@@ -1,6 +1,6 @@
 
 int    keyLenPrinted    = 6;
-String defaultServerUrl = 'wss://nostr-pub.wellorder.net';
+String defaultServerUrl = 'wss://nostr.onsats.org';
 
 
 class Contact {
@@ -37,7 +37,10 @@ class EventData {
         var n = tag.length;
         String server = defaultServerUrl;
         if( n >=3 ) {
-          server = tag[2].toString();           
+          server = tag[2].toString();
+          if( server == 'wss://nostr.rocks') {
+            server = 'wss://nostr.onsats.org';
+          }
         }
         Contact c = Contact(tag[1] as String, server, 3.toString());
         contactList.add(c);
@@ -61,8 +64,10 @@ class EventData {
 
     String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
-
-    return '-------+\nid     : ${max3(id)} \nAuthor : ${max3(pubkey)}\nTime   : $dTime\nKind   : $kind\nMessage: $content\n';
+    if( createdAt == 0) {
+      print("createdAt == 0 for event $content");
+    }
+    return '\n-------+\nAuthor : ${max3(pubkey)}\nMessage: $content\n\nid     : ${max3(id)}     Time: $dTime     Kind: $kind';
   }
 }
 
@@ -71,25 +76,29 @@ class Event {
   String event;
   String id;
   EventData eventData;
-  Event(this.event, this.id, this.eventData);
-  factory Event.fromJson(dynamic json) {
+  Event(this.event, this.id, this.eventData, this.seenOnRelays);
+
+  List<String> seenOnRelays;
+
+  factory Event.fromJson(dynamic json, String relay) {
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","","", 0, 0, []));
+      return Event(e,"",EventData("non","","", 0, 0, []), [relay]);
     }
 
-    return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]) );
+    return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay] );
   }
 
   @override 
   String toString() {
-    return '$eventData';
+    return '$eventData     Seen on: ${seenOnRelays[0]}\n';
   }
 }
 
 int ascendingTime(Event a, Event b) {
   if(a.eventData.createdAt < b.eventData.createdAt) {
+    print( 'ascendingTime : comparing two ${a.eventData.createdAt} and   ${b.eventData.createdAt}'); 
     return 0;
   }
 

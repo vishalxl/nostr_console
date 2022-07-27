@@ -21,14 +21,15 @@ Future<void> main() async {
       var e = events[i];
       if( e.eventData.kind == 3) {
         print('calling getfeed');
-        getFeed(e.eventData.contactList, events, 3);
+        getFeed(e.eventData.contactList, events, 5);
       }
     }
 
 
     print('waiting for feed to come in');
     Future.delayed(const Duration(milliseconds: 4000), () {
-      events.sort(ascendingTime);
+      //events.sort(ascendingTime);
+      events.removeWhere( (item) => item.eventData.kind != 1 );
       print('====================all events =================');
       printEvents(events);
       print('number of all events: ${events.length}');

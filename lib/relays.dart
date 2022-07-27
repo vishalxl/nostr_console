@@ -11,6 +11,10 @@ String getSubscriptionRequest(String publicKey, int numUserEvents) {
   return strSubscription1 + publicKey + strSubscription2;
 }
 
+void handleSocketError() {
+
+}
+
 class Relays {
   Map<String, Future<WebSocket> > relays;
 
@@ -24,6 +28,7 @@ class Relays {
     return Relays(r);
   }
 
+
   void connect(String relay, String publicKey, List<Event> events, int numUserEvents) {
     Future<WebSocket>? fws;
     if(relays.containsKey(relay)) {
@@ -36,25 +41,26 @@ class Relays {
         fws = WebSocket.connect(relay);
         relays[relay] = fws;
         fws.then((WebSocket ws) {
-        ws.listen(
-            (d) {
-              print(d);
-              Event e;
-              try {
-                e = Event.fromJson(jsonDecode(d));
-                events.add(e);
-                if( e.eventData.kind == 3) {
-                  
+          ws.listen(
+              (d) {
+                print(d);
+                Event e;
+                try {
+                  e = Event.fromJson(jsonDecode(d), relay);
+                  events.add(e);
+                  if( e.eventData.kind == 3) {
+                    
+                  }
+                } on FormatException {
+                  print( 'exception in fromJson for event');
                 }
-              } on FormatException {
-                print( 'exception in fromJson for event');
-              }
-            },
-            onError: (e) { print("error"); print(e);  },
-            onDone:  () { print('in onDone'); ws.close() ; }
-        );});
-
-
+              },
+              onError: (e) { print("error"); print(e);  },
+              onDone:  () { print('in onDone'); ws.close() ; }
+        );}).catchError((err) {
+            print('Error: Could not connect to $relay'); 
+            //throw Exception('Some arbitrary error');
+        });
       } on WebSocketException {
         print('WebSocketException exception');
         return;
@@ -64,7 +70,7 @@ class Relays {
       }
     }
 
-    print('sending request ${getSubscriptionRequest(publicKey, numUserEvents)}');
+    print('sending request ${getSubscriptionRequest(publicKey, numUserEvents)} to $relay');
     fws?.then((WebSocket ws) { ws.add(getSubscriptionRequest(publicKey, numUserEvents)); });
   
   }

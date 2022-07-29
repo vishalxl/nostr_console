@@ -1,4 +1,8 @@
 
+import 'dart:io';
+
+
+const int  spacesPerDepth = 4;
 int    keyLenPrinted    = 6;
 String defaultServerUrl = 'wss://nostr.onsats.org';
 
@@ -56,6 +60,37 @@ class EventData {
                      json['kind'] as int,
                      contactList);
   }
+
+ void printDepth(int d) {
+   int numSpaces = d * spacesPerDepth;
+   do {
+    stdout.write(" ");
+    numSpaces = numSpaces - 1;
+   }
+
+  while(numSpaces > 0);
+ }
+
+  void printEventData(int depth) {
+    String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
+    DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
+    if( createdAt == 0) {
+      print("debug: createdAt == 0 for event $content");
+    }
+
+
+    print("");
+    printDepth(depth);
+    stdout.write("-------+\n");
+    printDepth(depth);
+    stdout.write("Author : ${max3(pubkey)}\n");
+    printDepth(depth);
+    stdout.write("Message: $content\n\n");
+    printDepth(depth);
+    stdout.write("id     : ${max3(id)}     Time: $dTime     Kind: $kind");
+
+  }
+
   @override
   String toString() {
     if( id == "non") {
@@ -90,6 +125,10 @@ class Event {
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay] );
   }
 
+  void printEvent(int depth) {
+    eventData.printEventData(depth);
+  }
+
   @override 
   String toString() {
     return '$eventData     Seen on: ${seenOnRelays[0]}\n';
@@ -104,6 +143,31 @@ int ascendingTime(Event a, Event b) {
 
   return 1;
 }
+
+class EventNode {
+  Event e;
+  List<EventNode> children;
+
+  EventNode(this.e, this.children);
+
+  addChild(Event child) {
+    EventNode node;
+    node = EventNode(child, []);
+    children.add(node);
+  }
+
+  void printEventNode(int depth) {
+    e.printEvent(depth);
+
+    for( int i = 0; i < children.length; i++) {
+      
+    }
+
+  }
+
+
+}
+
 
 void printEvents(List<Event> events) {
     events.sort(ascendingTime);

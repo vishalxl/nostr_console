@@ -2,8 +2,8 @@ import 'package:nostr_console/nostr_console.dart';
 import 'package:test/test.dart';
 
 
-EventData exampleEdata = EventData("id", "pubkey", "content", 1111111, 1, []);
-EventData exampleEdataChild = EventData("id", "pubkey", "content child", 1111111, 1, []);
+EventData exampleEdata = EventData("id", "pubkey",  1111111, 1, "content", {}, []);
+EventData exampleEdataChild = EventData("id", "pubkey", 1111111, 1, "content child", {}, []);
 
 Event exampleEvent = Event('event', 'id', exampleEdata, ['relay name']);
 Event exampleEventChild = Event('event', 'id', exampleEdataChild, ['relay name']);
@@ -15,7 +15,7 @@ Tree exampleNodeChild = Tree(exampleEventChild, []);
 
 void main() {
   test('PrintEmptyEvent', () {
-    expect(EventData("non","","",1,1,[]).toString(), "");
+    expect(EventData("non","",1,1,"", {}, []).toString(), "");
   });
 
   test('printEventNode', () {

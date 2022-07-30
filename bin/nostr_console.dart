@@ -37,7 +37,7 @@ Future<void> main() async {
 
       Tree node = Tree.fromEvents(events);
       node.printEventNode(0);
-      print('number of all events: ${events.length}');
+      print('\nnumber of all events: ${events.length}');
 
 
       exit(0);

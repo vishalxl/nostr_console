@@ -28,27 +28,33 @@ class Contact {
   }
 }
 
+
 class EventData {
   String id;
   String pubkey;
-  String content;
   int    createdAt;
   int    kind;
+  String content;
+  Map<String, String> tags;
+
   List<Contact> contactList = [];
   
-  EventData(this.id, this.pubkey, this.content, this.createdAt, this.kind, this.contactList);
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content,  this.tags, this.contactList);
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
 
+    Map<String, String> t = {};
+
+    var jsonTags = json['tags'];
+    //print(jsonTags);
+      
+    var numTags = jsonTags.length;
+        
     // NIP 02: if the event is a contact list type, then populate contactList
     if(json['kind'] == 3) {
-      var tags = json['tags'];
-      //print(tags);
-      var numTags = tags.length;
       for( int i = 0; i < numTags; i++) {
-        
-        var tag = tags[i];
+        var tag = jsonTags[i];
         var n = tag.length;
         String server = defaultServerUrl;
         if( n >=3 ) {
@@ -60,15 +66,29 @@ class EventData {
         Contact c = Contact(tag[1] as String, server, 3.toString());
         contactList.add(c);
       }
-     
+    } else {
+      if ( json['kind'] == 1) {
+        for( int i = 0; i < numTags; i++) {
+          var tag = jsonTags[i];
+          var n = tag.length;
+          //print(tag);
+          //print(tag.runtimeType);
+          if( tag[0] == "e") {
+            t["e"] = tag[1];
+            break;
+          }
+
+          // TODO add other tags
+        }
+      }
     }
 
-    // return
     return EventData(json['id'] as String, 
                      json['pubkey'] as String, 
-                     json['content'] as String, 
                      json['created_at'] as int, 
                      json['kind'] as int,
+                     json['content'] as String,
+                     t,
                      contactList);
   }
 
@@ -119,7 +139,7 @@ class Event {
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","","", 0, 0, []), [relay]);
+      return Event(e,"",EventData("non","", 0, 0, "", {}, []), [relay]);
     }
 
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay] );
@@ -153,13 +173,25 @@ class Tree {
   factory Tree.fromEvents(List<Event> events) {
     Event e = events[0];
 
-    List<Tree> childTrees = [];
+    List<Tree>  childTrees = [];
+    List<Event> nonTopEvents = [];
 
     for( int i = 0; i < events.length; i++) {
       Event e = events[i];
-      Tree node = Tree(e, []);
+      if( e.eventData.tags.isNotEmpty) {
+        stdout.write("${e.eventData.tags}\n");
+        nonTopEvents.add(e);        
+      }
+      else {
+        stdout.write("Adding top child: $e\n");
+        Tree node;
+        node = Tree(e, []);
+        childTrees.add(node);
+      }
+    }
 
-      childTrees.add(node);
+    for(int i = 0; i < nonTopEvents.length; i++) {
+      
     }
 
     return Tree( e, childTrees);

@@ -22,9 +22,13 @@ void main() {
 
 
     EventNode node = exampleNode;
-    Event child = exampleEventChild;
+    EventNode childNode = exampleNodeChild;
+    Event     cChild = exampleEventChild;
 
-    node.addChild(child);
+    childNode.addChild(cChild);
+
+    node.addChildNode(childNode);
+    node.addChildNode(childNode);
 
     print("node");
     node.printEventNode(4);

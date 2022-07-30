@@ -1,11 +1,23 @@
 
 import 'dart:io';
 
-
-const int  spacesPerDepth = 4;
+const bool enableVerticalLines = false;
+const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
 String defaultServerUrl = 'wss://nostr.onsats.org';
 
+
+ void printDepth(int d) {
+   int numSpaces = d * spacesPerDepth;
+
+  
+   do {
+    stdout.write(" ");
+    numSpaces = numSpaces - 1;
+   }
+
+  while(numSpaces > 0);
+ }
 
 class Contact {
   String id;
@@ -61,16 +73,6 @@ class EventData {
                      contactList);
   }
 
- void printDepth(int d) {
-   int numSpaces = d * spacesPerDepth;
-   do {
-    stdout.write(" ");
-    numSpaces = numSpaces - 1;
-   }
-
-  while(numSpaces > 0);
- }
-
   void printEventData(int depth) {
     String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
@@ -79,7 +81,6 @@ class EventData {
     }
 
 
-    print("");
     printDepth(depth);
     stdout.write("-------+\n");
     printDepth(depth);
@@ -156,11 +157,20 @@ class EventNode {
     children.add(node);
   }
 
+  addChildNode(EventNode node) {
+    children.add(node);
+  }
+
+
   void printEventNode(int depth) {
     e.printEvent(depth);
 
     for( int i = 0; i < children.length; i++) {
-      
+
+      stdout.write("\n");
+      printDepth(depth+1);
+      stdout.write("|\n");
+      children[i].printEventNode(depth+1);
     }
 
   }

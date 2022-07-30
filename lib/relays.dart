@@ -15,6 +15,9 @@ void handleSocketError() {
 
 }
 
+/*
+ * @class Relays Contains connections to all relays. 
+ */
 class Relays {
   Map<String, Future<WebSocket> > relays;
 
@@ -28,8 +31,11 @@ class Relays {
     return Relays(r);
   }
 
-
-  void connect(String relay, String publicKey, List<Event> events, int numUserEvents) {
+  /* 
+   * @connect Connect to given relay and get all events for the given publicKey and insert the
+   *          received events in the given List<Event>
+   */
+  void connect(String relay, String publicKey, List<Event> events, int numEventsToGet) {
     Future<WebSocket>? fws;
     if(relays.containsKey(relay)) {
       fws = relays[relay];
@@ -70,8 +76,8 @@ class Relays {
       }
     }
 
-    print('sending request ${getSubscriptionRequest(publicKey, numUserEvents)} to $relay');
-    fws?.then((WebSocket ws) { ws.add(getSubscriptionRequest(publicKey, numUserEvents)); });
+    print('sending request ${getSubscriptionRequest(publicKey, numEventsToGet)} to $relay');
+    fws?.then((WebSocket ws) { ws.add(getSubscriptionRequest(publicKey, numEventsToGet)); });
   
   }
 
@@ -83,10 +89,10 @@ class Relays {
 
 Relays relays = Relays(Map());
 
-void getFeed(List<Contact> contacts, events, numEvents) {
+void getFeed(List<Contact> contacts, events, numEventsToGet) {
   for( int i = 0; i < contacts.length; i++) {
     var contact = contacts[i];
-    relays.connect(contact.relay, contact.id, events, numEvents);
+    relays.connect(contact.relay, contact.id, events, numEventsToGet);
   }
  
   

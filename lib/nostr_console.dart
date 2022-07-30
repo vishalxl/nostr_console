@@ -2,21 +2,20 @@
 import 'dart:io';
 
 const bool enableVerticalLines = false;
-const int  spacesPerDepth = 8;
+const int  spacesPerDepth = 7;
 int    keyLenPrinted    = 6;
 String defaultServerUrl = 'wss://nostr.onsats.org';
 
 
  void printDepth(int d) {
-   int numSpaces = d * spacesPerDepth;
+  if( d == 0) {
+    return;
+  }
 
-  
-   do {
+  for( int i = 0; i < spacesPerDepth * d ; i++) {
     stdout.write(" ");
-    numSpaces = numSpaces - 1;
-   }
+  }
 
-  while(numSpaces > 0);
  }
 
 class Contact {
@@ -145,19 +144,34 @@ int ascendingTime(Event a, Event b) {
   return 1;
 }
 
-class EventNode {
+class Tree {
   Event e;
-  List<EventNode> children;
+  List<Tree> children;
 
-  EventNode(this.e, this.children);
+  Tree(this.e, this.children);
 
-  addChild(Event child) {
-    EventNode node;
-    node = EventNode(child, []);
+  factory Tree.fromEvents(List<Event> events) {
+    Event e = events[0];
+
+    List<Tree> childTrees = [];
+
+    for( int i = 0; i < events.length; i++) {
+      Event e = events[i];
+      Tree node = Tree(e, []);
+
+      childTrees.add(node);
+    }
+
+    return Tree( e, childTrees);
+  }
+
+  void addChild(Event child) {
+    Tree node;
+    node = Tree(child, []);
     children.add(node);
   }
 
-  addChildNode(EventNode node) {
+  addChildNode(Tree node) {
     children.add(node);
   }
 
@@ -172,6 +186,10 @@ class EventNode {
       stdout.write("|\n");
       children[i].printEventNode(depth+1);
     }
+
+  }
+
+  void insertEvent(Event event) {
 
   }
 

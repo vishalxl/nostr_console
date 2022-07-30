@@ -6,6 +6,7 @@ import 'package:nostr_console/relays.dart';
 var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c";
 
 
+
 Future<void> main() async {
   List<Event>  events = [];
 
@@ -31,7 +32,11 @@ Future<void> main() async {
       //events.sort(ascendingTime);
       events.removeWhere( (item) => item.eventData.kind != 1 );
       print('====================all events =================');
-      printEvents(events);
+      
+      //printEvents(events);
+
+      Tree node = Tree.fromEvents(events);
+      node.printEventNode(0);
       print('number of all events: ${events.length}');
 
 

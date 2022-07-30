@@ -8,8 +8,8 @@ EventData exampleEdataChild = EventData("id", "pubkey", "content child", 1111111
 Event exampleEvent = Event('event', 'id', exampleEdata, ['relay name']);
 Event exampleEventChild = Event('event', 'id', exampleEdataChild, ['relay name']);
 
-EventNode exampleNode = EventNode(exampleEvent, []);
-EventNode exampleNodeChild = EventNode(exampleEventChild, []);
+Tree exampleNode = Tree(exampleEvent, []);
+Tree exampleNodeChild = Tree(exampleEventChild, []);
 
 
 
@@ -21,8 +21,8 @@ void main() {
   test('printEventNode', () {
 
 
-    EventNode node = exampleNode;
-    EventNode childNode = exampleNodeChild;
+    Tree node = exampleNode;
+    Tree childNode = exampleNodeChild;
     Event     cChild = exampleEventChild;
 
     childNode.addChild(cChild);
@@ -31,7 +31,7 @@ void main() {
     node.addChildNode(childNode);
 
     print("node");
-    node.printEventNode(4);
+    node.printEventNode(0);
 
   });
 }

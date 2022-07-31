@@ -34,20 +34,21 @@ class EventData {
   String content;
   String eTagParent; // direct parent tag
   List<String> eTagsRest;// rest of e tags
-  
+  List<String> pTags;// list of p tags for kind:1
 
-  List<Contact> contactList = [];
+  List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagParent, this.eTagsRest, this.contactList);
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagParent, this.eTagsRest, this.pTags, this.contactList);
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
 
     List<String> eTagsRead = [];
+    List<String> pTagsRead = [];
     String       eTagParentRead = "";
 
     var jsonTags = json['tags'];
-    stdout.write("In fromJson: jsonTags = $jsonTags");
+    //stdout.write("In fromJson: jsonTags = $jsonTags");
       
     var numTags = jsonTags.length;
         
@@ -70,10 +71,14 @@ class EventData {
       if ( json['kind'] == 1) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
-          stdout.write(tag);
+          //stdout.write(tag);
           //print(tag.runtimeType);
           if( tag[0] == "e") {
             eTagsRead.add(tag[1]);
+          } else {
+            if( tag[0] == "p") {
+              pTagsRead.add(tag[1]);
+            }
           }
 
           // TODO add other tags
@@ -88,6 +93,7 @@ class EventData {
                      json['content'] as String,
                      eTagParentRead,
                      eTagsRead,
+                     pTagsRead,
                      contactList);
   }
 
@@ -139,7 +145,7 @@ class Event {
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","", 0, 0, "", "", [], []), [relay]);
+      return Event(e,"",EventData("non","", 0, 0, "", "", [], [], []), [relay]);
     }
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay] );
   }
@@ -168,14 +174,14 @@ class Tree {
     for( int i = 0; i < events.length; i++) {
       
       Event e = events[i];
-      stdout.write("processing event number $i : $e \n");
+      //stdout.write("processing event number $i : $e \n");
       if( e.eventData.eTagsRest.isNotEmpty) {
         // in case the event has a parent, add it to the list of non Top Events 
-        stdout.write("Event has e tags: ${e.eventData.eTagsRest}\n");
+        //stdout.write("Event has e tags: ${e.eventData.eTagsRest}\n");
         nonTopEvents.add(e);        
       }
       else {
-        stdout.write("Adding top child: $e\n");
+        //stdout.write("Adding top child: $e\n");
         Tree node;
         node = Tree(e, []);
         childTrees.add(node);
@@ -260,10 +266,17 @@ class Tree {
   }
 }
 
+List<String> getpTags(List<Event> events) {
+  List<String> pTags = [];
+  for(int i = 0; i < events.length; i++) {
+    pTags.addAll(events[i].eventData.pTags);
+  }
+  return pTags;
+}
 
 int ascendingTime(Event a, Event b) {
   if(a.eventData.createdAt < b.eventData.createdAt) {
-    print( 'ascendingTime : comparing two ${a.eventData.createdAt} and   ${b.eventData.createdAt}'); 
+    //print( 'ascendingTime : comparing two ${a.eventData.createdAt} and   ${b.eventData.createdAt}'); 
     return 0;
   }
   return 1;
@@ -271,7 +284,7 @@ int ascendingTime(Event a, Event b) {
 
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.e.eventData.createdAt < b.e.eventData.createdAt) {
-    print( 'ascendingTimeTree : comparing two ${a.e.eventData.createdAt} and   ${b.e.eventData.createdAt}'); 
+    //print( 'ascendingTimeTree : comparing two ${a.e.eventData.createdAt} and   ${b.e.eventData.createdAt}'); 
     return 0;
   }
   return 1;

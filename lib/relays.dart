@@ -49,7 +49,7 @@ class Relays {
         fws.then((WebSocket ws) {
           ws.listen(
               (d) {
-                print(d);
+                //print(d);
                 Event e;
                 try {
                   e = Event.fromJson(jsonDecode(d), relay);

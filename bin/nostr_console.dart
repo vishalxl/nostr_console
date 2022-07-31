@@ -22,16 +22,31 @@ Future<void> main() async {
 
     print('waiting for feed to come in');
     Future.delayed(const Duration(milliseconds: 4000), () {
-      events.sort(ascendingTime);
       events.removeWhere( (item) => item.eventData.kind != 1 );
       print('====================all events =================');
       
-      //printEvents(events);
+      List<String> pTags = getpTags(events);
+      stdout.write("Total number of pTags = ${pTags.length}\n");
 
-      Tree node = Tree.fromEvents(events);
-      node.printTree(0, true);
-      print('\nnumber of all events: ${events.length}');
-      exit(0);
+      for(int i = 0; i < pTags.length; i++) {
+        getUserEvents( defaultServerUrl, pTags[i], events, 10);
+      }
+
+      Future.delayed(const Duration(milliseconds: 4000), () {
+        
+        // remove duplicate events
+        final ids = Set();
+        events.retainWhere((x) => ids.add(x.eventData.id));
+
+        // create tree from events
+        Tree node = Tree.fromEvents(events);
+
+        // print all the events in tree form  
+        node.printTree(0, true);
+
+        print('\nnumber of all events: ${events.length}');
+        exit(0);
+      });
     });
   });
 }

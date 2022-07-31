@@ -2,7 +2,7 @@
 import 'dart:io';
 
 const bool enableVerticalLines = false;
-const int  spacesPerDepth = 7;
+const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
 String defaultServerUrl = 'wss://nostr.onsats.org';
 
@@ -35,19 +35,22 @@ class EventData {
   int    createdAt;
   int    kind;
   String content;
-  Map<String, String> tags;
+  String eTagParent; // direct parent tag
+  List<String> eTagsRest;// rest of e tags
+  
 
   List<Contact> contactList = [];
   
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content,  this.tags, this.contactList);
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagParent, this.eTagsRest, this.contactList);
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
 
-    Map<String, String> t = {};
+    List<String> eTagsRead = [];
+    String       eTagParentRead = "";
 
     var jsonTags = json['tags'];
-    //print(jsonTags);
+    stdout.write("In fromJson: jsonTags = $jsonTags");
       
     var numTags = jsonTags.length;
         
@@ -70,12 +73,10 @@ class EventData {
       if ( json['kind'] == 1) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
-          var n = tag.length;
-          //print(tag);
+          stdout.write(tag);
           //print(tag.runtimeType);
           if( tag[0] == "e") {
-            t["e"] = tag[1];
-            break;
+            eTagsRead.add(tag[1]);
           }
 
           // TODO add other tags
@@ -88,7 +89,8 @@ class EventData {
                      json['created_at'] as int, 
                      json['kind'] as int,
                      json['content'] as String,
-                     t,
+                     eTagParentRead,
+                     eTagsRead,
                      contactList);
   }
 
@@ -101,14 +103,16 @@ class EventData {
 
 
     printDepth(depth);
-    stdout.write("-------+\n");
+    stdout.write("+-------+-------------\n");
     printDepth(depth);
-    stdout.write("Author : ${max3(pubkey)}\n");
+    stdout.write("|Message: $content\n");
     printDepth(depth);
-    stdout.write("Message: $content\n\n");
+    stdout.write("|Author : ${max3(pubkey)}\n");
     printDepth(depth);
-    stdout.write("id     : ${max3(id)}     Time: $dTime     Kind: $kind");
-
+    stdout.write("|");
+    printDepth(depth);
+    stdout.write("|id     : ${max3(id)}     Time: $dTime");
+    //stdout.write("\n$eTagsRest\n");
   }
 
   @override
@@ -122,7 +126,7 @@ class EventData {
     if( createdAt == 0) {
       print("createdAt == 0 for event $content");
     }
-    return '\n-------+\nAuthor : ${max3(pubkey)}\nMessage: $content\n\nid     : ${max3(id)}     Time: $dTime     Kind: $kind';
+    return '\n-------+-------------\nAuthor : ${max3(pubkey)}\nMessage: $content\n\nid     : ${max3(id)}     Time: $dTime     Kind: $kind';
   }
 }
 
@@ -139,7 +143,7 @@ class Event {
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","", 0, 0, "", {}, []), [relay]);
+      return Event(e,"",EventData("non","", 0, 0, "", "", [], []), [relay]);
     }
 
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay] );
@@ -171,15 +175,18 @@ class Tree {
   Tree(this.e, this.children);
 
   factory Tree.fromEvents(List<Event> events) {
-    Event e = events[0];
+    stdout.write("in factory fromEvents list. number of events: ${events.length}\n");
 
     List<Tree>  childTrees = [];
     List<Event> nonTopEvents = [];
 
     for( int i = 0; i < events.length; i++) {
+      
       Event e = events[i];
-      if( e.eventData.tags.isNotEmpty) {
-        stdout.write("${e.eventData.tags}\n");
+      stdout.write("processing event number $i : $e \n");
+      if( e.eventData.eTagsRest.isNotEmpty) {
+        // in case the event has a parent, add it to the list of non Top Events 
+        stdout.write("Event has e tags: ${e.eventData.eTagsRest}\n");
         nonTopEvents.add(e);        
       }
       else {
@@ -190,11 +197,35 @@ class Tree {
       }
     }
 
+    // add each of nonTopEvents to their parent tree ( if parent is found in tree)
     for(int i = 0; i < nonTopEvents.length; i++) {
-      
+      Event e = nonTopEvents[i];
+      insertEvent( childTrees, e);
+      // String parentId = e.eventData.tags     
     }
+    stdout.write("Ending:  factory fromEvents list. number of events: ${events.length}\n");
+    return Tree( events[0], childTrees); // TODO remove events[0]
+  }
 
-    return Tree( e, childTrees);
+  // @function insertEvent will insert the event e into the given list of trees if its
+  // parent is in that list of trees
+  static void insertEvent( List<Tree> trees, Event e) {
+
+    for( int i = 0; i < trees.length; i++) {
+
+      Tree tree = trees[i];
+      //stdout.write("In isertEvent: processing event $e \n");
+      String parent = e.eventData.eTagParent;
+      if( parent == "") {
+        parent = e.eventData.eTagsRest[0];
+      }
+
+      if( tree.e.eventData.id == parent) {
+        //stdout.write("In isertEvent: found parent for event $e \n");
+        tree.addChild(e);
+      }
+    }
+    return;
   }
 
   void addChild(Event child) {
@@ -208,24 +239,27 @@ class Tree {
   }
 
 
-  void printEventNode(int depth) {
-    e.printEvent(depth);
+  void printTree(int depth, bool onlyPrintChildren) {
+    if( !onlyPrintChildren) {
+      e.printEvent(depth);
+    } else {
+      depth = depth - 1;
+    }
 
     for( int i = 0; i < children.length; i++) {
 
       stdout.write("\n");
+      
       printDepth(depth+1);
-      stdout.write("|\n");
-      children[i].printEventNode(depth+1);
+      if(!onlyPrintChildren) {
+        stdout.write("|\n");
+      } else {
+        stdout.write("\n\n\n");
+      }
+      children[i].printTree(depth+1, false);
     }
 
   }
-
-  void insertEvent(Event event) {
-
-  }
-
-
 }
 
 
@@ -238,6 +272,27 @@ void printEvents(List<Event> events) {
     }
 }
 
+
+/* reply/root example for e tag
+{
+  "id": "4019debf44a087b973b7d8776e7ce74ee84a15e9c3dbed0b60dfdec23d170911",
+  "pubkey": "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5",
+  "created_at": 1659210144,
+  "kind": 1,
+  "tags": [
+    [
+      "e",
+      "0ddebf828647920417deb00cc9de70a83db5b5c414466f684a5cbe7f02723243",
+      "",
+      "root"
+    ],
+    [
+      "e",
+      "f68f0299f3a3204638337e6f7edf1a6653066a8d8a2bc74c4ab6ebe92a9c4130",
+      "",
+      "reply"
+    ],
+*/
 
 
 /*  

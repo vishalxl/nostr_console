@@ -29,14 +29,14 @@ Future<void> main() async {
 
     print('waiting for feed to come in');
     Future.delayed(const Duration(milliseconds: 4000), () {
-      //events.sort(ascendingTime);
+      events.sort(ascendingTime);
       events.removeWhere( (item) => item.eventData.kind != 1 );
       print('====================all events =================');
       
       //printEvents(events);
 
       Tree node = Tree.fromEvents(events);
-      node.printEventNode(0);
+      node.printTree(0, true);
       print('\nnumber of all events: ${events.length}');
 
 

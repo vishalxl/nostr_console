@@ -93,9 +93,7 @@ void getFeed(List<Contact> contacts, events, numEventsToGet) {
   for( int i = 0; i < contacts.length; i++) {
     var contact = contacts[i];
     relays.connect(contact.relay, contact.id, events, numEventsToGet);
-  }
- 
-  
+  }  
 }
 
 void getUserEvents(serverUrl, publicKey, events, numUserEvents) {

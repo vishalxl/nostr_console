@@ -19,14 +19,11 @@ void main() {
   });
 
   test('printEventNode', () {
-
-
     Tree node = exampleNode;
     Tree childNode = exampleNodeChild;
     Event     cChild = exampleEventChild;
 
     childNode.addChild(cChild);
-
     node.addChildNode(childNode);
     node.addChildNode(childNode);
 

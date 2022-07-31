@@ -6,8 +6,7 @@ const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
 String defaultServerUrl = 'wss://nostr.onsats.org';
 
-
- void printDepth(int d) {
+void printDepth(int d) {
   if( d == 0) {
     return;
   }
@@ -15,7 +14,6 @@ String defaultServerUrl = 'wss://nostr.onsats.org';
   for( int i = 0; i < spacesPerDepth * d ; i++) {
     stdout.write(" ");
   }
-
  }
 
 class Contact {
@@ -27,7 +25,6 @@ class Contact {
     return Contact(json[1] as String, json[2] as String, json[3]);
   }
 }
-
 
 class EventData {
   String id;
@@ -101,7 +98,6 @@ class EventData {
       print("debug: createdAt == 0 for event $content");
     }
 
-
     printDepth(depth);
     stdout.write("+-------+-------------\n");
     printDepth(depth);
@@ -145,7 +141,6 @@ class Event {
       e = json.length > 1? json[0]: "";
       return Event(e,"",EventData("non","", 0, 0, "", "", [], []), [relay]);
     }
-
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay] );
   }
 
@@ -159,19 +154,9 @@ class Event {
   }
 }
 
-int ascendingTime(Event a, Event b) {
-  if(a.eventData.createdAt < b.eventData.createdAt) {
-    print( 'ascendingTime : comparing two ${a.eventData.createdAt} and   ${b.eventData.createdAt}'); 
-    return 0;
-  }
-
-  return 1;
-}
-
 class Tree {
   Event e;
   List<Tree> children;
-
   Tree(this.e, this.children);
 
   factory Tree.fromEvents(List<Event> events) {
@@ -210,8 +195,6 @@ class Tree {
   // @function insertIntoTree will insert the event e into the given tree if 
   // any of the events in the tree is a parent of this event
   static bool insertIntoTree( Tree tree, Event e) {
-    bool inserted = false;
-
     String parent = e.eventData.eTagParent;
     if( parent == "") {
       parent = e.eventData.eTagsRest.last;
@@ -229,15 +212,12 @@ class Tree {
         }
       }
     }
-
     return false;
   }
-
 
   // @function insertEvent will insert the event e into the given list of trees if its
   // parent is in that list of trees
   static void insertIntoTrees( List<Tree> trees, Event e) {
-
     for( int i = 0; i < trees.length; i++) {
       Tree tree = trees[i];
       //stdout.write("In isertEvent: processing event $e \n");
@@ -258,8 +238,8 @@ class Tree {
     children.add(node);
   }
 
-
   void printTree(int depth, bool onlyPrintChildren) {
+    children.sort(ascendingTimeTree);
     if( !onlyPrintChildren) {
       e.printEvent(depth);
     } else {
@@ -267,9 +247,7 @@ class Tree {
     }
 
     for( int i = 0; i < children.length; i++) {
-
-      stdout.write("\n");
-      
+      stdout.write("\n");  
       printDepth(depth+1);
       if(!onlyPrintChildren) {
         stdout.write("|\n");
@@ -278,10 +256,26 @@ class Tree {
       }
       children[i].printTree(depth+1, false);
     }
-
+    //stdout.write("\nTotal number of tree children printed: ${children.length}\n");
   }
 }
 
+
+int ascendingTime(Event a, Event b) {
+  if(a.eventData.createdAt < b.eventData.createdAt) {
+    print( 'ascendingTime : comparing two ${a.eventData.createdAt} and   ${b.eventData.createdAt}'); 
+    return 0;
+  }
+  return 1;
+}
+
+int ascendingTimeTree(Tree a, Tree b) {
+  if(a.e.eventData.createdAt < b.e.eventData.createdAt) {
+    print( 'ascendingTimeTree : comparing two ${a.e.eventData.createdAt} and   ${b.e.eventData.createdAt}'); 
+    return 0;
+  }
+  return 1;
+}
 
 void printEvents(List<Event> events) {
     events.sort(ascendingTime);
@@ -291,7 +285,6 @@ void printEvents(List<Event> events) {
       }
     }
 }
-
 
 /* reply/root example for e tag
 {

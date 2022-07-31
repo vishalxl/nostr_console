@@ -109,7 +109,7 @@ class EventData {
     printDepth(depth);
     stdout.write("|Author : ${max3(pubkey)}\n");
     printDepth(depth);
-    stdout.write("|");
+    stdout.write("|\n");
     printDepth(depth);
     stdout.write("|id     : ${max3(id)}     Time: $dTime");
     //stdout.write("\n$eTagsRest\n");
@@ -200,29 +200,49 @@ class Tree {
     // add each of nonTopEvents to their parent tree ( if parent is found in tree)
     for(int i = 0; i < nonTopEvents.length; i++) {
       Event e = nonTopEvents[i];
-      insertEvent( childTrees, e);
+      insertIntoTrees( childTrees, e);
       // String parentId = e.eventData.tags     
     }
     stdout.write("Ending:  factory fromEvents list. number of events: ${events.length}\n");
     return Tree( events[0], childTrees); // TODO remove events[0]
   }
 
+  // @function insertIntoTree will insert the event e into the given tree if 
+  // any of the events in the tree is a parent of this event
+  static bool insertIntoTree( Tree tree, Event e) {
+    bool inserted = false;
+
+    String parent = e.eventData.eTagParent;
+    if( parent == "") {
+      parent = e.eventData.eTagsRest.last;
+    }
+
+    if( tree.e.eventData.id == parent) {
+      //stdout.write("In isertEvent: found parent for event $e \n");
+      tree.addChild(e);
+      return true;
+    } else {
+      for(int i = 0; i < tree.children.length; i++) {
+        Tree child = tree.children[i];
+        if( insertIntoTree(child, e)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+
   // @function insertEvent will insert the event e into the given list of trees if its
   // parent is in that list of trees
-  static void insertEvent( List<Tree> trees, Event e) {
+  static void insertIntoTrees( List<Tree> trees, Event e) {
 
     for( int i = 0; i < trees.length; i++) {
-
       Tree tree = trees[i];
       //stdout.write("In isertEvent: processing event $e \n");
-      String parent = e.eventData.eTagParent;
-      if( parent == "") {
-        parent = e.eventData.eTagsRest[0];
-      }
-
-      if( tree.e.eventData.id == parent) {
-        //stdout.write("In isertEvent: found parent for event $e \n");
-        tree.addChild(e);
+      if( insertIntoTree(tree, e) == true) {
+        return;
       }
     }
     return;
@@ -234,7 +254,7 @@ class Tree {
     children.add(node);
   }
 
-  addChildNode(Tree node) {
+  void addChildNode(Tree node) {
     children.add(node);
   }
 

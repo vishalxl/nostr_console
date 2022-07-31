@@ -22,7 +22,7 @@ Future<void> main() async {
       var e = events[i];
       if( e.eventData.kind == 3) {
         print('calling getfeed');
-        getFeed(e.eventData.contactList, events, 5);
+        getFeed(e.eventData.contactList, events, 10);
       }
     }
 

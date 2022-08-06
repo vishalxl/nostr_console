@@ -1,6 +1,7 @@
 
 import 'dart:io';
 import 'dart:convert';
+//import 'dart:svg';
 
 const bool enableVerticalLines = false;
 const int  spacesPerDepth = 8;
@@ -39,6 +40,17 @@ class EventData {
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
+  String getParent() {
+    if( eTagParent != "") {
+      return eTagParent;
+    }
+    if( eTagsRest.length > 0) {
+      return eTagsRest[eTagsRest.length - 1];
+    }
+
+    return "";
+  }
+
   EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagParent, this.eTagsRest, this.pTags, this.contactList);
   
   factory EventData.fromJson(dynamic json) {
@@ -157,7 +169,7 @@ class Event {
 
   void printEvent(int depth) {
     eventData.printEventData(depth);
-    print("\n$originalJson \n");
+    //stdout.write("\n$originalJson \n");
   }
 
   @override 
@@ -175,31 +187,36 @@ class Tree {
     stdout.write("in factory fromEvents list. number of events: ${events.length}\n");
 
     List<Tree>  childTrees = [];
-    List<Event> nonTopEvents = [];
+    Map<String, Tree> m = {};
+    events.forEach((element) { m[element.eventData.id] = Tree(element, []); });
 
-    for( int i = 0; i < events.length; i++) {
-      
-      Event e = events[i];
-      //stdout.write("processing event number $i : $e \n");
-      if( e.eventData.eTagsRest.isNotEmpty) {
-        // in case the event has a parent, add it to the list of non Top Events 
-        //stdout.write("Event has e tags: ${e.eventData.eTagsRest}\n");
-        nonTopEvents.add(e);        
+    stdout.write(m);
+    
+    List<String>  processed = [];
+
+    m.forEach((key, value) {  
+      if( !processed.contains(key)) {
+        if( !value.e.eventData.eTagsRest.isNotEmpty ) {
+          // in case this node is a parent, then move it to processed()
+          processed.add(key);
+        } else {
+          // is not a parent, find its parent and then add this element to that parent Tree
+          stdout.write("added to parent a child\n");
+          String id = key;
+          String parentId = value.e.eventData.getParent();
+          m[parentId]?.addChildNode(value);
+        }
+      } else { // entry already exists
+        // do nothing
       }
-      else {
-        //stdout.write("Adding top child: $e\n");
-        Tree node;
-        node = Tree(e, []);
-        childTrees.add(node);
-      }
+    });
+
+    for( var value in m.values) {
+        if( !value.e.eventData.eTagsRest.isNotEmpty) {  // if its a parent
+            childTrees.add(value);
+        }
     }
 
-    // add each of nonTopEvents to their parent tree ( if parent is found in tree)
-    for(int i = 0; i < nonTopEvents.length; i++) {
-      Event e = nonTopEvents[i];
-      insertIntoTrees( childTrees, e);
-      // String parentId = e.eventData.tags     
-    }
     stdout.write("Ending:  factory fromEvents list. number of events: ${events.length}\n");
     return Tree( events[0], childTrees); // TODO remove events[0]
   }

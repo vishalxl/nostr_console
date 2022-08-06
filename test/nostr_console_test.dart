@@ -41,6 +41,7 @@ void main() {
 
     Tree node = Tree.fromEvents(listEvents);
     node.printTree(0, true);
+    print("=========================");
   });
 
   test('createNodeTree_unordered1', () {

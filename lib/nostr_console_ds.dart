@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'dart:convert';
 
 const bool enableVerticalLines = false;
 const int  spacesPerDepth = 8;
@@ -104,7 +105,7 @@ class EventData {
       print("debug: createdAt == 0 for event $content");
     }
 
-    void printGreen(String s) => print("\x1B[32m$s\x1B[0m");
+    void printGreen(String s) => stdout.write("\x1B[32m$s\x1B[0m");
     printDepth(depth);
     stdout.write("+-------+-------------\n");
     printDepth(depth);
@@ -144,18 +145,19 @@ class Event {
 
   List<String> seenOnRelays;
 
-  factory Event.fromJson(dynamic json, String relay) {
+  factory Event.fromJson(String d, String relay) {
+    dynamic json = jsonDecode(d);
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
       return Event(e,"",EventData("non","", 0, 0, "", "", [], [], []), [relay], "[json]");
     }
-    return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], json.join() as String );
+    return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
   }
 
   void printEvent(int depth) {
     eventData.printEventData(depth);
-    //print("\n$originalJson \n");
+    print("\n$originalJson \n");
   }
 
   @override 

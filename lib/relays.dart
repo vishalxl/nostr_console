@@ -1,7 +1,6 @@
 
 import 'dart:io';
-import 'dart:convert';
-import 'package:nostr_console/nostr_console.dart';
+import 'package:nostr_console/nostr_console_ds.dart';
 
 int    getLatestNum  = 2;
 
@@ -52,7 +51,7 @@ class Relays {
                 //print(d);
                 Event e;
                 try {
-                  e = Event.fromJson(jsonDecode(d), relay);
+                  e = Event.fromJson(d, relay);
                   events.add(e);
                   if( e.eventData.kind == 3) {
                     

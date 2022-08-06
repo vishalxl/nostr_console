@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:nostr_console/nostr_console.dart';
+import 'package:nostr_console/nostr_console_ds.dart';
 import 'package:nostr_console/relays.dart';
 
 var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c";
@@ -22,7 +22,7 @@ Future<void> main() async {
 
     print('waiting for feed to come in');
     Future.delayed(const Duration(milliseconds: 4000), () {
-      events.removeWhere( (item) => item.eventData.kind != 1 );
+      
       print('====================all events =================');
       
       List<String> pTags = getpTags(events);
@@ -33,7 +33,7 @@ Future<void> main() async {
       }
 
       Future.delayed(const Duration(milliseconds: 4000), () {
-        
+        events.removeWhere( (item) => item.eventData.kind != 1 );  
         // remove duplicate events
         final ids = Set();
         events.retainWhere((x) => ids.add(x.eventData.id));

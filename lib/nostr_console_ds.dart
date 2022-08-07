@@ -31,13 +31,14 @@ String rightShiftContent(String s, int numSpaces) {
 
   for(int i = 0; i < s.length; i++) {
     if( s[i] == '\n') {
-      newlineCounter = 0;
       newString += "\n";
       newString += spacesString;
+      newlineCounter = 0;
     } else {
-      if( newlineCounter == (screenWidth - numSpaces)) {
+      if( newlineCounter >= (screenWidth - numSpaces)) {
         newString += "\n";
         newString += spacesString;
+        newlineCounter = 0;
       } 
 
       newString += s[i];

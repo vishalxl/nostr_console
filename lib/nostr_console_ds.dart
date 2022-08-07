@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 //import 'dart:svg';
 
+const int  screenWidth = 80;
 const bool enableVerticalLines = false;
 const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
@@ -17,6 +18,35 @@ void printDepth(int d) {
     stdout.write(" ");
   }
  }
+
+String rightShiftContent(String s, int numSpaces) {
+  String newString = "";
+
+  int newlineCounter = 0;
+
+  String spacesString = "";
+  for( int i = 0; i < numSpaces ; i++) {
+    spacesString += " ";
+  }
+
+  for(int i = 0; i < s.length; i++) {
+    if( s[i] == '\n') {
+      newlineCounter = 0;
+      newString += "\n";
+      newString += spacesString;
+    } else {
+      if( newlineCounter == (screenWidth - numSpaces)) {
+        newString += "\n";
+        newString += spacesString;
+      } 
+
+      newString += s[i];
+    }
+
+    newlineCounter++;
+  }
+  return newString;
+}
 
 class Contact {
   String id;
@@ -117,6 +147,7 @@ class EventData {
       print("debug: createdAt == 0 for event $content");
     }
 
+    content = rightShiftContent(content, spacesPerDepth * depth + 10);
     void printGreen(String s) => stdout.write("\x1B[32m$s\x1B[0m");
     printDepth(depth);
     stdout.write("+-------+-------------\n");
@@ -183,15 +214,18 @@ class Tree {
   List<Tree> children;
   Tree(this.e, this.children);
 
+  // @method create top level Tree from events. 
+  // first create a map. then add all top trees to the final list/ChildTrees. then add children to it.
+
   factory Tree.fromEvents(List<Event> events) {
     stdout.write("in factory fromEvents list. number of events: ${events.length}\n");
 
     List<Tree>  childTrees = [];
     Map<String, Tree> m = {};
+
     events.forEach((element) { m[element.eventData.id] = Tree(element, []); });
 
-    stdout.write(m);
-    
+    //stdout.write(m);
     List<String>  processed = [];
 
     m.forEach((key, value) {  
@@ -219,42 +253,6 @@ class Tree {
 
     stdout.write("Ending:  factory fromEvents list. number of events: ${events.length}\n");
     return Tree( events[0], childTrees); // TODO remove events[0]
-  }
-
-  // @function insertIntoTree will insert the event e into the given tree if 
-  // any of the events in the tree is a parent of this event
-  static bool insertIntoTree( Tree tree, Event e) {
-    String parent = e.eventData.eTagParent;
-    if( parent == "") {
-      parent = e.eventData.eTagsRest.last;
-    }
-
-    if( tree.e.eventData.id == parent) {
-      //stdout.write("In isertEvent: found parent for event $e \n");
-      tree.addChild(e);
-      return true;
-    } else {
-      for(int i = 0; i < tree.children.length; i++) {
-        Tree child = tree.children[i];
-        if( insertIntoTree(child, e)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // @function insertEvent will insert the event e into the given list of trees if its
-  // parent is in that list of trees
-  static void insertIntoTrees( List<Tree> trees, Event e) {
-    for( int i = 0; i < trees.length; i++) {
-      Tree tree = trees[i];
-      //stdout.write("In isertEvent: processing event $e \n");
-      if( insertIntoTree(tree, e) == true) {
-        return;
-      }
-    }
-    return;
   }
 
   void addChild(Event child) {

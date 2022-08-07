@@ -2,7 +2,11 @@ import 'dart:io';
 import 'package:nostr_console/nostr_console_ds.dart';
 import 'package:nostr_console/relays.dart';
 
-var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c";
+var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"; // vishalxl
+// var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
+// var    userPublickey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"; // fiatjaf
+
+
 
 Future<void> main() async {
   List<Event>  events = [];

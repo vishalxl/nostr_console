@@ -19,15 +19,16 @@ void handleSocketError() {
  */
 class Relays {
   Map<String, Future<WebSocket> > relays;
+  List<String> users; // is used to that duplicate requests aren't sent for same user
 
-  Relays(this.relays);
+  Relays(this.relays, this.users);
 
   factory Relays.relay(String relay) {
     Future<WebSocket> fws = WebSocket.connect(relay);
     print('In Relay.relay: connecting to relay $relay');
     Map<String,  Future<WebSocket>> r = Map();
     r[relay] = fws;
-    return Relays(r);
+    return Relays(r, []);
   }
 
   /* 
@@ -35,6 +36,14 @@ class Relays {
    *          received events in the given List<Event>
    */
   void connect(String relay, String publicKey, List<Event> events, int numEventsToGet) {
+
+    // following is too restrictive. TODO improve it
+    for(int i = 0; i < users.length; i++) {
+      if( users[i] == publicKey) {
+        return;
+      }
+    }
+
     Future<WebSocket>? fws;
     if(relays.containsKey(relay)) {
       fws = relays[relay];
@@ -75,6 +84,7 @@ class Relays {
       }
     }
 
+    users.add(publicKey);
     print('sending request ${getSubscriptionRequest(publicKey, numEventsToGet)} to $relay');
     fws?.then((WebSocket ws) { ws.add(getSubscriptionRequest(publicKey, numEventsToGet)); });
   
@@ -86,7 +96,7 @@ class Relays {
 
 }
 
-Relays relays = Relays(Map());
+Relays relays = Relays(Map(), []);
 
 void getFeed(List<Contact> contacts, events, numEventsToGet) {
   for( int i = 0; i < contacts.length; i++) {

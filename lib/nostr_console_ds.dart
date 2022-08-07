@@ -217,7 +217,6 @@ class Tree {
 
   // @method create top level Tree from events. 
   // first create a map. then add all top trees to the final list/ChildTrees. then add children to it.
-
   factory Tree.fromEvents(List<Event> events) {
     stdout.write("in factory fromEvents list. number of events: ${events.length}\n");
 
@@ -229,8 +228,16 @@ class Tree {
     //stdout.write(m);
     List<String>  processed = [];
 
-    m.forEach((key, value) {  
-      if( !processed.contains(key)) {
+    m.forEach((key, value) {
+      bool alreadyProcessed = false;
+      for( int i = 0; i < processed.length; i++) {
+        if( processed[i] == key) {
+          alreadyProcessed = true;
+          break;
+        }
+      }
+
+      if( !alreadyProcessed) {
         if( !value.e.eventData.eTagsRest.isNotEmpty ) {
           // in case this node is a parent, then move it to processed()
           processed.add(key);
@@ -240,19 +247,21 @@ class Tree {
           String id = key;
           String parentId = value.e.eventData.getParent();
           m[parentId]?.addChildNode(value);
+          processed.add(key);
         }
       } else { // entry already exists
         // do nothing
       }
     });
 
+    // add parent trees as top level child trees of this tree
     for( var value in m.values) {
         if( !value.e.eventData.eTagsRest.isNotEmpty) {  // if its a parent
             childTrees.add(value);
         }
     }
 
-    stdout.write("Ending:  factory fromEvents list. number of events: ${events.length}\n");
+    stdout.write("Ending:  factory fromEvents list. number of processed events: ${processed.length}\n");
     return Tree( events[0], childTrees); // TODO remove events[0]
   }
 

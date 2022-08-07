@@ -35,7 +35,7 @@ class Relays {
    * @connect Connect to given relay and get all events for the given publicKey and insert the
    *          received events in the given List<Event>
    */
-  void connect(String relay, String publicKey, List<Event> events, int numEventsToGet) {
+  void gerUserEvents(String relay, String publicKey, List<Event> events, int numEventsToGet) {
 
     // following is too restrictive. TODO improve it
     for(int i = 0; i < users.length; i++) {
@@ -43,6 +43,12 @@ class Relays {
         return;
       }
     }
+    users.add(publicKey);
+    String request = getSubscriptionRequest(publicKey, numEventsToGet);
+    sendRequest(relay, request, events);
+  }    
+
+  void sendRequest(String relay, String request, List<Event> events) {
 
     Future<WebSocket>? fws;
     if(relays.containsKey(relay)) {
@@ -84,9 +90,9 @@ class Relays {
       }
     }
 
-    users.add(publicKey);
-    print('sending request ${getSubscriptionRequest(publicKey, numEventsToGet)} to $relay');
-    fws?.then((WebSocket ws) { ws.add(getSubscriptionRequest(publicKey, numEventsToGet)); });
+    
+    print('sending request: $request to $relay');
+    fws?.then((WebSocket ws) { ws.add(request); });
   
   }
 
@@ -101,10 +107,14 @@ Relays relays = Relays(Map(), []);
 void getFeed(List<Contact> contacts, events, numEventsToGet) {
   for( int i = 0; i < contacts.length; i++) {
     var contact = contacts[i];
-    relays.connect(contact.relay, contact.id, events, numEventsToGet);
+    relays.gerUserEvents(contact.relay, contact.id, events, numEventsToGet);
   }  
 }
 
 void getUserEvents(serverUrl, publicKey, events, numUserEvents) {
-  relays.connect(serverUrl, publicKey, events, numUserEvents);
+  relays.gerUserEvents(serverUrl, publicKey, events, numUserEvents);
+}
+
+void sendRequest(serverUrl, request, events) {
+  relays.sendRequest(serverUrl, request, events);
 }

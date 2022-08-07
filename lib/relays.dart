@@ -3,18 +3,11 @@ import 'dart:io';
 import 'package:nostr_console/nostr_console_ds.dart';
 
 import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/status.dart' as status;
-
-int    getLatestNum  = 2;
 
 String getSubscriptionRequest(String publicKey, int numUserEvents) {
   var    strSubscription1  = '["REQ","latest",{ "authors": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents  } ]';
   return strSubscription1 + publicKey + strSubscription2;
-}
-
-void handleSocketError() {
-
 }
 
 /*
@@ -65,14 +58,10 @@ class Relays {
         relays[relay] = fws;
         fws.stream.listen(
               (d) {
-                //print(d);
                 Event e;
                 try {
                   e = Event.fromJson(d, relay);
                   events.add(e);
-                  if( e.eventData.kind == 3) {
-                    
-                  }
                 } on FormatException {
                   print( 'exception in fromJson for event');
                 }
@@ -80,9 +69,6 @@ class Relays {
               onError: (e) { print("error"); print(e);  },
               onDone:  () { print('in onDone'); }
         );
-            //print('Error: Could not connect to $relay'); 
-            //throw Exception('Some arbitrary error');
-      
       } on WebSocketException {
         print('WebSocketException exception');
         return;
@@ -92,10 +78,8 @@ class Relays {
       }
     }
 
-    
     print('sending request: $request to $relay');
     fws?.sink.add(request);
-  
   }
 
   IOWebSocketChannel? getWS(String relay) {

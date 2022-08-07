@@ -12,7 +12,7 @@ const request = "request";
 
 void printEventsAsTree(events) {
       if( events.length == 0) {
-        stdout.write("events length = 0\n");
+        print("events length = 0");
         return;
       }
       events.removeWhere( (item) => item.eventData.kind != 1 );  
@@ -34,12 +34,8 @@ Future<void> main(List<String> arguments) async {
   List<Event>  events = [];
   int numEvents = 6;
 
-  String requestString = "";
-  //final parser = ArgParser()..addFlag(request, negatable: false, abbr: 'r')..addOption(request);
   final parser = ArgParser()..addOption(request, abbr: 'r');
-
   ArgResults argResults = parser.parse(arguments);
-
 
   if( argResults[request] != null) {
     stdout.write("got argument request ${argResults[request]}");
@@ -51,6 +47,11 @@ Future<void> main(List<String> arguments) async {
     return;
   }
 
+
+  // the default in case no arguments are given is:
+  // get a user's events, then from its type 3 event, gets events of its follows,
+  // then get the events of user-id's mentioned in p-tags of received events
+  // then display them all
   getUserEvents(defaultServerUrl, userPublickey, events, numEvents);
   
   print('waiting for user events to come in');
@@ -70,7 +71,7 @@ Future<void> main(List<String> arguments) async {
       print('====================all events =================');
       
       List<String> pTags = getpTags(events);
-      stdout.write("Total number of pTags = ${pTags.length}\n");
+      print("Total number of pTags = ${pTags.length}\n");
 
       for(int i = 0; i < pTags.length; i++) {
         getUserEvents( defaultServerUrl, pTags[i], events, 10);

@@ -2,6 +2,9 @@
 import 'dart:io';
 import 'package:nostr_console/nostr_console_ds.dart';
 
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/status.dart' as status;
+
 int    getLatestNum  = 2;
 
 String getSubscriptionRequest(String publicKey, int numUserEvents) {
@@ -18,15 +21,15 @@ void handleSocketError() {
  * @class Relays Contains connections to all relays. 
  */
 class Relays {
-  Map<String, Future<WebSocket> > relays;
+  Map<String, IOWebSocketChannel > relays;
   List<String> users; // is used to that duplicate requests aren't sent for same user
 
   Relays(this.relays, this.users);
 
   factory Relays.relay(String relay) {
-    Future<WebSocket> fws = WebSocket.connect(relay);
+    IOWebSocketChannel  fws = IOWebSocketChannel.connect(relay);
     print('In Relay.relay: connecting to relay $relay');
-    Map<String,  Future<WebSocket>> r = Map();
+    Map<String,  IOWebSocketChannel> r = Map();
     r[relay] = fws;
     return Relays(r, []);
   }
@@ -50,7 +53,7 @@ class Relays {
 
   void sendRequest(String relay, String request, List<Event> events) {
 
-    Future<WebSocket>? fws;
+    IOWebSocketChannel?  fws;
     if(relays.containsKey(relay)) {
       fws = relays[relay];
     }
@@ -58,10 +61,9 @@ class Relays {
       print('connecting to $relay');
 
       try {
-        fws = WebSocket.connect(relay);
+        fws = IOWebSocketChannel.connect(relay);
         relays[relay] = fws;
-        fws.then((WebSocket ws) {
-          ws.listen(
+        fws.stream.listen(
               (d) {
                 //print(d);
                 Event e;
@@ -76,27 +78,27 @@ class Relays {
                 }
               },
               onError: (e) { print("error"); print(e);  },
-              onDone:  () { print('in onDone'); ws.close() ; }
-        );}).catchError((err) {
-            print('Error: Could not connect to $relay'); 
+              onDone:  () { print('in onDone'); }
+        );
+            //print('Error: Could not connect to $relay'); 
             //throw Exception('Some arbitrary error');
-        });
+      
       } on WebSocketException {
         print('WebSocketException exception');
         return;
       } catch(e) {
-        print('exception generic');
+        print('exception generic $e');
         return;
       }
     }
 
     
     print('sending request: $request to $relay');
-    fws?.then((WebSocket ws) { ws.add(request); });
+    fws?.sink.add(request);
   
   }
 
-  Future<WebSocket>? getWS(String relay) {
+  IOWebSocketChannel? getWS(String relay) {
     return relays[relay];
   }
 

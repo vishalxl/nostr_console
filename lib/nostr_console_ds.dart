@@ -3,11 +3,11 @@ import 'dart:io';
 import 'dart:convert';
 //import 'dart:svg';
 
-const int  screenWidth = 80;
+const int  screenWidth = 120;
 const bool enableVerticalLines = false;
 const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
-String defaultServerUrl = 'wss://nostr.onsats.org';
+String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
 Map<String, String> gKindONames = {};
 
@@ -23,9 +23,16 @@ void getNames(Event e) {
   if( content.isEmpty) {
     return;
   }
-  dynamic json = jsonDecode(content);
-  
-  gKindONames[e.eventData.pubkey] = json["name"];
+  try {
+    dynamic json = jsonDecode(content);
+    
+    if(json["name"] != Null) {
+      gKindONames[e.eventData.pubkey] = json["name"]??"";
+    }
+  } catch(ex) {
+    print("in getNames: caught exception $ex for content ${e.eventData.content}");
+  }
+
 }
 
 String getAuthorName(String pubkey) {
@@ -125,7 +132,7 @@ class EventData {
         if( n >=3 ) {
           server = tag[2].toString();
           if( server == 'wss://nostr.rocks') {
-            server = 'wss://nostr.onsats.org';
+            server = defaultServerUrl;
           }
         }
         Contact c = Contact(tag[1] as String, server, 3.toString());
@@ -254,7 +261,7 @@ class Tree {
           processed.add(key);
         } else {
           // is not a parent, find its parent and then add this element to that parent Tree
-          stdout.write("added to parent a child\n");
+          //stdout.write("added to parent a child\n");
           String id = key;
           String parentId = value.e.eventData.getParent();
           m[parentId]?.addChildNode(value);

@@ -12,18 +12,20 @@ String defaultServerUrl = 'wss://nostr.onsats.org';
 Map<String, String> gKindONames = {};
 
 void getNames(Event e) {
+  if( e.eventData.kind != 0) {
+    return;
+  }
+
   print("In getNames: for event content: ${e.eventData.content}");
   //e.printEvent(0);
-  if( e.eventData.kind == 0) {
-    String name = "";
-    String content = e.eventData.content;
-    if( content.isEmpty) {
-      return;
-    }
-    dynamic json = jsonDecode(content);
-    
-    gKindONames[e.eventData.pubkey] = json["name"];
+  String name = "";
+  String content = e.eventData.content;
+  if( content.isEmpty) {
+    return;
   }
+  dynamic json = jsonDecode(content);
+  
+  gKindONames[e.eventData.pubkey] = json["name"];
 }
 
 String getAuthorName(String pubkey) {

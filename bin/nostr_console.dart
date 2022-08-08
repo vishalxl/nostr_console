@@ -8,20 +8,23 @@ var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b2
 // var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
 // var    userPublickey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"; // fiatjaf
 
+// program arguments
 const request = "request";
 
-
-
 void printEventsAsTree(events) {
-    events.forEach( (x) => getNames(x));
-
     if( events.length == 0) {
-      print("events length = 0");
+      print("In printEventsAsTree: events length = 0");
       return;
     }
+
+    // populate the global with display names which can be later used by Event print
+    events.forEach( (x) => getNames(x));
+
+    // remove all events other than kind 1 ( posts)
     events.removeWhere( (item) => item.eventData.kind != 1 );  
+
     // remove duplicate events
-    final ids = Set();
+    Set ids = {};
     events.retainWhere((x) => ids.add(x.eventData.id));
 
     // create tree from events
@@ -31,9 +34,7 @@ void printEventsAsTree(events) {
     node.printTree(0, true);
 
     print('\nnumber of all events: ${events.length}');
-    print("number or names kind 0: ${gKindONames.length}");
-
-    //print(gKindONames);
+    print("number or events of kind 0: ${gKindONames.length}");
 }
 
 Future<void> main(List<String> arguments) async {
@@ -53,12 +54,11 @@ Future<void> main(List<String> arguments) async {
       return;
     }
 
-
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,
     // then get the events of user-id's mentioned in p-tags of received events
     // then display them all
-    getUserEvents(defaultServerUrl, userPublickey, events, numEvents);
+    getUserEvents(defaultServerUrl, userPublickey, events, 300);
 
     print('waiting for user events to come in');
     Future.delayed(const Duration(milliseconds: 2000), () {
@@ -67,7 +67,7 @@ Future<void> main(List<String> arguments) async {
         var e = events[i];
         if( e.eventData.kind == 3) {
           print('calling getfeed');
-          getFeed(e.eventData.contactList, events, 20);
+          getFeed(e.eventData.contactList, events, 300);
         }
       }
 
@@ -80,7 +80,7 @@ Future<void> main(List<String> arguments) async {
         print("Total number of pTags = ${pTags.length}\n");
 
         for(int i = 0; i < pTags.length; i++) {
-          getUserEvents( defaultServerUrl, pTags[i], events, 10);
+          getUserEvents( defaultServerUrl, pTags[i], events, 300);
         }
 
         Future.delayed(const Duration(milliseconds: 4000), () {

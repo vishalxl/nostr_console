@@ -33,6 +33,13 @@ class Relays {
    */
   void gerUserEvents(String relay, String publicKey, List<Event> events, int numEventsToGet) {
 
+    for(int i = 0; i < gBots.length; i++) {
+      if( publicKey == gBots[i]) {
+        print("In gerUserEvents: ignoring bot: $publicKey");
+        return;
+      }
+    }
+
     // following is too restrictive. TODO improve it
     for(int i = 0; i < users.length; i++) {
       if( users[i] == publicKey) {

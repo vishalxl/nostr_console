@@ -11,6 +11,8 @@ String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
 Map<String, String> gKindONames = {};
 
+List<String> gBots = ["3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512"];
+
 void getNames(Event e) {
   if( e.eventData.kind != 0) {
     return;
@@ -40,6 +42,16 @@ String getAuthorName(String pubkey) {
   String name = max3(pubkey);
   name = gKindONames[pubkey]??name;
   return name;
+}
+
+void printUserInfo(List<Event> events, String pub) {
+  int numUserEvents = 0;
+  for(int i = 0; i < events.length; i++) {
+    if( events[i].eventData.pubkey == pub && events[i].eventData.kind == 1) {
+      numUserEvents++;
+    }
+  }
+  print("Number of user events for user ${getAuthorName(pub)} : $numUserEvents");
 }
 
 void printDepth(int d) {

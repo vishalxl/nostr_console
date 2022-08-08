@@ -47,10 +47,9 @@ void printDepth(int d) {
 
 String rightShiftContent(String s, int numSpaces) {
   String newString = "";
-
-  int newlineCounter = 0;
-
+  int    newlineCounter = 0;
   String spacesString = "";
+
   for( int i = 0; i < numSpaces ; i++) {
     spacesString += " ";
   }
@@ -66,10 +65,8 @@ String rightShiftContent(String s, int numSpaces) {
         newString += spacesString;
         newlineCounter = 0;
       } 
-
       newString += s[i];
     }
-
     newlineCounter++;
   }
   return newString;
@@ -104,7 +101,6 @@ class EventData {
     if( eTagsRest.length > 0) {
       return eTagsRest[eTagsRest.length - 1];
     }
-
     return "";
   }
 
@@ -117,9 +113,7 @@ class EventData {
     List<String> pTagsRead = [];
     String       eTagParentRead = "";
 
-    var jsonTags = json['tags'];
-    //stdout.write("In fromJson: jsonTags = $jsonTags");
-      
+    var jsonTags = json['tags'];      
     var numTags = jsonTags.length;
         
     // NIP 02: if the event is a contact list type, then populate contactList
@@ -150,20 +144,14 @@ class EventData {
               pTagsRead.add(tag[1]);
             }
           }
-
           // TODO add other tags
         }
       }
     }
-
-    return EventData(json['id'] as String, 
-                     json['pubkey'] as String, 
-                     json['created_at'] as int, 
-                     json['kind'] as int,
-                     json['content'] as String,
-                     eTagParentRead,
-                     eTagsRead,
-                     pTagsRead,
+    return EventData(json['id'] as String,      json['pubkey'] as String, 
+                     json['created_at'] as int, json['kind'] as int,
+                     json['content'] as String, eTagParentRead,
+                     eTagsRead,                 pTagsRead,
                      contactList);
   }
 
@@ -188,7 +176,6 @@ class EventData {
     stdout.write("|\n");
     printDepth(depth);
     stdout.write("|id     : ${max3(id)}     Time: $dTime");
-    //stdout.write("\n$eTagsRest\n");
   }
 
   @override
@@ -206,15 +193,14 @@ class EventData {
   }
 }
 
-
 class Event {
   String event;
   String id;
   EventData eventData;
   String originalJson;
-  Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson);
-
   List<String> seenOnRelays;
+
+  Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson);
 
   factory Event.fromJson(String d, String relay) {
     dynamic json = jsonDecode(d);
@@ -247,12 +233,10 @@ class Tree {
   factory Tree.fromEvents(List<Event> events) {
     stdout.write("in factory fromEvents list. number of events: ${events.length}\n");
 
-    List<Tree>  childTrees = [];
+    // create a map from list of events
     Map<String, Tree> m = {};
-
     events.forEach((element) { m[element.eventData.id] = Tree(element, []); });
 
-    //stdout.write(m);
     List<String>  processed = [];
 
     m.forEach((key, value) {
@@ -282,6 +266,7 @@ class Tree {
     });
 
     // add parent trees as top level child trees of this tree
+    List<Tree>  childTrees = [];
     for( var value in m.values) {
         if( !value.e.eventData.eTagsRest.isNotEmpty) {  // if its a parent
             childTrees.add(value);
@@ -320,7 +305,6 @@ class Tree {
       }
       children[i].printTree(depth+1, false);
     }
-    //stdout.write("\nTotal number of tree children printed: ${children.length}\n");
   }
 }
 

@@ -33,7 +33,8 @@ void printEventsAsTree(events) {
     // print all the events in tree form  
     node.printTree(0, true);
 
-    print('\nnumber of all events: ${events.length}');
+    print('\n\n===================summary=================');
+    print('\nnumber of all events      : ${events.length}');
     print("number or events of kind 0: ${gKindONames.length}");
 }
 
@@ -60,8 +61,9 @@ Future<void> main(List<String> arguments) async {
     // then display them all
     getUserEvents(defaultServerUrl, userPublickey, events, 300);
 
+    const int numWaitSeconds = 3000;
     print('waiting for user events to come in');
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
 
       for( int i = 0; i < events.length; i++) {
         var e = events[i];
@@ -72,10 +74,7 @@ Future<void> main(List<String> arguments) async {
       }
 
       print('waiting for feed to come in');
-      Future.delayed(const Duration(milliseconds: 4000), () {
-        
-        print('====================all events =================');
-        
+      Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
         List<String> pTags = getpTags(events);
         print("Total number of pTags = ${pTags.length}\n");
 
@@ -83,7 +82,7 @@ Future<void> main(List<String> arguments) async {
           getUserEvents( defaultServerUrl, pTags[i], events, 300);
         }
 
-        Future.delayed(const Duration(milliseconds: 4000), () {
+        Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
           printEventsAsTree(events);
           exit(0);
         });

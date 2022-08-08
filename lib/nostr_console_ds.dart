@@ -9,6 +9,30 @@ const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
 String defaultServerUrl = 'wss://nostr.onsats.org';
 
+Map<String, String> gKindONames = {};
+
+void getNames(Event e) {
+  print("In getNames: for event content: ${e.eventData.content}");
+  //e.printEvent(0);
+  if( e.eventData.kind == 0) {
+    String name = "";
+    String content = e.eventData.content;
+    if( content.isEmpty) {
+      return;
+    }
+    dynamic json = jsonDecode(content);
+    
+    gKindONames[e.eventData.pubkey] = json["name"];
+  }
+}
+
+String getAuthorName(String pubkey) {
+  String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
+  String name = max3(pubkey);
+  name = gKindONames[pubkey]??name;
+  return name;
+}
+
 void printDepth(int d) {
   if( d == 0) {
     return;
@@ -148,15 +172,16 @@ class EventData {
       print("debug: createdAt == 0 for event $content");
     }
 
-    content = rightShiftContent(content, spacesPerDepth * depth + 10);
+    String contentShifted = rightShiftContent(content, spacesPerDepth * depth + 10);
     void printGreen(String s) => stdout.write("\x1B[32m$s\x1B[0m");
     printDepth(depth);
     stdout.write("+-------+-------------\n");
     printDepth(depth);
     stdout.write("|Message: ");
-    printGreen("$content\n");
+    printGreen("$contentShifted\n");
     printDepth(depth);
-    stdout.write("|Author : ${max3(pubkey)}\n");
+    String name = getAuthorName(pubkey);
+    stdout.write("|Author : $name\n");
     printDepth(depth);
     stdout.write("|\n");
     printDepth(depth);
@@ -330,7 +355,20 @@ void printEvents(List<Event> events) {
     }
 }
 
-/* reply/root example for e tag
+/* 
+kind 0 event
+{
+  "id": "63de3e2fe397fedef9d8f1937e8c7f73727bd6410d2e7578eb348d4ee059feaf",
+  "pubkey": "004db7605cfeba09b15625deb77c9369029f370591d68231b7c4dfd43f8f6f4f",
+  "created_at": 1659944329,
+  "kind": 0,
+  "tags": [],
+  "content": "{\"name\":\"IrredeemablePussy@minds.com\",\"about\":\"\",\"picture\":\"https://www.minds.com/icon/742483671239368719/medium/1502397901/1659944329/1659944329\"}",
+  "sig": "c500f7f8e27c3d1a41ed196931f66253cdd42dbb1e53b15fd1916da5c261b4d0e06d0008b39016775b3be56e6397c8d747d98174106f04c5874650fbe9d930b0"
+}
+
+
+reply/root example for e tag
 {
   "id": "4019debf44a087b973b7d8776e7ce74ee84a15e9c3dbed0b60dfdec23d170911",
   "pubkey": "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5",

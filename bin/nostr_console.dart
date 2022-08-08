@@ -10,77 +10,83 @@ var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b2
 
 const request = "request";
 
+
+
 void printEventsAsTree(events) {
-      if( events.length == 0) {
-        print("events length = 0");
-        return;
-      }
-      events.removeWhere( (item) => item.eventData.kind != 1 );  
-      // remove duplicate events
-      final ids = Set();
-      events.retainWhere((x) => ids.add(x.eventData.id));
+    events.forEach( (x) => getNames(x));
 
-      // create tree from events
-      Tree node = Tree.fromEvents(events);
+    if( events.length == 0) {
+      print("events length = 0");
+      return;
+    }
+    events.removeWhere( (item) => item.eventData.kind != 1 );  
+    // remove duplicate events
+    final ids = Set();
+    events.retainWhere((x) => ids.add(x.eventData.id));
 
-      // print all the events in tree form  
-      node.printTree(0, true);
+    // create tree from events
+    Tree node = Tree.fromEvents(events);
 
-      print('\nnumber of all events: ${events.length}');
+    // print all the events in tree form  
+    node.printTree(0, true);
 
+    print('\nnumber of all events: ${events.length}');
+    print("number or names kind 0: ${gKindONames.length}");
+
+    //print(gKindONames);
 }
 
 Future<void> main(List<String> arguments) async {
-  List<Event>  events = [];
-  int numEvents = 6;
+    List<Event>  events = [];
+    int numEvents = 6;
 
-  final parser = ArgParser()..addOption(request, abbr: 'r');
-  ArgResults argResults = parser.parse(arguments);
+    final parser = ArgParser()..addOption(request, abbr: 'r');
+    ArgResults argResults = parser.parse(arguments);
 
-  if( argResults[request] != null) {
-    stdout.write("got argument request ${argResults[request]}");
-    sendRequest("wss://nostr-pub.wellorder.net", argResults[request], events);
-    Future.delayed(const Duration(milliseconds: 6000), () {
-        printEventsAsTree(events);
-        exit(0);      
-    });
-    return;
-  }
-
-
-  // the default in case no arguments are given is:
-  // get a user's events, then from its type 3 event, gets events of its follows,
-  // then get the events of user-id's mentioned in p-tags of received events
-  // then display them all
-  getUserEvents(defaultServerUrl, userPublickey, events, numEvents);
-  
-  print('waiting for user events to come in');
-  Future.delayed(const Duration(milliseconds: 2000), () {
-
-    for( int i = 0; i < events.length; i++) {
-      var e = events[i];
-      if( e.eventData.kind == 3) {
-        print('calling getfeed');
-        getFeed(e.eventData.contactList, events, 20);
-      }
+    if( argResults[request] != null) {
+      stdout.write("got argument request ${argResults[request]}");
+      sendRequest("wss://nostr-pub.wellorder.net", argResults[request], events);
+      Future.delayed(const Duration(milliseconds: 6000), () {
+          printEventsAsTree(events);
+          exit(0);      
+      });
+      return;
     }
 
-    print('waiting for feed to come in');
-    Future.delayed(const Duration(milliseconds: 4000), () {
-      
-      print('====================all events =================');
-      
-      List<String> pTags = getpTags(events);
-      print("Total number of pTags = ${pTags.length}\n");
 
-      for(int i = 0; i < pTags.length; i++) {
-        getUserEvents( defaultServerUrl, pTags[i], events, 10);
+    // the default in case no arguments are given is:
+    // get a user's events, then from its type 3 event, gets events of its follows,
+    // then get the events of user-id's mentioned in p-tags of received events
+    // then display them all
+    getUserEvents(defaultServerUrl, userPublickey, events, numEvents);
+
+    print('waiting for user events to come in');
+    Future.delayed(const Duration(milliseconds: 2000), () {
+
+      for( int i = 0; i < events.length; i++) {
+        var e = events[i];
+        if( e.eventData.kind == 3) {
+          print('calling getfeed');
+          getFeed(e.eventData.contactList, events, 20);
+        }
       }
 
+      print('waiting for feed to come in');
       Future.delayed(const Duration(milliseconds: 4000), () {
-        printEventsAsTree(events);
-        exit(0);
+        
+        print('====================all events =================');
+        
+        List<String> pTags = getpTags(events);
+        print("Total number of pTags = ${pTags.length}\n");
+
+        for(int i = 0; i < pTags.length; i++) {
+          getUserEvents( defaultServerUrl, pTags[i], events, 10);
+        }
+
+        Future.delayed(const Duration(milliseconds: 4000), () {
+          printEventsAsTree(events);
+          exit(0);
+        });
       });
     });
-  });
 }

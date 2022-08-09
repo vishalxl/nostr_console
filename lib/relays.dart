@@ -1,7 +1,5 @@
-
 import 'dart:io';
 import 'package:nostr_console/nostr_console_ds.dart';
-
 import 'package:web_socket_channel/io.dart';
 
 String getSubscriptionRequest(String publicKey, int numUserEvents) {

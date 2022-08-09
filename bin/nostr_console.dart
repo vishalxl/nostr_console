@@ -7,6 +7,7 @@ import 'package:args/args.dart';
 var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"; // vishalxl
 //var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
 //var    userPublickey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"; // fiatjaf
+// ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69 melvin
 
 // program arguments
 const request = "request";
@@ -18,10 +19,13 @@ void printEventsAsTree(events) {
     }
 
     // populate the global with display names which can be later used by Event print
-    events.forEach( (x) => getNames(x));
+    events.forEach( (x) => processKind0Event(x));
 
     // remove all events other than kind 1 ( posts)
     events.removeWhere( (item) => item.eventData.kind != 1 );  
+
+    // remove bot events
+    events.removeWhere( (item) => gBots.contains(item.eventData.pubkey));
 
     // remove duplicate events
     Set ids = {};
@@ -34,10 +38,14 @@ void printEventsAsTree(events) {
     node.printTree(0, true);
 
     print('\n\n===================summary=================');
-    //printUserInfo(events, "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245");
+    printUserInfo(events, "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245");
+    printUserInfo(events, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d");
+    printUserInfo(events, "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c");
+    printUserInfo(events, "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69");
 
     print('\nnumber of all events      : ${events.length}');
     print("number or events of kind 0: ${gKindONames.length}");
+    print("number of bots ignored    : ${gBots.length}");
 }
 
 Future<void> main(List<String> arguments) async {
@@ -65,23 +73,24 @@ Future<void> main(List<String> arguments) async {
 
     int numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 
-    const int numWaitSeconds = 3000;
+    const int numWaitSeconds = 2000;
     print('waiting for user events to come in....');
-    Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
+    Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
       events.forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
 
       // get user's feed ( from follows by looking at kind 3 event)
-      for( int i = 0; i < events.length; i++) {
+      for( int i = events.length - 1; i >= 0; i--) {
         var e = events[i];
         if( e.eventData.kind == 3) {
           print('calling getfeed');
           getFeed(e.eventData.contactList, events, 300);
+          break; // need to call getFeed only once for the latest kind 3 event
         }
       }
 
       print('waiting for feed to come in.....');
-      Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
+      Future.delayed(const Duration(milliseconds: numWaitSeconds * 4), () {
         // count feed events
         events.forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
         numFeedEvents = numFeedEvents - numUserEvents;
@@ -95,7 +104,7 @@ Future<void> main(List<String> arguments) async {
         }
         
         print('waiting for rest of events to come in....');
-        Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
+        Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
           // count other events
           events.forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
           numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;

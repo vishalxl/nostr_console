@@ -1,7 +1,5 @@
-
 import 'dart:io';
 import 'dart:convert';
-//import 'dart:svg';
 
 const int  screenWidth = 120;
 const bool enableVerticalLines = false;
@@ -9,34 +7,34 @@ const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
-Map<String, String> gKindONames = {};
+Map<String, String> gKindONames = {}; // global names from kind 0 events
 
-List<String> gBots = ["3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512"];
+List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
+                        "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072"   // bestofhn
+                      ];
 
-void getNames(Event e) {
+// If given event is kind 0 event, then populates gKindONames with that info
+void processKind0Event(Event e) {
   if( e.eventData.kind != 0) {
     return;
   }
 
   print("In getNames: for event content: ${e.eventData.content}");
-  //e.printEvent(0);
-  String name = "";
   String content = e.eventData.content;
   if( content.isEmpty) {
     return;
   }
   try {
     dynamic json = jsonDecode(content);
-    
     if(json["name"] != Null) {
       gKindONames[e.eventData.pubkey] = json["name"]??"";
     }
   } catch(ex) {
-    print("in getNames: caught exception $ex for content ${e.eventData.content}");
+    print("Warning: In getNames: caught exception $ex for content ${e.eventData.content}");
   }
-
 }
 
+// returns name by looking up global list gKindONames, which is populated by kind 0 events
 String getAuthorName(String pubkey) {
   String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
   String name = max3(pubkey);

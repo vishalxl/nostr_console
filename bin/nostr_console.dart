@@ -84,13 +84,13 @@ Future<void> main(List<String> arguments) async {
         var e = events[i];
         if( e.eventData.kind == 3) {
           print('calling getfeed');
-          getFeed(e.eventData.contactList, events, 300);
+          getContactFeed(e.eventData.contactList, events, 300);
           break; // need to call getFeed only once for the latest kind 3 event
         }
       }
 
       print('waiting for feed to come in.....');
-      Future.delayed(const Duration(milliseconds: numWaitSeconds * 4), () {
+      Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
         // count feed events
         events.forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
         numFeedEvents = numFeedEvents - numUserEvents;
@@ -98,10 +98,7 @@ Future<void> main(List<String> arguments) async {
         // get mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(events);
         print("Total number of pTags = ${pTags.length}\n");
-
-        for(int i = 0; i < pTags.length; i++) {
-          getUserEvents( defaultServerUrl, pTags[i], events, 300);
-        }
+        getMultiUserEvents(defaultServerUrl, pTags, events, 300);
         
         print('waiting for rest of events to come in....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {

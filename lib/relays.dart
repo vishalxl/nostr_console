@@ -139,7 +139,7 @@ class Relays {
 
 Relays relays = Relays(Map(), []);
 
-void getFeed(List<Contact> contacts, events, numEventsToGet) {
+void getContactFeed(List<Contact> contacts, events, numEventsToGet) {
   Map<String, List<String> > mContacts = {};
 
   for( int i = 0; i < contacts.length; i++) {
@@ -156,6 +156,11 @@ void getFeed(List<Contact> contacts, events, numEventsToGet) {
 void getUserEvents(serverUrl, publicKey, events, numUserEvents) {
   relays.getUserEvents(serverUrl, publicKey, events, numUserEvents);
 }
+
+void getMultiUserEvents(serverUrl, publicKeys, events, numUserEvents) {
+  relays.getMultiUserEvents(serverUrl, publicKeys, events, numUserEvents);
+}
+
 
 void sendRequest(serverUrl, request, events) {
   relays.sendRequest(serverUrl, request, events);

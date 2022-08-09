@@ -4,8 +4,8 @@ import 'package:nostr_console/relays.dart';
 import 'package:args/args.dart';
 
 
-var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"; // vishalxl
-//var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
+//var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"; // vishalxl
+var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
 //var    userPublickey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"; // fiatjaf
 // ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69 melvin
 
@@ -69,47 +69,69 @@ Future<void> main(List<String> arguments) async {
     // get a user's events, then from its type 3 event, gets events of its follows,
     // then get the events of user-id's mentioned in p-tags of received events
     // then display them all
-    getUserEvents(defaultServerUrl, userPublickey, events, 300);
+    getUserEvents(defaultServerUrl, userPublickey, events, 1000);
 
     int numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 
     const int numWaitSeconds = 2000;
-    print('waiting for user events to come in....');
+    stdout.write('Waiting for user events to come in....');
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
       events.forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
+      stdout.write(".. got ${events.length} total events\n");
 
       // get user's feed ( from follows by looking at kind 3 event)
-      for( int i = events.length - 1; i >= 0; i--) {
+      List<String> contactList = [];
+      int latestContactsTime = 0;
+
+      print("processing contact, event of kind 3");
+      int latestContactIndex = -1;
+      for( int i = 0; i < events.length; i++) {
         var e = events[i];
-        if( e.eventData.kind == 3) {
-          print('calling getfeed');
-          getContactFeed(e.eventData.contactList, events, 300);
-          break; // need to call getFeed only once for the latest kind 3 event
+        if( e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
+          latestContactIndex = i;
+          latestContactsTime = e.eventData.createdAt;
         }
       }
 
-      print('waiting for feed to come in.....');
-      Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
+      if (latestContactIndex != -1) {
+          events[latestContactIndex].printEvent(0);
+          print("got latestContactIndex = $latestContactIndex");
+          contactList = getContactFeed(events[latestContactIndex].eventData.contactList, events, 300);
+          print("number of contacts = ${contactList.length}");
+      }
+
+      stdout.write('waiting for feed to come in.....');
+      Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
+
         // count feed events
         events.forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
         numFeedEvents = numFeedEvents - numUserEvents;
+        stdout.write("received $numFeedEvents from the follows\n");
 
         // get mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(events);
+
         print("Total number of pTags = ${pTags.length}\n");
         getMultiUserEvents(defaultServerUrl, pTags, events, 300);
         
         print('waiting for rest of events to come in....');
-        Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
+        Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
           // count other events
           events.forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
           numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;
 
           printEventsAsTree(events);
+
           print("number of user events    : $numUserEvents");
           print("number of feed events    : $numFeedEvents");
           print("number of other events   : $numOtherEvents");
+
+          String authorName = getAuthorName(userPublickey);
+          print("\nFinished fetching feed for user $userPublickey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
+          //for(int i = 0; i < contactList.length;i++) {
+            //print( getAuthorName(contactList[i]));
+          //}
           exit(0);
         });
       });

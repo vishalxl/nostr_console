@@ -250,13 +250,15 @@ class Tree {
   factory Tree.fromEvents(List<Event> events) {
     stdout.write("in factory fromEvents list. number of events: ${events.length}\n");
 
-    // create a map from list of events
-    Map<String, Tree> m = {};
-    events.forEach((element) { m[element.eventData.id] = Tree(element, []); });
+    // create a map from list of events, key is eventId and value is event itself
+    Map<String, Tree> mAllEvents = {};
+    events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, []); });
 
+
+    List<String> parentNotFound = [];
     List<String>  processed = [];
 
-    m.forEach((key, value) {
+    mAllEvents.forEach((key, value) {
       bool alreadyProcessed = false;
       for( int i = 0; i < processed.length; i++) {
         if( processed[i] == key) {
@@ -274,8 +276,14 @@ class Tree {
           //stdout.write("added to parent a child\n");
           String id = key;
           String parentId = value.e.eventData.getParent();
-          m[parentId]?.addChildNode(value);
-          processed.add(key);
+          mAllEvents[parentId]?.addChildNode(value);
+          if( mAllEvents.containsKey(parentId)) {
+            processed.add(key);
+          } else {
+            parentNotFound.add(key);
+            //print("\nevent without parent found: ");
+            //value.e.printEvent(0);
+          }
         }
       } else { // entry already exists
         // do nothing
@@ -283,16 +291,16 @@ class Tree {
     });
 
     // add parent trees as top level child trees of this tree
-    List<Tree>  childTrees = [];
-    for( var value in m.values) {
+    List<Tree>  topLevelTrees = [];
+    for( var value in mAllEvents.values) {
         if( !value.e.eventData.eTagsRest.isNotEmpty) {  // if its a parent
-            childTrees.add(value);
+            topLevelTrees.add(value);
         }
     }
 
     stdout.write("Ending:  factory fromEvents list. number of processed events: ${processed.length}\n");
-    return Tree( events[0], childTrees); // TODO remove events[0]
-  }
+    return Tree( events[0], topLevelTrees); // TODO remove events[0]
+  } // end fromEvents()
 
   void addChild(Event child) {
     Tree node;
@@ -326,10 +334,17 @@ class Tree {
 }
 
 List<String> getpTags(List<Event> events) {
+  //print("in getPtags. number of events = ${events.length}");
   List<String> pTags = [];
   for(int i = 0; i < events.length; i++) {
     pTags.addAll(events[i].eventData.pTags);
   }
+
+  // remove duplicate pTags events
+  Set tempPtags = {};
+  pTags.retainWhere((x) => tempPtags.add(x));
+
+  print("in getPtags. returning number of ptags = ${pTags.length}");
   return pTags;
 }
 

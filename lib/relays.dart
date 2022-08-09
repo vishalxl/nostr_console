@@ -139,18 +139,20 @@ class Relays {
 
 Relays relays = Relays(Map(), []);
 
-void getContactFeed(List<Contact> contacts, events, numEventsToGet) {
+List<String> getContactFeed(List<Contact> contacts, events, numEventsToGet) {
   Map<String, List<String> > mContacts = {};
-
+  List<String> contactList = [];
   for( int i = 0; i < contacts.length; i++) {
     if( mContacts.containsKey(contacts[i].relay) ) {
       mContacts[contacts[i].relay]?.add(contacts[i].id);
     } else {
       mContacts[contacts[i].relay] = [contacts[i].id];
     }
+    contactList.add(contacts[i].id);
   }
 
   mContacts.forEach((key, value) { relays.getMultiUserEvents(key, value, events, numEventsToGet);})  ;
+  return contactList;  
 }
 
 void getUserEvents(serverUrl, publicKey, events, numUserEvents) {

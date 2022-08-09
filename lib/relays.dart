@@ -2,10 +2,26 @@ import 'dart:io';
 import 'package:nostr_console/nostr_console_ds.dart';
 import 'package:web_socket_channel/io.dart';
 
-String getSubscriptionRequest(String publicKey, int numUserEvents) {
+String getUserRequest(String publicKey, int numUserEvents) {
   var    strSubscription1  = '["REQ","latest",{ "authors": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents  } ]';
   return strSubscription1 + publicKey + strSubscription2;
+}
+
+
+String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
+  var    strSubscription1  = '["REQ","latest",{ "authors": [';
+  var    strSubscription2  ='], "limit": $numUserEvents  } ]';
+  String s = "";
+
+  for(int i = 0; i < publicKeys.length; i++) {
+    s += "\"${publicKeys[i]}\"";
+    if( i < publicKeys.length - 1) {
+      s += ",";
+    } 
+  }
+
+  return strSubscription1 + s + strSubscription2;
 }
 
 /*
@@ -29,7 +45,7 @@ class Relays {
    * @connect Connect to given relay and get all events for the given publicKey and insert the
    *          received events in the given List<Event>
    */
-  void gerUserEvents(String relay, String publicKey, List<Event> events, int numEventsToGet) {
+  void getUserEvents(String relay, String publicKey, List<Event> events, int numEventsToGet) {
 
     for(int i = 0; i < gBots.length; i++) {
       if( publicKey == gBots[i]) {
@@ -45,7 +61,35 @@ class Relays {
       }
     }
     users.add(publicKey);
-    String request = getSubscriptionRequest(publicKey, numEventsToGet);
+    String request = getUserRequest(publicKey, numEventsToGet);
+    sendRequest(relay, request, events);
+  }    
+
+  /* 
+   * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
+   *          received events in the given List<Event>
+   */
+  void getMultiUserEvents(String relay, List<String> publicKeys, List<Event> events, int numEventsToGet) {
+    
+    List<String> reqKeys = [];
+
+    // following is too restrictive. TODO improve it
+    for(int i = 0; i < publicKeys.length; i++) {
+      if( users.any( (u) => u == publicKeys[i])) {
+        continue;
+      }
+
+      if( gBots.any( (bot) => bot == publicKeys[i] )) {
+        print("In getMultiUserEvents: ignoring a bot");
+        continue;
+      }
+
+      users.add(publicKeys[i]);
+      reqKeys.add(publicKeys[i]);
+
+    }
+
+    String request = getMultiUserRequest(reqKeys, numEventsToGet);
     sendRequest(relay, request, events);
   }    
 
@@ -56,7 +100,7 @@ class Relays {
       fws = relays[relay];
     }
     else {
-      print('connecting to $relay');
+      print('\nconnecting to $relay');
 
       try {
         fws = IOWebSocketChannel.connect(relay);
@@ -83,7 +127,7 @@ class Relays {
       }
     }
 
-    print('sending request: $request to $relay');
+    print('sending request: $request to $relay\n');
     fws?.sink.add(request);
   }
 
@@ -96,14 +140,21 @@ class Relays {
 Relays relays = Relays(Map(), []);
 
 void getFeed(List<Contact> contacts, events, numEventsToGet) {
+  Map<String, List<String> > mContacts = {};
+
   for( int i = 0; i < contacts.length; i++) {
-    var contact = contacts[i];
-    relays.gerUserEvents(contact.relay, contact.id, events, numEventsToGet);
-  }  
+    if( mContacts.containsKey(contacts[i].relay) ) {
+      mContacts[contacts[i].relay]?.add(contacts[i].id);
+    } else {
+      mContacts[contacts[i].relay] = [contacts[i].id];
+    }
+  }
+
+  mContacts.forEach((key, value) { relays.getMultiUserEvents(key, value, events, numEventsToGet);})  ;
 }
 
 void getUserEvents(serverUrl, publicKey, events, numUserEvents) {
-  relays.gerUserEvents(serverUrl, publicKey, events, numUserEvents);
+  relays.getUserEvents(serverUrl, publicKey, events, numUserEvents);
 }
 
 void sendRequest(serverUrl, request, events) {

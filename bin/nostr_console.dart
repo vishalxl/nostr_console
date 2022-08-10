@@ -43,12 +43,12 @@ void printEventsAsTree(events) {
     print('\n\n===================summary=================');
     printUserInfo(events, "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245");
     printUserInfo(events, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d");
-    printUserInfo(events, "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c");
-    printUserInfo(events, "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69");
+    //printUserInfo(events, "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c");
+    //printUserInfo(events, "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69");
 
     print('\nnumber of all events      : ${events.length}');
-    print("number or events of kind 0: ${gKindONames.length}");
-    print("number of bots ignored    : ${gBots.length}");
+    //print("number or events of kind 0: ${gKindONames.length}");
+    //print("number of bots ignored    : ${gBots.length}");
 }
 
 Future<void> main(List<String> arguments) async {
@@ -130,16 +130,14 @@ Future<void> main(List<String> arguments) async {
 
           printEventsAsTree(events);
 
-          print("number of user events    : $numUserEvents");
-          print("number of feed events    : $numFeedEvents");
-          print("number of other events   : $numOtherEvents");
+          //print("number of user events    : $numUserEvents");
+          //print("number of feed events    : $numFeedEvents");
+          //print("number of other events   : $numOtherEvents");
 
           String authorName = getAuthorName(userPublickey);
           print("\nFinished fetching feed for user $userPublickey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
-          contactList.forEach((x) => print(getAuthorName(x)));
-          //for(int i = 0; i < contactList.length;i++) {
-            //print( getAuthorName(contactList[i]));
-          //}
+          contactList.forEach((x) => stdout.write(getAuthorName(x) + ", "));
+          stdout.write("\n");
           exit(0);
         });
       });

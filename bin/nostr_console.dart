@@ -4,20 +4,25 @@ import 'package:nostr_console/relays.dart';
 import 'package:args/args.dart';
 
 
-var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"; // vishalxl
+var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c";   // vishalxl
 //var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
 //var    userPublickey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"; // fiatjaf
-// ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69 melvin
+//var    userPublickey = "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69"; // melvin
 //var    userPublickey = "52b4a076bcbbbdc3a1aefa3735816cf74993b1b8db202b01c883c58be7fad8bd"; // semisol
 
 
 // program arguments
-const request = "request";
-const user    = "user";
+const String requestArg  = "request";
+const String userArg     = "user";
+const String lastdaysArg = "days";
+
+// by default the threads that were started in last two days are shown
+// this can be changed with 'days' command line argument
+int numLastDays = 2; 
 
 void printEventsAsTree(events) {
     if( events.length == 0) {
-      print("In printEventsAsTree: events length = 0");
+      print("Warning: In printEventsAsTree: events length = 0");
       return;
     }
 
@@ -38,13 +43,10 @@ void printEventsAsTree(events) {
     Tree node = Tree.fromEvents(events);
 
     // print all the events in tree form  
-    node.printTree(0, true);
+    node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
 
     print('\n\n===================summary=================');
     //printUserInfo(events, "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245");
-    //printUserInfo(events, "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d");
-    //printUserInfo(events, "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c");
-    //printUserInfo(events, "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69");
 
     print('\nnumber of all events      : ${events.length}');
     //print("number or events of kind 0: ${gKindONames.length}");
@@ -53,22 +55,26 @@ void printEventsAsTree(events) {
 
 Future<void> main(List<String> arguments) async {
     List<Event>  events = [];
-    int numEvents = 6;
-
-    final parser = ArgParser()..addOption(request, abbr: 'r')..addOption(user, abbr:"u");
+    final parser = ArgParser()..addOption(requestArg, abbr: 'r')
+                              ..addOption(userArg, abbr:"u")
+                              ..addOption(lastdaysArg, abbr:"d");
     ArgResults argResults = parser.parse(arguments);
 
-    if( argResults[request] != null) {
-      stdout.write("got argument request ${argResults[request]}");
-      sendRequest("wss://nostr-pub.wellorder.net", argResults[request], events);
+    if( argResults[requestArg] != null) {
+      stdout.write("got argument request ${argResults[requestArg]}");
+      sendRequest("wss://nostr-pub.wellorder.net", argResults[requestArg], events);
       Future.delayed(const Duration(milliseconds: 6000), () {
           printEventsAsTree(events);
           exit(0);      
       });
       return;
     } else {
-      if( argResults[user] != null) {
-        userPublickey = argResults[user];
+      if( argResults[userArg] != null) {
+        userPublickey = argResults[userArg];
+      }
+      if( argResults[lastdaysArg] != null) {
+        numLastDays =  int.parse(argResults[lastdaysArg]);
+        print("Going to show posts for last $numLastDays days");
       }
     }
 
@@ -136,7 +142,7 @@ Future<void> main(List<String> arguments) async {
 
           String authorName = getAuthorName(userPublickey);
           print("\nFinished fetching feed for user $userPublickey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
-          contactList.forEach((x) => stdout.write(getAuthorName(x) + ", "));
+          contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
           stdout.write("\n");
           exit(0);
         });

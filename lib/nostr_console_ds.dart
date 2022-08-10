@@ -20,7 +20,7 @@ void processKind0Event(Event e) {
     return;
   }
 
-  print("In getNames: for event content: ${e.eventData.content}");
+  //print("In getNames: for event content: ${e.eventData.content}");
   String content = e.eventData.content;
   if( content.isEmpty) {
     return;
@@ -174,7 +174,9 @@ class EventData {
   }
 
   void printEventData(int depth) {
-    String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
+    String max3(String v)       => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
+    void   printGreen(String s) => stdout.supportsAnsiEscapes ?stdout.write("\x1B[32m$s\x1B[0m"):stdout.write(s);
+
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
     
    // TODO do it in one call
@@ -187,7 +189,7 @@ class EventData {
     }
 
     String contentShifted = rightShiftContent(content, spacesPerDepth * depth + 10);
-    void printGreen(String s) => stdout.write("\x1B[32m$s\x1B[0m");
+    
     printDepth(depth);
     stdout.write("+-------+\n");
     printDepth(depth);
@@ -196,7 +198,6 @@ class EventData {
     printDepth(depth);
     stdout.write("|Message: ");
     printGreen(contentShifted);
-    
   }
 
   @override
@@ -316,7 +317,8 @@ class Tree {
     children.add(node);
   }
 
-  void printTree(int depth, bool onlyPrintChildren) {
+  void printTree(int depth, bool onlyPrintChildren, var newerThan) {
+
     children.sort(ascendingTimeTree);
     if( !onlyPrintChildren) {
       e.printEvent(depth);
@@ -325,20 +327,27 @@ class Tree {
     }
 
     for( int i = 0; i < children.length; i++) {
-      stdout.write("\n");  
-      printDepth(depth+1);
       if(!onlyPrintChildren) {
+        stdout.write("\n");  
+        printDepth(depth+1);
         stdout.write("|\n");
       } else {
+
+        DateTime dTime = DateTime.fromMillisecondsSinceEpoch(children[i].e.eventData.createdAt *1000);
+        //print("comparing $newerThan with $dTime");
+        if( dTime.compareTo(newerThan) < 0) {
+          continue;
+        }
+        stdout.write("\n");  
+        printDepth(depth+1);
         stdout.write("\n\n\n");
       }
-      children[i].printTree(depth+1, false);
+      children[i].printTree(depth+1, false, newerThan);
     }
   }
 }
 
 List<String> getpTags(List<Event> events) {
-  //print("in getPtags. number of events = ${events.length}");
   List<String> pTags = [];
   for(int i = 0; i < events.length; i++) {
     pTags.addAll(events[i].eventData.pTags);
@@ -348,13 +357,12 @@ List<String> getpTags(List<Event> events) {
   Set tempPtags = {};
   pTags.retainWhere((x) => tempPtags.add(x));
 
-  print("in getPtags. returning number of ptags = ${pTags.length}");
+  print("In getPtags. returning number of ptags = ${pTags.length}");
   return pTags;
 }
 
 int ascendingTime(Event a, Event b) {
   if(a.eventData.createdAt < b.eventData.createdAt) {
-    //print( 'ascendingTime : comparing two ${a.eventData.createdAt} and   ${b.eventData.createdAt}'); 
     return 0;
   }
   return 1;
@@ -362,7 +370,6 @@ int ascendingTime(Event a, Event b) {
 
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.e.eventData.createdAt < b.e.eventData.createdAt) {
-    //print( 'ascendingTimeTree : comparing two ${a.e.eventData.createdAt} and   ${b.e.eventData.createdAt}'); 
     return 0;
   }
   return 1;

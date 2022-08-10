@@ -127,7 +127,7 @@ class Relays {
       }
     }
 
-    print('sending request: $request to $relay\n');
+    //print('sending request: $request to $relay\n');
     fws?.sink.add(request);
   }
 

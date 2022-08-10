@@ -27,7 +27,7 @@ void main() {
     node.addChildNode(childNode);
     node.addChildNode(childNode);
   
-    node.printTree(0, false);
+    node.printTree(0, false, DateTime.now().subtract(Duration(days:1)));
   });
 
   test('createNodeTree_ordered', () {
@@ -40,7 +40,7 @@ void main() {
     List<Event> listEvents = [exampleEvent1, exampleEvent2, exampleEvent3];
 
     Tree node = Tree.fromEvents(listEvents);
-    node.printTree(0, true);
+    node.printTree(0, true, DateTime.now().subtract(Duration(days:1)));
     print("=========================");
   });
 
@@ -54,7 +54,7 @@ void main() {
     List<Event> listEvents = [ exampleEvent3, exampleEvent2,  exampleEvent1];
 
     Tree node = Tree.fromEvents(listEvents);
-    node.printTree(0, true);
+    node.printTree(0, true, DateTime.now().subtract(Duration(days:1)));
   });
 
 

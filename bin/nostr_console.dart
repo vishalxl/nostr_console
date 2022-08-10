@@ -4,13 +4,16 @@ import 'package:nostr_console/relays.dart';
 import 'package:args/args.dart';
 
 
-//var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"; // vishalxl
-var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
+var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"; // vishalxl
+//var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
 //var    userPublickey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"; // fiatjaf
 // ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69 melvin
+//var    userPublickey = "52b4a076bcbbbdc3a1aefa3735816cf74993b1b8db202b01c883c58be7fad8bd"; // semisol
+
 
 // program arguments
 const request = "request";
+const user    = "user";
 
 void printEventsAsTree(events) {
     if( events.length == 0) {
@@ -52,7 +55,7 @@ Future<void> main(List<String> arguments) async {
     List<Event>  events = [];
     int numEvents = 6;
 
-    final parser = ArgParser()..addOption(request, abbr: 'r');
+    final parser = ArgParser()..addOption(request, abbr: 'r')..addOption(user, abbr:"u");
     ArgResults argResults = parser.parse(arguments);
 
     if( argResults[request] != null) {
@@ -63,6 +66,10 @@ Future<void> main(List<String> arguments) async {
           exit(0);      
       });
       return;
+    } else {
+      if( argResults[user] != null) {
+        userPublickey = argResults[user];
+      }
     }
 
     // the default in case no arguments are given is:
@@ -129,6 +136,7 @@ Future<void> main(List<String> arguments) async {
 
           String authorName = getAuthorName(userPublickey);
           print("\nFinished fetching feed for user $userPublickey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
+          contactList.forEach((x) => print(getAuthorName(x)));
           //for(int i = 0; i < contactList.length;i++) {
             //print( getAuthorName(contactList[i]));
           //}

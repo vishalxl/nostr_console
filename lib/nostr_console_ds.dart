@@ -116,7 +116,7 @@ class EventData {
     if( eTagParent != "") {
       return eTagParent;
     }
-    if( eTagsRest.length > 0) {
+    if( eTagsRest.isNotEmpty) {
       return eTagsRest[eTagsRest.length - 1];
     }
     return "";
@@ -177,9 +177,11 @@ class EventData {
     String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
     
-   final df = DateFormat(DateFormat.YEAR_ABBR_MONTH_DAY);//.('yyyy-MM-dd hh:mm a');
-   String strDate = df.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
-
+   // TODO do it in one call
+   final df1 = DateFormat('hh:mm a');
+   final df2 = DateFormat(DateFormat.YEAR_ABBR_MONTH_DAY);
+   String strDate = df1.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
+   strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
     if( createdAt == 0) {
       print("debug: createdAt == 0 for event $content");
     }

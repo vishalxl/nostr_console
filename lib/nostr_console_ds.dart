@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 const int  screenWidth = 120;
 const bool enableVerticalLines = false;
@@ -175,6 +176,10 @@ class EventData {
   void printEventData(int depth) {
     String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
+    
+   final df = DateFormat(DateFormat.YEAR_ABBR_MONTH_DAY);//.('yyyy-MM-dd hh:mm a');
+   String strDate = df.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
+
     if( createdAt == 0) {
       print("debug: createdAt == 0 for event $content");
     }
@@ -182,17 +187,14 @@ class EventData {
     String contentShifted = rightShiftContent(content, spacesPerDepth * depth + 10);
     void printGreen(String s) => stdout.write("\x1B[32m$s\x1B[0m");
     printDepth(depth);
-    stdout.write("+-------+-------------\n");
-    printDepth(depth);
-    stdout.write("|Message: ");
-    printGreen("$contentShifted\n");
+    stdout.write("+-------+\n");
     printDepth(depth);
     String name = getAuthorName(pubkey);
-    stdout.write("|Author : $name\n");
+    stdout.write("|Author : $name     id: ${max3(id)}      Time: $strDate\n");
     printDepth(depth);
-    stdout.write("|\n");
-    printDepth(depth);
-    stdout.write("|id     : ${max3(id)}     Time: $dTime");
+    stdout.write("|Message: ");
+    printGreen(contentShifted);
+    
   }
 
   @override

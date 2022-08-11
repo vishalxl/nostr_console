@@ -10,7 +10,8 @@ int    keyLenPrinted    = 6;
 //String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
-Map<String, String> gKindONames = {}; // global names from kind 0 events
+// global user names from kind 0 events, mapped from public key to user name
+Map<String, String> gKindONames = {}; 
 
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072"   // bestofhn
@@ -112,6 +113,7 @@ class EventData {
   String eTagParent; // direct parent tag
   List<String> eTagsRest;// rest of e tags
   List<String> pTags;// list of p tags for kind:1
+  List<List<String>> tags;
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
@@ -125,13 +127,14 @@ class EventData {
     return "";
   }
 
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagParent, this.eTagsRest, this.pTags, this.contactList);
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagParent, this.eTagsRest, this.pTags, this.contactList, this.tags);
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
 
     List<String> eTagsRead = [];
     List<String> pTagsRead = [];
+    List<List<String>> tagsRead = [];
     String       eTagParentRead = "";
 
     var jsonTags = json['tags'];      
@@ -158,6 +161,9 @@ class EventData {
           var tag = jsonTags[i];
           //stdout.write(tag);
           //print(tag.runtimeType);
+          if( tag.isEmpty) {
+            continue;
+          }
           if( tag[0] == "e") {
             eTagsRead.add(tag[1]);
           } else {
@@ -165,6 +171,11 @@ class EventData {
               pTagsRead.add(tag[1]);
             }
           }
+          List<String> t = [];
+          t.add(tag[0]);
+          t.add(tag[1]);
+          tagsRead.add(t);
+
           // TODO add other tags
         }
       }
@@ -173,8 +184,44 @@ class EventData {
                      json['created_at'] as int, json['kind'] as int,
                      json['content'] as String, eTagParentRead,
                      eTagsRead,                 pTagsRead,
-                     contactList);
+                     contactList,
+                     tagsRead);
   }
+
+  String expandMentions(String content) {
+    if( tags.isEmpty) {
+      return content;
+    }
+
+    String s = "";
+
+    List<String> placeHolders = ["#[0]", "#[1]", "#[2]", "#[3]" ];
+
+
+    for(int i = 0; i < placeHolders.length; i++) {
+      int index = -1;
+      Pattern p = placeHolders[i];
+      if( (index = content.indexOf(p)) != -1 ) {
+        if( i >= tags.length) {
+          continue;
+        }
+
+        if( tags[i].isEmpty || tags[i].length < 2) {
+          continue;
+        }
+        String author = getAuthorName(tags[i][1]);
+
+        //print("\n\nauthor mention: i = $i  index = $index  tags[i][1] = ${tags[i][1]} author = $author");
+        //print("tags = $tags");
+
+        //print("in expandMentions: changing content at index i = $i");
+        content = "${content.substring(0, index)} @$author ${content.substring(index + 4)}";
+      }
+    }
+
+    return content;
+  }
+
 
   void printEventData(int depth) {
     String max3(String v)       => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
@@ -191,6 +238,7 @@ class EventData {
       print("debug: createdAt == 0 for event $content");
     }
 
+    content = expandMentions(content);
     String contentShifted = rightShiftContent(content, spacesPerDepth * depth + 10);
     
     printDepth(depth);
@@ -201,6 +249,8 @@ class EventData {
     printDepth(depth);
     stdout.write("|Message: ");
     printGreen(contentShifted);
+
+    
   }
 
   @override
@@ -232,7 +282,7 @@ class Event {
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","", 0, 0, "", "", [], [], []), [relay], "[json]");
+      return Event(e,"",EventData("non","", 0, 0, "", "", [], [], [], [[]]), [relay], "[json]");
     }
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
   }
@@ -257,7 +307,7 @@ class Tree {
   // first create a map. then add all top trees to the final list/ChildTrees. then add children to it.
   factory Tree.fromEvents(List<Event> events) {
     if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", "", [], [], []), [""], "[json]"), []);
+      return Tree(Event("","",EventData("non","", 0, 0, "", "", [], [], [], [[]]), [""], "[json]"), []);
     }
     // create a map from list of events, key is eventId and value is event itself
     Map<String, Tree> mAllEvents = {};

@@ -49,7 +49,7 @@ class Relays {
 
     for(int i = 0; i < gBots.length; i++) {
       if( publicKey == gBots[i]) {
-        print("In gerUserEvents: ignoring bot: $publicKey");
+        //print("In gerUserEvents: ignoring bot: $publicKey");
         return;
       }
     }
@@ -80,7 +80,7 @@ class Relays {
       }
 
       if( gBots.any( (bot) => bot == publicKeys[i] )) {
-        print("In getMultiUserEvents: ignoring a bot");
+        //print("In getMultiUserEvents: ignoring a bot");
         continue;
       }
 
@@ -100,7 +100,7 @@ class Relays {
       fws = relays[relay];
     }
     else {
-      print('\nconnecting to $relay');
+      print('connecting to $relay');
 
       try {
         fws = IOWebSocketChannel.connect(relay);
@@ -127,7 +127,7 @@ class Relays {
       }
     }
 
-    //print('sending request: $request to $relay\n');
+    print('sending request: $request to $relay\n');
     fws?.sink.add(request);
   }
 
@@ -147,6 +147,9 @@ List<String> getContactFeed(List<Contact> contacts, events, numEventsToGet) {
       mContacts[contacts[i].relay]?.add(contacts[i].id);
     } else {
       mContacts[contacts[i].relay] = [contacts[i].id];
+    }
+    if( contacts[i].id == "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245") {
+      print("In getContactFeed: sending request for jb55 32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245");
     }
     contactList.add(contacts[i].id);
   }

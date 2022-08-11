@@ -10,11 +10,11 @@ var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b2
 //var    userPublickey = "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69"; // melvin
 //var    userPublickey = "52b4a076bcbbbdc3a1aefa3735816cf74993b1b8db202b01c883c58be7fad8bd"; // semisol
 
-
 // program arguments
 const String requestArg  = "request";
 const String userArg     = "user";
 const String lastdaysArg = "days";
+const String relayArg    = "relay";
 
 // by default the threads that were started in last two days are shown
 // this can be changed with 'days' command line argument
@@ -55,27 +55,34 @@ void printEventsAsTree(events) {
 
 Future<void> main(List<String> arguments) async {
     List<Event>  events = [];
-    final parser = ArgParser()..addOption(requestArg, abbr: 'r')
+    final parser = ArgParser()..addOption(requestArg, abbr: 'q')
                               ..addOption(userArg, abbr:"u")
-                              ..addOption(lastdaysArg, abbr:"d");
+                              ..addOption(lastdaysArg, abbr:"d")
+                              ..addOption(relayArg, abbr:"r");
     ArgResults argResults = parser.parse(arguments);
 
+    if( argResults[relayArg] != null) {
+      defaultServerUrl =  argResults[relayArg];
+      print("Going to use relay: $defaultServerUrl");
+    }
+
     if( argResults[requestArg] != null) {
-      stdout.write("got argument request ${argResults[requestArg]}");
+      stdout.write("Got argument request ${argResults[requestArg]}");
       sendRequest("wss://nostr-pub.wellorder.net", argResults[requestArg], events);
       Future.delayed(const Duration(milliseconds: 6000), () {
           printEventsAsTree(events);
           exit(0);      
       });
       return;
-    } else {
-      if( argResults[userArg] != null) {
-        userPublickey = argResults[userArg];
-      }
-      if( argResults[lastdaysArg] != null) {
-        numLastDays =  int.parse(argResults[lastdaysArg]);
-        print("Going to show posts for last $numLastDays days");
-      }
+    } 
+
+    if( argResults[userArg] != null) {
+      userPublickey = argResults[userArg];
+    }
+    if( argResults[lastdaysArg] != null) {
+
+      numLastDays =  int.parse(argResults[lastdaysArg]);
+      print("Going to show posts for last $numLastDays days");
     }
 
     // the default in case no arguments are given is:
@@ -91,13 +98,11 @@ Future<void> main(List<String> arguments) async {
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
       events.forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
-      stdout.write(".. got ${events.length} total events\n");
+      stdout.write(".. received ${events.length} events made by the user\n");
 
       // get user's feed ( from follows by looking at kind 3 event)
       List<String> contactList = [];
       int latestContactsTime = 0;
-
-      print("processing contact, event of kind 3");
       int latestContactIndex = -1;
       for( int i = 0; i < events.length; i++) {
         var e = events[i];
@@ -108,8 +113,6 @@ Future<void> main(List<String> arguments) async {
       }
 
       if (latestContactIndex != -1) {
-          events[latestContactIndex].printEvent(0);
-          print("got latestContactIndex = $latestContactIndex");
           contactList = getContactFeed(events[latestContactIndex].eventData.contactList, events, 300);
           print("number of contacts = ${contactList.length}");
       }
@@ -120,19 +123,19 @@ Future<void> main(List<String> arguments) async {
         // count feed events
         events.forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
         numFeedEvents = numFeedEvents - numUserEvents;
-        stdout.write("received $numFeedEvents from the follows\n");
+        stdout.write("received $numFeedEvents events from the follows\n");
 
         // get mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(events);
 
-        print("Total number of pTags = ${pTags.length}\n");
         getMultiUserEvents(defaultServerUrl, pTags, events, 300);
         
-        print('waiting for rest of events to come in....');
+        print('Waiting for rest of events to come in....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
           // count other events
           events.forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
           numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;
+          stdout.write("received $numOtherEvents other events\n");
 
           printEventsAsTree(events);
 

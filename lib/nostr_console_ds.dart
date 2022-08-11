@@ -6,6 +6,8 @@ const int  screenWidth = 120;
 const bool enableVerticalLines = false;
 const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
+
+//String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
 Map<String, String> gKindONames = {}; // global names from kind 0 events
@@ -14,13 +16,14 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072"   // bestofhn
                       ];
 
+const int gDebug = 0;
+
 // If given event is kind 0 event, then populates gKindONames with that info
 void processKind0Event(Event e) {
   if( e.eventData.kind != 0) {
     return;
   }
 
-  //print("In getNames: for event content: ${e.eventData.content}");
   String content = e.eventData.content;
   if( content.isEmpty) {
     return;
@@ -31,7 +34,7 @@ void processKind0Event(Event e) {
       gKindONames[e.eventData.pubkey] = json["name"]??"";
     }
   } catch(ex) {
-    print("Warning: In getNames: caught exception $ex for content ${e.eventData.content}");
+    if( gDebug != 0) print("Warning: In processKind0Event: caught exception for content: ${e.eventData.content}");
   }
 }
 
@@ -253,8 +256,9 @@ class Tree {
   // @method create top level Tree from events. 
   // first create a map. then add all top trees to the final list/ChildTrees. then add children to it.
   factory Tree.fromEvents(List<Event> events) {
-    stdout.write("in factory fromEvents list. number of events: ${events.length}\n");
-
+    if( events.isEmpty) {
+      return Tree(Event("","",EventData("non","", 0, 0, "", "", [], [], []), [""], "[json]"), []);
+    }
     // create a map from list of events, key is eventId and value is event itself
     Map<String, Tree> mAllEvents = {};
     events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, []); });
@@ -303,7 +307,6 @@ class Tree {
         }
     }
 
-    stdout.write("Ending:  factory fromEvents list. number of processed events: ${processed.length}\n");
     return Tree( events[0], topLevelTrees); // TODO remove events[0]
   } // end fromEvents()
 
@@ -357,7 +360,6 @@ List<String> getpTags(List<Event> events) {
   Set tempPtags = {};
   pTags.retainWhere((x) => tempPtags.add(x));
 
-  print("In getPtags. returning number of ptags = ${pTags.length}");
   return pTags;
 }
 

@@ -300,48 +300,26 @@ class Tree {
   Tree(this.e, this.children);
 
   // @method create top level Tree from events. 
-  // first create a map. then add all top trees to the final list/ChildTrees. then add children to it.
+  // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Tree.fromEvents(List<Event> events) {
     if( events.isEmpty) {
       return Tree(Event("","",EventData("non","", 0, 0, "", "", [], [], [], [[]]), [""], "[json]"), []);
     }
+
     // create a map from list of events, key is eventId and value is event itself
     Map<String, Tree> mAllEvents = {};
     events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, []); });
 
-
-    List<String> parentNotFound = [];
-    List<String>  processed = [];
-
     mAllEvents.forEach((key, value) {
-      bool alreadyProcessed = false;
-      for( int i = 0; i < processed.length; i++) {
-        if( processed[i] == key) {
-          alreadyProcessed = true;
-          break;
-        }
-      }
 
-      if( !alreadyProcessed) {
-        if( !value.e.eventData.eTagsRest.isNotEmpty ) {
-          // in case this node is a parent, then move it to processed()
-          processed.add(key);
-        } else {
-          // is not a parent, find its parent and then add this element to that parent Tree
-          //stdout.write("added to parent a child\n");
-          String id = key;
-          String parentId = value.e.eventData.getParent();
-          mAllEvents[parentId]?.addChildNode(value);
-          if( mAllEvents.containsKey(parentId)) {
-            processed.add(key);
-          } else {
-            parentNotFound.add(key);
-            //print("\nevent without parent found: ");
-            //value.e.printEvent(0);
-          }
-        }
-      } else { // entry already exists
-        // do nothing
+      if( !value.e.eventData.eTagsRest.isNotEmpty ) {
+        // in case this node is a parent, then move it to processed()
+      } else {
+        // is not a parent, find its parent and then add this element to that parent Tree
+        //stdout.write("added to parent a child\n");
+        String id = key;
+        String parentId = value.e.eventData.getParent();
+        mAllEvents[parentId]?.addChildNode(value);
       }
     });
 

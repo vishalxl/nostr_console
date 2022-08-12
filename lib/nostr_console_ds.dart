@@ -193,11 +193,7 @@ class EventData {
       return content;
     }
 
-    String s = "";
-
-    List<String> placeHolders = ["#[0]", "#[1]", "#[2]", "#[3]" ];
-
-
+    List<String> placeHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]" ];
     for(int i = 0; i < placeHolders.length; i++) {
       int index = -1;
       Pattern p = placeHolders[i];
@@ -215,7 +211,7 @@ class EventData {
         //print("tags = $tags");
 
         //print("in expandMentions: changing content at index i = $i");
-        content = "${content.substring(0, index)} @$author ${content.substring(index + 4)}";
+        content = "${content.substring(0, index)} @$author${content.substring(index + 4)}";
       }
     }
 

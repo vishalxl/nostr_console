@@ -93,7 +93,7 @@ Future<void> main(List<String> arguments) async {
 
     int numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 
-    const int numWaitSeconds = 2000;
+    const int numWaitSeconds = 3000;
     stdout.write('Waiting for user events to come in....');
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
@@ -131,7 +131,7 @@ Future<void> main(List<String> arguments) async {
         getMultiUserEvents(defaultServerUrl, pTags, events, 300);
         
         print('Waiting for rest of events to come in....');
-        Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
+        Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
           // count other events
           events.forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
           numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;

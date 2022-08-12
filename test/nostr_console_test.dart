@@ -40,7 +40,7 @@ void main() {
     List<Event> listEvents = [exampleEvent1, exampleEvent2, exampleEvent3];
 
     Tree node = Tree.fromEvents(listEvents);
-    node.printTree(0, true, DateTime.now().subtract(Duration(days:1)));
+    node.printTree(0, true, DateTime.now().subtract(Duration(days:1000)));
     print("=========================");
   });
 
@@ -54,7 +54,7 @@ void main() {
     List<Event> listEvents = [ exampleEvent3, exampleEvent2,  exampleEvent1];
 
     Tree node = Tree.fromEvents(listEvents);
-    node.printTree(0, true, DateTime.now().subtract(Duration(days:1)));
+    node.printTree(0, true, DateTime.now().subtract(Duration(days:1000))); // will test for ~1000 days
   });
 
 

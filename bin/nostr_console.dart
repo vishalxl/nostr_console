@@ -12,22 +12,33 @@ const String testPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f
 String userPrivateKey = testPrivateKey;
 String userPublicKey  = testPublicKey;
 
-//var    userPublickey = "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c";   // vishalxl
-//var    userPublickey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"; // jb55
-//var    userPublickey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"; // fiatjaf
-//var    userPublickey = "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69"; // melvin
-//var    userPublickey = "52b4a076bcbbbdc3a1aefa3735816cf74993b1b8db202b01c883c58be7fad8bd"; // semisol
-
 // program arguments
 const String requestArg  = "request";
 const String prikeyArg   = "prikey";
 const String lastdaysArg = "days";
 const String relayArg    = "relay";
+const String helpArg     = "help";
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument
 int numLastDays = 1; 
 
+void printUsage() {
+String usage = """usage: dartcl [OPTIONS] 
+
+  OPTIONS
+
+      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
+                                sent. Default is a hard-coded well known private key. Same as -p
+      --relay   <relay wss url> The relay url that is used as main relay. Default is $defaultServerUrl . Same as -r
+      --days    <N>             The latest number of days for which events are shown. Default is 1. Same as -d
+      --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
+                                from a relay. If not provided, then events for default or given user are shown. Same as -q
+      --help                    Print this usage message and exit. Same as -h
+      
+""";
+  print(usage);
+}
 
 int showMenu(List<String> menuOptions) {
   while(true) {
@@ -67,7 +78,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
     bool userContinue = true;
     while(userContinue) {
 
-      print('\n\nPick an option by typing the correspoinding\nnumber and then pressing <enter>:');
+      print('\nPick an option by typing the correspoinding\nnumber and then pressing <enter>:');
       int option = showMenu(['Display events',    // 1 
                              'Post/Reply',        // 2
                              'Exit']);            // 3
@@ -112,17 +123,16 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           stdout.write("\n");
           exit(0);
       }
-
-
       
-      const int waitMilliSeconds = 300;
+      // need a bit of wait to give other events to execute, so do a delay, which allows
+      // relays to recieve and handle new events
+      const int waitMilliSeconds = 400;
       Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
-        print("\nNumber of new events = ${getRecievedEvents().length}");
+        print("\n\nNumber of new events = ${getRecievedEvents().length}");
         node.insertEvents(getRecievedEvents());
         clearEvents();
       });
 
-      // TODO fix: not sure why this is needed
       Future<void> foo() async {
         await Future.delayed(Duration(milliseconds: waitMilliSeconds + 100));
         return;
@@ -132,30 +142,19 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
     } // end while
 }
 
-void printUsage() {
-String usage = """usage: dartcl [OPTIONS] 
-
-  OPTIONS
-
-      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
-                                sent. Default is a hard-coded well known private key. -p is same.
-      --relay   <relay wss url> The relay url that is used as main relay. Default is $defaultServerUrl . -r is same.
-      --days    <N>             The latest number of days for which events are shown. Default is 1. -d is same.
-      --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
-                                from a relay. If not provided, then events for default or given user are shown. -q is same.
-      
-""";
-  print(usage);
-}
-
 Future<void> main(List<String> arguments) async {
     
-    printUsage();
     final parser = ArgParser()..addOption(requestArg, abbr: 'q')
                               ..addOption(prikeyArg, abbr:"p")
                               ..addOption(lastdaysArg, abbr:"d")
-                              ..addOption(relayArg, abbr:"r");
+                              ..addOption(relayArg, abbr:"r")
+                              ..addFlag(helpArg, abbr:"h", defaultsTo: false);
     ArgResults argResults = parser.parse(arguments);
+
+    if( argResults[helpArg]) {
+      printUsage();
+      return;
+    }
 
     if( argResults[relayArg] != null) {
       defaultServerUrl =  argResults[relayArg];

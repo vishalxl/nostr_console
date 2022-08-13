@@ -179,10 +179,8 @@ class EventData {
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
                      json['created_at'] as int, json['kind'] as int,
-                     json['content'] as String, 
-                     eTagsRead,                 pTagsRead,
-                     contactList,
-                     tagsRead);
+                     json['content'] as String, eTagsRead,        pTagsRead,
+                     contactList,               tagsRead);
   }
 
   String expandMentions(String content) {
@@ -211,13 +209,13 @@ class EventData {
         content = "${content.substring(0, index)} @$author${content.substring(index + 4)}";
       }
     }
-
     return content;
   }
 
 
   void printEventData(int depth) {
-    String max3(String v)       => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
+    int n = 5;
+    String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printGreen(String s) => stdout.supportsAnsiEscapes ?stdout.write("\x1B[32m$s\x1B[0m"):stdout.write(s);
 
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
@@ -238,12 +236,10 @@ class EventData {
     stdout.write("+-------+\n");
     printDepth(depth);
     String name = getAuthorName(pubkey);
-    stdout.write("|Author : $name     id: ${max3(id)}      Time: $strDate\n");
+    stdout.write("|Author : $name     id: ${maxN(id)}      Time: $strDate\n");
     printDepth(depth);
     stdout.write("|Message: ");
     printGreen(contentShifted);
-
-    
   }
 
   @override
@@ -335,7 +331,10 @@ class Tree {
     List<String> newEventsId = [];
     newEvents.forEach((element) { 
       if( allEvents[element.eventData.id] != null) {
-        return; // return if the event is already there in the map
+        return; // don't process if the event is already present in the map
+      }
+      if( element.eventData.kind != 1) {
+        return; // only kind 1 events are added to the tree
       }
       allEvents[element.eventData.id] = Tree(element, [], {}); 
       newEventsId.add(element.eventData.id);
@@ -397,6 +396,22 @@ class Tree {
       children[i].printTree(depth+1, false, newerThan);
     }
   }
+
+  String getTagsFromEvent(String replyToId) {
+
+    String strTags = "";
+    if( replyToId == "") {
+      return strTags;
+    }
+    for(  String k in allEvents.keys) {
+      if( k.substring(0, replyToId.length) == replyToId) {
+        strTags =  '["e","$k"]';
+        break;
+      }
+    }
+    return strTags;
+  }
+ 
 }
 
 List<String> getpTags(List<Event> events) {

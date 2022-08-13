@@ -107,7 +107,7 @@ class Relays {
       fws = relays[relay];
     }
     else {
-      print('connecting to $relay');
+      if(gDebug !=0) print('connecting to $relay');
 
       try {
         fws = IOWebSocketChannel.connect(relay);
@@ -145,7 +145,7 @@ class Relays {
       fws = relays[relay];
     }
     else {
-      print('connecting to $relay');
+      if(gDebug !=0) ('connecting to $relay');
 
       try {
         fws = IOWebSocketChannel.connect(relay);
@@ -164,9 +164,8 @@ class Relays {
       }
     }
 
-    print('sending message: $message to $relay\n');
+    if(gDebug !=0) print('sending message: $message to $relay\n');
     fws?.sink.add(message);
-
   }
 
   IOWebSocketChannel? getWS(String relay) {
@@ -208,7 +207,6 @@ List<String> getContactFeed(List<Contact> contacts, numEventsToGet) {
 }
 
 void getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen) {
-  print("in getUserEvents");
   relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen);
 }
 

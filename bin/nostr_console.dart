@@ -64,8 +64,6 @@ String getShaId(String pubkey, int createdAt, String strTags, String content) {
 }
 
 Future<void> terminalMenuUi(Tree node, var contactList) async {
-    //gDebug = 1;
-
     bool userContinue = true;
     while(userContinue) {
 
@@ -92,17 +90,13 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";
           String strTags = node.getTagsFromEvent(replyToId);
-
-          int createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+          int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
           
           String id = getShaId(userPublicKey, createdAt, strTags, content);
           String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
-          //print("sig = $sig");
-          //{"id": "da2a1321c9d2c8d53aa962f1ce83bbeaf00be0bf38e359a858ef269c17490e60","pubkey": "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180",
-          //"created_at": 1660244881,"kind": 1,"tags": [],"content": "test12","sig": "8d36571b0dacdadca1e9b3373c16050a0dc6abf25ec5e6cf9a9075f4877e2a8ca8012e9fcd168a7ff1a631386979282c87b139dec912def9f5764bc7f8cfc7cb"}
-          String finalMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": 1,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
-          relays.sendMessage(finalMessage, defaultServerUrl);
+          String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": 1,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
+          relays.sendMessage(toSendMessage, defaultServerUrl);
           break;
 
         case 3:
@@ -122,28 +116,41 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
 
       
       const int waitMilliSeconds = 300;
-      //print("Going to get latest events...");
       Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
         print("\nNumber of new events = ${getRecievedEvents().length}");
-        //print("updating event tree...");
         node.insertEvents(getRecievedEvents());
         clearEvents();
       });
 
+      // TODO fix: not sure why this is needed
       Future<void> foo() async {
-        //print('foo started');
         await Future.delayed(Duration(milliseconds: waitMilliSeconds + 100));
-        //print('foo executed');
         return;
       }
-
       await foo();
 
     } // end while
 }
 
+void printUsage() {
+String usage = """usage: dartcl [OPTIONS] 
+
+  OPTIONS
+
+      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
+                                sent. Default is a hard-coded well known private key. -p is same.
+      --relay   <relay wss url> The relay url that is used as main relay. Default is $defaultServerUrl . -r is same.
+      --days    <N>             The latest number of days for which events are shown. Default is 1. -d is same.
+      --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
+                                from a relay. If not provided, then events for default or given user are shown. -q is same.
+      
+""";
+  print(usage);
+}
+
 Future<void> main(List<String> arguments) async {
     
+    printUsage();
     final parser = ArgParser()..addOption(requestArg, abbr: 'q')
                               ..addOption(prikeyArg, abbr:"p")
                               ..addOption(lastdaysArg, abbr:"d")
@@ -172,7 +179,6 @@ Future<void> main(List<String> arguments) async {
           Tree node = getTree(getRecievedEvents());
         
           // print all the events in tree form  
-          //node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
           clearEvents();
           terminalMenuUi(node, []);
       });
@@ -188,7 +194,7 @@ Future<void> main(List<String> arguments) async {
     int numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 
     const int numWaitSeconds = 2000;
-    stdout.write('Waiting for user events to come in....');
+    stdout.write('Waiting for user events to come in.....');
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
       getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
@@ -224,7 +230,7 @@ Future<void> main(List<String> arguments) async {
 
         getMultiUserEvents(defaultServerUrl, pTags, 300);
         
-        print('Waiting for rest of events to come in....');
+        stdout.write('Waiting for rest of events to come in.....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
           // count other events
           getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
@@ -235,8 +241,6 @@ Future<void> main(List<String> arguments) async {
           // display the feed and then call Menu function
           clearEvents();
           terminalMenuUi(node, contactList);
-
-          //exit(0);
         });
       });
     });

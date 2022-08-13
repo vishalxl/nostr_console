@@ -2,15 +2,21 @@ import 'dart:io';
 import 'package:nostr_console/nostr_console_ds.dart';
 import 'package:web_socket_channel/io.dart';
 
-String getUserRequest(String publicKey, int numUserEvents) {
-  var    strSubscription1  = '["REQ","latest",{ "authors": ["';
-  var    strSubscription2  ='"], "limit": $numUserEvents  } ]';
+String getUserRequest(String publicKey, int numUserEvents, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+
+
+  var    strSubscription1  = '["REQ","single_user",{ "authors": ["';
+  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
   return strSubscription1 + publicKey + strSubscription2;
 }
 
 
 String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
-  var    strSubscription1  = '["REQ","latest",{ "authors": [';
+  var    strSubscription1  = '["REQ","multiple_user",{ "authors": [';
   var    strSubscription2  ='], "limit": $numUserEvents  } ]';
   String s = "";
 
@@ -30,22 +36,23 @@ String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
 class Relays {
   Map<String, IOWebSocketChannel > relays;
   List<String> users; // is used to that duplicate requests aren't sent for same user
+  List<Event>  rEvents = [];
 
-  Relays(this.relays, this.users);
+  Relays(this.relays, this.users, this.rEvents);
 
   factory Relays.relay(String relay) {
     IOWebSocketChannel  fws = IOWebSocketChannel.connect(relay);
     print('In Relay.relay: connecting to relay $relay');
     Map<String,  IOWebSocketChannel> r = Map();
     r[relay] = fws;
-    return Relays(r, []);
+    return Relays(r, [], []);
   }
 
   /* 
    * @connect Connect to given relay and get all events for the given publicKey and insert the
    *          received events in the given List<Event>
    */
-  void getUserEvents(String relay, String publicKey, List<Event> events, int numEventsToGet) {
+  void getUserEvents(String relay, String publicKey, int numEventsToGet, int sinceWhen) {
 
     for(int i = 0; i < gBots.length; i++) {
       if( publicKey == gBots[i]) {
@@ -61,15 +68,15 @@ class Relays {
       }
     }
     users.add(publicKey);
-    String request = getUserRequest(publicKey, numEventsToGet);
-    sendRequest(relay, request, events);
+    String request = getUserRequest(publicKey, numEventsToGet, sinceWhen);
+    sendRequest(relay, request);
   }    
 
   /* 
    * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
    *          received events in the given List<Event>
    */
-  void getMultiUserEvents(String relay, List<String> publicKeys, List<Event> events, int numEventsToGet) {
+  void getMultiUserEvents(String relay, List<String> publicKeys, int numEventsToGet) {
     
     List<String> reqKeys = [];
 
@@ -90,10 +97,10 @@ class Relays {
     }
 
     String request = getMultiUserRequest(reqKeys, numEventsToGet);
-    sendRequest(relay, request, events);
+    sendRequest(relay, request);
   }    
 
-  void sendRequest(String relay, String request, List<Event> events) {
+  void sendRequest(String relay, String request) {
 
     IOWebSocketChannel?  fws;
     if(relays.containsKey(relay)) {
@@ -110,12 +117,13 @@ class Relays {
                 Event e;
                 try {
                   e = Event.fromJson(d, relay);
-                  events.add(e);
+                  if(gDebug != 0) print("adding event to list");
+                  rEvents.add(e);
                 } on FormatException {
                   print( 'exception in fromJson for event');
                 }
               },
-              onError: (e) { print("error"); print(e);  },
+              onError: (e) { print("in onError"); print(e);  },
               onDone:  () { print('in onDone'); }
         );
       } on WebSocketException {
@@ -131,15 +139,61 @@ class Relays {
     fws?.sink.add(request);
   }
 
+  void sendMessage(String message, String relay) {
+    IOWebSocketChannel?  fws;
+    if(relays.containsKey(relay)) {
+      fws = relays[relay];
+    }
+    else {
+      print('connecting to $relay');
+
+      try {
+        fws = IOWebSocketChannel.connect(relay);
+        relays[relay] = fws;
+        fws.stream.listen(
+              (d) {}, //
+              onError: (e) { print("in onError"); print(e);  },
+              onDone:  () { print('in onDone'); }
+        );
+      } on WebSocketException {
+        print('WebSocketException exception');
+        return;
+      } catch(e) {
+        print('exception generic $e');
+        return;
+      }
+    }
+
+    print('sending message: $message to $relay\n');
+    fws?.sink.add(message);
+
+  }
+
   IOWebSocketChannel? getWS(String relay) {
     return relays[relay];
   }
 
+  void printStatus() {
+    print("In Relays::printStatus. Number of relays = ${relays.length}");
+    relays.forEach((key, value) {
+      print("for relay: $key");
+      print("$value\n");
+
+
+      String? reason = value.closeReason;
+      print( reason??"reason not found");
+    });
+  }
+
+  void clearHistory() {
+    users = [];
+    relays = {};
+  }
 }
 
-Relays relays = Relays(Map(), []);
+Relays relays = Relays({}, [], []);
 
-List<String> getContactFeed(List<Contact> contacts, events, numEventsToGet) {
+List<String> getContactFeed(List<Contact> contacts, numEventsToGet) {
   Map<String, List<String> > mContacts = {};
   List<String> contactList = [];
   for( int i = 0; i < contacts.length; i++) {
@@ -154,19 +208,28 @@ List<String> getContactFeed(List<Contact> contacts, events, numEventsToGet) {
     contactList.add(contacts[i].id);
   }
 
-  mContacts.forEach((key, value) { relays.getMultiUserEvents(key, value, events, numEventsToGet);})  ;
+  mContacts.forEach((key, value) { relays.getMultiUserEvents(key, value, numEventsToGet);})  ;
   return contactList;  
 }
 
-void getUserEvents(serverUrl, publicKey, events, numUserEvents) {
-  relays.getUserEvents(serverUrl, publicKey, events, numUserEvents);
+void getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen) {
+  print("in getUserEvents");
+  relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen);
 }
 
-void getMultiUserEvents(serverUrl, publicKeys, events, numUserEvents) {
-  relays.getMultiUserEvents(serverUrl, publicKeys, events, numUserEvents);
+void getMultiUserEvents(serverUrl, publicKeys, numUserEvents) {
+  relays.getMultiUserEvents(serverUrl, publicKeys, numUserEvents);
 }
 
 
-void sendRequest(serverUrl, request, events) {
-  relays.sendRequest(serverUrl, request, events);
+void sendRequest(serverUrl, request) {
+  relays.sendRequest(serverUrl, request);
+}
+
+List<Event> getRecievedEvents() {
+  return relays.rEvents;
+}
+
+void clearEvents() {
+  relays.rEvents = [];
 }

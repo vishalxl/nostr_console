@@ -17,7 +17,7 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072"   // bestofhn
                       ];
 
-const int gDebug = 0;
+int gDebug = 0;
 
 // If given event is kind 0 event, then populates gKindONames with that info
 void processKind0Event(Event e) {
@@ -42,8 +42,7 @@ void processKind0Event(Event e) {
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
 String getAuthorName(String pubkey) {
   String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
-  String name = max3(pubkey);
-  name = gKindONames[pubkey]??name;
+  String name = gKindONames[pubkey]??max3(pubkey);
   return name;
 }
 
@@ -95,9 +94,7 @@ String rightShiftContent(String s, int numSpaces) {
 }
 
 class Contact {
-  String id;
-  String relay;
-  String name;
+  String id, relay, name;
   Contact(this.id, this.relay, this.name);
   factory Contact.fromJson(dynamic json) {
     return Contact(json[1] as String, json[2] as String, json[3]);
@@ -110,7 +107,6 @@ class EventData {
   int    createdAt;
   int    kind;
   String content;
-  String eTagParent; // direct parent tag
   List<String> eTagsRest;// rest of e tags
   List<String> pTags;// list of p tags for kind:1
   List<List<String>> tags;
@@ -118,16 +114,13 @@ class EventData {
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
   String getParent() {
-    if( eTagParent != "") {
-      return eTagParent;
-    }
     if( eTagsRest.isNotEmpty) {
       return eTagsRest[eTagsRest.length - 1];
     }
     return "";
   }
 
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagParent, this.eTagsRest, this.pTags, this.contactList, this.tags);
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags, this.contactList, this.tags);
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
@@ -135,7 +128,6 @@ class EventData {
     List<String> eTagsRead = [];
     List<String> pTagsRead = [];
     List<List<String>> tagsRead = [];
-    String       eTagParentRead = "";
 
     var jsonTags = json['tags'];      
     var numTags = jsonTags.length;
@@ -180,9 +172,14 @@ class EventData {
         }
       }
     }
+
+    if(gDebug != 0) {
+      print("Creating EventData with content: ${json['content']}");
+    }
+
     return EventData(json['id'] as String,      json['pubkey'] as String, 
                      json['created_at'] as int, json['kind'] as int,
-                     json['content'] as String, eTagParentRead,
+                     json['content'] as String, 
                      eTagsRead,                 pTagsRead,
                      contactList,
                      tagsRead);
@@ -278,7 +275,7 @@ class Event {
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","", 0, 0, "", "", [], [], [], [[]]), [relay], "[json]");
+      return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]]), [relay], "[json]");
     }
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
   }
@@ -295,26 +292,25 @@ class Event {
 }
 
 class Tree {
-  Event e;
-  List<Tree> children;
-  Tree(this.e, this.children);
+  Event             e;
+  List<Tree>        children;
+  Map<String, Tree> allEvents;
+  Tree(this.e, this.children, this.allEvents);
 
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Tree.fromEvents(List<Event> events) {
     if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", "", [], [], [], [[]]), [""], "[json]"), []);
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]]), [""], "[json]"), [], {});
     }
 
     // create a map from list of events, key is eventId and value is event itself
     Map<String, Tree> mAllEvents = {};
-    events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, []); });
+    events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, [], {}); });
 
     mAllEvents.forEach((key, value) {
 
-      if( !value.e.eventData.eTagsRest.isNotEmpty ) {
-        // in case this node is a parent, then move it to processed()
-      } else {
+      if(value.e.eventData.eTagsRest.isNotEmpty ) {
         // is not a parent, find its parent and then add this element to that parent Tree
         //stdout.write("added to parent a child\n");
         String id = key;
@@ -331,12 +327,41 @@ class Tree {
         }
     }
 
-    return Tree( events[0], topLevelTrees); // TODO remove events[0]
+    return Tree( events[0], topLevelTrees, mAllEvents); // TODO remove events[0]
   } // end fromEvents()
+
+  bool insertEvents(List<Event> newEvents) {
+    //print("In insertEvents num events: ${newEvents.length}");
+    List<String> newEventsId = [];
+    newEvents.forEach((element) { 
+      if( allEvents[element.eventData.id] != null) {
+        return; // return if the event is already there in the map
+      }
+      allEvents[element.eventData.id] = Tree(element, [], {}); 
+      newEventsId.add(element.eventData.id);
+    });
+
+    //print("In insertEvents num eventsId: ${newEventsId.length}");
+    newEventsId.forEach((newId) {
+
+      Tree? t = allEvents[newId];
+      if( t != null) {
+        if( t.e.eventData.eTagsRest.isEmpty) {
+          // is a parent event
+            children.add(t);
+        } else {
+              String parentId = t.e.eventData.getParent();
+              allEvents[parentId]?.addChildNode(t);
+        }
+      }
+    });
+
+    return true;
+  }
 
   void addChild(Event child) {
     Tree node;
-    node = Tree(child, []);
+    node = Tree(child, [], {});
     children.add(node);
   }
 
@@ -408,6 +433,31 @@ void printEvents(List<Event> events) {
         print('${events[i]}');
       }
     }
+}
+
+Tree getTree(events) {
+    if( events.length == 0) {
+      print("Warning: In printEventsAsTree: events length = 0");
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]]), [""], "[json]"), [], {});
+    }
+
+    // populate the global with display names which can be later used by Event print
+    events.forEach( (x) => processKind0Event(x));
+
+    // remove all events other than kind 1 ( posts)
+    events.removeWhere( (item) => item.eventData.kind != 1 );  
+
+    // remove bot events
+    events.removeWhere( (item) => gBots.contains(item.eventData.pubkey));
+
+    // remove duplicate events
+    Set ids = {};
+    events.retainWhere((x) => ids.add(x.eventData.id));
+
+    // create tree from events
+    Tree node = Tree.fromEvents(events);
+
+    return node;
 }
 
 /* 

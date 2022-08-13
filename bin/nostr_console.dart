@@ -51,14 +51,16 @@ int showMenu(List<String> menuOptions) {
     String? userOptionInput = stdin.readLineSync();
     String userOption = userOptionInput??"";
     //print("read option $userOption");
-    if( !int.parse(userOption).isNaN) {
-      int valueOption = int.parse(userOption);
-      if( valueOption < 1 || valueOption > menuOptions.length) {
-        print("Invalid option. Kindly try again.\n");
-        continue;
-      } else {
+    if( int.tryParse(userOption) != null) {
+      int? valueOption = int.tryParse(userOption);
+      if( valueOption != null) {
+        if( valueOption < 1 || valueOption > menuOptions.length) {
+          print("Invalid option. Kindly try again.\n");
+          continue;
+        } else {
 
-        return valueOption;
+          return valueOption;
+        }
       }
     } else {
       print("Invalid option. Kindly try again.\n");
@@ -78,7 +80,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
     bool userContinue = true;
     while(userContinue) {
 
-      print('\nPick an option by typing the correspoinding\nnumber and then pressing <enter>:');
+      print('\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
       int option = showMenu(['Display events',    // 1 
                              'Post/Reply',        // 2
                              'Exit']);            // 3

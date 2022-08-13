@@ -6,6 +6,10 @@ import 'package:args/args.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert'; // for the utf8.encode method
 
+// name of executable
+String exename = "nostr_console";
+String version = "0.0.1";
+
 // well known disposable test private key
 const String testPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
 const String testPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
@@ -24,7 +28,9 @@ const String helpArg     = "help";
 int numLastDays = 1; 
 
 void printUsage() {
-String usage = """usage: dartcl [OPTIONS] 
+String usage = """$exename version $version
+
+usage: $exename [OPTIONS] 
 
   OPTIONS
 
@@ -150,41 +156,49 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(prikeyArg, abbr:"p")
                               ..addOption(lastdaysArg, abbr:"d")
                               ..addOption(relayArg, abbr:"r")
-                              ..addFlag(helpArg, abbr:"h", defaultsTo: false);
-    ArgResults argResults = parser.parse(arguments);
+                              ..addFlag(helpArg, abbr:"h", defaultsTo: false)..allowsAnything;
 
-    if( argResults[helpArg]) {
-      printUsage();
+    try {
+      ArgResults argResults = parser.parse(arguments);
+      if( argResults[helpArg]) {
+        printUsage();
+        return;
+      }
+
+      if( argResults[relayArg] != null) {
+        defaultServerUrl =  argResults[relayArg];
+        print("Going to use relay: $defaultServerUrl");
+      }
+
+      if( argResults[prikeyArg] != null) {
+        userPrivateKey = argResults[prikeyArg];
+        userPublicKey = getPublicKey(userPrivateKey);
+      }
+      if( argResults[lastdaysArg] != null) {
+
+        numLastDays =  int.parse(argResults[lastdaysArg]);
+        print("Going to show posts for last $numLastDays days");
+      }
+
+      if( argResults[requestArg] != null) {
+        stdout.write("Got argument request ${argResults[requestArg]}");
+        sendRequest("wss://nostr-pub.wellorder.net", argResults[requestArg]);
+        Future.delayed(const Duration(milliseconds: 6000), () {
+            Tree node = getTree(getRecievedEvents());
+          
+            // print all the events in tree form  
+            clearEvents();
+            terminalMenuUi(node, []);
+        });
+        return;
+      } 
+    } on FormatException catch (e) {
+      print(e.message);
       return;
-    }
-
-    if( argResults[relayArg] != null) {
-      defaultServerUrl =  argResults[relayArg];
-      print("Going to use relay: $defaultServerUrl");
-    }
-
-    if( argResults[prikeyArg] != null) {
-      userPrivateKey = argResults[prikeyArg];
-      userPublicKey = getPublicKey(userPrivateKey);
-    }
-    if( argResults[lastdaysArg] != null) {
-
-      numLastDays =  int.parse(argResults[lastdaysArg]);
-      print("Going to show posts for last $numLastDays days");
-    }
-
-    if( argResults[requestArg] != null) {
-      stdout.write("Got argument request ${argResults[requestArg]}");
-      sendRequest("wss://nostr-pub.wellorder.net", argResults[requestArg]);
-      Future.delayed(const Duration(milliseconds: 6000), () {
-          Tree node = getTree(getRecievedEvents());
-        
-          // print all the events in tree form  
-          clearEvents();
-          terminalMenuUi(node, []);
-      });
+    } on Exception catch (e) {
+      print(e);
       return;
-    } 
+    }    
 
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,

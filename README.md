@@ -7,6 +7,8 @@ Nostr console client using Dart
 Usage: 
 
 ```
+usage: dart run bin/nostr_console.dart [OPTIONS] 
+
   OPTIONS
 
       --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events
@@ -23,16 +25,16 @@ To get ALL the latest messages for last 3 days:
  dart run bin/nostr_console.dart  --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`
  ```
  
-To get the latest messages for user with public key K: 
+To get the latest messages for user with private key K ( that is also used to sign posted/sent messages): 
  
 ```
- dart run bin/nostr_console.dart  --user=K
+ dart run bin/nostr_console.dart  --prikey=K
 ```
 
-To get the latest messages for user with public key K for last 4 days ( default is 3) from relay R: 
+To get the latest messages for user with private key K for last 4 days ( default is 1) from relay R: 
  
  ```
- dart run bin/nostr_console.dart  --user=K --relay=R --days=4 
+ dart run bin/nostr_console.dart  --prikey=K --relay=R --days=4 
  ```
 
 

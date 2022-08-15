@@ -86,8 +86,23 @@ String getShaId(String pubkey, int createdAt, String strTags, String content) {
 Future<void> terminalMenuUi(Tree node, var contactList) async {
     bool userContinue = true;
     while(userContinue) {
+      // need a bit of wait to give other events to execute, so do a delay, which allows
+      // relays to recieve and handle new events
+      const int waitMilliSeconds = 400;
+      Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
+        print("\n\n\n\n\n\n---------------------------------------\nNotifications: Number of new events = ${getRecievedEvents().length}");
+        node.insertEvents(getRecievedEvents());
+        clearEvents();
+      });
 
-      print('\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
+      Future<void> foo() async {
+        await Future.delayed(Duration(milliseconds: waitMilliSeconds + 100));
+        return;
+      }
+      await foo();
+
+      // the main menu
+      print('\n\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
       int option = showMenu(['Display events',    // 1 
                              'Post/Reply',        // 2
                              'Exit']);            // 3
@@ -132,22 +147,6 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           stdout.write("\n");
           exit(0);
       }
-      
-      // need a bit of wait to give other events to execute, so do a delay, which allows
-      // relays to recieve and handle new events
-      const int waitMilliSeconds = 400;
-      Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
-        print("\n\nNumber of new events = ${getRecievedEvents().length}");
-        node.insertEvents(getRecievedEvents());
-        clearEvents();
-      });
-
-      Future<void> foo() async {
-        await Future.delayed(Duration(milliseconds: waitMilliSeconds + 100));
-        return;
-      }
-      await foo();
-
     } // end while
 }
 

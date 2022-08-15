@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:bip340/bip340.dart';
-import 'package:nostr_console/nostr_console_ds.dart';
+import 'package:nostr_console/event_ds.dart';
+import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:args/args.dart';
 import 'package:crypto/crypto.dart';
@@ -224,6 +225,8 @@ Future<void> main(List<String> arguments) async {
         if( e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
           latestContactIndex = i;
           latestContactsTime = e.eventData.createdAt;
+          print("${DateTime.now().millisecondsSinceEpoch ~/  1000}  latestContactsTime = $latestContactsTime");
+           
         }
       }
 

@@ -1,5 +1,6 @@
-import 'package:nostr_console/nostr_console_ds.dart';
+import 'package:nostr_console/event_ds.dart';
 import 'package:test/test.dart';
+import 'package:nostr_console/tree_ds.dart';
 
 
 EventData exampleEdata = EventData("id1", "pubkey",  1111111, 1, "content", [], [], [], [[]]);

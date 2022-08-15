@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:nostr_console/nostr_console_ds.dart';
+import 'package:nostr_console/event_ds.dart';
 import 'package:web_socket_channel/io.dart';
 
 String getUserRequest(String publicKey, int numUserEvents, int sinceWhen) {
@@ -7,13 +7,10 @@ String getUserRequest(String publicKey, int numUserEvents, int sinceWhen) {
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
   }
-
-
   var    strSubscription1  = '["REQ","single_user",{ "authors": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
   return strSubscription1 + publicKey + strSubscription2;
 }
-
 
 String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
   var    strSubscription1  = '["REQ","multiple_user",{ "authors": [';
@@ -26,7 +23,6 @@ String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
       s += ",";
     } 
   }
-
   return strSubscription1 + s + strSubscription2;
 }
 
@@ -37,7 +33,6 @@ class Relays {
   Map<String, IOWebSocketChannel > relays;
   List<String> users; // is used so that duplicate requests aren't sent for same user
   List<Event>  rEvents = [];
-
   Relays(this.relays, this.users, this.rEvents);
 
   factory Relays.relay(String relay) {

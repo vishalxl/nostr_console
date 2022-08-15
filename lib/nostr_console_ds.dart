@@ -7,6 +7,9 @@ const bool enableVerticalLines = false;
 const int  spacesPerDepth = 8;
 int    keyLenPrinted    = 6;
 
+const int max_depth_allowed      = 7;
+const int leftShiftDeepThreadsBy = 3;
+
 //String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
@@ -14,7 +17,8 @@ String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 Map<String, String> gKindONames = {}; 
 
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
-                        "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072"   // bestofhn
+                        "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",   // bestofhn
+                        "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2"   // bitcoin_bot
                       ];
 
 int gDebug = 0;
@@ -392,6 +396,16 @@ class Tree {
         stdout.write("\n");  
         printDepth(depth+1);
         stdout.write("\n\n\n");
+      }
+
+      // if the thread becomes too 'deep' then reset its depth, so that its 
+      // children will not be displayed too much the right, but are shifted
+      // left by about <leftShiftDeepThreadsBy> places
+      if( depth > max_depth_allowed) {
+        depth = max_depth_allowed - leftShiftDeepThreadsBy;
+        printDepth(depth+1);
+        stdout.write("+-------------------------------+\n");
+        
       }
       children[i].printTree(depth+1, false, newerThan);
     }

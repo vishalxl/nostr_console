@@ -9,7 +9,7 @@ import 'dart:convert'; // for the utf8.encode method
 
 // name of executable
 String exename = "nostr_console";
-String version = "0.0.1";
+String version = "0.0.2";
 
 // well known disposable test private key
 const String testPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
@@ -84,6 +84,10 @@ String getShaId(String pubkey, int createdAt, String strTags, String content) {
 }
 
 Future<void> terminalMenuUi(Tree node, var contactList) async {
+
+    // at the very beginning, show the tree as it is the, and them show the options menu
+    node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
+
     bool userContinue = true;
     while(userContinue) {
       // need a bit of wait to give other events to execute, so do a delay, which allows

@@ -36,6 +36,11 @@ To get the latest messages for user with private key K for last 4 days ( default
  ```
  dart run bin/nostr_console.dart  --prikey=K --relay=R --days=4 
  ```
+ 
+ # Screenshots
+
+![latest](https://pbs.twimg.com/media/FaPUwC-VQAAnSXS?format=png&name=4096x4096) from [tweet](https://twitter.com/vishalxl/status/1559324245494075392) in mid Aug 2022.
+
 
 
 

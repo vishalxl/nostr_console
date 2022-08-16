@@ -128,7 +128,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           print("Type id of event to reply to ( leave blank if you want to make a post): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";
-          String strTags = node.getTagsFromEvent(replyToId);
+          String strTags = node.getTagStr(replyToId, exename);
           int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
           
           String id = getShaId(userPublicKey, createdAt, strTags, content);

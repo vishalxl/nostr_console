@@ -40,8 +40,10 @@ class Tree {
     return Tree( events[0], topLevelTrees, mAllEvents); // TODO remove events[0]
   } // end fromEvents()
 
-  bool insertEvents(List<Event> newEvents) {
-    //print("In insertEvents num events: ${newEvents.length}");
+  /*
+   * @insertEvents inserts the given new events into the tree, and returns the id the ones actually inserted
+   */
+  List<String> insertEvents(List<Event> newEvents) {
     List<String> newEventsId = [];
 
     newEvents.forEach((element) { 
@@ -72,7 +74,7 @@ class Tree {
       }
     });
 
-    return true;
+    return newEventsId;
   }
 
   void addChild(Event child) {
@@ -114,8 +116,8 @@ class Tree {
       // if the thread becomes too 'deep' then reset its depth, so that its 
       // children will not be displayed too much the right, but are shifted
       // left by about <leftShiftDeepThreadsBy> places
-      if( depth > max_depth_allowed) {
-        depth = max_depth_allowed - leftShiftDeepThreadsBy;
+      if( depth > maxDepthAllowed) {
+        depth = maxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
         stdout.write("+-------------------------------+\n");
         
@@ -137,41 +139,40 @@ class Tree {
     return t;
   }
 
-  void printNotifications(List<Event> events) {
+  /*
+   * @printNotifications Add the given events to the Tree, and print the events as notifications
+   *                     It should be ensured that these are only kind 1 events
+   */
+  void printNotifications(List<String> newEventsId) {
 
     // remove duplicate
     Set temp = {};
-    events.retainWhere((x) => temp.add(x.eventData.id));
-
-    stdout.write("\n\n\n\n\n\n---------------------------------------\nNotifications:");
+    newEventsId.retainWhere((event) => temp.add(newEventsId));
     
-    if( events.isEmpty) {
+    stdout.write("\n\n\n\n\n\n---------------------------------------\nNotifications:");
+    if( newEventsId.isEmpty) {
       stdout.write("No new replies/posts.");
       return;
     }
 
-    stdout.write("Number of new replies/posts = ${events.length}\n");
+    stdout.write("Number of new replies/posts = ${newEventsId.length}\n");
     stdout.write("\nHere are the threads with new replies: \n\n");
-    //events.forEach((element) {element.eventData.printEventData(0);});
 
-    events.forEach((element) { 
+    newEventsId.forEach((eventID) { 
       // ignore if not in Tree
-      if( allEvents[element.eventData.id] == null) {
+      if( allEvents[eventID] == null) {
         return;
       }
-      if( element.eventData.kind != 1) {
-        return; // only type 1 are printed
-      }
-      Tree ?t = allEvents[element.eventData.id];
+      Tree ?t = allEvents[eventID];
       if( t != null) {
         t.e.eventData.isNotification = true;
         Tree topTree = getTopTree(t);
         topTree.printTree(0, false, 0);
         print("\n");
       }
-
     });
   }
+
   /*
    * @getTagsFromEvent Searches for all events, and creates a json of e-tag type which can be sent with event
    *                   Also adds 'client' tag with application name.
@@ -225,9 +226,11 @@ int ascendingTimeTree(Tree a, Tree b) {
   return 1;
 }
 
-
-Tree getTree(events) {
-    if( events.length == 0) {
+/*
+ * @function getTree Creates a Tree out of these received List of events. 
+ */
+Tree getTree(List<Event> events) {
+    if( events.isEmpty) {
       print("Warning: In printEventsAsTree: events length = 0");
       return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]]), [""], "[json]"), [], {});
     }

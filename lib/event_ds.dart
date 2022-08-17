@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 
 const int  screenWidth = 120;
-const bool enableVerticalLines = false;
 const int  spacesPerDepth = 8;
-const int  keyLenPrinted    = 6;
 
-const int max_depth_allowed      = 7;
-const int leftShiftDeepThreadsBy = 3;
+const int maxDepthAllowed      = 7;
+const int leftShiftThreadsBy = 3;
 
 const String commentColor = "\x1B[32m"; // green
 const String notificationColor = "\x1b[36m"; // cyan
@@ -26,12 +24,7 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 
 int gDebug = 0;
 
-
 void printDepth(int d) {
-  if( d == 0) {
-    return;
-  }
-
   for( int i = 0; i < spacesPerDepth * d ; i++) {
     stdout.write(" ");
   }

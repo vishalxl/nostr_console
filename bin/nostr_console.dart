@@ -54,6 +54,8 @@ int showMenu(List<String> menuOptions) {
       print("    ${i+1}. ${menuOptions[i]}");
     }
 
+    stdout.write("Type menu option/number: ");
+
     //print(">");
     String? userOptionInput = stdin.readLineSync();
     String userOption = userOptionInput??"";
@@ -95,8 +97,8 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
       const int waitMilliSeconds = 400;
       Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
         
-        node.insertEvents(getRecievedEvents());
-        node.printNotifications(getRecievedEvents());
+        List<String> newEventsId = node.insertEvents(getRecievedEvents());
+        node.printNotifications(newEventsId);
         clearEvents();
       });
 
@@ -119,16 +121,20 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           break;
 
         case 2:
-          print("Type comment to post/reply: ");
+          stdout.write("Type comment to post/reply: ");
           String? $contentVar = stdin.readLineSync();
           String content = $contentVar??"";
           if( content == "") {
             break;
           }
 
-          print("Type id of event to reply to ( leave blank if you want to make a post): ");
+          stdout.write("Type initial few letters of the id of event to reply to ( leave blank if you want to make a post; type x if you want to cancel): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";
+          if( replyToId == "x") {
+            print("Cancelling post/reply.");
+            break;
+          }
           String strTags = node.getTagStr(replyToId, exename);
           int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
           

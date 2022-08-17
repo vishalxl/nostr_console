@@ -94,8 +94,9 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
       // relays to recieve and handle new events
       const int waitMilliSeconds = 400;
       Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
-        print("\n\n\n\n\n\n---------------------------------------\nNotifications: Number of new events = ${getRecievedEvents().length}");
+        
         node.insertEvents(getRecievedEvents());
+        node.printThreads(getRecievedEvents());
         clearEvents();
       });
 
@@ -135,6 +136,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
           String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": 1,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
+          //print(toSendMessage);
           relays.sendMessage(toSendMessage, defaultServerUrl);
           break;
 
@@ -228,17 +230,17 @@ Future<void> main(List<String> arguments) async {
         if( e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
           latestContactIndex = i;
           latestContactsTime = e.eventData.createdAt;
-          print("${DateTime.now().millisecondsSinceEpoch ~/  1000}  latestContactsTime = $latestContactsTime");
+          //print("${DateTime.now().millisecondsSinceEpoch ~/  1000}  latestContactsTime = $latestContactsTime");
            
         }
       }
 
       if (latestContactIndex != -1) {
           contactList = getContactFeed(getRecievedEvents()[latestContactIndex].eventData.contactList, 300);
-          print("number of contacts = ${contactList.length}");
+          //print("number of contacts = ${contactList.length}");
       }
 
-      stdout.write('waiting for feed to come in.....');
+      stdout.write('waiting for feed to come in...............');
       Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
 
         // count feed events

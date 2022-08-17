@@ -43,9 +43,12 @@ class Tree {
   bool insertEvents(List<Event> newEvents) {
     //print("In insertEvents num events: ${newEvents.length}");
     List<String> newEventsId = [];
+
     newEvents.forEach((element) { 
+      // don't process if the event is already present in the map
+      // this condition also excludes any duplicate events sent as newEvents
       if( allEvents[element.eventData.id] != null) {
-        return; // don't process if the event is already present in the map
+        return;
       }
       if( element.eventData.kind != 1) {
         return; // only kind 1 events are added to the tree
@@ -121,6 +124,53 @@ class Tree {
     }
   }
 
+  Tree getTopTree(Tree t) {
+
+    while( true) {
+      Tree? parent =  allEvents[ t.e.eventData.getParent()];
+      if( parent != null) {
+        t = parent;
+      } else {
+        break;
+      }
+    }
+    return t;
+  }
+
+  void printThreads(List<Event> events) {
+
+    // remove duplicate
+    Set temp = {};
+    events.retainWhere((x) => temp.add(x.eventData.id));
+
+    stdout.write("\n\n\n\n\n\n---------------------------------------\nNotifications:");
+    
+    if( events.isEmpty) {
+      stdout.write("No new replies/posts.");
+      return;
+    }
+
+    stdout.write("Number of new replies/posts = ${events.length}\n");
+    stdout.write("\nHere are the threads with new replies: \n\n");
+    //events.forEach((element) {element.eventData.printEventData(0);});
+
+    events.forEach((element) { 
+      // ignore if not in Tree
+      if( allEvents[element.eventData.id] == null) {
+        return;
+      }
+      if( element.eventData.kind != 1) {
+        return; // only type 1 are printed
+      }
+      Tree ?t = allEvents[element.eventData.id];
+      if( t != null) {
+        Tree topTree = getTopTree(t);
+        topTree.printTree(0, false, 0);
+        print("\n");
+      }
+
+    });
+  }
   /*
    * @getTagsFromEvent Searches for all events, and creates a json of e-tag type which can be sent with event
    *                   Also adds 'client' tag with application name.
@@ -130,6 +180,7 @@ class Tree {
     String strTags = "";
 
     if( replyToId.isEmpty) {
+      strTags += '["client","$clientName"]' ;
       return strTags;
     }
 
@@ -148,19 +199,19 @@ class Tree {
       }
     }
     
-    print("latestEventId = $latestEventId");
+    //print("latestEventId = $latestEventId");
     if( latestEventId.isNotEmpty) {
       strTags =  '["e","$latestEventId"]';
     }
 
-    /*
+    
     if( strTags != "") {
       strTags += ",";
     }
 
-    strTags += '["client", "$clientName"]' ;
-    */
-    print(strTags);
+    strTags += '["client","$clientName"]' ;
+    
+    //print(strTags);
     return strTags;
   }
  

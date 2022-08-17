@@ -87,7 +87,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
 
     // at the very beginning, show the tree as it is the, and them show the options menu
     node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
-
+    //gDebug = 1;
     bool userContinue = true;
     while(userContinue) {
       // need a bit of wait to give other events to execute, so do a delay, which allows
@@ -96,7 +96,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
       Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
         
         node.insertEvents(getRecievedEvents());
-        node.printThreads(getRecievedEvents());
+        node.printNotifications(getRecievedEvents());
         clearEvents();
       });
 
@@ -219,25 +219,22 @@ Future<void> main(List<String> arguments) async {
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
       getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
-      stdout.write(".. received ${getRecievedEvents().length} events made by the user\n");
+      stdout.write("...received ${getRecievedEvents().length} events made by the user\n");
 
-      // get user's feed ( from follows by looking at kind 3 event)
+      // get the latest kind 3 event for the user, which lists his 'follows' list
       List<String> contactList = [];
-      int latestContactsTime = 0;
-      int latestContactIndex = -1;
+      int latestContactsTime = 0, latestContactIndex = -1;
       for( int i = 0; i < getRecievedEvents().length; i++) {
         var e = getRecievedEvents()[i];
         if( e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
           latestContactIndex = i;
           latestContactsTime = e.eventData.createdAt;
-          //print("${DateTime.now().millisecondsSinceEpoch ~/  1000}  latestContactsTime = $latestContactsTime");
-           
         }
       }
 
+      // if contact list was found, get user's feed 
       if (latestContactIndex != -1) {
           contactList = getContactFeed(getRecievedEvents()[latestContactIndex].eventData.contactList, 300);
-          //print("number of contacts = ${contactList.length}");
       }
 
       stdout.write('waiting for feed to come in...............');

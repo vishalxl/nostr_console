@@ -10,6 +10,9 @@ const int  keyLenPrinted    = 6;
 const int max_depth_allowed      = 7;
 const int leftShiftDeepThreadsBy = 3;
 
+const String commentColor = "\x1B[32m"; // green
+const String notificationColor = "\x1b[36m"; // cyan
+
 //String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
@@ -78,6 +81,7 @@ class EventData {
   List<String> eTagsRest;// rest of e tags
   List<String> pTags;// list of p tags for kind:1
   List<List<String>> tags;
+  bool   isNotification; // whether its to be highlighted using highlight color
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
@@ -88,7 +92,7 @@ class EventData {
     return "";
   }
 
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags, this.contactList, this.tags);
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags, this.contactList, this.tags, {this.isNotification = false});
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
@@ -184,7 +188,7 @@ class EventData {
   void printEventData(int depth) {
     int n = 3;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
-    void   printGreen(String s) => stdout.supportsAnsiEscapes ?stdout.write("\x1B[32m$s\x1B[0m"):stdout.write(s);
+    void   printGreen(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s\x1B[0m"):stdout.write(s);
 
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
     
@@ -207,7 +211,12 @@ class EventData {
     stdout.write("|Author : $name     id: ${maxN(id)}      Time: $strDate\n");
     printDepth(depth);
     stdout.write("|Message: ");
-    printGreen(contentShifted);
+    if( isNotification) {
+      printGreen(contentShifted, notificationColor);
+      isNotification = false;
+    } else {
+      printGreen(contentShifted, commentColor);
+    }
   }
 
   @override

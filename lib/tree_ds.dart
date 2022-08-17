@@ -137,7 +137,7 @@ class Tree {
     return t;
   }
 
-  void printThreads(List<Event> events) {
+  void printNotifications(List<Event> events) {
 
     // remove duplicate
     Set temp = {};
@@ -164,6 +164,7 @@ class Tree {
       }
       Tree ?t = allEvents[element.eventData.id];
       if( t != null) {
+        t.e.eventData.isNotification = true;
         Tree topTree = getTopTree(t);
         topTree.printTree(0, false, 0);
         print("\n");

@@ -183,21 +183,26 @@ class Relays {
 Relays relays = Relays({}, [], []);
 
 List<String> getContactFeed(List<Contact> contacts, numEventsToGet) {
+  
+  // maps from relay url to list of users that it supplies events for
   Map<String, List<String> > mContacts = {};
+
   List<String> contactList = [];
+
+  // creat the mapping between relay and its hosted users
   for( int i = 0; i < contacts.length; i++) {
     if( mContacts.containsKey(contacts[i].relay) ) {
       mContacts[contacts[i].relay]?.add(contacts[i].id);
     } else {
       mContacts[contacts[i].relay] = [contacts[i].id];
     }
-    /*if( contacts[i].id == "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245") {
-      print("In getContactFeed: sending request for jb55 32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245");
-    }*/
     contactList.add(contacts[i].id);
   }
 
+  // send request for the users events to the relays
   mContacts.forEach((key, value) { relays.getMultiUserEvents(key, value, numEventsToGet);})  ;
+  
+  // return contact list for use by caller
   return contactList;  
 }
 

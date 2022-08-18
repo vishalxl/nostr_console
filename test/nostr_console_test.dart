@@ -9,8 +9,8 @@ EventData exampleEdataChild = EventData("id2", "pubkey", 1111111, 1, "content ch
 Event exampleEvent = Event('event', 'id3', exampleEdata, ['relay name'], "[json]");
 Event exampleEventChild = Event('event', 'id4', exampleEdataChild, ['relay name'], "[json]");
 
-Tree exampleNode = Tree(exampleEvent, [], {});
-Tree exampleNodeChild = Tree(exampleEventChild, [], {});
+Tree exampleNode = Tree(exampleEvent, [], {}, []);
+Tree exampleNodeChild = Tree(exampleEventChild, [], {}, []);
 
 void main() {
   test('PrintEmptyEvent', () {

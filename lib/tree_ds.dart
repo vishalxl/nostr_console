@@ -5,19 +5,24 @@ class Tree {
   Event             e;
   List<Tree>        children;
   Map<String, Tree> allEvents;
-  Tree(this.e, this.children, this.allEvents);
+  List<String>      eventsWithoutParent;
+  Tree(this.e, this.children, this.allEvents, this.eventsWithoutParent);
 
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Tree.fromEvents(List<Event> events) {
     if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]]), [""], "[json]"), [], {});
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]]), [""], "[json]"), [], {}, []);
     }
 
     // create a map from list of events, key is eventId and value is event itself
     Map<String, Tree> mAllEvents = {};
-    events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, [], {}); });
+    events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, [], {}, []); });
 
+    // this will become the children of the main top node. These are events without parents, which are printed at top.
+    List<Tree>  topLevelTrees = [];
+
+    List<String> tempWithoutParent = [];
     mAllEvents.forEach((key, value) {
 
       if(value.e.eventData.eTagsRest.isNotEmpty ) {
@@ -25,19 +30,33 @@ class Tree {
         //stdout.write("added to parent a child\n");
         String id = key;
         String parentId = value.e.eventData.getParent();
-        mAllEvents[parentId]?.addChildNode(value);
+        if(mAllEvents.containsKey( parentId)) {
+           mAllEvents[parentId]?.addChildNode(value); // in this if condition this will get called
+        } else {
+           // in case where the parent of the new event is not in the pool of all events, 
+           // then we create a dummy event and put it at top ( or make this a top event?)
+           Tree dummyTopNode = Tree(Event("","",EventData("Unk","Non", value.e.eventData.createdAt , 0, "Unknown/Dummy Event", [], [], [], [[]]), [""], "[json]"), [], {}, []);
+           dummyTopNode.addChildNode(value);
+           tempWithoutParent.add(value.e.eventData.id); 
+          
+           // add the dummy evnets to top level trees, so that their real children get printed too with them
+           // so no post is missed by reader
+           topLevelTrees.add(dummyTopNode);
+        }
       }
     });
 
     // add parent trees as top level child trees of this tree
-    List<Tree>  topLevelTrees = [];
     for( var value in mAllEvents.values) {
         if( !value.e.eventData.eTagsRest.isNotEmpty) {  // if its a parent
             topLevelTrees.add(value);
         }
     }
 
-    return Tree( events[0], topLevelTrees, mAllEvents); // TODO remove events[0]
+    // add tempWithoutParent to topLevelTrees too
+
+    if(gDebug != 0) print("number of events without parent in fromEvents = ${tempWithoutParent.length}");
+    return Tree( events[0], topLevelTrees, mAllEvents, tempWithoutParent); // TODO remove events[0]
   } // end fromEvents()
 
   /*
@@ -57,7 +76,7 @@ class Tree {
       if( newEvent.eventData.kind != 1) {
         return;
       }
-      allEvents[newEvent.eventData.id] = Tree(newEvent, [], {}); 
+      allEvents[newEvent.eventData.id] = Tree(newEvent, [], {}, []); 
       newEventsId.add(newEvent.eventData.id);
     });
 
@@ -83,7 +102,7 @@ class Tree {
 
   void addChild(Event child) {
     Tree node;
-    node = Tree(child, [], {});
+    node = Tree(child, [], {}, []);
     children.add(node);
   }
 
@@ -194,6 +213,7 @@ class Tree {
       clientName = "nostr_console";
     }
 
+    // find the latest event with the given id
     int latestEventTime = 0;
     String latestEventId = "";
     for(  String k in allEvents.keys) {
@@ -221,6 +241,13 @@ class Tree {
     return strTags;
   }
  
+  int count() {
+    int totalCount = 1; // this is the top level event
+    for(int i = 0; i < children.length; i++) {
+      totalCount += children[i].count(); // then add all the children
+    }
+    return totalCount;
+  }
 }
 
 int ascendingTimeTree(Tree a, Tree b) {
@@ -236,7 +263,7 @@ int ascendingTimeTree(Tree a, Tree b) {
 Tree getTree(List<Event> events) {
     if( events.isEmpty) {
       print("Warning: In printEventsAsTree: events length = 0");
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]]), [""], "[json]"), [], {});
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]]), [""], "[json]"), [], {}, []);
     }
 
     // populate the global with display names which can be later used by Event print
@@ -255,5 +282,6 @@ Tree getTree(List<Event> events) {
     // create tree from events
     Tree node = Tree.fromEvents(events);
 
+    if(gDebug != 0) print("total number of events in main tree = ${node.count()}");
     return node;
 }

@@ -119,6 +119,7 @@ class Tree {
       depth = depth - 1;
     }
 
+    bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
       if(!onlyPrintChildren) {
         stdout.write("\n");  
@@ -137,15 +138,24 @@ class Tree {
       }
 
       // if the thread becomes too 'deep' then reset its depth, so that its 
-      // children will not be displayed too much the right, but are shifted
-      // left by about <leftShiftDeepThreadsBy> places
+      // children will not be displayed too much on the right, but are shifted
+      // left by about <leftShiftThreadsBy> places
       if( depth > maxDepthAllowed) {
         depth = maxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
-        stdout.write("+${getNumDashes((leftShiftThreadsBy + 1) * 8 - 1)}+\n");        
+        stdout.write("<${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1)}+\n");        
+        leftShifted = true;
       }
+
       children[i].printTree(depth+1, false, newerThan);
     }
+
+    if( leftShifted) {
+      stdout.write("\n");
+      printDepth(depth+1);
+      print(">");
+    }
+
   }
 
   Tree getTopTree(Tree t) {

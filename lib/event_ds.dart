@@ -2,15 +2,19 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
-const int  gMinValidTextWidth = 60;
-const int  gDefaultTextWidth = 120;
-int        gTextWidth = gDefaultTextWidth;
-const int  gSpacesPerDepth = 8;
+const int  gMinValidTextWidth = 60; // minimum text width acceptable
+const int  gDefaultTextWidth = 120; // default text width
+int        gTextWidth = gDefaultTextWidth; // is changed by --width option
+const int  gSpacesPerDepth = 8;     // constant
 int        gNumLeftMarginSpaces = 0; // this number is modified in main 
 String     gAlignment = "center"; // is modified in main if --align argument is given
 
-const int  maxDepthAllowed      = 4;
-const int  leftShiftThreadsBy = 2;
+// after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
+const int  gMinimumDepthAllowed = 2;
+const int  gMaximumDepthAllowed  = 12;
+const int  gDefaultMaxDepth     = 4;
+int        maxDepthAllowed      = gDefaultMaxDepth;
+const int  leftShiftThreadsBy   = 2;
 
 // 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
 const String commentColor = "\x1B[32m"; // green

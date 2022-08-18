@@ -119,7 +119,7 @@ class Relays {
                 }
               },
               onError: (e) { print("\n${warningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
-              onDone:  () { print('Info: In onDone'); }
+              onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
         );
       } on WebSocketException {
         print('WebSocketException exception');
@@ -147,8 +147,8 @@ class Relays {
         relays[relay] = fws;
         fws.stream.listen(
               (d) {}, //
-              onError: (e) { print("in onError"); print(e);  },
-              onDone:  () { print('in onDone'); }
+              onError: (e) { print("\n${warningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
+              onDone:  () { if( gDebug != 0) print('in onDone'); }
         );
       } on WebSocketException {
         print('WebSocketException exception');

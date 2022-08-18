@@ -12,19 +12,21 @@ String exename = "nostr_console";
 String version = "0.0.2";
 
 // well known disposable test private key
-const String testPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
-const String testPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
-String userPrivateKey = testPrivateKey;
-String userPublicKey  = testPublicKey;
+const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
+const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
+String userPrivateKey = gDefaultPrivateKey;
+String userPublicKey  = gDefaultPublicKey;
 
-// program arguments1
-const String requestArg  = "request";
+// program arguments
+const String pubkeyArg   = "pubkey";
 const String prikeyArg   = "prikey";
 const String lastdaysArg = "days";
 const String relayArg    = "relay";
+const String requestArg  = "request";
 const String helpArg     = "help";
 const String alignArg    = "align"; // can be "left"
-const String widthArg     = "width";
+const String widthArg    = "width";
+const String maxDepthArg    = "maxdepth";
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument
@@ -32,21 +34,27 @@ int numLastDays = 1;
 
 void printUsage() {
 String usage = """$exename version $version
+The nostr console client built using dart.
 
 usage: $exename [OPTIONS] 
 
   OPTIONS
 
+      --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
+                                well known private key. When given, posts/replies can't be sent. Same as -p
       --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
-                                sent. Default is a hard-coded well known private key. Same as -p
+                                sent. Default is a hard-coded well known private key. Same as -k
       --relay   <relay wss url> The relay url that is used as main relay. Default is $defaultServerUrl . Same as -r
       --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
       --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                 from a relay. If not provided, then events for default or given user are shown. Same as -q
+  UI Options                                
       --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                 the posts or text is aligned to the center of the terminal. Same as -a 
       --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is $gDefaultTextWidth. 
-                                Cant be less than $gMinValidTextWidth. Same as -c
+                                Cant be less than $gMinValidTextWidth. Same as -w
+      --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is $gMinimumDepthAllowed and
+                                maximum allowed is $gMaximumDepthAllowed. Same as -m
       --help                    Print this usage message and exit. Same as -h
       
 """;
@@ -131,6 +139,11 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           break;
 
         case 2:
+          // in case the program was invoked with --pubkey, then user can't send messages
+          if( userPrivateKey == "") {
+              print("Since no user private key has been supplied, messages can't sent. Invoke with --prikey \n");
+              break;
+          }
           stdout.write("Type comment to post/reply: ");
           String? $contentVar = stdin.readLineSync();
           String content = $contentVar??"";
@@ -169,10 +182,10 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
 
 Future<void> main(List<String> arguments) async {
     
-    final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(prikeyArg, abbr:"p")
+    final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
-                              ..addOption(widthArg, abbr:"c");
+                              ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m");
 
     try {
       ArgResults argResults = parser.parse(arguments);
@@ -181,14 +194,21 @@ Future<void> main(List<String> arguments) async {
         return;
       }
 
-      if( argResults[relayArg] != null) {
-        defaultServerUrl =  argResults[relayArg];
-        print("Going to use relay: $defaultServerUrl");
+      if( argResults[pubkeyArg] != null) {
+        userPublicKey = argResults[pubkeyArg];
+        userPrivateKey = "";
+        print("Going to use public key $userPublicKey. You will not be able to send posts/replies.");
       }
 
       if( argResults[prikeyArg] != null) {
         userPrivateKey = argResults[prikeyArg];
         userPublicKey = getPublicKey(userPrivateKey);
+        print("Going to use the provided private key");
+      }
+
+      if( argResults[relayArg] != null) {
+        defaultServerUrl =  argResults[relayArg];
+        print("Going to use relay: $defaultServerUrl");
       }
 
       if( argResults[lastdaysArg] != null) {
@@ -201,8 +221,8 @@ Future<void> main(List<String> arguments) async {
         if( tempTextWidth < gMinValidTextWidth ) {
           print("Text-width cannot be less than $gMinValidTextWidth. Going to use the defalt value of $gTextWidth");
         } else {
-          print("Going to use $gTextWidth columns for text on screen.");
           gTextWidth = tempTextWidth;
+          print("Going to use $gTextWidth columns for text on screen.");
         }
       }
 
@@ -210,12 +230,23 @@ Future<void> main(List<String> arguments) async {
       gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
       
       // undo above if left option is given
-      if( argResults[alignArg] != null) {
+      if( argResults[alignArg] != null ) {
         if( argResults[alignArg] == "left" ) {
           print("Going to align to left.");
           gAlignment = "left";
           gNumLeftMarginSpaces = 0;
-        } 
+        }
+      }
+
+      if( argResults[maxDepthArg] != null) {
+
+        int tempMaxDepth = int.parse(argResults[maxDepthArg]);
+        if( tempMaxDepth < gMinimumDepthAllowed || tempMaxDepth > gMaximumDepthAllowed) {
+          print("Maximum depth cannot be less than $gMinimumDepthAllowed and cannot be more than $gMaximumDepthAllowed. Going to use the default maximum depth, which is $gDefaultMaxDepth.");
+        } else {
+          maxDepthAllowed = tempMaxDepth;
+          print("Going to take threads to maximum depth of $numLastDays days");
+        }
       }
 
       if( argResults[requestArg] != null) {

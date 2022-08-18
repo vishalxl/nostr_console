@@ -98,6 +98,11 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
     //gDebug = 1;
     bool userContinue = true;
     while(userContinue) {
+      // align the text again in case the window size has been changed
+      if( gAlignment == "center") {
+        gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
+      }
+
       // need a bit of wait to give other events to execute, so do a delay, which allows
       // relays to recieve and handle new events
       const int waitMilliSeconds = 400;
@@ -122,11 +127,6 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
       print('You picked: $option');
       switch(option) {
         case 1:
-          // align the text again in case the window size has been changed
-          if( gAlignment == "center") {
-            gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
-          }
-
           node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
           break;
 
@@ -206,7 +206,7 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
-      // can be computed only after screenWidth has been found
+      // can be computed only after textWidth has been found
       gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
       
       // undo above if left option is given

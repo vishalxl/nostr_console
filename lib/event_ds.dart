@@ -2,15 +2,15 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
-const int  gMinValidScreenWidth = 60;
-const int  defaultScreenWidth = 80;
-int        screenWidth = defaultScreenWidth;
-const int  spacesPerDepth = 8;
+const int  gMinValidTextWidth = 60;
+const int  gDefaultTextWidth = 120;
+int        gTextWidth = gDefaultTextWidth;
+const int  gSpacesPerDepth = 8;
 int        gNumLeftMarginSpaces = 0; // this number is modified in main 
 String     gAlignment = "center"; // is modified in main if --align argument is given
 
-const int maxDepthAllowed      = 4;
-const int leftShiftThreadsBy = 2;
+const int  maxDepthAllowed      = 4;
+const int  leftShiftThreadsBy = 2;
 
 // 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
 const String commentColor = "\x1B[32m"; // green
@@ -32,7 +32,7 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 int gDebug = 0;
 
 void printDepth(int d) {
-  for( int i = 0; i < spacesPerDepth * d + gNumLeftMarginSpaces; i++) {
+  for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
     stdout.write(" ");
   }
 }
@@ -65,7 +65,7 @@ String rightShiftContent(String s, int numSpaces) {
       newString += spacesString;
       newlineCounter = 0;
     } else {
-      if( newlineCounter >= (screenWidth - numSpaces)) {
+      if( newlineCounter >= (gTextWidth - numSpaces)) {
         newString += "\n";
         newString += spacesString;
         newlineCounter = 0;
@@ -215,7 +215,7 @@ class EventData {
     }
 
     content = expandMentions(content);
-    String contentShifted = rightShiftContent(content, spacesPerDepth * depth + 10);
+    String contentShifted = rightShiftContent(content, gSpacesPerDepth * depth + 10);
     
     printDepth(depth);
     stdout.write("+-------+\n");

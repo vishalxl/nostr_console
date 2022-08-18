@@ -45,8 +45,8 @@ usage: $exename [OPTIONS]
                                 from a relay. If not provided, then events for default or given user are shown. Same as -q
       --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                 the posts or text is aligned to the center of the terminal. Same as -a 
-      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 80. 
-                                Cant be less than $gMinValidScreenWidth. Same as -c
+      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is $gDefaultTextWidth. 
+                                Cant be less than $gMinValidTextWidth. Same as -c
       --help                    Print this usage message and exit. Same as -h
       
 """;
@@ -124,7 +124,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
         case 1:
           // align the text again in case the window size has been changed
           if( gAlignment == "center") {
-            gNumLeftMarginSpaces = (stdout.terminalColumns - 80 )~/2;
+            gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
           }
 
           node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
@@ -138,7 +138,7 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
             break;
           }
 
-          stdout.write("Type initial few letters of the id of event to reply to ( leave blank if you want to make a post; type x if you want to cancel): ");
+          stdout.write("\nType initial few letters of the id of event to\nreply to (leave blank if you want to make a\nnew post; type x if you want to cancel): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";
           if( replyToId == "x") {
@@ -197,17 +197,17 @@ Future<void> main(List<String> arguments) async {
       }
 
       if( argResults[widthArg] != null) {
-        int tempScreenWidth = int.parse(argResults[widthArg]);
-        if( tempScreenWidth < gMinValidScreenWidth ) {
-          print("Screen-width cannot be less than $gMinValidScreenWidth. Going to use the defalt value of $screenWidth");
+        int tempTextWidth = int.parse(argResults[widthArg]);
+        if( tempTextWidth < gMinValidTextWidth ) {
+          print("Text-width cannot be less than $gMinValidTextWidth. Going to use the defalt value of $gTextWidth");
         } else {
-          print("Going to use $screenWidth columns for text on screen.");
-          screenWidth = tempScreenWidth;
+          print("Going to use $gTextWidth columns for text on screen.");
+          gTextWidth = tempTextWidth;
         }
       }
 
       // can be computed only after screenWidth has been found
-      gNumLeftMarginSpaces = (stdout.terminalColumns - 80 )~/2;
+      gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
       
       // undo above if left option is given
       if( argResults[alignArg] != null) {
@@ -267,7 +267,7 @@ Future<void> main(List<String> arguments) async {
           contactList = getContactFeed(getRecievedEvents()[latestContactIndex].eventData.contactList, 300);
       }
 
-      stdout.write('waiting for feed to come in...............');
+      stdout.write('Waiting for feed to come in...............');
       Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
 
         // count feed events

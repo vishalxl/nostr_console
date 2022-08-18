@@ -34,8 +34,8 @@ class Tree {
            mAllEvents[parentId]?.addChildNode(value); // in this if condition this will get called
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
-           // then we create a dummy event and put it at top ( or make this a top event?)
-           Tree dummyTopNode = Tree(Event("","",EventData("Unk","Non", value.e.eventData.createdAt , 0, "Unknown/Dummy Event", [], [], [], [[]]), [""], "[json]"), [], {}, []);
+           // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
+           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,"Non", value.e.eventData.createdAt , 0, "Unknown parent event", [], [], [], [[]]), [""], "[json]"), [], {}, []);
            dummyTopNode.addChildNode(value);
            tempWithoutParent.add(value.e.eventData.id); 
           
@@ -142,8 +142,7 @@ class Tree {
       if( depth > maxDepthAllowed) {
         depth = maxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
-        stdout.write("+-------------------------------+\n");
-        
+        stdout.write("+${getNumDashes((leftShiftThreadsBy + 1) * 8 - 1)}+\n");        
       }
       children[i].printTree(depth+1, false, newerThan);
     }
@@ -225,10 +224,15 @@ class Tree {
       }
     }
     
+    if( latestEventId.isEmpty) {
+      // search for it in the dummy event id's
+
+    }
+
     //print("latestEventId = $latestEventId");
     if( latestEventId.isNotEmpty) {
       strTags =  '["e","$latestEventId"]';
-    }
+    } 
 
     
     if( strTags != "") {

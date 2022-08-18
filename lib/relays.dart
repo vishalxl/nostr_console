@@ -56,7 +56,7 @@ class Relays {
       }
     }
 
-    // following is too restrictive. TODO improve it
+    // following is too restrictive casuse changed sinceWhen is not considered. TODO improve it
     for(int i = 0; i < users.length; i++) {
       if( users[i] == publicKey) {
         return;
@@ -118,8 +118,8 @@ class Relays {
                   print( 'exception in fromJson for event');
                 }
               },
-              onError: (e) { print("in onError"); print(e);  },
-              onDone:  () { print('in onDone'); }
+              onError: (e) { print("\n${warningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
+              onDone:  () { print('Info: In onDone'); }
         );
       } on WebSocketException {
         print('WebSocketException exception');
@@ -172,8 +172,6 @@ class Relays {
     relays.forEach((key, value) {
       print("for relay: $key");
       print("$value\n");
-
-
       String? reason = value.closeReason;
       print( reason??"reason not found");
     });
@@ -213,7 +211,6 @@ void getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen) {
 void getMultiUserEvents(serverUrl, publicKeys, numUserEvents) {
   relays.getMultiUserEvents(serverUrl, publicKeys, numUserEvents);
 }
-
 
 void sendRequest(serverUrl, request) {
   relays.sendRequest(serverUrl, request);

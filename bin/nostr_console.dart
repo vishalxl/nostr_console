@@ -23,6 +23,8 @@ const String prikeyArg   = "prikey";
 const String lastdaysArg = "days";
 const String relayArg    = "relay";
 const String helpArg     = "help";
+const String alignArg    = "align"; // can be "left"
+const String widthArg     = "width";
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument
@@ -38,9 +40,13 @@ usage: $exename [OPTIONS]
       --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
                                 sent. Default is a hard-coded well known private key. Same as -p
       --relay   <relay wss url> The relay url that is used as main relay. Default is $defaultServerUrl . Same as -r
-      --days    <N>             The latest number of days for which events are shown. Default is 1. Same as -d
+      --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
       --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                 from a relay. If not provided, then events for default or given user are shown. Same as -q
+      --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
+                                the posts or text is aligned to the center of the terminal. Same as -a 
+      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 80. 
+                                Cant be less than $gMinValidScreenWidth. Same as -c
       --help                    Print this usage message and exit. Same as -h
       
 """;
@@ -116,7 +122,11 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
       print('You picked: $option');
       switch(option) {
         case 1:
-          //print("in display events option");
+          // align the text again in case the window size has been changed
+          if( gAlignment == "center") {
+            gNumLeftMarginSpaces = (stdout.terminalColumns - 80 )~/2;
+          }
+
           node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
           break;
 
@@ -161,7 +171,8 @@ Future<void> main(List<String> arguments) async {
     
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(prikeyArg, abbr:"p")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
-                              ..addFlag(helpArg, abbr:"h", defaultsTo: false);
+                              ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
+                              ..addOption(widthArg, abbr:"c");
 
     try {
       ArgResults argResults = parser.parse(arguments);
@@ -179,10 +190,32 @@ Future<void> main(List<String> arguments) async {
         userPrivateKey = argResults[prikeyArg];
         userPublicKey = getPublicKey(userPrivateKey);
       }
-      if( argResults[lastdaysArg] != null) {
 
+      if( argResults[lastdaysArg] != null) {
         numLastDays =  int.parse(argResults[lastdaysArg]);
         print("Going to show posts for last $numLastDays days");
+      }
+
+      if( argResults[widthArg] != null) {
+        int tempScreenWidth = int.parse(argResults[widthArg]);
+        if( tempScreenWidth < gMinValidScreenWidth ) {
+          print("Screen-width cannot be less than $gMinValidScreenWidth. Going to use the defalt value of $screenWidth");
+        } else {
+          print("Going to use $screenWidth columns for text on screen.");
+          screenWidth = tempScreenWidth;
+        }
+      }
+
+      // can be computed only after screenWidth has been found
+      gNumLeftMarginSpaces = (stdout.terminalColumns - 80 )~/2;
+      
+      // undo above if left option is given
+      if( argResults[alignArg] != null) {
+        if( argResults[alignArg] == "left" ) {
+          print("Going to align to left.");
+          gAlignment = "left";
+          gNumLeftMarginSpaces = 0;
+        } 
       }
 
       if( argResults[requestArg] != null) {

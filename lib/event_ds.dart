@@ -2,15 +2,21 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
-const int  screenWidth = 120;
+const int  gMinValidScreenWidth = 60;
+const int  defaultScreenWidth = 80;
+int        screenWidth = defaultScreenWidth;
 const int  spacesPerDepth = 8;
+int        gNumLeftMarginSpaces = 0; // this number is modified in main 
+String     gAlignment = "center"; // is modified in main if --align argument is given
 
-const int maxDepthAllowed      = 7;
-const int leftShiftThreadsBy = 3;
+const int maxDepthAllowed      = 4;
+const int leftShiftThreadsBy = 2;
 
 // 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
 const String commentColor = "\x1B[32m"; // green
 const String notificationColor = "\x1b[36m"; // cyan
+const String warningColor = "\x1B[31m"; // red
+const String colorEndMarker = "\x1B[0m";
 
 //String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
@@ -26,19 +32,32 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 int gDebug = 0;
 
 void printDepth(int d) {
-  for( int i = 0; i < spacesPerDepth * d ; i++) {
+  for( int i = 0; i < spacesPerDepth * d + gNumLeftMarginSpaces; i++) {
     stdout.write(" ");
   }
- }
+}
+
+String getNumSpaces(int num) {
+  String s = "";
+  for( int i = 0; i < num; i++) {
+    s += " ";
+  }
+  return s;
+}
+
+String getNumDashes(int num) {
+  String s = "";
+  for( int i = 0; i < num; i++) {
+    s += "-";
+  }
+  return s;
+}
+
 
 String rightShiftContent(String s, int numSpaces) {
   String newString = "";
   int    newlineCounter = 0;
-  String spacesString = "";
-
-  for( int i = 0; i < numSpaces ; i++) {
-    spacesString += " ";
-  }
+  String spacesString = getNumSpaces(numSpaces + gNumLeftMarginSpaces);
 
   for(int i = 0; i < s.length; i++) {
     if( s[i] == '\n') {
@@ -182,7 +201,7 @@ class EventData {
   void printEventData(int depth) {
     int n = 3;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
-    void   printGreen(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s\x1B[0m"):stdout.write(s);
+    void   printGreen(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$colorEndMarker"):stdout.write(s);
 
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
     
@@ -202,7 +221,7 @@ class EventData {
     stdout.write("+-------+\n");
     printDepth(depth);
     String name = getAuthorName(pubkey);
-    stdout.write("|Author : $name     id: ${maxN(id)}      Time: $strDate\n");
+    stdout.write("|Author : $name  id: ${maxN(id)}  Time: $strDate\n");
     printDepth(depth);
     stdout.write("|Message: ");
     if( isNotification) {

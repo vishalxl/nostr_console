@@ -99,7 +99,28 @@ String getShaId(String pubkey, int createdAt, String strTags, String content) {
   return id;
 }
 
-Future<void> terminalMenuUi(Tree node, var contactList) async {
+Future<void> otherMenuUi(Tree node, var contactList) async {
+
+  print('\n\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
+  int option = showMenu([ 'Display Contact List',    // 1 
+                          'Go back']);           // 3
+  print('You picked: $option');
+  switch(option) {
+    case 1:
+      String authorName = getAuthorName(userPublicKey);
+      print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
+      contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+      print("");
+      break;
+
+    default:
+      break;
+  }
+
+  return;
+}
+
+Future<void> mainMenuUi(Tree node, var contactList) async {
 
     // at the very beginning, show the tree as it is the, and them show the options menu
     node.printTree(0, true, DateTime.now().subtract(Duration(days:numLastDays)));
@@ -131,7 +152,8 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
       print('\n\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
       int option = showMenu(['Display events',    // 1 
                              'Post/Reply',        // 2
-                             'Exit']);            // 3
+                             'Other Options',     //3
+                             'Quit']);            // 3
       print('You picked: $option');
       switch(option) {
         case 1:
@@ -169,6 +191,11 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           break;
 
         case 3:
+          //print("\n\nNot yet implemented.");
+          otherMenuUi(node, contactList);
+          break;
+
+        case 4:
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);
@@ -255,7 +282,7 @@ Future<void> main(List<String> arguments) async {
         Future.delayed(const Duration(milliseconds: 6000), () {
             Tree node = getTree(getRecievedEvents());
             clearEvents();
-            terminalMenuUi(node, []);
+            mainMenuUi(node, []);
         });
         return;
       } 
@@ -321,7 +348,7 @@ Future<void> main(List<String> arguments) async {
           Tree node = getTree(getRecievedEvents());
           clearEvents();
           // call the mein UI function
-          terminalMenuUi(node, contactList);
+          mainMenuUi(node, contactList);
         });
       });
     });

@@ -17,6 +17,12 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       --days    <N>             The latest number of days for which events are shown. Default is 1. -d is same.
       --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                 from a relay. If not provided, then events for default or given user are shown. -q is same.
+      --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
+                                the posts or text is aligned to the center of the terminal. Same as -a 
+      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 80. 
+                                Cant be less than 60. Same as -c
+      --help                    Print this usage message and exit. Same as -h
+                                
 ```                                
 
 To get ALL the latest messages for last 3 days: 
@@ -39,7 +45,7 @@ To get the latest messages for user with private key K for last 4 days ( default
  
  # Screenshots
 
-![latest](https://pbs.twimg.com/media/FaPUwC-VQAAnSXS?format=png&name=4096x4096) from [tweet](https://twitter.com/vishalxl/status/1559324245494075392) in mid Aug 2022.
+![latest](https://pbs.twimg.com/media/FachGW3agAAele4?format=png&name=4096x4096) in mid Aug 2022.
 
 
 

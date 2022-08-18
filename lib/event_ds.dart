@@ -8,6 +8,7 @@ const int  spacesPerDepth = 8;
 const int maxDepthAllowed      = 7;
 const int leftShiftThreadsBy = 3;
 
+// 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
 const String commentColor = "\x1B[32m"; // green
 const String notificationColor = "\x1b[36m"; // cyan
 

@@ -45,31 +45,35 @@ class Tree {
    */
   List<String> insertEvents(List<Event> newEvents) {
     List<String> newEventsId = [];
-
-    newEvents.forEach((element) { 
+    
+    // add the event to the Tree
+    newEvents.forEach((newEvent) { 
       // don't process if the event is already present in the map
       // this condition also excludes any duplicate events sent as newEvents
-      if( allEvents[element.eventData.id] != null) {
+      if( allEvents[newEvent.eventData.id] != null) {
         return;
       }
-      if( element.eventData.kind != 1) {
-        return; // only kind 1 events are added to the tree
+      // only kind 1 events are handled, return otherwise
+      if( newEvent.eventData.kind != 1) {
+        return;
       }
-      allEvents[element.eventData.id] = Tree(element, [], {}); 
-      newEventsId.add(element.eventData.id);
+      allEvents[newEvent.eventData.id] = Tree(newEvent, [], {}); 
+      newEventsId.add(newEvent.eventData.id);
     });
 
     //print("In insertEvents num eventsId: ${newEventsId.length}");
+    // now go over the newly inserted event, and then find its parent, or if its a top tree
     newEventsId.forEach((newId) {
-
-      Tree? t = allEvents[newId];
-      if( t != null) {
-        if( t.e.eventData.eTagsRest.isEmpty) {
-          // is a parent event
-            children.add(t);
+      Tree? newTree = allEvents[newId]; // this should return true because we just inserted this event in the allEvents in block above
+      // in case the event is already present in the current collection of events (main Tree)
+      if( newTree != null) {
+        if( newTree.e.eventData.eTagsRest.isEmpty) {
+            // if its a is a new parent event, then add it to the main top parents ( this.children)
+            children.add(newTree);
         } else {
-              String parentId = t.e.eventData.getParent();
-              allEvents[parentId]?.addChildNode(t);
+            // if it has a parent , then add the newTree as the parent's child
+            String parentId = newTree.e.eventData.getParent();
+            allEvents[parentId]?.addChildNode(newTree);
         }
       }
     });
@@ -159,7 +163,7 @@ class Tree {
     stdout.write("\nHere are the threads with new replies: \n\n");
 
     newEventsId.forEach((eventID) { 
-      // ignore if not in Tree
+      // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
       if( allEvents[eventID] == null) {
         return;
       }

@@ -17,7 +17,7 @@ const String testPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f
 String userPrivateKey = testPrivateKey;
 String userPublicKey  = testPublicKey;
 
-// program arguments
+// program arguments1
 const String requestArg  = "request";
 const String prikeyArg   = "prikey";
 const String lastdaysArg = "days";
@@ -142,17 +142,12 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
           String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
           String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": 1,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
-          //print(toSendMessage);
           relays.sendMessage(toSendMessage, defaultServerUrl);
           break;
 
         case 3:
         default:
           userContinue = false;
-          //print("number of user events     : $numUserEvents");
-          //print("number of feed events    : $numFeedEvents");
-          //print("number of other events   : $numOtherEvents");
-
           String authorName = getAuthorName(userPublicKey);
           print("\nFinished fetching feed for user $userPublicKey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
           contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
@@ -164,11 +159,9 @@ Future<void> terminalMenuUi(Tree node, var contactList) async {
 
 Future<void> main(List<String> arguments) async {
     
-    final parser = ArgParser()..addOption(requestArg, abbr: 'q')
-                              ..addOption(prikeyArg, abbr:"p")
-                              ..addOption(lastdaysArg, abbr:"d")
-                              ..addOption(relayArg, abbr:"r")
-                              ..addFlag(helpArg, abbr:"h", defaultsTo: false)..allowsAnything;
+    final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(prikeyArg, abbr:"p")
+                              ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
+                              ..addFlag(helpArg, abbr:"h", defaultsTo: false);
 
     try {
       ArgResults argResults = parser.parse(arguments);
@@ -197,8 +190,6 @@ Future<void> main(List<String> arguments) async {
         sendRequest("wss://nostr-pub.wellorder.net", argResults[requestArg]);
         Future.delayed(const Duration(milliseconds: 6000), () {
             Tree node = getTree(getRecievedEvents());
-          
-            // print all the events in tree form  
             clearEvents();
             terminalMenuUi(node, []);
         });
@@ -264,8 +255,8 @@ Future<void> main(List<String> arguments) async {
           stdout.write("received $numOtherEvents other events\n");
 
           Tree node = getTree(getRecievedEvents());
-          // display the feed and then call Menu function
           clearEvents();
+          // call the mein UI function
           terminalMenuUi(node, contactList);
         });
       });

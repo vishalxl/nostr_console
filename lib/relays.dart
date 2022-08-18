@@ -96,6 +96,10 @@ class Relays {
   }    
 
   void sendRequest(String relay, String request) {
+    if(relay == "" ) {
+      if( gDebug != 0) print ("Invalid or empty relay given");
+      return;
+    }
 
     IOWebSocketChannel?  fws;
     if(relays.containsKey(relay)) {
@@ -112,7 +116,7 @@ class Relays {
                 Event e;
                 try {
                   e = Event.fromJson(d, relay);
-                  if(gDebug != 0) print("adding event to list");
+                  if(gDebug >= 2) print("adding event to list");
                   rEvents.add(e);
                 } on FormatException {
                   print( 'exception in fromJson for event');
@@ -122,7 +126,7 @@ class Relays {
               onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
         );
       } on WebSocketException {
-        print('WebSocketException exception');
+        print('WebSocketException exception for relay $relay');
         return;
       } catch(e) {
         print('exception generic $e');
@@ -130,7 +134,7 @@ class Relays {
       }
     }
 
-    //print('sending request: $request to $relay\n');
+    if(gDebug != 0) print('sending request: $request to $relay\n');
     fws?.sink.add(request);
   }
 

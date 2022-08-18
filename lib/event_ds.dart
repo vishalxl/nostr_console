@@ -25,6 +25,13 @@ const String colorEndMarker = "\x1B[0m";
 //String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
+// dummy account pubkey
+const String gDummyAccountPubkey = "Non";
+
+// By default the threads that were started in last one day are shown
+// this can be changed with 'days' command line argument
+int gNumLastDays     = 1; 
+
 // global user names from kind 0 events, mapped from public key to user name
 Map<String, String> gKindONames = {}; 
 
@@ -32,6 +39,17 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",   // bestofhn
                         "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2"   // bitcoin_bot
                       ];
+// well known disposable test private key
+const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
+const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
+String userPrivateKey = gDefaultPrivateKey;
+String userPublicKey  = gDefaultPublicKey;
+
+// name of executable
+String exename = "nostr_console";
+String version = "0.0.2";
+
+
 
 int gDebug = 0;
 
@@ -120,7 +138,7 @@ class EventData {
 
     var jsonTags = json['tags'];      
     var numTags = jsonTags.length;
-        
+
     // NIP 02: if the event is a contact list type, then populate contactList
     if(json['kind'] == 3) {
       for( int i = 0; i < numTags; i++) {
@@ -129,11 +147,13 @@ class EventData {
         String server = defaultServerUrl;
         if( n >=3 ) {
           server = tag[2].toString();
-          if( server == 'wss://nostr.rocks') {
+          if( server == 'wss://nostr.rocks' || server == "wss://nostr.bitcoiner.social") {
             server = defaultServerUrl;
           }
+          //server = defaultServerUrl;
         }
         Contact c = Contact(tag[1] as String, server, 3.toString());
+        
         contactList.add(c);
       }
     } else {
@@ -162,8 +182,12 @@ class EventData {
       }
     }
 
-    if(gDebug != 0) {
-      print("Creating EventData with content: ${json['content']}");
+    if(gDebug >= 2 ) {
+      print("----------------------------------------Creating EventData with content: ${json['content']}");
+    }
+
+    if( json['id'] == "af57a41047c339e25f2dcf46e20de883b885b22499642813954545eefc1a192c") {
+      if(gDebug > 0) print("got message: af57a41047c339e25f2dcf46e20de883b885b22499642813954545eefc1a192c");
     }
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 

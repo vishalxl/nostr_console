@@ -35,7 +35,7 @@ class Tree {
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,"Non", value.e.eventData.createdAt , 0, "Unknown parent event", [], [], [], [[]]), [""], "[json]"), [], {}, []);
+           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 0, "Unknown parent event", [], [], [], [[]]), [""], "[json]"), [], {}, []);
            dummyTopNode.addChildNode(value);
            tempWithoutParent.add(value.e.eventData.id); 
           
@@ -181,13 +181,13 @@ class Tree {
     Set temp = {};
     newEventsId.retainWhere((event) => temp.add(newEventsId));
     
-    stdout.write("\n\n\n\n\n\n---------------------------------------\nNotifications:");
+    stdout.write("\n\n\n\n\n\n---------------------------------------\nNotifications: ");
     if( newEventsId.isEmpty) {
-      stdout.write("No new replies/posts.");
+      stdout.write("No new replies/posts.\nTotal posts: ${count()}\n");
       return;
     }
-
-    stdout.write("Number of new replies/posts = ${newEventsId.length}\n");
+    // TODO call count() less
+    stdout.write("Number of new replies/posts = ${newEventsId.length}\nTotal posts: ${count()}\n");
     stdout.write("\nHere are the threads with new replies: \n\n");
 
     newEventsId.forEach((eventID) { 
@@ -256,7 +256,12 @@ class Tree {
   }
  
   int count() {
-    int totalCount = 1; // this is the top level event
+    int totalCount = 0;
+    // ignore dummy events
+    if(e.eventData.pubkey != gDummyAccountPubkey) {
+      totalCount = 1;
+    }
+
     for(int i = 0; i < children.length; i++) {
       totalCount += children[i].count(); // then add all the children
     }

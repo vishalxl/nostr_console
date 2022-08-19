@@ -37,8 +37,8 @@ int showMenu(List<String> menuOptions, String menuName) {
   }
 }
 
-String getShaId(String pubkey, int createdAt, String strTags, String content) {
-  String buf = '[0,"$pubkey",$createdAt,1,[$strTags],"$content"]';
+String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
+  String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
   var bufInBytes = utf8.encode(buf);
   var value = sha256.convert(bufInBytes);
   String id = value.toString();  
@@ -91,7 +91,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-
+    gDebug = 1;
     // at the very beginning, show the tree as it is the, and them show the options menu
     node.printTree(0, true, DateTime.now().subtract(Duration(days:gNumLastDays)));
     //gDebug = 1;
@@ -156,13 +156,18 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
             print("Cancelling post/reply.");
             break;
           }
+          String replyKind = "1";
+          if( content == "+") {
+            print("Sending a like to given post.");
+            replyKind = "7";
+          }
           String strTags = node.getTagStr(replyToId, exename);
           int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
           
-          String id = getShaId(userPublicKey, createdAt, strTags, content);
+          String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
           String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
-          String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": 1,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
+          String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
           relays.sendMessage(toSendMessage, defaultServerUrl);
           break;
 

@@ -284,6 +284,29 @@ int ascendingTimeTree(Tree a, Tree b) {
   return 1;
 }
 
+void processReactions(List<Event> events) {
+
+  for (Event event in events) {
+    if( event.eventData.kind == 7 && event.eventData.eTagsRest.isNotEmpty) {
+      if(gDebug > 1) ("Got event of type 7");
+      String reactorId  = event.eventData.pubkey;
+      String comment    = event.eventData.content;
+      int    lastEIndex = event.eventData.eTagsRest.length - 1;
+      String reactedTo  = event.eventData.eTagsRest[lastEIndex];
+      if( gReactions.containsKey(reactedTo)) {
+        List<String> temp = [reactorId, comment];
+        gReactions[reactedTo]?.add(temp);
+      } else {
+        List<List<String>> newReactorList = [];
+        List<String> temp = [reactorId, comment];
+        newReactorList.add(temp);
+        gReactions[reactedTo] = newReactorList;
+      }
+    }
+  }
+  return;
+}
+
 /*
  * @function getTree Creates a Tree out of these received List of events. 
  */
@@ -295,6 +318,13 @@ Tree getTree(List<Event> events) {
 
     // populate the global with display names which can be later used by Event print
     events.forEach( (x) => processKind0Event(x));
+
+    // process NIP 25, or event reactions by adding them to a global map
+    processReactions(events);
+
+    for(var reactedTo in gReactions.keys) {
+      //print("Got a reaction for $reactedTo. Total number of reactions = ${gReactions[reactedTo]?.length}");
+    }
 
     // remove all events other than kind 1 ( posts)
     events.removeWhere( (item) => item.eventData.kind != 1 );  

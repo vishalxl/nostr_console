@@ -35,6 +35,10 @@ int gNumLastDays     = 1;
 // global user names from kind 0 events, mapped from public key to user name
 Map<String, String> gKindONames = {}; 
 
+// global reactions entry. Mapts from <event reacted to id, List of Reactors>
+// reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment )
+Map< String, List<List<String>> > gReactions = {};
+
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",   // bestofhn
                         "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2"   // bitcoin_bot
@@ -48,8 +52,6 @@ String userPublicKey  = gDefaultPublicKey;
 // name of executable
 String exename = "nostr_console";
 String version = "0.0.2";
-
-
 
 int gDebug = 0;
 
@@ -157,7 +159,7 @@ class EventData {
         contactList.add(c);
       }
     } else {
-      if ( json['kind'] == 1) {
+      if ( json['kind'] == 1 || json['kind'] == 7) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
           //stdout.write(tag);
@@ -250,6 +252,7 @@ class EventData {
     printDepth(depth);
     String name = getAuthorName(pubkey);
     stdout.write("|Author : $name  id: ${maxN(id)}  Time: $strDate\n");
+    printReaction(depth);    // only prints if there are any likes/reactions
     printDepth(depth);
     stdout.write("|Message: ");
     if( isNotification) {
@@ -257,6 +260,24 @@ class EventData {
       isNotification = false;
     } else {
       printGreen(contentShifted, commentColor);
+    }
+  }
+
+  void printReaction(int depth) {
+    if( gReactions.containsKey(id)) {
+      String reactorNames = "|Likes  : ";
+      printDepth(depth);
+      //print("All Likes:");
+      int numReactions = gReactions[id]?.length??0;
+      List<List<String>> reactors = gReactions[id]??[];
+      for( int i = 0; i <numReactions; i++) {
+        String reactorId = reactors[i][0];
+        reactorNames += getAuthorName(reactorId);
+        if( i < numReactions -1) {
+          reactorNames += ", ";
+        }
+      }
+      print(reactorNames);
     }
   }
 

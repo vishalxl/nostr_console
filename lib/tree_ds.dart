@@ -110,11 +110,13 @@ class Tree {
     children.add(node);
   }
 
-  void printTree(int depth, bool onlyPrintChildren, var newerThan) {
+  int printTree(int depth, bool onlyPrintChildren, var newerThan) {
 
+    int numPrinted = 0;
     children.sort(ascendingTimeTree);
     if( !onlyPrintChildren) {
       e.printEvent(depth);
+      numPrinted++;
     } else {
       depth = depth - 1;
     }
@@ -147,7 +149,7 @@ class Tree {
         leftShifted = true;
       }
 
-      children[i].printTree(depth+1, false, newerThan);
+      numPrinted += children[i].printTree(depth+1, false, newerThan);
     }
 
     if( leftShifted) {
@@ -156,6 +158,12 @@ class Tree {
       print(">");
     }
 
+    if( onlyPrintChildren) {
+      print("\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
+    }
+
+
+    return numPrinted;
   }
 
   Tree getTopTree(Tree t) {
@@ -181,7 +189,7 @@ class Tree {
     Set temp = {};
     newEventsId.retainWhere((event) => temp.add(newEventsId));
     
-    stdout.write("\n\n\n\n\n\n---------------------------------------\nNotifications: ");
+    stdout.write("\n---------------------------------------\nNotifications: ");
     if( newEventsId.isEmpty) {
       stdout.write("No new replies/posts.\nTotal posts: ${count()}\n");
       return;

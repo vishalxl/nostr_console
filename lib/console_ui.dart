@@ -46,21 +46,44 @@ String getShaId(String pubkey, int createdAt, String strTags, String content) {
 }
 
 Future<void> otherMenuUi(Tree node, var contactList) async {
+  bool continueOtherMenu = true;
+  while(continueOtherMenu) {
+    print('\n\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
+    int option = showMenu([ 'Display Contact List',    // 1 
+                            'Change number of days printed',
+                            'Go back to main menu']);           // 3
+    print('You picked: $option');
+    switch(option) {
+      case 1:
+        String authorName = getAuthorName(userPublicKey);
+        print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
+        contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+        print("");
+        break;
+      case 2:
+          String? $tempNumDays = stdin.readLineSync();
+          String newNumDays = $tempNumDays??"";
 
-  print('\n\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
-  int option = showMenu([ 'Display Contact List',    // 1 
-                          'Go back']);           // 3
-  print('You picked: $option');
-  switch(option) {
-    case 1:
-      String authorName = getAuthorName(userPublicKey);
-      print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
-      contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
-      print("");
-      break;
+          try {
+            gNumLastDays =  int.parse(newNumDays);
+            print("Changed number of days printed to $gNumLastDays");
+          } on FormatException catch (e) {
+            print(e.message);
+            return;
+          } on Exception catch (e) {
+            print(e);
+            return;
+          }    
 
-    default:
-      break;
+        break;
+
+      case 3:
+        continueOtherMenu = false;
+        break;
+
+      default:
+        break;
+    }
   }
 
   return;

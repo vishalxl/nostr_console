@@ -91,7 +91,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-    gDebug = 1;
+    //gDebug = 1;
     // at the very beginning, show the tree as it is the, and them show the options menu
     node.printTree(0, true, DateTime.now().subtract(Duration(days:gNumLastDays)));
     //gDebug = 1;
@@ -142,7 +142,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
               print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
               break;
           }
-          stdout.write("Type comment to post/reply: ");
+          stdout.write("Type comment to post/reply (type just '+' to send a like): ");
           String? $contentVar = stdin.readLineSync();
           String content = $contentVar??"";
           if( content == "") {

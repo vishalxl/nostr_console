@@ -188,8 +188,8 @@ class EventData {
       print("----------------------------------------Creating EventData with content: ${json['content']}");
     }
 
-    if( json['id'] == "af57a41047c339e25f2dcf46e20de883b885b22499642813954545eefc1a192c") {
-      if(gDebug > 0) print("got message: af57a41047c339e25f2dcf46e20de883b885b22499642813954545eefc1a192c");
+    if( json['id'] == "f0cfda6c5d20de2becdf3ebf50e87a9bb1042b3fb4b7e03adefd892d46e65ba7") {
+      if(gDebug >= 1) print("got message: f0cfda6c5d20de2becdf3ebf50e87a9bb1042b3fb4b7e03adefd892d46e65ba7");
     }
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 

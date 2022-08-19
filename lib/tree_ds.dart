@@ -100,16 +100,6 @@ class Tree {
     return newEventsId;
   }
 
-  void addChild(Event child) {
-    Tree node;
-    node = Tree(child, [], {}, []);
-    children.add(node);
-  }
-
-  void addChildNode(Tree node) {
-    children.add(node);
-  }
-
   int printTree(int depth, bool onlyPrintChildren, var newerThan) {
 
     int numPrinted = 0;
@@ -164,19 +154,6 @@ class Tree {
 
 
     return numPrinted;
-  }
-
-  Tree getTopTree(Tree t) {
-
-    while( true) {
-      Tree? parent =  allChildEventsMap[ t.e.eventData.getParent()];
-      if( parent != null) {
-        t = parent;
-      } else {
-        break;
-      }
-    }
-    return t;
   }
 
   /*
@@ -275,11 +252,38 @@ class Tree {
     }
     return totalCount;
   }
+
+  void addChild(Event child) {
+    Tree node;
+    node = Tree(child, [], {}, []);
+    children.add(node);
+  }
+
+  void addChildNode(Tree node) {
+    children.add(node);
+  }
+
+  Tree getTopTree(Tree t) {
+
+    while( true) {
+      Tree? parent =  allChildEventsMap[ t.e.eventData.getParent()];
+      if( parent != null) {
+        t = parent;
+      } else {
+        break;
+      }
+    }
+    return t;
+  }
 }
 
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.e.eventData.createdAt < b.e.eventData.createdAt) {
-    return 0;
+    return -1;
+  } else {
+    if( a.e.eventData.createdAt == b.e.eventData.createdAt) {
+      return 0;
+    }
   }
   return 1;
 }

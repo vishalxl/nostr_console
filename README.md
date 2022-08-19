@@ -11,21 +11,26 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
 
   OPTIONS
 
-      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events
-                                sent. Default is a hard-coded well known private key. -p is same.
-      --relay   <relay wss url> The relay url that is used as main relay. Default is wss://nostr-relay.untethr.me . -r is same.
-      --days    <N>             The latest number of days for which events are shown. Default is 1. -d is same.
+      --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
+                                well known private key. When given, posts/replies can't be sent. Same as -p
+      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
+                                sent. Default is a hard-coded well known private key. Same as -k
+      --relay   <relay wss url> The relay url that is used as main relay. Default is wss://nostr-relay.untethr.me. Same as -r
+      --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
       --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
-                                from a relay. If not provided, then events for default or given user are shown. -q is same.
+                                from a relay. If not provided, then events for default or given user are shown. Same as -q
+  UI Options                                
       --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                 the posts or text is aligned to the center of the terminal. Same as -a 
-      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 80. 
-                                Cant be less than 60. Same as -c
+      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 120. 
+                                Cant be less than 60. Same as -w
+      --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is 2 and
+                                maximum allowed is 12. Same as -m
       --help                    Print this usage message and exit. Same as -h
-                                
+                               
 ```                                
 
-To get ALL the latest messages for last 3 days: 
+To get ALL the latest messages for last 3 days (on linux which allows backtick execution): 
 
 ```
  dart run bin/nostr_console.dart  --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`

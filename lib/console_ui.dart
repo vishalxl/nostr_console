@@ -31,9 +31,9 @@ int showMenu(List<String> menuOptions, String menuName) {
       } on Exception catch (e) {
         print(e);
       }    
-
-      print("Invalid option. Kindly try again. The valid\noptions are from 1 to ${menuOptions.length}");
     }
+    print("\nInvalid option. Kindly try again. The valid options are from 1 to ${menuOptions.length}\n");
+
   }
 }
 

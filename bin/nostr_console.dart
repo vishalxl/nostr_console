@@ -4,11 +4,8 @@ import 'package:bip340/bip340.dart';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
-
 import 'package:nostr_console/console_ui.dart';
-
 import 'package:args/args.dart';
-
 
 // program arguments
 const String pubkeyArg   = "pubkey";
@@ -19,7 +16,7 @@ const String requestArg  = "request";
 const String helpArg     = "help";
 const String alignArg    = "align"; // can be "left"
 const String widthArg    = "width";
-const String maxDepthArg    = "maxdepth";
+const String maxDepthArg = "maxdepth";
 
 void printUsage() {
 String usage = """$exename version $version
@@ -158,7 +155,6 @@ Future<void> main(List<String> arguments) async {
       stdout.write("...received ${getRecievedEvents().length} events made by the user\n");
 
       // get the latest kind 3 event for the user, which lists his 'follows' list
-      List<String> contactList = [];
       int latestContactsTime = 0, latestContactIndex = -1;
       for( int i = 0; i < getRecievedEvents().length; i++) {
         var e = getRecievedEvents()[i];
@@ -168,7 +164,8 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
-      // if contact list was found, get user's feed 
+      // if contact list was found, get user's feed, and keep the contact list for later use 
+      List<String> contactList = [];
       if (latestContactIndex != -1) {
           contactList = getContactFeed(getRecievedEvents()[latestContactIndex].eventData.contactList, 300);
       }
@@ -183,7 +180,6 @@ Future<void> main(List<String> arguments) async {
 
         // get mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(getRecievedEvents());
-
         getMultiUserEvents(defaultServerUrl, pTags, 300);
         
         stdout.write('Waiting for rest of events to come in.....');
@@ -193,8 +189,10 @@ Future<void> main(List<String> arguments) async {
           numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;
           stdout.write("received $numOtherEvents other events\n");
 
+          // get all events in Tree form
           Tree node = getTree(getRecievedEvents());
           clearEvents();
+
           // call the mein UI function
           mainMenuUi(node, contactList);
         });

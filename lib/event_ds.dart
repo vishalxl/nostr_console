@@ -2,6 +2,16 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
+// name of executable
+String exename = "nostr_console";
+String version = "0.0.3";
+
+// well known disposable test private key
+const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
+const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
+String userPrivateKey = gDefaultPrivateKey;
+String userPublicKey  = gDefaultPublicKey;
+
 const int  gMinValidTextWidth = 60; // minimum text width acceptable
 const int  gDefaultTextWidth = 120; // default text width
 int        gTextWidth = gDefaultTextWidth; // is changed by --width option
@@ -35,23 +45,15 @@ int gNumLastDays     = 1;
 // global user names from kind 0 events, mapped from public key to user name
 Map<String, String> gKindONames = {}; 
 
-// global reactions entry. Mapts from <event reacted to id, List of Reactors>
-// reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment )
+// global reactions entry. Map of form <if of event reacted to, List of Reactors>
+// reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment)
 Map< String, List<List<String>> > gReactions = {};
 
+// bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
-                        "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",   // bestofhn
+                        "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
                         "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2"   // bitcoin_bot
                       ];
-// well known disposable test private key
-const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
-const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
-String userPrivateKey = gDefaultPrivateKey;
-String userPublicKey  = gDefaultPublicKey;
-
-// name of executable
-String exename = "nostr_console";
-String version = "0.0.2";
 
 int gDebug = 0;
 
@@ -76,7 +78,6 @@ String getNumDashes(int num) {
   }
   return s;
 }
-
 
 String rightShiftContent(String s, int numSpaces) {
   String newString = "";
@@ -110,15 +111,15 @@ class Contact {
 }
 
 class EventData {
-  String id;
-  String pubkey;
-  int    createdAt;
-  int    kind;
-  String content;
-  List<String> eTagsRest;// rest of e tags
-  List<String> pTags;// list of p tags for kind:1
+  String             id;
+  String             pubkey;
+  int                createdAt;
+  int                kind;
+  String             content;
+  List<String>       eTagsRest;// rest of e tags
+  List<String>       pTags;// list of p tags for kind:1
   List<List<String>> tags;
-  bool   isNotification; // whether its to be highlighted using highlight color
+  bool               isNotification; // whether its to be highlighted using highlight color
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
@@ -134,8 +135,8 @@ class EventData {
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
 
-    List<String> eTagsRead = [];
-    List<String> pTagsRead = [];
+    List<String>       eTagsRead = [];
+    List<String>       pTagsRead = [];
     List<List<String>> tagsRead = [];
 
     var jsonTags = json['tags'];      
@@ -203,10 +204,17 @@ class EventData {
       return content;
     }
 
-    List<String> placeHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]" ];
+    // just check if there is any square bracket in comment, if not we return
+    String squareBracketStart = "[", squareBracketEnd = "]";
+    if( !content.contains(squareBracketStart) || !content.contains(squareBracketEnd) ) {
+      return content;
+    }
+
+    // replace the patterns
+    List<String> placeHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]" ];
     for(int i = 0; i < placeHolders.length; i++) {
-      int index = -1;
-      Pattern p = placeHolders[i];
+      int     index = -1;
+      Pattern p     = placeHolders[i];
       if( (index = content.indexOf(p)) != -1 ) {
         if( i >= tags.length) {
           continue;
@@ -215,12 +223,8 @@ class EventData {
         if( tags[i].isEmpty || tags[i].length < 2) {
           continue;
         }
+
         String author = getAuthorName(tags[i][1]);
-
-        //print("\n\nauthor mention: i = $i  index = $index  tags[i][1] = ${tags[i][1]} author = $author");
-        //print("tags = $tags");
-
-        //print("in expandMentions: changing content at index i = $i");
         content = "${content.substring(0, index)} @$author${content.substring(index + 4)}";
       }
     }

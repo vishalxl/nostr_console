@@ -99,7 +99,7 @@ class Relays {
                   }
                   String id = json[2]['id'] as String;
                   if( uniqueIdsRecieved.contains(id)) {
-                    if( gDebug == 0) print("In relay: received duplicate event id : $id");
+                    if( gDebug > 0) print("In relay: received duplicate event id : $id");
                     return;
                   } else {
                     uniqueIdsRecieved.add(id);

@@ -147,7 +147,7 @@ Future<void> main(List<String> arguments) async {
 
     int numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 
-    const int numWaitSeconds = 3500;
+    const int numWaitSeconds = 2500;
     stdout.write('Waiting for user events to come in.....');
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events

@@ -190,6 +190,43 @@ class Tree {
     });
   }
 
+  // Write the tree's events to file as one event's json per line
+  Future<void> writeEventsToFile(String filename) async {
+    //print("opening $filename to write to");
+    try {
+      final File file         = File(filename);
+      int        eventCounter = 0;
+      String     nLinesStr    = "";
+
+      const int  numLinesTogether = 200;
+      int        linesWritten = 0;
+      for( var k in allChildEventsMap.keys) {
+        Tree? t = allChildEventsMap[k];
+        if( t != null) {
+          String line = "${t.e.originalJson}\n";
+          nLinesStr += line;
+          eventCounter++;    
+        }
+
+        if( eventCounter % numLinesTogether == 0) {
+          await  file.writeAsString(nLinesStr, mode: FileMode.append).then( (file) => file);
+          nLinesStr = "";
+          linesWritten += numLinesTogether;
+        }
+      }
+
+      if(  eventCounter > linesWritten) {
+        await  file.writeAsString(nLinesStr, mode: FileMode.append).then( (file) => file);
+        nLinesStr = "";
+      }
+
+      int len = await file.length();
+    } on Exception catch (e) {
+      print("Could not open file $filename.");
+    }        
+    return;
+  }
+
   /*
    * @getTagsFromEvent Searches for all events, and creates a json of e-tag type which can be sent with event
    *                   Also adds 'client' tag with application name.

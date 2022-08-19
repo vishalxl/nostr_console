@@ -183,6 +183,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           print("\nFinished fetching feed for user $userPublicKey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
           contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
           stdout.write("\n");
+          //await node.writeEventsToFile("nostrConsoleEventsStore.txt");
           exit(0);
       }
     } // end while

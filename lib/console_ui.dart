@@ -7,32 +7,32 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert'; // for the utf8.encode method
 
 
-int showMenu(List<String> menuOptions) {
+int showMenu(List<String> menuOptions, String menuName) {
+  print("\n$menuName\n${getNumDashes(menuName.length)}");
+  print('Pick an option:');
   while(true) {
-    //print("in showmenu while");
     for(int i = 0; i < menuOptions.length;i++) {
       print("    ${i+1}. ${menuOptions[i]}");
     }
 
     stdout.write("Type menu option/number: ");
-
-    //print(">");
     String? userOptionInput = stdin.readLineSync();
     String userOption = userOptionInput??"";
-    //print("read option $userOption");
     if( int.tryParse(userOption) != null) {
-      int? valueOption = int.tryParse(userOption);
-      if( valueOption != null) {
-        if( valueOption < 1 || valueOption > menuOptions.length) {
-          print("Invalid option. Kindly try again.\n");
-          continue;
-        } else {
-
-          return valueOption;
+      try{
+        int? valueOption = int.tryParse(userOption);
+        if( valueOption != null) {
+          if( valueOption >= 1 && valueOption <= menuOptions.length) {
+            return valueOption;
+          }
         }
-      }
-    } else {
-      print("Invalid option. Kindly try again.\n");
+      } on FormatException catch (e) {
+        print(e.message);
+      } on Exception catch (e) {
+        print(e);
+      }    
+
+      print("Invalid option. Kindly try again. The valid\noptions are from 1 to ${menuOptions.length}");
     }
   }
 }
@@ -48,10 +48,10 @@ String getShaId(String pubkey, int createdAt, String strTags, String content) {
 Future<void> otherMenuUi(Tree node, var contactList) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
-    print('\n\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
-    int option = showMenu([ 'Display Contact List',    // 1 
-                            'Change number of days printed',
-                            'Go back to main menu']);           // 3
+    int option = showMenu([ 'Display Contact List',          // 1 
+                            'Change number of days printed', // 2
+                            'Go back to main menu'],         // 3
+                            "Other Menu");
     print('You picked: $option');
     switch(option) {
       case 1:
@@ -61,19 +61,20 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         print("");
         break;
       case 2:
-          String? $tempNumDays = stdin.readLineSync();
-          String newNumDays = $tempNumDays??"";
+        stdout.write("Enter number of days for which you want to see posts: ");
+        String? $tempNumDays = stdin.readLineSync();
+        String newNumDays = $tempNumDays??"";
 
-          try {
-            gNumLastDays =  int.parse(newNumDays);
-            print("Changed number of days printed to $gNumLastDays");
-          } on FormatException catch (e) {
-            print(e.message);
-            return;
-          } on Exception catch (e) {
-            print(e);
-            return;
-          }    
+        try {
+          gNumLastDays =  int.parse(newNumDays);
+          print("Changed number of days printed to $gNumLastDays");
+        } on FormatException catch (e) {
+          print(e.message);
+          return;
+        } on Exception catch (e) {
+          print(e);
+          return;
+        }    
 
         break;
 
@@ -118,11 +119,11 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
       await foo();
 
       // the main menu
-      print('\n\nPick an option by typing the corresponding\nnumber and then pressing <enter>:');
       int option = showMenu(['Display events',    // 1 
                              'Post/Reply',        // 2
-                             'Other Options',     //3
-                             'Quit']);            // 3
+                             'Other Options',     // 3
+                             'Quit'],             // 4
+                             "Main Menu");
       print('You picked: $option');
       switch(option) {
         case 1:

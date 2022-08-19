@@ -191,7 +191,7 @@ class Tree {
     
     stdout.write("\n---------------------------------------\nNotifications: ");
     if( newEventsId.isEmpty) {
-      stdout.write("No new replies/posts.\nTotal posts: ${count()}\n");
+      stdout.write("No new replies/posts.\nTotal posts: ${count()}\n\n");
       return;
     }
     // TODO call count() less

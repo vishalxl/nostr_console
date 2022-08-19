@@ -1,30 +1,7 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
 import 'package:web_socket_channel/io.dart';
-
-String getUserRequest(String publicKey, int numUserEvents, int sinceWhen) {
-  String strTime = "";
-  if( sinceWhen != 0) {
-    strTime = ', "since": ${sinceWhen.toString()}';
-  }
-  var    strSubscription1  = '["REQ","single_user",{ "authors": ["';
-  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + publicKey + strSubscription2;
-}
-
-String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
-  var    strSubscription1  = '["REQ","multiple_user",{ "authors": [';
-  var    strSubscription2  ='], "limit": $numUserEvents  } ]';
-  String s = "";
-
-  for(int i = 0; i < publicKeys.length; i++) {
-    s += "\"${publicKeys[i]}\"";
-    if( i < publicKeys.length - 1) {
-      s += ",";
-    } 
-  }
-  return strSubscription1 + s + strSubscription2;
-}
 
 /*
  * @class Relays Contains connections to all relays. 
@@ -32,15 +9,16 @@ String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
 class Relays {
   Map<String, IOWebSocketChannel > relays;
   List<String> users; // is used so that duplicate requests aren't sent for same user
-  List<Event>  rEvents = [];
-  Relays(this.relays, this.users, this.rEvents);
+  List<Event>  rEvents = []; // current events received. can be used by others. Is flushed between consumption
+  Set<String>  uniqueIdsRecieved = {} ; // id of events received. only for internal usage, so that duplicate events are rejected
+  Relays(this.relays, this.users, this.rEvents, this.uniqueIdsRecieved);
 
   factory Relays.relay(String relay) {
     IOWebSocketChannel  fws = IOWebSocketChannel.connect(relay);
     print('In Relay.relay: connecting to relay $relay');
     Map<String,  IOWebSocketChannel> r = {};
     r[relay] = fws;
-    return Relays(r, [], []);
+    return Relays(r, [], [], {});
   }
 
   /* 
@@ -115,12 +93,29 @@ class Relays {
               (d) {
                 Event e;
                 try {
+                  dynamic json = jsonDecode(d);
+                  if( json.length < 3) {
+                    return;
+                  }
+                  String id = json[2]['id'] as String;
+                  if( uniqueIdsRecieved.contains(id)) {
+                    if( gDebug == 0) print("In relay: received duplicate event id : $id");
+                    return;
+                  } else {
+                    uniqueIdsRecieved.add(id);
+                  }
+
                   e = Event.fromJson(d, relay);
                   if(gDebug >= 2) print("adding event to list");
+                  
                   rEvents.add(e);
                 } on FormatException {
                   print( 'exception in fromJson for event');
-                }
+                  return;
+                } catch(err) {
+                  print('exception generic $err for relay $relay');
+                  return;
+                }                
               },
               onError: (err) { print("\n${warningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
               onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
@@ -128,8 +123,8 @@ class Relays {
       } on WebSocketException {
         print('WebSocketException exception for relay $relay');
         return;
-      } catch(e) {
-        print('exception generic $e');
+      } catch(err) {
+        print('exception generic $err for relay $relay');
         return;
       }
     }
@@ -150,7 +145,18 @@ class Relays {
         fws = IOWebSocketChannel.connect(relay);
         relays[relay] = fws;
         fws.stream.listen(
-              (d) {}, //
+              (d) {
+                // need to put a processor even here, otherwise events will get ignored
+                Event e;
+                try {
+                  e = Event.fromJson(d, relay);
+                  if(gDebug >= 2) print("adding event to list");
+                  
+                  rEvents.add(e);
+                } on FormatException {
+                  print( 'exception in fromJson for event');
+                }
+              }, //
               onError: (err) { print("\n${warningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
               onDone:  () { if( gDebug != 0) print('in onDone'); }
         );
@@ -182,7 +188,31 @@ class Relays {
   }
 }
 
-Relays relays = Relays({}, [], []);
+Relays relays = Relays({}, [], [], {});
+
+String getUserRequest(String publicKey, int numUserEvents, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+  var    strSubscription1  = '["REQ","single_user",{ "authors": ["';
+  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
+  return strSubscription1 + publicKey + strSubscription2;
+}
+
+String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
+  var    strSubscription1  = '["REQ","multiple_user",{ "authors": [';
+  var    strSubscription2  ='], "limit": $numUserEvents  } ]';
+  String s = "";
+
+  for(int i = 0; i < publicKeys.length; i++) {
+    s += "\"${publicKeys[i]}\"";
+    if( i < publicKeys.length - 1) {
+      s += ",";
+    } 
+  }
+  return strSubscription1 + s + strSubscription2;
+}
 
 List<String> getContactFeed(List<Contact> contacts, numEventsToGet) {
   
@@ -212,9 +242,19 @@ void getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen) {
   relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen);
 }
 
-void getMultiUserEvents(serverUrl, publicKeys, numUserEvents) {
-  relays.getMultiUserEvents(serverUrl, publicKeys, numUserEvents);
+void getMultiUserEvents(serverUrl, List<String> publicKeys, numUserEvents) {
+  const int numMaxUserRequests = 15;
+  for( int i = 0; i < publicKeys.length; i+= numMaxUserRequests) {
+    int getUserRequests = numMaxUserRequests;
+    if( publicKeys.length - i <= numMaxUserRequests) {
+      getUserRequests = publicKeys.length - i;
+    }
+    //print("sending request form $i to ${i + getUserRequests} ");
+    List<String> partialList = publicKeys.sublist(i, i + getUserRequests);
+    relays.getMultiUserEvents(serverUrl, partialList, numUserEvents);
+  }
 }
+
 
 void sendRequest(serverUrl, request) {
   relays.sendRequest(serverUrl, request);

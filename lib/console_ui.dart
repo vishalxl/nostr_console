@@ -149,7 +149,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
             break;
           }
 
-          stdout.write("\nType initial few letters of the id of event to\nreply to (leave blank if you want to make a\nnew post; type x if you want to cancel): ");
+          stdout.write("\nType id of event to reply to (leave blank to make a new post; type x if to cancel): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";
           if( replyToId == "x") {

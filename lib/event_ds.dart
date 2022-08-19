@@ -102,12 +102,10 @@ String rightShiftContent(String s, int numSpaces) {
   return newString;
 }
 
+// The contact only stores id of contact. The actual name is stored in a global variable/map
 class Contact {
-  String id, relay, name;
-  Contact(this.id, this.relay, this.name);
-  factory Contact.fromJson(dynamic json) {
-    return Contact(json[1] as String, json[2] as String, json[3]);
-  }
+  String id, relay;
+  Contact(this.id, this.relay);
 }
 
 class EventData {
@@ -120,6 +118,7 @@ class EventData {
   List<String>       pTags;// list of p tags for kind:1
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
+  Set<String>       newLikes;    //
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
@@ -130,7 +129,7 @@ class EventData {
     return "";
   }
 
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags, this.contactList, this.tags, {this.isNotification = false});
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags, this.contactList, this.tags, this.newLikes, {this.isNotification = false});
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
@@ -155,7 +154,7 @@ class EventData {
           }
           //server = defaultServerUrl;
         }
-        Contact c = Contact(tag[1] as String, server, 3.toString());
+        Contact c = Contact(tag[1] as String, server);
         
         contactList.add(c);
       }
@@ -196,7 +195,8 @@ class EventData {
     return EventData(json['id'] as String,      json['pubkey'] as String, 
                      json['created_at'] as int, json['kind'] as int,
                      json['content'] as String, eTagsRead,        pTagsRead,
-                     contactList,               tagsRead);
+                     contactList,               tagsRead, 
+                     {});
   }
 
   String expandMentions(String content) {
@@ -235,7 +235,7 @@ class EventData {
   void printEventData(int depth) {
     int n = 3;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
-    void   printGreen(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$colorEndMarker"):stdout.write(s);
+    void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$colorEndMarker"):stdout.write(s);
 
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
     
@@ -260,10 +260,10 @@ class EventData {
     printDepth(depth);
     stdout.write("|Message: ");
     if( isNotification) {
-      printGreen(contentShifted, notificationColor);
+      printInColor(contentShifted, notificationColor);
       isNotification = false;
     } else {
-      printGreen(contentShifted, commentColor);
+      printInColor(contentShifted, commentColor);
     }
   }
 
@@ -276,12 +276,19 @@ class EventData {
       List<List<String>> reactors = gReactions[id]??[];
       for( int i = 0; i <numReactions; i++) {
         String reactorId = reactors[i][0];
-        reactorNames += getAuthorName(reactorId);
+        if( newLikes.contains(reactorId)) {
+          // colorify
+          reactorNames += notificationColor + getAuthorName(reactorId) + colorEndMarker;
+        } else {
+          reactorNames += getAuthorName(reactorId);
+        }
+        
         if( i < numReactions -1) {
           reactorNames += ", ";
         }
       }
       print(reactorNames);
+      newLikes.clear();
     }
   }
 
@@ -314,7 +321,7 @@ class Event {
     if( json.length < 3) {
       String e = "";
       e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]]), [relay], "[json]");
+      return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]");
     }
     return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
   }

@@ -69,11 +69,11 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
           gNumLastDays =  int.parse(newNumDays);
           print("Changed number of days printed to $gNumLastDays");
         } on FormatException catch (e) {
-          print(e.message);
-          return;
+          print("Invalid input. Kindly try again.");
+          continue;
         } on Exception catch (e) {
-          print(e);
-          return;
+          print("Invalid input. Kindly try again.");
+          continue;
         }    
 
         break;

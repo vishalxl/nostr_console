@@ -4,9 +4,9 @@ import 'package:nostr_console/event_ds.dart';
 class Tree {
   Event             e;
   List<Tree>        children;
-  Map<String, Tree> allEvents;
+  Map<String, Tree> allChildEventsMap;
   List<String>      eventsWithoutParent;
-  Tree(this.e, this.children, this.allEvents, this.eventsWithoutParent);
+  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent);
 
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
@@ -16,22 +16,22 @@ class Tree {
     }
 
     // create a map from list of events, key is eventId and value is event itself
-    Map<String, Tree> mAllEvents = {};
-    events.forEach((element) { mAllEvents[element.eventData.id] = Tree(element, [], {}, []); });
+    Map<String, Tree> allChildEventsMap = {};
+    events.forEach((element) { allChildEventsMap[element.eventData.id] = Tree(element, [], {}, []); });
 
     // this will become the children of the main top node. These are events without parents, which are printed at top.
     List<Tree>  topLevelTrees = [];
 
     List<String> tempWithoutParent = [];
-    mAllEvents.forEach((key, value) {
+    allChildEventsMap.forEach((key, value) {
 
       if(value.e.eventData.eTagsRest.isNotEmpty ) {
         // is not a parent, find its parent and then add this element to that parent Tree
         //stdout.write("added to parent a child\n");
         String id = key;
         String parentId = value.e.eventData.getParent();
-        if(mAllEvents.containsKey( parentId)) {
-           mAllEvents[parentId]?.addChildNode(value); // in this if condition this will get called
+        if(allChildEventsMap.containsKey( parentId)) {
+           allChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
@@ -47,7 +47,7 @@ class Tree {
     });
 
     // add parent trees as top level child trees of this tree
-    for( var value in mAllEvents.values) {
+    for( var value in allChildEventsMap.values) {
         if( !value.e.eventData.eTagsRest.isNotEmpty) {  // if its a parent
             topLevelTrees.add(value);
         }
@@ -56,7 +56,7 @@ class Tree {
     // add tempWithoutParent to topLevelTrees too
 
     if(gDebug != 0) print("number of events without parent in fromEvents = ${tempWithoutParent.length}");
-    return Tree( events[0], topLevelTrees, mAllEvents, tempWithoutParent); // TODO remove events[0]
+    return Tree( events[0], topLevelTrees, allChildEventsMap, tempWithoutParent); // TODO remove events[0]
   } // end fromEvents()
 
   /*
@@ -69,21 +69,21 @@ class Tree {
     newEvents.forEach((newEvent) { 
       // don't process if the event is already present in the map
       // this condition also excludes any duplicate events sent as newEvents
-      if( allEvents[newEvent.eventData.id] != null) {
+      if( allChildEventsMap[newEvent.eventData.id] != null) {
         return;
       }
       // only kind 1 events are handled, return otherwise
       if( newEvent.eventData.kind != 1) {
         return;
       }
-      allEvents[newEvent.eventData.id] = Tree(newEvent, [], {}, []); 
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, []); 
       newEventsId.add(newEvent.eventData.id);
     });
 
     //print("In insertEvents num eventsId: ${newEventsId.length}");
     // now go over the newly inserted event, and then find its parent, or if its a top tree
     newEventsId.forEach((newId) {
-      Tree? newTree = allEvents[newId]; // this should return true because we just inserted this event in the allEvents in block above
+      Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
       // in case the event is already present in the current collection of events (main Tree)
       if( newTree != null) {
         if( newTree.e.eventData.eTagsRest.isEmpty) {
@@ -92,7 +92,7 @@ class Tree {
         } else {
             // if it has a parent , then add the newTree as the parent's child
             String parentId = newTree.e.eventData.getParent();
-            allEvents[parentId]?.addChildNode(newTree);
+            allChildEventsMap[parentId]?.addChildNode(newTree);
         }
       }
     });
@@ -169,7 +169,7 @@ class Tree {
   Tree getTopTree(Tree t) {
 
     while( true) {
-      Tree? parent =  allEvents[ t.e.eventData.getParent()];
+      Tree? parent =  allChildEventsMap[ t.e.eventData.getParent()];
       if( parent != null) {
         t = parent;
       } else {
@@ -200,10 +200,10 @@ class Tree {
 
     newEventsId.forEach((eventID) { 
       // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
-      if( allEvents[eventID] == null) {
+      if( allChildEventsMap[eventID] == null) {
         return;
       }
-      Tree ?t = allEvents[eventID];
+      Tree ?t = allChildEventsMap[eventID];
       if( t != null) {
         t.e.eventData.isNotification = true;
         Tree topTree = getTopTree(t);
@@ -233,10 +233,10 @@ class Tree {
     // find the latest event with the given id
     int latestEventTime = 0;
     String latestEventId = "";
-    for(  String k in allEvents.keys) {
+    for(  String k in allChildEventsMap.keys) {
       if( k.substring(0, replyToId.length) == replyToId) {
-        if( ( allEvents[k]?.e.eventData.createdAt ?? 0) > latestEventTime ) {
-          latestEventTime = allEvents[k]?.e.eventData.createdAt ?? 0;
+        if( ( allChildEventsMap[k]?.e.eventData.createdAt ?? 0) > latestEventTime ) {
+          latestEventTime = allChildEventsMap[k]?.e.eventData.createdAt ?? 0;
           latestEventId = k;
         }
       }

@@ -96,9 +96,14 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
-      // can be computed only after textWidth has been found
-      gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
-      
+      try {
+        // can be computed only after textWidth has been found
+        gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
+      } on StdoutException catch (e) {
+        print("Cannot find terminal size. Left aligning by default.");
+        gNumLeftMarginSpaces = 0;
+      }
+
       // undo above if left option is given
       if( argResults[alignArg] != null ) {
         if( argResults[alignArg] == "left" ) {

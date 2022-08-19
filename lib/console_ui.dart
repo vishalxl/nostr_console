@@ -99,7 +99,13 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
     while(userContinue) {
       // align the text again in case the window size has been changed
       if( gAlignment == "center") {
-        gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
+        try {
+          // can be computed only after textWidth has been found
+          gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
+        } on StdoutException catch (e) {
+          //print("Cannot find terminal size. Left aligning by default.");
+          gNumLeftMarginSpaces = 0;
+        }
       }
 
       // need a bit of wait to give other events to execute, so do a delay, which allows
@@ -133,7 +139,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
         case 2:
           // in case the program was invoked with --pubkey, then user can't send messages
           if( userPrivateKey == "") {
-              print("Since no user private key has been supplied, messages can't sent. Invoke with --prikey \n");
+              print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
               break;
           }
           stdout.write("Type comment to post/reply: ");

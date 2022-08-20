@@ -3,6 +3,7 @@ Nostr console client using Dart
 
 # Use
 
+Easiest way to run nostr_comsole: Go to releases and get an executable for your platform.
 
 Usage: 
 

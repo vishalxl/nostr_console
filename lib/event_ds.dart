@@ -16,8 +16,8 @@ const int  gMinValidTextWidth = 60; // minimum text width acceptable
 const int  gDefaultTextWidth = 120; // default text width
 int        gTextWidth = gDefaultTextWidth; // is changed by --width option
 const int  gSpacesPerDepth = 8;     // constant
-int        gNumLeftMarginSpaces = 0; // this number is modified in main 
-String     gAlignment = "center"; // is modified in main if --align argument is given
+int        gNumLeftMarginSpaces = 0;// this number is modified in main 
+String     gAlignment = "center";   // is modified in main if --align argument is given
 const int  gapBetweenTopTrees = 1;
 
 // after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
@@ -133,7 +133,8 @@ class EventData {
     return "";
   }
 
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags, this.contactList, this.tags, this.newLikes, {this.isNotification = false});
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags,
+            this.contactList, this.tags, this.newLikes, {this.isNotification = false});
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
@@ -359,22 +360,6 @@ List<String> getpTags(List<Event> events) {
   return pTags;
 }
 
-int ascendingTime(Event a, Event b) {
-  if(a.eventData.createdAt < b.eventData.createdAt) {
-    return 0;
-  }
-  return 1;
-}
-
-void printEvents(List<Event> events) {
-    events.sort(ascendingTime);
-    for( int i = 0; i < events.length; i++) {
-      if( events[i].eventData.kind == 1) {
-        print('${events[i]}');
-      }
-    }
-}
-
 // If given event is kind 0 event, then populates gKindONames with that info
 void processKind0Event(Event e) {
   if( e.eventData.kind != 0) {
@@ -413,11 +398,10 @@ void printUserInfo(List<Event> events, String pub) {
 }
 
 List<Event> readEventsFromFile(String filename) {
-
   List<Event> events = [];
-  final File file = File(filename);
+  final File  file   = File(filename);
 
-  // sync
+  // sync read
   try {
     List<String> lines = file.readAsLinesSync();
     for( int i = 0; i < lines.length; i++ ) {
@@ -427,18 +411,6 @@ List<Event> readEventsFromFile(String filename) {
   } on Exception catch(err) {
     print("Cannot open file $gEventsFilename");
   }
-
-/*
-  while(true) {
-    try {
-      String strEvent = file.readAsStringSync();
-      //print(strEvent);
-
-    }
-    on Exception catch(e) {
-      break;
-    }
-  }*/
 
   return events;
 }

@@ -6,7 +6,6 @@ import 'package:nostr_console/relays.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert'; // for the utf8.encode method
 
-
 int showMenu(List<String> menuOptions, String menuName) {
   print("\n$menuName\n${getNumDashes(menuName.length)}");
   print('Pick an option:');
@@ -86,7 +85,6 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         break;
     }
   }
-
   return;
 }
 
@@ -170,7 +168,6 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           break;
 
         case 3:
-          //print("\n\nNot yet implemented.");
           otherMenuUi(node, contactList);
           break;
 

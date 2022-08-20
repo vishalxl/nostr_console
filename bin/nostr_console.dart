@@ -157,11 +157,9 @@ Future<void> main(List<String> arguments) async {
       List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
       
       setRelaysIntialEvents(eventsFromFile);
-      getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
+      eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
       print("read $numFileEvents posts from file \"$gEventsFilename\"");
-      //numFileEvents = getRecievedEvents().length;
     }
-
 
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,

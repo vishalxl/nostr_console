@@ -19,6 +19,8 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
       --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                 from a relay. If not provided, then events for default or given user are shown. Same as -q
+      --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
+                                to it all the events (including the ones read, and any new received). Same as -f                                
   UI Options                                
       --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                 the posts or text is aligned to the center of the terminal. Same as -a 
@@ -33,20 +35,27 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
 To get ALL the latest messages for last 3 days (on linux which allows backtick execution): 
 
 ```
- dart run bin/nostr_console.dart  --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`
- ```
+nostr_console.exe  --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`
+```
  
 To get the latest messages for user with private key K ( that is also used to sign posted/sent messages): 
  
 ```
- dart run bin/nostr_console.dart  --prikey=K
+nostr_console.exe  --prikey=K
 ```
 
 To get the latest messages for user with private key K for last 4 days ( default is 1) from relay R: 
  
- ```
- dart run bin/nostr_console.dart  --prikey=K --relay=R --days=4 
- ```
+```
+nostr_console.exe  --prikey=K --relay=R --days=4 
+```
+
+ To write events to a file ( and later read from it too), for any given private key K:
+
+```
+nostr_console.exe  --file=eventsFile.txt --prikey=K
+```
+
  
  # Screenshots
 

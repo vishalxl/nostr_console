@@ -267,3 +267,9 @@ List<Event> getRecievedEvents() {
 void clearEvents() {
   relays.rEvents = [];
 }
+
+
+void setRelaysIntialEvents(eventsFromFile) {
+  relays.rEvents = eventsFromFile;
+}
+

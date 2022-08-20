@@ -18,6 +18,7 @@ int        gTextWidth = gDefaultTextWidth; // is changed by --width option
 const int  gSpacesPerDepth = 8;     // constant
 int        gNumLeftMarginSpaces = 0; // this number is modified in main 
 String     gAlignment = "center"; // is modified in main if --align argument is given
+const int  gapBetweenTopTrees = 1;
 
 // after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
 const int  gMinimumDepthAllowed = 2;
@@ -54,6 +55,9 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
                         "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2"   // bitcoin_bot
                       ];
+
+//const String gDefaultEventsFilename = "events_store_nostr.txt";
+String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 
 int gDebug = 0;
 
@@ -194,7 +198,8 @@ class EventData {
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
                      json['created_at'] as int, json['kind'] as int,
-                     json['content'] as String, eTagsRead,        pTagsRead,
+                     json['content'].trim() as String, 
+                     eTagsRead,                 pTagsRead,
                      contactList,               tagsRead, 
                      {});
   }
@@ -317,13 +322,17 @@ class Event {
   Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson);
 
   factory Event.fromJson(String d, String relay) {
-    dynamic json = jsonDecode(d);
-    if( json.length < 3) {
-      String e = "";
-      e = json.length > 1? json[0]: "";
-      return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]");
+    try {
+      dynamic json = jsonDecode(d);
+      if( json.length < 3) {
+        String e = "";
+        e = json.length > 1? json[0]: "";
+        return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]");
+      }
+      return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
+    } on Exception catch(e) {
+      return Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]");
     }
-    return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
   }
 
   void printEvent(int depth) {
@@ -401,4 +410,35 @@ void printUserInfo(List<Event> events, String pub) {
     }
   }
   print("Number of user events for user ${getAuthorName(pub)} : $numUserEvents");
+}
+
+List<Event> readEventsFromFile(String filename) {
+
+  List<Event> events = [];
+  final File file = File(filename);
+
+  // sync
+  try {
+    List<String> lines = file.readAsLinesSync();
+    for( int i = 0; i < lines.length; i++ ) {
+          Event e = Event.fromJson(lines[i], "");
+          events.add(e);
+    }
+  } on Exception catch(err) {
+    print("Cannot open file $gEventsFilename");
+  }
+
+/*
+  while(true) {
+    try {
+      String strEvent = file.readAsStringSync();
+      //print(strEvent);
+
+    }
+    on Exception catch(e) {
+      break;
+    }
+  }*/
+
+  return events;
 }

@@ -100,10 +100,8 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
       // align the text again in case the window size has been changed
       if( gAlignment == "center") {
         try {
-          // can be computed only after textWidth has been found
           gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
         } on StdoutException catch (e) {
-          //print("Cannot find terminal size. Left aligning by default.");
           gNumLeftMarginSpaces = 0;
         }
       }
@@ -114,7 +112,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
       Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
         
         List<String> newEventsId = node.insertEvents(getRecievedEvents());
-        node.printNotifications(newEventsId);
+        node.printNotifications(newEventsId, getAuthorName(userPublicKey));
         clearEvents();
       });
 
@@ -183,7 +181,9 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           print("\nFinished fetching feed for user $userPublicKey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
           contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
           stdout.write("\n");
-          //await node.writeEventsToFile("nostrConsoleEventsStore.txt");
+          if( gEventsFilename != "") {
+            await node.writeEventsToFile(gEventsFilename);
+          }
           exit(0);
       }
     } // end while

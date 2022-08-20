@@ -8,6 +8,8 @@ class Tree {
   List<String>      eventsWithoutParent;
   Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent);
 
+  static const List<int>   typesInEventMap = [0, 1, 3, 7]; // 0 meta, 1 post, 3 follows list, 7 reactions
+
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Tree.fromEvents(List<Event> events) {
@@ -17,7 +19,12 @@ class Tree {
 
     // create a map from list of events, key is eventId and value is event itself
     Map<String, Tree> allChildEventsMap = {};
-    events.forEach((event) { allChildEventsMap[event.eventData.id] = Tree(event, [], {}, []); });
+    events.forEach((event) { 
+      // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7)
+      if( typesInEventMap.contains(event.eventData.kind)) {
+        allChildEventsMap[event.eventData.id] = Tree(event, [], {}, []); 
+      }
+    });
 
     // this will become the children of the main top node. These are events without parents, which are printed at top.
     List<Tree>  topLevelTrees = [];
@@ -25,6 +32,7 @@ class Tree {
     List<String> tempWithoutParent = [];
     allChildEventsMap.forEach((key, value) {
 
+      // only posts areadded to this tree structure
       if( value.e.eventData.kind != 1) {
         return;
       }
@@ -34,16 +42,20 @@ class Tree {
         //stdout.write("added to parent a child\n");
         String id = key;
         String parentId = value.e.eventData.getParent();
-        if( allChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
-          return;
+        if( allChildEventsMap.containsKey(parentId)) {
         }
 
         if(allChildEventsMap.containsKey( parentId)) {
-           allChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
+          if( allChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
+            print("In fromEvents: got an event whose parent is not a type 1 post: $id");
+            return;
+          }
+
+          allChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 0, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]"), [], {}, []);
+           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]"), [], {}, []);
            dummyTopNode.addChildNode(value);
            tempWithoutParent.add(value.e.eventData.id); 
           
@@ -56,12 +68,10 @@ class Tree {
 
     // add parent trees as top level child trees of this tree
     for( var value in allChildEventsMap.values) {
-        if( value.e.eventData.kind == 1 &&  value.e.eventData.eTagsRest.isEmpty) {  // if its a parent
+        if( value.e.eventData.kind == 1 &&  value.e.eventData.eTagsRest.isEmpty) {  // only posts which are parents
             topLevelTrees.add(value);
         }
     }
-
-    // add tempWithoutParent to topLevelTrees too
 
     if(gDebug != 0) print("number of events without parent in fromEvents = ${tempWithoutParent.length}");
     return Tree( events[0], topLevelTrees, allChildEventsMap, tempWithoutParent); // TODO remove events[0]
@@ -78,7 +88,7 @@ class Tree {
     newEvents.forEach((newEvent) { 
       // don't process if the event is already present in the map
       // this condition also excludes any duplicate events sent as newEvents
-      if( allChildEventsMap[newEvent.eventData.id] != null) {
+      if( allChildEventsMap.containsKey(newEvent.eventData.id)) {
         return;
       }
 
@@ -87,30 +97,28 @@ class Tree {
         String reactedTo = processReaction(newEvent);
         
         if( reactedTo != "") {
-          newEventsId.add(newEvent.eventData.id);
+          newEventsId.add(newEvent.eventData.id); // add here to process/give notification about this new reaction
           if(gDebug > 0) print("got a new reaction by: ${newEvent.eventData.id} to $reactedTo");
         } else {
           return;
         }
       }
-      // only kind 1 events are added to map, return otherwise
-      if( newEvent.eventData.kind != 1 && newEvent.eventData.kind != 7) {
+
+      // only kind 0, 1, 3, 7 events are added to map, return otherwise
+      if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
         return;
       }
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, []); 
       newEventsId.add(newEvent.eventData.id);
     });
-
     
-
-    //print("In insertEvents num eventsId: ${newEventsId.length}");
-    // now go over the newly inserted event, and then find its parent, or if its a top tree
+    // now go over the newly inserted event, and add its to the tree. only for kind 1 events
     newEventsId.forEach((newId) {
       Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
       // in case the event is already present in the current collection of events (main Tree)
       if( newTree != null) {
-        // now kind 7 events are also returned and are not added to the tree structure itself
-        if( newTree.e.eventData.kind == 7) {
+        // only kind 1 events are added to the overall tree structure
+        if( newTree.e.eventData.kind != 1) {
           return;
         }
 
@@ -132,6 +140,8 @@ class Tree {
   int printTree(int depth, bool onlyPrintChildren, var newerThan) {
 
     if( e.eventData.kind != 1) {
+      print("Warning: In print tree found non kind 1 event");
+      //e.printEvent(depth);
       return 0; // for kind 7 event or any other
     }
 
@@ -158,8 +168,9 @@ class Tree {
           continue;
         }
         stdout.write("\n");  
-        printDepth(depth+1);
-        stdout.write("\n\n\n");
+        for( int i = 0; i < gapBetweenTopTrees; i++ )  { 
+          stdout.write("\n"); 
+        }
       }
 
       // if the thread becomes too 'deep' then reset its depth, so that its 
@@ -193,24 +204,27 @@ class Tree {
    * @printNotifications Add the given events to the Tree, and print the events as notifications
    *                     It should be ensured that these are only kind 1 events
    */
-  void printNotifications(List<String> newEventsId) {
-
-    // remove duplicate
+  void printNotifications(List<String> newEventsId, String userName) {
+    // remove duplicates
     Set temp = {};
     newEventsId.retainWhere((event) => temp.add(newEventsId));
     
-    stdout.write("\n---------------------------------------\nNotifications: ");
+    String strToWrite = "Notifications: ";
     if( newEventsId.isEmpty) {
-      stdout.write("No new replies/posts.\nTotal posts: ${count()}\n\n");
+      strToWrite += "No new replies/posts.\n";
+      stdout.write("${getNumDashes(strToWrite.length - 1)}\n$strToWrite");
+      stdout.write("Total posts  : ${count()}\n");
+      stdout.write("Signed in as : $userName\n\n");
       return;
     }
     // TODO call count() less
-    stdout.write("Number of new replies/posts = ${newEventsId.length}\nTotal posts: ${count()}\n");
+    strToWrite += "Number of new replies/posts = ${newEventsId.length}\n";
+    stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
+    stdout.write("Total posts  : ${count()}\n");
+    stdout.write("Signed in as : $userName\n");
     stdout.write("\nHere are the threads with new replies or new likes: \n\n");
 
-
     List<Tree> topTrees = []; // collect all top tress to display in this list. only unique tress will be displayed
-
     newEventsId.forEach((eventID) { 
       // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
       if( allChildEventsMap[eventID] == null) {
@@ -219,39 +233,40 @@ class Tree {
 
       Tree ?t = allChildEventsMap[eventID];
       if( t != null) {
-        if( t.e.eventData.kind == 1 ) {
-          t.e.eventData.isNotification = true;
-          Tree topTree = getTopTree(t);
-          topTrees.add(topTree);
-        } else {
-          //t.e.eventData.newLikes = ;
-          Event event = t.e;
-          if(gDebug >= 0) ("Got notification of type 7");
-          String reactorId  = event.eventData.pubkey;
-          String comment    = event.eventData.content;
-          int    lastEIndex = event.eventData.eTagsRest.length - 1;
-          String reactedTo  = event.eventData.eTagsRest[lastEIndex];
-          Event? reactedToEvent = allChildEventsMap[reactedTo]?.e;
-          if( reactedToEvent != null) {
-            Tree? reactedToTree = allChildEventsMap[reactedTo];
-            if( reactedToTree != null) {
-              reactedToTree.e.eventData.newLikes.add( reactorId);
-              Tree topTree = getTopTree(reactedToTree);
-              topTrees.add(topTree);
-            }
-          }
+        switch(t.e.eventData.kind) {
+          case 1:
+            t.e.eventData.isNotification = true;
+            Tree topTree = getTopTree(t);
+            topTrees.add(topTree);
+            break;
+          case 7:
+            Event event = t.e;
+            if(gDebug >= 0) ("Got notification of type 7");
+            String reactorId  = event.eventData.pubkey;
+            int    lastEIndex = event.eventData.eTagsRest.length - 1;
+            String reactedTo  = event.eventData.eTagsRest[lastEIndex];
+            Event? reactedToEvent = allChildEventsMap[reactedTo]?.e;
+            if( reactedToEvent != null) {
+              Tree? reactedToTree = allChildEventsMap[reactedTo];
+              if( reactedToTree != null) {
+                reactedToTree.e.eventData.newLikes.add( reactorId);
+                Tree topTree = getTopTree(reactedToTree);
+                topTrees.add(topTree);
+              }
+            }       
+            break;
+          default:
+          break;
         }
       }
     });
 
-    // remove identidal entries
-    // remove duplicate events
+    // remove duplicate top trees
     Set ids = {};
     topTrees.retainWhere((t) => ids.add(t.e.eventData.id));
     
     topTrees.forEach( (t) { t.printTree(0, false, 0); });
     print("\n");
-
   }
 
   // Write the tree's events to file as one event's json per line
@@ -259,17 +274,24 @@ class Tree {
     //print("opening $filename to write to");
     try {
       final File file         = File(filename);
+      
+      // empty the file
+      await  file.writeAsString("", mode: FileMode.writeOnly).then( (file) => file);
       int        eventCounter = 0;
       String     nLinesStr    = "";
+      int        countPosts   = 0;
 
-      const int  numLinesTogether = 200;
+      const int  numLinesTogether = 100; // number of lines to write in one write call
       int        linesWritten = 0;
       for( var k in allChildEventsMap.keys) {
         Tree? t = allChildEventsMap[k];
         if( t != null) {
           String line = "${t.e.originalJson}\n";
           nLinesStr += line;
-          eventCounter++;    
+          eventCounter++;
+          if( t.e.eventData.kind == 1) {
+            countPosts++;
+          }
         }
 
         if( eventCounter % numLinesTogether == 0) {
@@ -284,10 +306,12 @@ class Tree {
         nLinesStr = "";
       }
 
-      int len = await file.length();
-    } on Exception catch (e) {
+      //int len = await file.length();
+      print("\n\nWrote total $eventCounter events to file \"$gEventsFilename\" of which ${countPosts + 1} are posts.")  ; // TODO remove extra 1
+    } on Exception catch (err) {
       print("Could not open file $filename.");
-    }        
+    }      
+    
     return;
   }
 
@@ -318,11 +342,6 @@ class Tree {
           latestEventId = k;
         }
       }
-    }
-    
-    if( latestEventId.isEmpty) {
-      // search for it in the dummy event id's
-
     }
 
     //print("latestEventId = $latestEventId");
@@ -438,8 +457,8 @@ Tree getTree(List<Event> events) {
       //print("Got a reaction for $reactedTo. Total number of reactions = ${gReactions[reactedTo]?.length}");
     }
 
-    // remove all events other than kind 1, 7 and 3 ( posts)
-    events.removeWhere( (item) => item.eventData.kind != 1 && item.eventData.kind != 7 && item.eventData.kind != 3);  
+    // remove all events other than kind 0, 1, 3 and 7 
+    events.removeWhere( (item) => !Tree.typesInEventMap.contains(item.eventData.kind));  
 
     // remove bot events
     events.removeWhere( (item) => gBots.contains(item.eventData.pubkey));

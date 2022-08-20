@@ -17,6 +17,7 @@ const String helpArg     = "help";
 const String alignArg    = "align"; // can be "left"
 const String widthArg    = "width";
 const String maxDepthArg = "maxdepth";
+const String eventFileArg = "file";
 
 void printUsage() {
 String usage = """$exename version $version
@@ -34,6 +35,8 @@ usage: $exename [OPTIONS]
       --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
       --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                 from a relay. If not provided, then events for default or given user are shown. Same as -q
+      --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
+                                to it all the events (including the ones read, and any new received). Same as -f
   UI Options                                
       --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                 the posts or text is aligned to the center of the terminal. Same as -a 
@@ -52,7 +55,8 @@ Future<void> main(List<String> arguments) async {
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
-                              ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m");
+                              ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m")
+                              ..addOption(eventFileArg, abbr:"f");
 
     try {
       ArgResults argResults = parser.parse(arguments);
@@ -131,6 +135,14 @@ Future<void> main(List<String> arguments) async {
         });
         return;
       } 
+
+      if( argResults[eventFileArg] != null) {
+        gEventsFilename =  argResults[eventFileArg];
+        if( gEventsFilename != "") { 
+          print("Going to use file to read from and store events: $gEventsFilename");
+        }
+      }
+
     } on FormatException catch (e) {
       print(e.message);
       return;
@@ -139,26 +151,37 @@ Future<void> main(List<String> arguments) async {
       return;
     }    
 
+    int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
+    if( gEventsFilename != "") {
+      stdout.write('Reading events from the given file.......');
+      List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
+      
+      setRelaysIntialEvents(eventsFromFile);
+      getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
+      print("read $numFileEvents posts from file \"$gEventsFilename\"");
+      //numFileEvents = getRecievedEvents().length;
+    }
+
+
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,
     // then get the events of user-id's mentioned in p-tags of received events
     // then display them all
     getUserEvents(defaultServerUrl, userPublicKey, 1000, 0);
 
-    int numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
-
     const int numWaitSeconds = 2500;
-    stdout.write('Waiting for user events to come in.....');
+    stdout.write('Waiting for user posts to come in.....');
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
       getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
-      stdout.write("...received ${getRecievedEvents().length} events made by the user\n");
+      numUserEvents -= numFileEvents;
+      stdout.write("...received $numUserEvents posts made by the user\n");
 
       // get the latest kind 3 event for the user, which lists his 'follows' list
       int latestContactsTime = 0, latestContactIndex = -1;
       for( int i = 0; i < getRecievedEvents().length; i++) {
         var e = getRecievedEvents()[i];
-        if( e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
+        if( e.eventData.pubkey == userPublicKey && e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
           latestContactIndex = i;
           latestContactsTime = e.eventData.createdAt;
         }
@@ -170,24 +193,24 @@ Future<void> main(List<String> arguments) async {
           contactList = getContactFeed(getRecievedEvents()[latestContactIndex].eventData.contactList, 300);
       }
 
-      stdout.write('Waiting for feed to come in...............');
+      stdout.write('Waiting for feed to come in..............');
       Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
 
         // count feed events
         getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
-        numFeedEvents = numFeedEvents - numUserEvents;
-        stdout.write("received $numFeedEvents events from the follows\n");
+        numFeedEvents = numFeedEvents - numUserEvents - numFileEvents;
+        stdout.write("received $numFeedEvents posts from the follows\n");
 
         // get mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(getRecievedEvents());
         getMultiUserEvents(defaultServerUrl, pTags, 300);
         
-        stdout.write('Waiting for rest of events to come in.....');
+        stdout.write('Waiting for rest of posts to come in.....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
           // count other events
           getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
-          numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;
-          stdout.write("received $numOtherEvents other events\n");
+          numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents - numFileEvents;
+          stdout.write("received $numOtherEvents other posts\n");
 
           // get all events in Tree form
           Tree node = getTree(getRecievedEvents());

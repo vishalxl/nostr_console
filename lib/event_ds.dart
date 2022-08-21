@@ -248,7 +248,7 @@ class EventData {
     return content;
   }
 
-
+  // prints event data in the format that allows it to be shown in tree form by the Tree class
   void printEventData(int depth) {
     int n = 3;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
@@ -284,6 +284,8 @@ class EventData {
     }
   }
 
+  // looks up global map of reactions, if this event has any reactions, and then prints the reactions
+  // in appropriate color( in case one is a notification, which is stored in member variable)
   void printReaction(int depth) {
     if( gReactions.containsKey(id)) {
       String reactorNames = "|Likes  : ";
@@ -324,6 +326,7 @@ class EventData {
   }
 }
 
+// This is mostly a placeholder for EventData. TODO combine both?
 class Event {
   String event;
   String id;
@@ -396,16 +399,6 @@ String getAuthorName(String pubkey) {
   String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
   String name = gKindONames[pubkey]??max3(pubkey);
   return name;
-}
-
-void printUserInfo(List<Event> events, String pub) {
-  int numUserEvents = 0;
-  for(int i = 0; i < events.length; i++) {
-    if( events[i].eventData.pubkey == pub && events[i].eventData.kind == 1) {
-      numUserEvents++;
-    }
-  }
-  print("Number of user events for user ${getAuthorName(pub)} : $numUserEvents");
 }
 
 List<Event> readEventsFromFile(String filename) {

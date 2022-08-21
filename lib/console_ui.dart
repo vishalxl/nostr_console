@@ -36,6 +36,10 @@ int showMenu(List<String> menuOptions, String menuName) {
   }
 }
 
+String addEscapeChars(String str) {
+  return str.replaceAll("\"", "\\\"");
+}
+
 String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
   String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
   if( gDebug > 0) print("In getShaId: for buf = $buf");
@@ -90,10 +94,9 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-    gDebug = 0;
-    // at the very beginning, show the tree as it is the, and them show the options menu
+    gDebug = 1;
+    // at the very beginning, show the tree as it is, and them show the options menu
     node.printTree(0, true, DateTime.now().subtract(Duration(days:gNumLastDays)));
-    //gDebug = 1;
     bool userContinue = true;
     while(userContinue) {
       // align the text again in case the window size has been changed
@@ -145,7 +148,8 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           if( content == "") {
             break;
           }
-
+          
+          content = addEscapeChars(content);
           stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";

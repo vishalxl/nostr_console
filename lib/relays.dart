@@ -8,7 +8,7 @@ import 'package:web_socket_channel/io.dart';
  */
 class Relays {
   Map<String, IOWebSocketChannel > relays;
-  List<String> users; // is used so that duplicate requests aren't sent for same user
+  List<String> users;        // is used so that duplicate requests aren't sent for same user
   List<Event>  rEvents = []; // current events received. can be used by others. Is flushed between consumption
   Set<String>  uniqueIdsRecieved = {} ; // id of events received. only for internal usage, so that duplicate events are rejected
   Relays(this.relays, this.users, this.rEvents, this.uniqueIdsRecieved);

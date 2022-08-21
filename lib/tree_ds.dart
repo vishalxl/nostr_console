@@ -384,8 +384,8 @@ class Tree {
     children.add(node);
   }
 
+  // for any tree node, returns its top most parent
   Tree getTopTree(Tree t) {
-
     while( true) {
       Tree? parent =  allChildEventsMap[ t.e.eventData.getParent()];
       if( parent != null) {
@@ -397,33 +397,33 @@ class Tree {
     return t;
   }
 
-Tree getMostRecent(int mostRecentTime) {
-  if( children.isEmpty)   {
-    return this;
-  }
+  // returns the time of the most recent comment
+  Tree getMostRecent(int mostRecentTime) {
+    if( children.isEmpty)   {
+      return this;
+    }
 
-  if( e.eventData.createdAt > mostRecentTime) {
-    mostRecentTime = e.eventData.createdAt;
-  }
+    if( e.eventData.createdAt > mostRecentTime) {
+      mostRecentTime = e.eventData.createdAt;
+    }
 
-  int mostRecentIndex = -1;
-  for( int i = 0; i < children.length; i++) {
-    int mostRecentChild = children[i].getMostRecent(mostRecentTime).e.eventData.createdAt;
-    if( mostRecentTime <= mostRecentChild) {
-       mostRecentTime = mostRecentChild;
-       mostRecentIndex = i;
+    int mostRecentIndex = -1;
+    for( int i = 0; i < children.length; i++) {
+      int mostRecentChild = children[i].getMostRecent(mostRecentTime).e.eventData.createdAt;
+      if( mostRecentTime <= mostRecentChild) {
+        mostRecentTime = mostRecentChild;
+        mostRecentIndex = i;
+      }
+    }
+
+    if( mostRecentIndex == -1) {
+      // typically this should not happen. children can't be newer than parents 
+      return this;
+    } else {
+      return children[mostRecentIndex];
     }
   }
-
-  if( mostRecentIndex == -1) {
-    // typically this should not happen. children can't be newer than parents 
-    return this;
-  } else {
-    return children[mostRecentIndex];
-  }
-}
-
-}
+} // end Tree
 
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.e.eventData.createdAt < b.e.eventData.createdAt) {
@@ -436,7 +436,7 @@ int ascendingTimeTree(Tree a, Tree b) {
   return 1;
 }
 
-
+// sorter function that looks at the latest event in the whole tree including the/its children
 int sortTreeNewestReply(Tree a, Tree b) {
   int aMostRecent = a.getMostRecent(0).e.eventData.createdAt;
   int bMostRecent = b.getMostRecent(0).e.eventData.createdAt;
@@ -451,9 +451,9 @@ int sortTreeNewestReply(Tree a, Tree b) {
   return 1;
 }
 
-
+// for the given reaction event of kind 7, will update the global gReactions appropriately, returns 
+// the reactedTo event's id, blank if invalid reaction etc
 String processReaction(Event event) {
-
   if( event.eventData.kind == 7 && event.eventData.eTagsRest.isNotEmpty) {
     if(gDebug > 1) ("Got event of type 7");
     String reactorId  = event.eventData.pubkey;
@@ -474,8 +474,8 @@ String processReaction(Event event) {
   return "";
 }
 
+// will go over the list of events, and update the global gReactions appropriately
 void processReactions(List<Event> events) {
-
   for (Event event in events) {
     processReaction(event);
   }
@@ -496,10 +496,6 @@ Tree getTree(List<Event> events) {
 
     // process NIP 25, or event reactions by adding them to a global map
     processReactions(events);
-
-    for(var reactedTo in gReactions.keys) {
-      //print("Got a reaction for $reactedTo. Total number of reactions = ${gReactions[reactedTo]?.length}");
-    }
 
     // remove all events other than kind 0, 1, 3 and 7 
     events.removeWhere( (item) => !Tree.typesInEventMap.contains(item.eventData.kind));  

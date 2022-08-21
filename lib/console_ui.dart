@@ -38,6 +38,7 @@ int showMenu(List<String> menuOptions, String menuName) {
 
 String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
   String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
+  if( gDebug > 0) print("In getShaId: for buf = $buf");
   var bufInBytes = utf8.encode(buf);
   var value = sha256.convert(bufInBytes);
   String id = value.toString();  
@@ -89,7 +90,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-    gDebug = 1;
+    gDebug = 0;
     // at the very beginning, show the tree as it is the, and them show the options menu
     node.printTree(0, true, DateTime.now().subtract(Duration(days:gNumLastDays)));
     //gDebug = 1;
@@ -138,14 +139,14 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
               print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
               break;
           }
-          stdout.write("Type comment to post/reply (type just '+' to send a like): ");
+          stdout.write("Type comment to post/reply (type '+' to send a like): ");
           String? $contentVar = stdin.readLineSync();
           String content = $contentVar??"";
           if( content == "") {
             break;
           }
 
-          stdout.write("\nType id of event to reply to (leave blank to make a new post; type x if to cancel): ");
+          stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";
           if( replyToId == "x") {

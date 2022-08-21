@@ -184,7 +184,13 @@ Future<void> main(List<String> arguments) async {
       // if contact list was found, get user's feed, and keep the contact list for later use 
       List<String> contactList = [];
       if (contactEvent != null ) {
+        if(gDebug > 0) print("In main: found kind 3 contact list: \n ${contactEvent.originalJson}");
         contactList = getContactFeed(contactEvent.eventData.contactList, 300);
+        if( !gContactLists.containsKey(userPublicKey)) {
+          gContactLists[userPublicKey] = contactEvent.eventData.contactList;
+        }
+      } else {
+        if( gDebug > 0) print( "could not find contact list");
       }
       
       stdout.write('Waiting for feed to come in..............');

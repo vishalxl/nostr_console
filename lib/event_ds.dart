@@ -50,6 +50,11 @@ Map<String, String> gKindONames = {};
 // reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment)
 Map< String, List<List<String>> > gReactions = {};
 
+// global contact list of each user, including of the logged in user.
+// maps from pubkey of a user, to the latest contact list of that user, which is the latest kind 3 message
+// is updated as kind 3 events are received 
+Map< String, List<Contact>> gContactLists = {};
+
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
@@ -59,7 +64,7 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 //const String gDefaultEventsFilename = "events_store_nostr.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 
-int gDebug = 1;
+int gDebug = 0;
 
 void printDepth(int d) {
   for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
@@ -106,10 +111,15 @@ String rightShiftContent(String s, int numSpaces) {
   return newString;
 }
 
-// The contact only stores id of contact. The actual name is stored in a global variable/map
+// The contact only stores id and relay of contact. The actual name is stored in a global variable/map
 class Contact {
   String id, relay;
   Contact(this.id, this.relay);
+
+  @override 
+  String toString() {
+    return 'id: $id ( ${getAuthorName(id)})     relay: $relay';
+  }
 }
 
 class EventData {
@@ -434,4 +444,31 @@ Event? getContactEvent(List<Event> events, String pubkey) {
     }
 
     return null;
+}
+
+// for the user userPubkey, returns the relay of its contact contactPubkey
+String getRelayOfUser(String userPubkey, String contactPubkey) {
+
+  if(gDebug > 0) print("In getRelayOfUser: Searching relay for contact $contactPubkey" );
+
+  String relay = "";
+  if( userPubkey == "" || contactPubkey == "") {
+    return "";
+  }
+
+  if( gContactLists.containsKey(userPubkey)) {
+    List<Contact>? contacts = gContactLists[userPubkey];
+    if( contacts != null) {
+      for( int i = 0; i < contacts.length; i++) {
+        if( gDebug > 0) print(  contacts[i].toString()  );
+        if( contacts[i].id == contactPubkey) {
+          relay = contacts[i].relay;
+          if(gDebug > 0) print("In getRelayOfUser: found relay $relay for contact $contactPubkey" );
+          return relay;
+        }
+      }
+    }
+  }
+  // if not found return empty string
+  return relay;
 }

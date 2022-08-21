@@ -231,14 +231,13 @@ class Tree {
 
     List<Tree> topTrees = []; // collect all top tress to display in this list. only unique tress will be displayed
     newEventsId.forEach((eventID) { 
-      // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
-      if( allChildEventsMap[eventID] == null) {
+      
+      Tree ?t = allChildEventsMap[eventID];
+      if( t == null) {
+        // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
         if( gDebug > 0) print("In printNotifications: Could not find event $eventID in tree");
         return;
-      }
-
-      Tree ?t = allChildEventsMap[eventID];
-      if( t != null) {
+      } else {
         switch(t.e.eventData.kind) {
           case 1:
             t.e.eventData.isNotification = true;
@@ -328,14 +327,11 @@ class Tree {
    */
   String getTagStr(String replyToId, String clientName) {
     String strTags = "";
+    clientName = clientName == ""? "nostr_console": clientName; // in case its empty 
 
     if( replyToId.isEmpty) {
       strTags += '["client","$clientName"]' ;
       return strTags;
-    }
-
-    if( clientName.isEmpty) {
-      clientName = "nostr_console";
     }
 
     // find the latest event with the given id
@@ -350,19 +346,18 @@ class Tree {
       }
     }
 
-    //print("latestEventId = $latestEventId");
-    if( latestEventId.isNotEmpty) {
-      strTags =  '["e","$latestEventId"]';
-    } 
-
-    
-    if( strTags != "") {
-      strTags += ",";
-    }
-
     strTags += '["client","$clientName"]' ;
+    if( latestEventId.isNotEmpty) {
+      String? pTagPubkey = allChildEventsMap[latestEventId]?.e.eventData.pubkey;
+      if( pTagPubkey != null) {
+        strTags += ',["p","$pTagPubkey"]';
+      }
+
+      String relay = getRelayOfUser(userPublicKey, pTagPubkey??"");
+      relay = (relay == "")? defaultServerUrl: relay;
+      strTags +=  ',["e","$latestEventId","$relay"]';
+    }
     
-    //print(strTags);
     return strTags;
   }
  

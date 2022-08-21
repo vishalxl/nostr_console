@@ -51,6 +51,7 @@ usage: $exename [OPTIONS]
 }
 
 Future<void> main(List<String> arguments) async {
+    int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
     
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
@@ -125,23 +126,35 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
-      if( argResults[requestArg] != null) {
-        stdout.write("Got argument request ${argResults[requestArg]}");
-        sendRequest(defaultServerUrl, argResults[requestArg]);
-        Future.delayed(const Duration(milliseconds: 6000), () {
-            Tree node = getTree(getRecievedEvents());
-            clearEvents();
-            mainMenuUi(node, []);
-        });
-        return;
-      } 
-
       if( argResults[eventFileArg] != null) {
         gEventsFilename =  argResults[eventFileArg];
         if( gEventsFilename != "") { 
           print("Going to use file to read from and store events: $gEventsFilename");
         }
       }
+
+      if( gEventsFilename != "") {
+        stdout.write('Reading events from the given file.......');
+        List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
+        
+        setRelaysIntialEvents(eventsFromFile);
+        eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
+        print("read $numFileEvents posts from file \"$gEventsFilename\"");
+      }
+
+      if( argResults[requestArg] != null) {
+        stdout.write("Got argument request ${argResults[requestArg]}");
+        sendRequest(defaultServerUrl, argResults[requestArg]);
+        Future.delayed(const Duration(milliseconds: 6000), () {
+            List<Event> receivedEvents = getRecievedEvents();
+            // remove bots
+            receivedEvents.removeWhere((e) => gBots.contains(e.eventData.pubkey));
+            Tree node = getTree(getRecievedEvents());
+            clearEvents();
+            mainMenuUi(node, []);
+        });
+        return;
+      } 
 
     } on FormatException catch (e) {
       print(e.message);
@@ -150,16 +163,6 @@ Future<void> main(List<String> arguments) async {
       print(e);
       return;
     }    
-
-    int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
-    if( gEventsFilename != "") {
-      stdout.write('Reading events from the given file.......');
-      List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
-      
-      setRelaysIntialEvents(eventsFromFile);
-      eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
-      print("read $numFileEvents posts from file \"$gEventsFilename\"");
-    }
 
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,
@@ -176,21 +179,14 @@ Future<void> main(List<String> arguments) async {
       stdout.write("...received $numUserEvents posts made by the user\n");
 
       // get the latest kind 3 event for the user, which lists his 'follows' list
-      int latestContactsTime = 0, latestContactIndex = -1;
-      for( int i = 0; i < getRecievedEvents().length; i++) {
-        var e = getRecievedEvents()[i];
-        if( e.eventData.pubkey == userPublicKey && e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
-          latestContactIndex = i;
-          latestContactsTime = e.eventData.createdAt;
-        }
-      }
+      Event? contactEvent = getContactEvent(getRecievedEvents(), userPublicKey);
 
       // if contact list was found, get user's feed, and keep the contact list for later use 
       List<String> contactList = [];
-      if (latestContactIndex != -1) {
-          contactList = getContactFeed(getRecievedEvents()[latestContactIndex].eventData.contactList, 300);
+      if (contactEvent != null ) {
+        contactList = getContactFeed(contactEvent.eventData.contactList, 300);
       }
-
+      
       stdout.write('Waiting for feed to come in..............');
       Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
 

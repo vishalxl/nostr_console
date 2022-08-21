@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:nostr_console/event_ds.dart';
 
@@ -100,8 +101,9 @@ class Tree {
         
         if( reactedTo != "") {
           newEventsId.add(newEvent.eventData.id); // add here to process/give notification about this new reaction
-          if(gDebug > 0) print("got a new reaction by: ${newEvent.eventData.id} to $reactedTo");
+          if(gDebug > 0) print("In insertEvents: got a new reaction by: ${newEvent.eventData.id} to $reactedTo");
         } else {
+          if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo");
           return;
         }
       }
@@ -117,7 +119,6 @@ class Tree {
     // now go over the newly inserted event, and add its to the tree. only for kind 1 events
     newEventsId.forEach((newId) {
       Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
-      // in case the event is already present in the current collection of events (main Tree)
       if( newTree != null) {
         // only kind 1 events are added to the overall tree structure
         if( newTree.e.eventData.kind != 1) {
@@ -136,6 +137,8 @@ class Tree {
       }
     });
 
+    if(gDebug > 0) print("In insertEvents: Found new ${newEventsId.length} events. ");
+
     return newEventsId;
   }
 
@@ -148,7 +151,7 @@ class Tree {
     }
 
     int numPrinted = 0;
-    children.sort(ascendingTimeTree);
+    children.sort(sortTreeNewestReply);
     if( !onlyPrintChildren) {
       e.printEvent(depth);
       numPrinted++;
@@ -230,6 +233,7 @@ class Tree {
     newEventsId.forEach((eventID) { 
       // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
       if( allChildEventsMap[eventID] == null) {
+        if( gDebug > 0) print("In printNotifications: Could not find event $eventID in tree");
         return;
       }
 
@@ -397,6 +401,33 @@ class Tree {
     }
     return t;
   }
+
+Tree getMostRecent(int mostRecentTime) {
+  if( children.isEmpty)   {
+    return this;
+  }
+
+  if( e.eventData.createdAt > mostRecentTime) {
+    mostRecentTime = e.eventData.createdAt;
+  }
+
+  int mostRecentIndex = -1;
+  for( int i = 0; i < children.length; i++) {
+    int mostRecentChild = children[i].getMostRecent(mostRecentTime).e.eventData.createdAt;
+    if( mostRecentTime <= mostRecentChild) {
+       mostRecentTime = mostRecentChild;
+       mostRecentIndex = i;
+    }
+  }
+
+  if( mostRecentIndex == -1) {
+    // typically this should not happen. children can't be newer than parents 
+    return this;
+  } else {
+    return children[mostRecentIndex];
+  }
+}
+
 }
 
 int ascendingTimeTree(Tree a, Tree b) {
@@ -409,6 +440,22 @@ int ascendingTimeTree(Tree a, Tree b) {
   }
   return 1;
 }
+
+
+int sortTreeNewestReply(Tree a, Tree b) {
+  int aMostRecent = a.getMostRecent(0).e.eventData.createdAt;
+  int bMostRecent = b.getMostRecent(0).e.eventData.createdAt;
+
+  if(aMostRecent < bMostRecent) {
+    return -1;
+  } else {
+    if( aMostRecent == bMostRecent) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 
 String processReaction(Event event) {
 

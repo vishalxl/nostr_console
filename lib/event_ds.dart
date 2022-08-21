@@ -59,7 +59,7 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 //const String gDefaultEventsFilename = "events_store_nostr.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 
-int gDebug = 0;
+int gDebug = 1;
 
 void printDepth(int d) {
   for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
@@ -193,8 +193,9 @@ class EventData {
       print("----------------------------------------Creating EventData with content: ${json['content']}");
     }
 
-    if( json['id'] == "f0cfda6c5d20de2becdf3ebf50e87a9bb1042b3fb4b7e03adefd892d46e65ba7") {
-      if(gDebug >= 1) print("got message: f0cfda6c5d20de2becdf3ebf50e87a9bb1042b3fb4b7e03adefd892d46e65ba7");
+    String checkEventId = "c39c03f70a88207fdecd356cbbb05b508ee28115fba03f55d6c5e852086b4ddf";
+    if( json['id'] == checkEventId) {
+      if(gDebug >= 1) print("got message: $checkEventId");
     }
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
@@ -413,4 +414,24 @@ List<Event> readEventsFromFile(String filename) {
   }
 
   return events;
+}
+
+Event? getContactEvent(List<Event> events, String pubkey) {
+
+    // get the latest kind 3 event for the user, which lists his 'follows' list
+    int latestContactsTime = 0, latestContactIndex = -1;
+    for( int i = 0; i < events.length; i++) {
+      var e = events[i];
+      if( e.eventData.pubkey == pubkey && e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
+        latestContactIndex = i;
+        latestContactsTime = e.eventData.createdAt;
+      }
+    }
+
+    // if contact list was found, get user's feed, and keep the contact list for later use 
+    if (latestContactIndex != -1) {
+      return events[latestContactIndex];
+    }
+
+    return null;
 }

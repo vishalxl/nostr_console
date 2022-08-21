@@ -74,7 +74,9 @@ class Tree {
     }
 
     if(gDebug != 0) print("number of events without parent in fromEvents = ${tempWithoutParent.length}");
-    return Tree( events[0], topLevelTrees, allChildEventsMap, tempWithoutParent); // TODO remove events[0]
+
+    Event dummy = Event("","",  EventData("non","", 0, 1, "Dummy Top event. Should not be printed.", [], [], [], [[]], {}), [""], "[json]");
+    return Tree( dummy, topLevelTrees, allChildEventsMap, tempWithoutParent); // TODO remove events[0]
   } // end fromEvents()
 
   /*
@@ -139,10 +141,10 @@ class Tree {
 
   int printTree(int depth, bool onlyPrintChildren, var newerThan) {
 
-    if( e.eventData.kind != 1) {
-      print("Warning: In print tree found non kind 1 event");
+    if( e.eventData.kind == 1) {
+      //print("Warning: In print tree found non kind 1 event");
       //e.printEvent(depth);
-      return 0; // for kind 7 event or any other
+      //return 0; // for kind 7 event or any other
     }
 
     int numPrinted = 0;

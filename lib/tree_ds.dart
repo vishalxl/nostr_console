@@ -1,13 +1,21 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:nostr_console/event_ds.dart';
+
+
+typedef fTreeSelector = bool Function(Tree a);
+
+bool selectAll(Tree t) {
+  //print("In select all");
+  return true;
+}
 
 class Tree {
   Event             e;
   List<Tree>        children;
   Map<String, Tree> allChildEventsMap;
   List<String>      eventsWithoutParent;
-  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent);
+  bool              whetherTopMost;
+  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost);
 
   static const List<int>   typesInEventMap = [0, 1, 3, 7]; // 0 meta, 1 post, 3 follows list, 7 reactions
 
@@ -15,7 +23,7 @@ class Tree {
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Tree.fromEvents(List<Event> events) {
     if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, []);
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false);
     }
 
     // create a map from list of events, key is eventId and value is event itself
@@ -23,7 +31,7 @@ class Tree {
     events.forEach((event) { 
       // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7)
       if( typesInEventMap.contains(event.eventData.kind)) {
-        allChildEventsMap[event.eventData.id] = Tree(event, [], {}, []); 
+        allChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false); 
       }
     });
 
@@ -56,7 +64,7 @@ class Tree {
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]"), [], {}, []);
+           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false);
            dummyTopNode.addChildNode(value);
            tempWithoutParent.add(value.e.eventData.id); 
           
@@ -77,7 +85,7 @@ class Tree {
     if(gDebug != 0) print("number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
     Event dummy = Event("","",  EventData("non","", 0, 1, "Dummy Top event. Should not be printed.", [], [], [], [[]], {}), [""], "[json]");
-    return Tree( dummy, topLevelTrees, allChildEventsMap, tempWithoutParent); // TODO remove events[0]
+    return Tree( dummy, topLevelTrees, allChildEventsMap, tempWithoutParent, true); // TODO remove events[0]
   } // end fromEvents()
 
   /*
@@ -112,7 +120,7 @@ class Tree {
       if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
         return;
       }
-      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, []); 
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false); 
       newEventsId.add(newEvent.eventData.id);
     });
     
@@ -142,17 +150,17 @@ class Tree {
     return newEventsId;
   }
 
-  int printTree(int depth, bool onlyPrintChildren, var newerThan) {
 
-    if( e.eventData.kind == 1) {
-      //print("Warning: In print tree found non kind 1 event");
-      //e.printEvent(depth);
-      //return 0; // for kind 7 event or any other
+  int printTree(int depth, var newerThan, fTreeSelector treeSelector) {
+
+    if(  !treeSelector(this) & !whetherTopMost ) {
+      return 0;
     }
 
     int numPrinted = 0;
     children.sort(sortTreeNewestReply);
-    if( !onlyPrintChildren) {
+
+    if( !whetherTopMost) {
       e.printEvent(depth);
       numPrinted++;
     } else {
@@ -161,7 +169,12 @@ class Tree {
 
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
-      if(!onlyPrintChildren) {
+      // continue if this children isn't going to get printed anyway
+      if( !treeSelector(children[i])) {
+        continue;
+      }
+
+      if(!whetherTopMost) {
         stdout.write("\n");  
         printDepth(depth+1);
         stdout.write("|\n");
@@ -188,7 +201,7 @@ class Tree {
         leftShifted = true;
       }
 
-      numPrinted += children[i].printTree(depth+1, false, newerThan);
+      numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
     }
 
     if( leftShifted) {
@@ -197,7 +210,7 @@ class Tree {
       print(">");
     }
 
-    if( onlyPrintChildren) {
+    if( whetherTopMost) {
       print("\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
     }
 
@@ -270,7 +283,7 @@ class Tree {
     Set ids = {};
     topTrees.retainWhere((t) => ids.add(t.e.eventData.id));
     
-    topTrees.forEach( (t) { t.printTree(0, false, 0); });
+    topTrees.forEach( (t) { t.printTree(0, 0, selectAll); });
     print("\n");
   }
 
@@ -376,7 +389,7 @@ class Tree {
 
   void addChild(Event child) {
     Tree node;
-    node = Tree(child, [], {}, []);
+    node = Tree(child, [], {}, [], false);
     children.add(node);
   }
 
@@ -423,6 +436,25 @@ class Tree {
       return children[mostRecentIndex];
     }
   }
+
+  // returns true if the treee or its children has a post by user
+  bool hasUserPost(String pubkey) {
+    //print("in has userpost for $pubkey");
+    if( e.eventData.pubkey == pubkey) {
+      //print("in has userpost for $pubkey returning true for event id ${e.eventData.id}");
+      return true;
+    }
+
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].hasUserPost(pubkey)) {
+        return true;
+      }
+    }
+
+    //print("in has userpost for $pubkey returning false");
+    return false;
+  } 
+
 } // end Tree
 
 int ascendingTimeTree(Tree a, Tree b) {
@@ -488,7 +520,7 @@ void processReactions(List<Event> events) {
 Tree getTree(List<Event> events) {
     if( events.isEmpty) {
       print("Warning: In printEventsAsTree: events length = 0");
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, []);
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true);
     }
 
     // populate the global with display names which can be later used by Event print
@@ -513,3 +545,4 @@ Tree getTree(List<Event> events) {
     if(gDebug != 0) print("total number of events in main tree = ${node.count()}");
     return node;
 }
+

@@ -9,8 +9,8 @@ EventData exampleEdataChild = EventData("id2", "pubkey", 1111111, 1, "content ch
 Event exampleEvent = Event('event', 'id3', exampleEdata, ['relay name'], "[json]");
 Event exampleEventChild = Event('event', 'id4', exampleEdataChild, ['relay name'], "[json]");
 
-Tree exampleNode = Tree(exampleEvent, [], {}, []);
-Tree exampleNodeChild = Tree(exampleEventChild, [], {}, []);
+Tree exampleNode = Tree(exampleEvent, [], {}, [], false);
+Tree exampleNodeChild = Tree(exampleEventChild, [], {}, [], false);
 
 void main() {
   test('PrintEmptyEvent', () {
@@ -26,7 +26,7 @@ void main() {
     node.addChildNode(childNode);
     node.addChildNode(childNode);
   
-    node.printTree(0, false, DateTime.now().subtract(Duration(days:1)));
+    node.printTree(0, DateTime.now().subtract(Duration(days:1)), selectAll);
   });
 
   test('createNodeTree_ordered', () {
@@ -38,7 +38,7 @@ void main() {
     List<Event> listEvents = [exampleEvent1, exampleEvent2, exampleEvent3];
 
     Tree node = Tree.fromEvents(listEvents);
-    node.printTree(0, true, DateTime.now().subtract(Duration(days:1000)));
+    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectAll);
     print("=========================");
   });
 
@@ -51,7 +51,7 @@ void main() {
     List<Event> listEvents = [ exampleEvent3, exampleEvent2,  exampleEvent1];
 
     Tree node = Tree.fromEvents(listEvents);
-    node.printTree(0, true, DateTime.now().subtract(Duration(days:1000))); // will test for ~1000 days
+    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectAll); // will test for ~1000 days
   });
 
 

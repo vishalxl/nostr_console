@@ -465,3 +465,21 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
   // if not found return empty string
   return relay;
 }
+
+// returns full public key of given username ( or first few letters of id) 
+Set<String> getPublicKeyFromName(String userName) {
+  Set<String> pubkeys = {};
+
+
+  gKindONames.forEach((key, value) {
+    if( userName == value) {
+      pubkeys.add(key);
+    }
+
+    if( key.substring(0, userName.length) == userName) {
+      pubkeys.add(key);
+    }
+  });
+
+  return pubkeys;
+}

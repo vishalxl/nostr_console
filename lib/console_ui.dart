@@ -54,7 +54,8 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   while(continueOtherMenu) {
     int option = showMenu([ 'Display Contact List',          // 1 
                             'Change number of days printed', // 2
-                            'Go back to main menu'],         // 3
+                            'Show tweets from a user',       // 3
+                            'Go back to main menu'],         // 4
                             "Other Menu");
     print('You picked: $option');
     switch(option) {
@@ -83,6 +84,30 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         break;
 
       case 3:
+        stdout.write("Enter username or first few letters of user's public key: ");
+        String? $tempUserName = stdin.readLineSync();
+        String userName = $tempUserName??"";
+        if( userName != "") {
+          Set<String> pubkey = getPublicKeyFromName(userName); 
+          print("In main: got ${ pubkey.length} public keys from the given name");
+          print(pubkey);
+          if( pubkey.length > 1) {
+            if( pubkey.length > 1) {
+              print("Got multiple users with the same name. Try again, and kindly enter a more unique name or id-prefix");
+            }
+          } else {
+            if (pubkey.isEmpty ) {
+              print("Could not find the user with that id or username.");
+            } 
+            else {
+              String pk = pubkey.first;
+              bool onlyUser (Tree t) => t.hasUserPost(pk);
+              node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUser);
+            }
+          }
+        }
+        break;
+      case 4:
         continueOtherMenu = false;
         break;
 
@@ -96,7 +121,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 Future<void> mainMenuUi(Tree node, var contactList) async {
     gDebug = 1;
     // at the very beginning, show the tree as it is, and them show the options menu
-    node.printTree(0, true, DateTime.now().subtract(Duration(days:gNumLastDays)));
+    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
     bool userContinue = true;
     while(userContinue) {
       // align the text again in case the window size has been changed
@@ -133,7 +158,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
       print('You picked: $option');
       switch(option) {
         case 1:
-          node.printTree(0, true, DateTime.now().subtract(Duration(days:gNumLastDays)));
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
           break;
 
         case 2:
@@ -148,7 +173,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           if( content == "") {
             break;
           }
-          
+
           content = addEscapeChars(content);
           stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
           String? $replyToVar = stdin.readLineSync();

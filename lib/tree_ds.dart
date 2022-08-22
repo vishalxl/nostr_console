@@ -347,7 +347,8 @@ class Tree {
     int latestEventTime = 0;
     String latestEventId = "";
     for(  String k in allChildEventsMap.keys) {
-      if( k.substring(0, replyToId.length) == replyToId) {
+      //print("$k $replyToId");
+      if( k.length >= replyToId.length && k.substring(0, replyToId.length) == replyToId) {
         if( ( allChildEventsMap[k]?.e.eventData.createdAt ?? 0) > latestEventTime ) {
           latestEventTime = allChildEventsMap[k]?.e.eventData.createdAt ?? 0;
           latestEventId = k;

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:translator/translator.dart';
 
 // name of executable
 String exename = "nostr_console";
@@ -64,6 +65,12 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 //const String gDefaultEventsFilename = "events_store_nostr.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 
+// translate for this number of days
+const int gTranslateForDays = 2;
+
+final translator = GoogleTranslator();
+
+
 int gDebug = 0;
 
 void printDepth(int d) {
@@ -111,6 +118,40 @@ String rightShiftContent(String s, int numSpaces) {
   return newString;
 }
 
+bool nonEnglish(String str) {
+  bool result = false;
+  return result;
+}
+
+bool isNumeric(String s) {
+ return double.tryParse(s) != null;
+}
+
+extension StringX on String {
+  isLatinAlphabet({caseSensitive = false}) {
+    if( length < 4) {
+      return true;
+    }
+
+    int countLatinletters = 0;
+    for (int i = 0; i < length; i++) {
+      final target = caseSensitive ? this[i] : this[i].toLowerCase();
+      if ( (target.codeUnitAt(0) > 96 && target.codeUnitAt(0) < 123)  || ( isNumeric(target) )) {
+        countLatinletters++; 
+      }
+
+    }
+
+    if( gDebug > 0) print("in isLatinAlphabet: latin letters: $countLatinletters and total = $length ");
+    if( countLatinletters < ( 40.0/100 ) * length ) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+}    
+
+
 // The contact only stores id and relay of contact. The actual name is stored in a global variable/map
 class Contact {
   String id, relay;
@@ -132,7 +173,8 @@ class EventData {
   List<String>       pTags;// list of p tags for kind:1
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
-  Set<String>       newLikes;    //
+  String             evaluatedContent; // content which has mentions expanded, and which has been translated
+  Set<String>        newLikes;    //
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
   
@@ -144,7 +186,7 @@ class EventData {
   }
 
   EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags,
-            this.contactList, this.tags, this.newLikes, {this.isNotification = false});
+            this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = ""});
   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
@@ -248,6 +290,33 @@ class EventData {
     return content;
   }
 
+  void translateAndExpandMentions() {
+    if (content == "") {
+      return;
+    }
+
+    if( evaluatedContent == "") {
+      evaluatedContent = expandMentions(content);
+      if(  !evaluatedContent.isLatinAlphabet()) {
+        if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
+        //final input = "Здравствуйте. Ты в порядке?";
+
+        // Using the Future API
+        if( DateTime.fromMillisecondsSinceEpoch(createdAt *1000).compareTo( DateTime.now().subtract(Duration(days:gTranslateForDays)) ) > 0 ) {
+          if( gDebug > 0) print("Sending google request: translating $content");
+          try {
+          translator
+              .translate(content, to: 'en')
+              .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("In google translate then")}, 
+                     onError : (error, stackTrace) =>  "error in google translate");
+          } on Exception catch(err) {
+            if( gDebug > 0) print("Error in trying to use google translate: $err");
+          }
+        }
+      }
+    }
+  }
+
   // prints event data in the format that allows it to be shown in tree form by the Tree class
   void printEventData(int depth) {
     int n = 3;
@@ -264,9 +333,8 @@ class EventData {
     if( createdAt == 0) {
       print("debug: createdAt == 0 for event $content");
     }
-
-    content = expandMentions(content);
-    String contentShifted = rightShiftContent(content, gSpacesPerDepth * depth + 10);
+   
+    String contentShifted = rightShiftContent(evaluatedContent==""?content: evaluatedContent, gSpacesPerDepth * depth + 10);
     
     printDepth(depth);
     stdout.write("+-------+\n");
@@ -469,7 +537,6 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
 // returns full public key of given username ( or first few letters of id) 
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
-
 
   gKindONames.forEach((key, value) {
     if( userName == value) {

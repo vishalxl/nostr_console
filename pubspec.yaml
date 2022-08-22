@@ -18,4 +18,5 @@ dependencies:
   cli_menu: ^0.3.0-nullsafety.0
   crypto: ^3.0.2
   intl: ^0.17.0
+  translator: ^0.1.7
   web_socket_channel: ^2.2.0

@@ -176,7 +176,9 @@ class Tree {
         stdout.write("|\n");
       } else {
 
-        DateTime dTime = DateTime.fromMillisecondsSinceEpoch(children[i].e.eventData.createdAt *1000);
+
+        Tree newestChild = children[i].getMostRecent(0);
+        DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChild.e.eventData.createdAt *1000);
         //print("comparing $newerThan with $dTime");
         if( dTime.compareTo(newerThan) < 0) {
           continue;
@@ -544,6 +546,9 @@ Tree getTree(List<Event> events) {
     // remove duplicate events
     Set ids = {};
     events.retainWhere((x) => ids.add(x.eventData.id));
+
+    // translate and expand mentions for all
+    events.forEach( (e) => e.eventData.translateAndExpandMentions());
 
     // create tree from events
     Tree node = Tree.fromEvents(events);

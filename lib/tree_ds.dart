@@ -153,10 +153,6 @@ class Tree {
 
   int printTree(int depth, var newerThan, fTreeSelector treeSelector) {
 
-    if(  !treeSelector(this) & !whetherTopMost ) {
-      return 0;
-    }
-
     int numPrinted = 0;
     children.sort(sortTreeNewestReply);
 

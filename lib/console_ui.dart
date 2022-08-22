@@ -130,7 +130,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-    gDebug = 1;
+    gDebug = 0;
     // at the very beginning, show the tree as it is, and them show the options menu
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
     bool userContinue = true;

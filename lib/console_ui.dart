@@ -55,7 +55,8 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
     int option = showMenu([ 'Display Contact List',          // 1 
                             'Change number of days printed', // 2
                             'Show tweets from a user',       // 3
-                            'Go back to main menu'],         // 4
+                            'Show tweets containg word',     // 4
+                            'Go back to main menu'],         // 5
                             "Other Menu");
     print('You picked: $option');
     switch(option) {
@@ -108,6 +109,16 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         }
         break;
       case 4:
+        stdout.write("Enter word(s) to search: ");
+        String? $tempWords = stdin.readLineSync();
+        String words = $tempWords??"";
+        if( words != "") {
+          bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords);
+        }
+        break;
+
+      case 5:
         continueOtherMenu = false;
         break;
 

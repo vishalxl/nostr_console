@@ -439,21 +439,30 @@ class Tree {
 
   // returns true if the treee or its children has a post by user
   bool hasUserPost(String pubkey) {
-    //print("in has userpost for $pubkey");
     if( e.eventData.pubkey == pubkey) {
-      //print("in has userpost for $pubkey returning true for event id ${e.eventData.id}");
       return true;
     }
-
     for( int i = 0; i < children.length; i++ ) {
       if( children[i].hasUserPost(pubkey)) {
         return true;
       }
     }
-
-    //print("in has userpost for $pubkey returning false");
     return false;
   } 
+
+  // returns true if the given words exists in it or its children
+  bool hasWords(String word) {
+    if( e.eventData.content.toLowerCase().contains(word)) {
+      return true;
+    }
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].e.eventData.content.toLowerCase().contains(word)) {
+        return true;
+      }
+    }
+    return false;
+  } 
+
 
 } // end Tree
 

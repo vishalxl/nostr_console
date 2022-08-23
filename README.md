@@ -10,6 +10,7 @@ Otherwise do following:
 2. git clone this repository
 3. From the project folder, run command ```dart pub get``` which gets all the dependencies
 4. Run command ```dart run bin/nostr_console.dart```, which will run it with default settings. 
+5. Further you can create an executable for your platform by  ```dart compile exe bin/nostr_console.dart``` which will create an executable for your platform. You can invoke that exe with required parameters. On Windows, you can create a shortcut to it with your desired command line arguments mentioned in it.
 
 Usage: 
 

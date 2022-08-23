@@ -201,6 +201,9 @@ class Tree {
       }
 
       numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
+      if( whetherTopMost && gDebug != 0) { 
+        print(children[i].getMostRecent(0).e.eventData.createdAt);
+      }
       //if( gDebug > 0) print("at end for loop iteraion: numPrinted = $numPrinted");
     }
 
@@ -455,7 +458,7 @@ class Tree {
     }
 
     if( mostRecentIndex == -1) {
-      // typically this should not happen. children can't be newer than parents 
+      // typically this should not happen. child nodes/events can't be older than parents 
       return this;
     } else {
       return children[mostRecentIndex];
@@ -474,6 +477,34 @@ class Tree {
     }
     return false;
   } 
+
+  // returns true if the treee or its children has a post by user
+  bool hasUserPostAndLike(String pubkey) {
+    bool hasReacted = false;
+
+    if( gReactions.containsKey(e.eventData.id))  {
+      List<List<String>>? reactions = gReactions[e.eventData.id];
+      if( reactions  != null) {
+        for( int i = 0; i < reactions.length; i++) {
+          if( reactions[i][0] == pubkey) {
+            hasReacted = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if( e.eventData.pubkey == pubkey || hasReacted ) {
+      return true;
+    }
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].hasUserPost(pubkey)) {
+        return true;
+      }
+    }
+    return false;
+  } 
+
 
   // returns true if the given words exists in it or its children
   bool hasWords(String word) {
@@ -500,7 +531,29 @@ class Tree {
     return false;
   } 
 
+  Event? getContactEvent(String pkey) {
 
+      // get the latest kind 3 event for the user, which lists his 'follows' list
+      int latestContactsTime = 0;
+      String latestContactEvent = "";
+
+      allChildEventsMap.forEach((key, value) {
+        if( value.e.eventData.pubkey == pkey && value.e.eventData.kind == 3 && latestContactsTime < value.e.eventData.createdAt) {
+          latestContactEvent = value.e.eventData.id;
+          latestContactsTime = value.e.eventData.createdAt;
+        }
+      });
+
+      // if contact list was found, get user's feed, and keep the contact list for later use 
+      if (latestContactEvent != "") {
+        if( gDebug > 0) {
+          print("latest pubkey : $latestContactEvent");
+        }
+        return allChildEventsMap[latestContactEvent]?.e;
+      }
+
+      return null;
+  }
 } // end Tree
 
 int ascendingTimeTree(Tree a, Tree b) {

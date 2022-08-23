@@ -54,7 +54,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   while(continueOtherMenu) {
     int option = showMenu([ 'Display Contact List',          // 1 
                             'Change number of days printed', // 2
-                            'Show tweets from a user',       // 3
+                            'Show a user profile',           // 3
                             'Show tweets containg word',     // 4
                             'Go back to main menu'],         // 5
                             "Other Menu");
@@ -102,8 +102,21 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
             } 
             else {
               String pk = pubkey.first;
-              bool onlyUser (Tree t) => t.hasUserPost(pk);
-              node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUser);
+              //bool onlyUser (Tree t) => t.hasUserPost(pk);
+              bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(pk);
+              node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
+              
+              // get the latest kind 3 event for the user, which lists his 'follows' list
+              Event? contactEvent = node.getContactEvent(pubkey.first);
+
+              // if contact list was found, get user's feed, and keep the contact list for later use 
+              String authorName = getAuthorName(pubkey.first);
+              List<String> contactList = [];
+              print("\nShowing the profile page for ${pubkey.first} ($authorName), whose contact list has ${ (contactEvent?.eventData.contactList.length)??0} profiles.\n ");
+              if (contactEvent != null ) {
+                contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
+              }
+              print("");
             }
           }
         }
@@ -114,7 +127,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         String words = $tempWords??"";
         if( words != "") {
           bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
-          node.printTree(0, DateTime.now().subtract(Duration(days:1000)), onlyWords); // search all the trees, hence 1000 days
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
         }
         break;
 
@@ -130,7 +143,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-    gDebug = 1;
+    gDebug = 0;
     // at the very beginning, show the tree as it is, and them show the options menu
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
     bool userContinue = true;

@@ -56,7 +56,8 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
                             'Change number of days printed', // 2
                             'Show a user profile',           // 3
                             'Show tweets containg word',     // 4
-                            'Go back to main menu'],         // 5
+                            'Chat rooms',                    // 5
+                            'Go back to main menu'],         // 6
                             "Other Menu");
     print('You picked: $option');
     switch(option) {
@@ -132,6 +133,10 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         break;
 
       case 5:
+        node.showChatRooms();
+        break;
+
+      case 6:
         continueOtherMenu = false;
         break;
 

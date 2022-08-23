@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
 
 
@@ -15,23 +16,25 @@ class Tree {
   Map<String, Tree> allChildEventsMap;
   List<String>      eventsWithoutParent;
   bool              whetherTopMost;
-  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost);
+  Map<String, ChatRoom> chatRooms = {};
+  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost, this.chatRooms);
 
-  static const List<int>   typesInEventMap = [0, 1, 3, 7]; // 0 meta, 1 post, 3 follows list, 7 reactions
+  static const List<int>   typesInEventMap = [0, 1, 3, 7, 40, 42]; // 0 meta, 1 post, 3 follows list, 7 reactions
 
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Tree.fromEvents(List<Event> events) {
     if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false);
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false, {});
     }
 
     // create a map from list of events, key is eventId and value is event itself
     Map<String, Tree> allChildEventsMap = {};
     events.forEach((event) { 
-      // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7)
+      // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
+      if( event.eventData.kind == 40 || event.eventData.kind == 42) if( gDebug > 0)  print("in from Events: got a kind 40/42 event of id ${event.eventData.id} and kind ${event.eventData.kind}" );
       if( typesInEventMap.contains(event.eventData.kind)) {
-        allChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false); 
+        allChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
       }
     });
 
@@ -39,10 +42,49 @@ class Tree {
     List<Tree>  topLevelTrees = [];
 
     List<String> tempWithoutParent = [];
-    allChildEventsMap.forEach((key, value) {
+    Map<String, ChatRoom> rooms = {};
 
-      // only posts areadded to this tree structure
-      if( value.e.eventData.kind != 1) {
+    allChildEventsMap.forEach((key, value) {
+      String eId = value.e.eventData.id;
+      int    eKind = value.e.eventData.kind;
+      if(eKind == 42) {
+        String chatRoomId = value.e.eventData.getChatRoomId();
+        if( chatRoomId != "") {
+          if( rooms.containsKey(chatRoomId)) {
+            rooms[chatRoomId]?.insertMessage(eId);
+            if( gDebug > 0) print("Added new message to a chat room $chatRoomId. ");
+          } else {
+            List<String> temp = [];
+            temp.add(eId);
+            ChatRoom room = ChatRoom(chatRoomId, "", "", "", temp);
+            rooms[chatRoomId] = room;
+            if( gDebug > 0) print("Added new chat room object $chatRoomId and added message to it. ");
+          }
+        } else {
+          if( gDebug > 0) print("Could not get chat room id for event $eId, its original json: ");
+          if( gDebug > 0) print(value.e.originalJson);
+        }
+      }
+
+      if(eKind == 40) {
+        String chatRoomId = eId;
+        if( rooms.containsKey(chatRoomId)) {
+          if( rooms[chatRoomId]?.name == "") {
+            dynamic json = jsonDecode(value.e.eventData.content);
+            if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
+            rooms[chatRoomId]?.name = json['name'];
+          }
+        } else {
+          List<String> temp = [];
+          temp.add(eId);
+          ChatRoom room = ChatRoom(chatRoomId, "", "", "", temp);
+          rooms[chatRoomId] = room;
+          if( gDebug > 0) print("Added new chat room $chatRoomId.");
+        }
+      }
+
+      // only posts, of kind 1, are added to the main tree structure
+      if( eKind != 1) {
         return;
       }
 
@@ -64,7 +106,10 @@ class Tree {
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Tree dummyTopNode = Tree(Event("","",EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false);
+           Tree dummyTopNode = Tree(Event("","",
+                                          EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}),
+                                                    [""], "[json]"), 
+                                    [], {}, [], false, {});
            dummyTopNode.addChildNode(value);
            tempWithoutParent.add(value.e.eventData.id); 
           
@@ -82,10 +127,12 @@ class Tree {
         }
     }
 
+    if( gDebug != 0) print("at end of tree from events: Total number of chat rooms: ${rooms.length}");
     if(gDebug != 0) print("number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
+    // create a dummy top level tree and then create the main Tree object
     Event dummy = Event("","",  EventData("non","", 0, 1, "Dummy Top event. Should not be printed.", [], [], [], [[]], {}), [""], "[json]");
-    return Tree( dummy, topLevelTrees, allChildEventsMap, tempWithoutParent, true); // TODO remove events[0]
+    return Tree( dummy, topLevelTrees, allChildEventsMap, tempWithoutParent, true, rooms);
   } // end fromEvents()
 
   /*
@@ -125,7 +172,7 @@ class Tree {
       newEvent.eventData.translateAndExpandMentions();
 
       if( gDebug > 0) print("In insertEvents: adding event to main children map");
-      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false); 
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {}); 
       newEventsId.add(newEvent.eventData.id);
     });
     
@@ -317,6 +364,27 @@ class Tree {
     print("\n");
   }
 
+  void showChatRooms() {
+    print("\n\nChat Rooms:");
+    printChatRoomInfo();
+  }
+
+  void printChatRoomInfo() {
+    chatRooms.forEach((key, value) {
+      String name = "";
+      if( value.name == "") {
+        name = value.chatRoomId;
+      } else {
+        name = value.name;
+      }
+      int numMessages = value.messageIds.length;
+
+      print("-----------$name---------");
+      print("Total number of messages: $numMessages");
+      print("\n\n");
+    });
+  }
+
   // Write the tree's events to file as one event's json per line
   Future<void> writeEventsToFile(String filename) async {
     //print("opening $filename to write to");
@@ -420,7 +488,7 @@ class Tree {
 
   void addChild(Event child) {
     Tree node;
-    node = Tree(child, [], {}, [], false);
+    node = Tree(child, [], {}, [], false, {});
     children.add(node);
   }
 
@@ -622,7 +690,7 @@ void processReactions(List<Event> events) {
 Tree getTree(List<Event> events) {
     if( events.isEmpty) {
       print("Warning: In printEventsAsTree: events length = 0");
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true);
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true, {});
     }
 
     // populate the global with display names which can be later used by Event print
@@ -631,7 +699,7 @@ Tree getTree(List<Event> events) {
     // process NIP 25, or event reactions by adding them to a global map
     processReactions(events);
 
-    // remove all events other than kind 0, 1, 3 and 7 
+    // remove all events other than kind 0, 1, 3, 7  and 40 (chat rooms)
     events.removeWhere( (item) => !Tree.typesInEventMap.contains(item.eventData.kind));  
 
     // remove bot events

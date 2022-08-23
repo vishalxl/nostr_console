@@ -34,10 +34,6 @@ const String notificationColor = "\x1b[36m"; // cyan
 const String warningColor = "\x1B[31m"; // red
 const String colorEndMarker = "\x1B[0m";
 
-// translate flag
-const int gNumTranslateDays = 4;
-bool gTranslate = false;
-
 //String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
@@ -60,6 +56,9 @@ Map< String, List<List<String>> > gReactions = {};
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
 
+// chat rooms , mappint from chat room kind 40 event to its information as list where even = key, odd = value
+Map<String, List<String>> gChatRooms = {};
+
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
@@ -70,11 +69,9 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 //const String gDefaultEventsFilename = "events_store_nostr.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 
-// translate for this number of days
-const int gTranslateForDays = 2;
-
 final translator = GoogleTranslator();
-
+const int gNumTranslateDays = 4;// translate for this number of days
+bool gTranslate = false; // translate flag
 
 int gDebug = 0;
 
@@ -221,7 +218,7 @@ class EventData {
         contactList.add(c);
       }
     } else {
-      if ( json['kind'] == 1 || json['kind'] == 7) {
+      if ( json['kind'] == 1 || json['kind'] == 7 || json['kind'] == 42 ) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
           //stdout.write(tag);
@@ -307,7 +304,7 @@ class EventData {
         //final input = "Здравствуйте. Ты в порядке?";
 
         // Using the Future API
-        if( DateTime.fromMillisecondsSinceEpoch(createdAt *1000).compareTo( DateTime.now().subtract(Duration(days:gTranslateForDays)) ) > 0 ) {
+        if( DateTime.fromMillisecondsSinceEpoch(createdAt *1000).compareTo( DateTime.now().subtract(Duration(days:gNumTranslateDays)) ) > 0 ) {
           if( gDebug > 0) print("Sending google request: translating $content");
           try {
           translator
@@ -320,6 +317,19 @@ class EventData {
         }
       }
     }
+  }
+
+  // only applicable for kind 42 event
+  String getChatRoomId() {
+    if( kind != 42) {
+      return "";
+    }
+    for(int i = 0; i < tags.length; i++) {
+      if( tags[i][0] == "#e") {
+        return tags[i][1];
+      }
+    }
+    return "";
   }
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
@@ -434,6 +444,19 @@ class Event {
   }
 }
 
+class ChatRoom {
+  String       chatRoomId; // id of the kind 40 start event
+  String       name; 
+  String       about;
+  String       picture;
+  List<String> messageIds;  // all the 42 kind events in this
+
+  ChatRoom(this.chatRoomId, this.name, this.about, this.picture, this.messageIds);
+  void insertMessage(String msg) {
+    messageIds.add(msg);
+  }
+ }
+
 List<String> getpTags(List<Event> events) {
   List<String> pTags = [];
   for(int i = 0; i < events.length; i++) {
@@ -492,6 +515,7 @@ List<Event> readEventsFromFile(String filename) {
   return events;
 }
 
+// From the list of events provided, lookup the lastst contact information for the given user/pubkey
 Event? getContactEvent(List<Event> events, String pubkey) {
 
     // get the latest kind 3 event for the user, which lists his 'follows' list

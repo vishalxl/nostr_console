@@ -1,6 +1,6 @@
 name: nostr_console
 description: A nostr client built for terminal/console.
-version: 0.0.4
+version: 0.0.5
 homepage: https://github.com/vishalxl/nostr_console
 
 environment:

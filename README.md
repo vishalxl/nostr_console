@@ -5,6 +5,12 @@ Nostr console client using Dart
 
 Easiest way to run nostr_comsole: Go to releases and get an executable for your platform.
 
+Otherwise do following:
+1. Install [Flutter](https://docs.flutter.dev/get-started/install) SDK, or [Dart](https://dart.dev/get-dart) SDK
+2. git clone this repository
+3. From the project folder, run command ```dart pub get``` which gets all the dependencies
+4. Run command ```dart run bin/nostr_console.dart```, which will run it with default settings. 
+
 Usage: 
 
 ```
@@ -21,7 +27,10 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                 from a relay. If not provided, then events for default or given user are shown. Same as -q
       --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
-                                to it all the events (including the ones read, and any new received). Same as -f                                
+                                to it all the events (including the ones read, and any new received). Same as -f
+      --translate               This flag, if present, will make the application translate some of the recent posts using
+                                google translate. Same as -t
+
   UI Options                                
       --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                 the posts or text is aligned to the center of the terminal. Same as -a 

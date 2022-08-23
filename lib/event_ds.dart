@@ -5,7 +5,7 @@ import 'package:translator/translator.dart';
 
 // name of executable
 String exename = "nostr_console";
-String version = "0.0.3";
+String version = "0.0.5";
 
 // well known disposable test private key
 const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";

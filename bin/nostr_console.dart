@@ -18,6 +18,7 @@ const String alignArg    = "align"; // can be "left"
 const String widthArg    = "width";
 const String maxDepthArg = "maxdepth";
 const String eventFileArg = "file";
+const String translateArg = "translate";
 
 void printUsage() {
 String usage = """$exename version $version
@@ -37,6 +38,8 @@ usage: $exename [OPTIONS]
                                 from a relay. If not provided, then events for default or given user are shown. Same as -q
       --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
                                 to it all the events (including the ones read, and any new received). Same as -f
+      --translate               This flag, if present, will make the application translate some of the recent posts using
+                                google translate. Save as -t
   UI Options                                
       --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                 the posts or text is aligned to the center of the terminal. Same as -a 
@@ -57,13 +60,18 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
                               ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m")
-                              ..addOption(eventFileArg, abbr:"f");
+                              ..addOption(eventFileArg, abbr:"f")..addFlag(translateArg, abbr: "t", defaultsTo: false);
 
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
         printUsage();
         return;
+      }
+
+      if( argResults[translateArg]) {
+        gTranslate = true;
+        print("Going to translate comments in last $gNumTranslateDays days using Google translate service");
       }
 
       if( argResults[pubkeyArg] != null) {

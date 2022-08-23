@@ -120,6 +120,11 @@ class Tree {
       if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
         return;
       }
+
+      // expand mentions ( and translate if flag is set)
+      newEvent.eventData.translateAndExpandMentions();
+
+      if( gDebug > 0) print("In insertEvents: adding event to main children map");
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false); 
       newEventsId.add(newEvent.eventData.id);
     });
@@ -230,14 +235,10 @@ class Tree {
     Set temp = {};
     newEventsId.retainWhere((event) => temp.add(newEventsId));
     
-    (allChildEventsMap[""]?.e.eventData.id??-1) == 7 || (allChildEventsMap[""]?.e.eventData.id??-1) == 1;
-
     String strToWrite = "Notifications: ";
     int count17 = 0;
-    //newEventsId.forEach((element) {  (allChildEventsMap[element]?.e.eventData.id??-1) == 7 || (allChildEventsMap[element]?.e.eventData.id??-1) == 1 ? count17++:count17; });
     for( int i =0 ; i < newEventsId.length; i++) {
       if( (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1) == 7 || (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1) == 1) {
-
         count17++;
       }
 
@@ -248,7 +249,9 @@ class Tree {
       }
 
     }
-    if(gDebug > 0) print("Info: In printNotifications: newEventsId len = $newEventsId count17 = $count17");
+    // TODO don't print notifications for events that are too old
+
+    if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventsId count17 = $count17");
     
     if( count17 == 0) {
       strToWrite += "No new replies/posts.\n";

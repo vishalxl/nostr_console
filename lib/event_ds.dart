@@ -34,6 +34,10 @@ const String notificationColor = "\x1b[36m"; // cyan
 const String warningColor = "\x1B[31m"; // red
 const String colorEndMarker = "\x1B[0m";
 
+// translate flag
+const int gNumTranslateDays = 4;
+bool gTranslate = false;
+
 //String defaultServerUrl = 'wss://relay.damus.io';
 String defaultServerUrl = 'wss://nostr-relay.untethr.me';
 
@@ -298,7 +302,7 @@ class EventData {
 
     if( evaluatedContent == "") {
       evaluatedContent = expandMentions(content);
-      if(  !evaluatedContent.isLatinAlphabet()) {
+      if( gTranslate && !evaluatedContent.isLatinAlphabet()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
         //final input = "Здравствуйте. Ты в порядке?";
 

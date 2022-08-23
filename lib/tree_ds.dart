@@ -219,7 +219,7 @@ class Tree {
     }
 
     if( whetherTopMost) {
-      print("\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
+      print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
     }
 
 

@@ -166,6 +166,7 @@ class Tree {
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
       // continue if this children isn't going to get printed anyway
+      //if( gDebug > 0) print("going to call tree selector");
       if( !treeSelector(children[i])) {
         continue;
       }
@@ -200,6 +201,7 @@ class Tree {
       }
 
       numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
+      //if( gDebug > 0) print("at end for loop iteraion: numPrinted = $numPrinted");
     }
 
     if( leftShifted) {
@@ -225,8 +227,27 @@ class Tree {
     Set temp = {};
     newEventsId.retainWhere((event) => temp.add(newEventsId));
     
+    (allChildEventsMap[""]?.e.eventData.id??-1) == 7 || (allChildEventsMap[""]?.e.eventData.id??-1) == 1;
+
     String strToWrite = "Notifications: ";
-    if( newEventsId.isEmpty) {
+    int count17 = 0;
+    //newEventsId.forEach((element) {  (allChildEventsMap[element]?.e.eventData.id??-1) == 7 || (allChildEventsMap[element]?.e.eventData.id??-1) == 1 ? count17++:count17; });
+    for( int i =0 ; i < newEventsId.length; i++) {
+      if( (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1) == 7 || (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1) == 1) {
+
+        count17++;
+      }
+
+      if(  allChildEventsMap.containsKey(newEventsId[i])) {
+        if( gDebug > 0) print( "id = ${ (allChildEventsMap[newEventsId[i]]?.e.eventData.id??-1)}");
+      } else {
+        if( gDebug > 0) print( "could not find event id in map");
+      }
+
+    }
+    if(gDebug > 0) print("Info: In printNotifications: newEventsId len = $newEventsId count17 = $count17");
+    
+    if( count17 == 0) {
       strToWrite += "No new replies/posts.\n";
       stdout.write("${getNumDashes(strToWrite.length - 1)}\n$strToWrite");
       stdout.write("Total posts  : ${count()}\n");
@@ -239,7 +260,7 @@ class Tree {
     stdout.write("Total posts  : ${count()}\n");
     stdout.write("Signed in as : $userName\n");
     stdout.write("\nHere are the threads with new replies or new likes: \n\n");
-
+    
     List<Tree> topTrees = []; // collect all top tress to display in this list. only unique tress will be displayed
     newEventsId.forEach((eventID) { 
       
@@ -268,11 +289,16 @@ class Tree {
                 reactedToTree.e.eventData.newLikes.add( reactorId);
                 Tree topTree = getTopTree(reactedToTree);
                 topTrees.add(topTree);
+              } else {
+                if(gDebug > 0) print("Could not find reactedTo tree");
               }
-            }       
+            } else {
+              if(gDebug > 0) print("Could not find reactedTo event");
+            }
             break;
           default:
-          break;
+            if(gDebug > 0) print("got an event thats not 1 or 7(reaction). its id = ${t.e.eventData.kind} count17 = $count17");
+            break;
         }
       }
     });
@@ -451,10 +477,22 @@ class Tree {
 
   // returns true if the given words exists in it or its children
   bool hasWords(String word) {
+    //if(gDebug > 0) print("In tree selector hasWords: this id = ${e.eventData.id} word = $word");
+    if( e.eventData.content.length > 1000) {
+      return false;
+    }
+
     if( e.eventData.content.toLowerCase().contains(word)) {
       return true;
     }
     for( int i = 0; i < children.length; i++ ) {
+      //if(gDebug > 0) print("this id = ${e.eventData.id} word = $word i = $i ");
+      
+      // ignore too large comments
+      if( children[i].e.eventData.content.length > 1000) {
+        continue;
+      }
+
       if( children[i].e.eventData.content.toLowerCase().contains(word)) {
         return true;
       }

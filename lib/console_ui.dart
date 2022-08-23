@@ -114,7 +114,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         String words = $tempWords??"";
         if( words != "") {
           bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords);
+          node.printTree(0, DateTime.now().subtract(Duration(days:1000)), onlyWords); // search all the trees, hence 1000 days
         }
         break;
 
@@ -130,7 +130,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-    gDebug = 0;
+    gDebug = 1;
     // at the very beginning, show the tree as it is, and them show the options menu
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
     bool userContinue = true;

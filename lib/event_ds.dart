@@ -59,7 +59,8 @@ Map< String, List<Contact>> gContactLists = {};
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
-                        "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2"   // bitcoin_bot
+                        "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2",  // bitcoin_bot
+                        "105dfb7467b6286f573cae17146c55133d0dcc8d65e5239844214412218a6c36"   // zerohedge
                       ];
 
 //const String gDefaultEventsFilename = "events_store_nostr.txt";
@@ -307,7 +308,7 @@ class EventData {
           try {
           translator
               .translate(content, to: 'en')
-              .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("In google translate then")}, 
+              .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")}, 
                      onError : (error, stackTrace) =>  "error in google translate");
           } on Exception catch(err) {
             if( gDebug > 0) print("Error in trying to use google translate: $err");
@@ -524,7 +525,7 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
         if( gDebug > 0) print(  contacts[i].toString()  );
         if( contacts[i].id == contactPubkey) {
           relay = contacts[i].relay;
-          if(gDebug > 0) print("In getRelayOfUser: found relay $relay for contact $contactPubkey" );
+          //if(gDebug > 0) print("In getRelayOfUser: found relay $relay for contact $contactPubkey" );
           return relay;
         }
       }

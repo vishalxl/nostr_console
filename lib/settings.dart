@@ -1,7 +1,7 @@
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.0.5";
+const String version = "0.0.6";
 
 // well known disposable test private key
 const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";

@@ -419,6 +419,15 @@ class Tree {
   }
 
   void printChannel(ChatRoom room)  {
+    String displayName = room.chatRoomId;
+    if( room.name != "") {
+      displayName = "${room.name} ( ${displayName.substring(0, 6)} )";
+    }
+
+    int lenDashes = 10;
+    String str = getNumSpaces(gNumLeftMarginSpaces + 10) + getNumDashes(lenDashes) + displayName + getNumDashes(lenDashes);
+    print(" ${getNumSpaces(gNumLeftMarginSpaces + displayName.length~/2 + 4)}In Channel");
+    print("\n$str\n");
 
       for(int i = 0; i < room.messageIds.length; i++) {
         String eId = room.messageIds[i];
@@ -430,10 +439,9 @@ class Tree {
       }
   }
 
-
   // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
   String showChannel(String channelId) {
-
+    
     for( String key in chatRooms.keys) {
       if( key.substring(0, channelId.length) == channelId ) {
         ChatRoom? room = chatRooms[key];
@@ -451,7 +459,6 @@ class Tree {
           if( room.name.length < channelId.length) {
             continue;
           }
-
           print("room = ${room.name} channelId = $channelId");
           if( room.name.substring(0, channelId.length) == channelId ) {
             printChannel(room);

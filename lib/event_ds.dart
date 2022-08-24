@@ -2,69 +2,14 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:translator/translator.dart';
+import 'package:crypto/crypto.dart';
+import 'package:nostr_console/settings.dart';
 
-// name of executable
-String exename = "nostr_console";
-String version = "0.0.5";
-
-// well known disposable test private key
-const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
-const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
-String userPrivateKey = gDefaultPrivateKey;
-String userPublicKey  = gDefaultPublicKey;
-
-const int  gMinValidTextWidth = 60; // minimum text width acceptable
-const int  gDefaultTextWidth = 120; // default text width
-int        gTextWidth = gDefaultTextWidth; // is changed by --width option
-const int  gSpacesPerDepth = 8;     // constant
-int        gNumLeftMarginSpaces = 0;// this number is modified in main 
-String     gAlignment = "center";   // is modified in main if --align argument is given
-const int  gapBetweenTopTrees = 1;
-
-// after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
-const int  gMinimumDepthAllowed = 2;
-const int  gMaximumDepthAllowed  = 12;
-const int  gDefaultMaxDepth     = 4;
-int        maxDepthAllowed      = gDefaultMaxDepth;
-const int  leftShiftThreadsBy   = 2;
-
-// 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
-const String commentColor = "\x1B[32m"; // green
-const String notificationColor = "\x1b[36m"; // cyan
-const String warningColor = "\x1B[31m"; // red
-const String colorEndMarker = "\x1B[0m";
-
-//String defaultServerUrl = 'wss://relay.damus.io';
-String defaultServerUrl = 'wss://nostr-relay.untethr.me';
-
-// dummy account pubkey
-const String gDummyAccountPubkey = "Non";
-
-// By default the threads that were started in last one day are shown
-// this can be changed with 'days' command line argument
-int gNumLastDays     = 1; 
-
-// global user names from kind 0 events, mapped from public key to user name
-Map<String, String> gKindONames = {}; 
-
-// global reactions entry. Map of form <if of event reacted to, List of Reactors>
-// reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment)
-Map< String, List<List<String>> > gReactions = {};
 
 // global contact list of each user, including of the logged in user.
 // maps from pubkey of a user, to the latest contact list of that user, which is the latest kind 3 message
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
-
-// bots ignored to reduce spam
-List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
-                        "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
-                        "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2",  // bitcoin_bot
-                        "105dfb7467b6286f573cae17146c55133d0dcc8d65e5239844214412218a6c36"   // zerohedge
-                      ];
-
-//const String gDefaultEventsFilename = "events_store_nostr.txt";
-String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 
 final translator = GoogleTranslator();
 const int gNumTranslateDays = 4;// translate for this number of days
@@ -128,7 +73,7 @@ bool isNumeric(String s) {
 
 extension StringX on String {
   isLatinAlphabet({caseSensitive = false}) {
-    if( length < 4) {
+    if( length < 6) { // since smaller words can be smileys can should not be translated
       return true;
     }
 
@@ -160,6 +105,19 @@ class Contact {
   String toString() {
     return 'id: $id ( ${getAuthorName(id)})     relay: $relay';
   }
+}
+
+String addEscapeChars(String str) {
+  return str.replaceAll("\"", "\\\"");
+}
+
+String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
+  String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
+  if( gDebug > 0) print("In getShaId: for buf = $buf");
+  var bufInBytes = utf8.encode(buf);
+  var value = sha256.convert(bufInBytes);
+  String id = value.toString();  
+  return id;
 }
 
 class EventData {
@@ -244,9 +202,9 @@ class EventData {
       print("----------------------------------------Creating EventData with content: ${json['content']}");
     }
 
-    String checkEventId = "c39c03f70a88207fdecd356cbbb05b508ee28115fba03f55d6c5e852086b4ddf";
+    String checkEventId = "078e89dcd3c2bde3d26648fae73411aafced5f3096c4d292169affab747276a8";
     if( json['id'] == checkEventId) {
-      if(gDebug >= 1) print("got message: $checkEventId");
+      if(gDebug > 0) print("got message: $checkEventId");
     }
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
@@ -306,10 +264,11 @@ class EventData {
           try {
           translator
               .translate(content, to: 'en')
-              .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")}, 
-                     onError : (error, stackTrace) =>  "error in google translate");
+              .catchError( (error, stackTrace) =>   null )
+              .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} 
+                     );
           } on Exception catch(err) {
-            if( gDebug > 0) print("Error in trying to use google translate: $err");
+            if( gDebug >= 0) print("Info: Error in trying to use google translate: $err");
           }
         }
       }
@@ -542,7 +501,7 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
     List<Contact>? contacts = gContactLists[userPubkey];
     if( contacts != null) {
       for( int i = 0; i < contacts.length; i++) {
-        if( gDebug > 0) print(  contacts[i].toString()  );
+        //if( gDebug > 0) print(  contacts[i].toString()  );
         if( contacts[i].id == contactPubkey) {
           relay = contacts[i].relay;
           //if(gDebug > 0) print("In getRelayOfUser: found relay $relay for contact $contactPubkey" );
@@ -555,11 +514,12 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
   return relay;
 }
 
-// returns full public key of given username ( or first few letters of id) 
+// returns full public key(s) for the given username( which can be first few letters of pubkey, or the user name)
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
   gKindONames.forEach((key, value) {
+    // check both the user name, and the pubkey to search for the user
     if( userName == value) {
       pubkeys.add(key);
     }
@@ -568,8 +528,6 @@ Set<String> getPublicKeyFromName(String userName) {
       pubkeys.add(key);
     }
   });
-
-
 
   return pubkeys;
 }

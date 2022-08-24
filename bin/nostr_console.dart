@@ -5,6 +5,7 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/console_ui.dart';
+import 'package:nostr_console/settings.dart';
 import 'package:args/args.dart';
 
 // program arguments
@@ -20,38 +21,12 @@ const String maxDepthArg = "maxdepth";
 const String eventFileArg = "file";
 const String translateArg = "translate";
 
+
 void printUsage() {
-String usage = """$exename version $version
-The nostr console client built using dart.
 
-usage: $exename [OPTIONS] 
-
-  OPTIONS
-
-      --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
-                                well known private key. When given, posts/replies can't be sent. Same as -p
-      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
-                                sent. Default is a hard-coded well known private key. Same as -k
-      --relay   <relay wss url> The relay url that is used as main relay. Default is $defaultServerUrl . Same as -r
-      --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
-      --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
-                                from a relay. If not provided, then events for default or given user are shown. Same as -q
-      --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
-                                to it all the events (including the ones read, and any new received). Same as -f
-      --translate               This flag, if present, will make the application translate some of the recent posts using
-                                google translate. Save as -t
-  UI Options                                
-      --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
-                                the posts or text is aligned to the center of the terminal. Same as -a 
-      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is $gDefaultTextWidth. 
-                                Cant be less than $gMinValidTextWidth. Same as -w
-      --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is $gMinimumDepthAllowed and
-                                maximum allowed is $gMaximumDepthAllowed. Same as -m
-      --help                    Print this usage message and exit. Same as -h
-      
-""";
-  print(usage);
+  print(gUsage);
 }
+
 
 Future<void> main(List<String> arguments) async {
     int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;

@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
-
+import 'package:nostr_console/settings.dart';
+import 'package:bip340/bip340.dart';
 
 typedef fTreeSelector = bool Function(Tree a);
 
@@ -47,6 +48,7 @@ class Tree {
     allChildEventsMap.forEach((key, value) {
       String eId = value.e.eventData.id;
       int    eKind = value.e.eventData.kind;
+
       if(eKind == 42) {
         String chatRoomId = value.e.eventData.getChatRoomId();
         if( chatRoomId != "") {
@@ -100,7 +102,7 @@ class Tree {
 
         if(allChildEventsMap.containsKey( parentId)) {
           if( allChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
-            print("In fromEvents: got an event whose parent is not a type 1 post: $id");
+            if( gDebug > 0) print("In Tree.fromEvents: got a kind 1 event whose parent is not a type 1 post: $id");
             return;
           }
 
@@ -138,7 +140,7 @@ class Tree {
   } // end fromEvents()
 
   /*
-   * @insertEvents inserts the given new events into the tree, and returns the id the ones actually inserted
+   * @insertEvents inserts the given new events into the tree, and returns the id the ones actually inserted so that they can be printed as notifications
    */
   List<String> insertEvents(List<Event> newEvents) {
 
@@ -165,7 +167,7 @@ class Tree {
         }
       }
 
-      // only kind 0, 1, 3, 7 events are added to map, return otherwise
+      // only kind 0, 1, 3, 7, 40, 42 events are added to map, return otherwise
       if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
         return;
       }
@@ -174,7 +176,7 @@ class Tree {
       newEvent.eventData.translateAndExpandMentions();
 
       if( gDebug > 0) print("In insertEvents: adding event to main children map");
-      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {}); 
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {});
       newEventsId.add(newEvent.eventData.id);
     });
     
@@ -182,19 +184,35 @@ class Tree {
     newEventsId.forEach((newId) {
       Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
       if( newTree != null) {
-        // only kind 1 events are added to the overall tree structure
-        if( newTree.e.eventData.kind != 1) {
-          return;
-        }
 
-        // kind 1 events are added to the tree structure
-        if( newTree.e.eventData.eTagsRest.isEmpty) {
-            // if its a is a new parent event, then add it to the main top parents ( this.children)
-            children.add(newTree);
-        } else {
-            // if it has a parent , then add the newTree as the parent's child
-            String parentId = newTree.e.eventData.getParent();
-            allChildEventsMap[parentId]?.addChildNode(newTree);
+        switch(newTree.e.eventData.kind) {
+          case 1:
+            // only kind 1 events are added to the overall tree structure
+            if( newTree.e.eventData.eTagsRest.isEmpty) {
+                // if its a is a new parent event, then add it to the main top parents ( this.children)
+                children.add(newTree);
+            } else {
+                // if it has a parent , then add the newTree as the parent's child
+                String parentId = newTree.e.eventData.getParent();
+                allChildEventsMap[parentId]?.addChildNode(newTree);
+            }
+            break;
+
+          case 42:
+            // add 42 chat message event id to its chat room
+            String channelId = newTree.e.eventData.getParent();
+            if( channelId != "") {
+              if( chatRooms.containsKey(channelId)) {
+                print("added event to chat room in insert event");
+                chatRooms[channelId]?.messageIds.add(newTree.e.eventData.id);
+              }
+            } else {
+              print("error: in insert events, could not find parent/channel id");
+            }
+            
+            break;
+          default: 
+            break;
         }
       }
     });
@@ -204,6 +222,97 @@ class Tree {
     return newEventsId;
   }
 
+  /*
+   * @printNotifications Add the given events to the Tree, and print the events as notifications
+   *                     It should be ensured that these are only kind 1 events
+   */
+  void printNotifications(List<String> newEventsId, String userName) {
+    // remove duplicates
+    Set temp = {};
+    newEventsId.retainWhere((event) => temp.add(newEventsId));
+    
+    String strToWrite = "Notifications: ";
+    int countNotificationEvents = 0;
+    for( int i =0 ; i < newEventsId.length; i++) {
+      int k = (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1);
+      if( k == 7 || k == 1 || k == 42 || k == 40) {
+        countNotificationEvents++;
+      }
+
+      if(  allChildEventsMap.containsKey(newEventsId[i])) {
+        if( gDebug > 0) print( "id = ${ (allChildEventsMap[newEventsId[i]]?.e.eventData.id??-1)}");
+      } else {
+        if( gDebug > 0) print( "Info: could not find event id in map."); // this wont later be processed
+      }
+
+    }
+    // TODO don't print notifications for events that are too old
+
+    if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventsId count17 = $countNotificationEvents");
+    
+    if( countNotificationEvents == 0) {
+      strToWrite += "No new replies/posts.\n";
+      stdout.write("${getNumDashes(strToWrite.length - 1)}\n$strToWrite");
+      stdout.write("Total posts  : ${count()}\n");
+      stdout.write("Signed in as : $userName\n\n");
+      return;
+    }
+    // TODO call count() less
+    strToWrite += "Number of new replies/posts = ${newEventsId.length}\n";
+    stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
+    stdout.write("Total posts  : ${count()}\n");
+    stdout.write("Signed in as : $userName\n");
+    stdout.write("\nHere are the threads with new replies or new likes: \n\n");
+    
+    List<Tree> topTrees = []; // collect all top tress to display in this list. only unique tress will be displayed
+    newEventsId.forEach((eventID) { 
+      
+      Tree ?t = allChildEventsMap[eventID];
+      if( t == null) {
+        // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
+        if( gDebug > 0) print("In printNotifications: Could not find event $eventID in tree");
+        return;
+      } else {
+        switch(t.e.eventData.kind) {
+          case 1:
+            t.e.eventData.isNotification = true;
+            Tree topTree = getTopTree(t);
+            topTrees.add(topTree);
+            break;
+          case 7:
+            Event event = t.e;
+            if(gDebug >= 0) ("Got notification of type 7");
+            String reactorId  = event.eventData.pubkey;
+            int    lastEIndex = event.eventData.eTagsRest.length - 1;
+            String reactedTo  = event.eventData.eTagsRest[lastEIndex];
+            Event? reactedToEvent = allChildEventsMap[reactedTo]?.e;
+            if( reactedToEvent != null) {
+              Tree? reactedToTree = allChildEventsMap[reactedTo];
+              if( reactedToTree != null) {
+                reactedToTree.e.eventData.newLikes.add( reactorId);
+                Tree topTree = getTopTree(reactedToTree);
+                topTrees.add(topTree);
+              } else {
+                if(gDebug > 0) print("Could not find reactedTo tree");
+              }
+            } else {
+              if(gDebug > 0) print("Could not find reactedTo event");
+            }
+            break;
+          default:
+            if(gDebug > 0) print("got an event thats not 1 or 7(reaction). its id = ${t.e.eventData.kind} count17 = $countNotificationEvents");
+            break;
+        }
+      }
+    });
+
+    // remove duplicate top trees
+    Set ids = {};
+    topTrees.retainWhere((t) => ids.add(t.e.eventData.id));
+    
+    topTrees.forEach( (t) { t.printTree(0, 0, selectAll); });
+    print("\n");
+  }
 
   int printTree(int depth, var newerThan, fTreeSelector treeSelector) {
 
@@ -275,97 +384,6 @@ class Tree {
     return numPrinted;
   }
 
-  /*
-   * @printNotifications Add the given events to the Tree, and print the events as notifications
-   *                     It should be ensured that these are only kind 1 events
-   */
-  void printNotifications(List<String> newEventsId, String userName) {
-    // remove duplicates
-    Set temp = {};
-    newEventsId.retainWhere((event) => temp.add(newEventsId));
-    
-    String strToWrite = "Notifications: ";
-    int count17 = 0;
-    for( int i =0 ; i < newEventsId.length; i++) {
-      if( (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1) == 7 || (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1) == 1) {
-        count17++;
-      }
-
-      if(  allChildEventsMap.containsKey(newEventsId[i])) {
-        if( gDebug > 0) print( "id = ${ (allChildEventsMap[newEventsId[i]]?.e.eventData.id??-1)}");
-      } else {
-        if( gDebug > 0) print( "could not find event id in map");
-      }
-
-    }
-    // TODO don't print notifications for events that are too old
-
-    if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventsId count17 = $count17");
-    
-    if( count17 == 0) {
-      strToWrite += "No new replies/posts.\n";
-      stdout.write("${getNumDashes(strToWrite.length - 1)}\n$strToWrite");
-      stdout.write("Total posts  : ${count()}\n");
-      stdout.write("Signed in as : $userName\n\n");
-      return;
-    }
-    // TODO call count() less
-    strToWrite += "Number of new replies/posts = ${newEventsId.length}\n";
-    stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
-    stdout.write("Total posts  : ${count()}\n");
-    stdout.write("Signed in as : $userName\n");
-    stdout.write("\nHere are the threads with new replies or new likes: \n\n");
-    
-    List<Tree> topTrees = []; // collect all top tress to display in this list. only unique tress will be displayed
-    newEventsId.forEach((eventID) { 
-      
-      Tree ?t = allChildEventsMap[eventID];
-      if( t == null) {
-        // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
-        if( gDebug > 0) print("In printNotifications: Could not find event $eventID in tree");
-        return;
-      } else {
-        switch(t.e.eventData.kind) {
-          case 1:
-            t.e.eventData.isNotification = true;
-            Tree topTree = getTopTree(t);
-            topTrees.add(topTree);
-            break;
-          case 7:
-            Event event = t.e;
-            if(gDebug >= 0) ("Got notification of type 7");
-            String reactorId  = event.eventData.pubkey;
-            int    lastEIndex = event.eventData.eTagsRest.length - 1;
-            String reactedTo  = event.eventData.eTagsRest[lastEIndex];
-            Event? reactedToEvent = allChildEventsMap[reactedTo]?.e;
-            if( reactedToEvent != null) {
-              Tree? reactedToTree = allChildEventsMap[reactedTo];
-              if( reactedToTree != null) {
-                reactedToTree.e.eventData.newLikes.add( reactorId);
-                Tree topTree = getTopTree(reactedToTree);
-                topTrees.add(topTree);
-              } else {
-                if(gDebug > 0) print("Could not find reactedTo tree");
-              }
-            } else {
-              if(gDebug > 0) print("Could not find reactedTo event");
-            }
-            break;
-          default:
-            if(gDebug > 0) print("got an event thats not 1 or 7(reaction). its id = ${t.e.eventData.kind} count17 = $count17");
-            break;
-        }
-      }
-    });
-
-    // remove duplicate top trees
-    Set ids = {};
-    topTrees.retainWhere((t) => ids.add(t.e.eventData.id));
-    
-    topTrees.forEach( (t) { t.printTree(0, 0, selectAll); });
-    print("\n");
-  }
-
   void showChatRooms() {
     print("\n\nChat Rooms:");
     printChatRoomInfo();
@@ -385,12 +403,13 @@ class Tree {
       print("Total number of messages: $numMessages");
 
       List<String> messageIds = value.messageIds;
-      for( int i = 0; i < messageIds.length; i++) {
+      for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
           Event? e = allChildEventsMap[messageIds[i]]?.e;
           if( e!= null) {
             e.printEvent(0);
             print("");
+            break; // print only one event, the latest one
           }
         }
 
@@ -398,6 +417,49 @@ class Tree {
 
       print("\n\n");
     });
+  }
+
+  void printRoom(ChatRoom room)  {
+      for(int i = 0; i < room.messageIds.length; i++) {
+        String eId = room.messageIds[i];
+        Event? e = allChildEventsMap[eId]?.e;
+        if( e!= null) {
+          e.printEvent(0);
+          print("");
+        }
+      }
+  }
+
+
+  // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
+  String showChannel(String channelId) {
+
+    for( String key in chatRooms.keys) {
+      if( key.substring(0, channelId.length) == channelId ) {
+        ChatRoom? room = chatRooms[key];
+        if( room != null) {
+          printRoom(room);
+        }
+        return key;
+      }
+    }
+
+    // since channelId was not found in channel id, search for it in channel name
+    for( String key in chatRooms.keys) {
+        ChatRoom? room = chatRooms[key];
+        if( room != null) {
+          if( room.name.length < channelId.length) {
+            continue;
+          }
+
+          print("room = ${room.name} channelId = $channelId");
+          if( room.name.substring(0, channelId.length) == channelId ) {
+            printRoom(room);
+            return key;
+          }
+        }
+    }
+    return "";
   }
 
   // Write the tree's events to file as one event's json per line
@@ -464,7 +526,6 @@ class Tree {
     int latestEventTime = 0;
     String latestEventId = "";
     for(  String k in allChildEventsMap.keys) {
-      //print("$k $replyToId");
       if( k.length >= replyToId.length && k.substring(0, replyToId.length) == replyToId) {
         if( ( allChildEventsMap[k]?.e.eventData.createdAt ?? 0) > latestEventTime ) {
           latestEventTime = allChildEventsMap[k]?.e.eventData.createdAt ?? 0;

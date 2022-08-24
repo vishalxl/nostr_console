@@ -1,10 +1,52 @@
 import 'dart:io';
-import 'package:bip340/bip340.dart';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert'; // for the utf8.encode method
+import 'package:nostr_console/settings.dart';
+import 'package:bip340/bip340.dart';
+
+Future<void> processNotifications(Tree node)  async {
+  // need a bit of wait to give other events to execute, so do a delay, which allows
+  // relays to recieve and handle new events
+  const int waitMilliSeconds = 400;
+  Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
+    
+    List<String> newEventsId = node.insertEvents(getRecievedEvents());
+    node.printNotifications(newEventsId, getAuthorName(userPublicKey));
+    clearEvents();
+  });
+
+  Future<void> foo() async {
+    await Future.delayed(Duration(milliseconds: waitMilliSeconds + 100));
+    return;
+  }
+  await foo();
+}
+
+Future<void> sendMessage(Tree node, String replyToId, String replyKind, String content) async {
+  String strTags = node.getTagStr(replyToId, exename);
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+  
+  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
+  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+
+  String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
+  relays.sendMessage(toSendMessage, defaultServerUrl);
+}
+
+Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) async {
+  String replyKind = "42";
+
+  String strTags = node.getTagStr(channelId, exename);
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+  
+  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
+  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+
+  String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$messageToSend","sig": "$sig"}]';
+  relays.sendMessage(toSendMessage, defaultServerUrl);
+}
+
 
 int showMenu(List<String> menuOptions, String menuName) {
   print("\n$menuName\n${getNumDashes(menuName.length)}");
@@ -36,29 +78,17 @@ int showMenu(List<String> menuOptions, String menuName) {
   }
 }
 
-String addEscapeChars(String str) {
-  return str.replaceAll("\"", "\\\"");
-}
-
-String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
-  String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
-  if( gDebug > 0) print("In getShaId: for buf = $buf");
-  var bufInBytes = utf8.encode(buf);
-  var value = sha256.convert(bufInBytes);
-  String id = value.toString();  
-  return id;
-}
-
 Future<void> otherMenuUi(Tree node, var contactList) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
     int option = showMenu([ 'Display Contact List',          // 1 
-                            'Change number of days printed', // 2
-                            'Show a user profile',           // 3
-                            'Show tweets containg word',     // 4
-                            'Chat rooms',                    // 5
-                            'Go back to main menu'],         // 6
-                            "Other Menu");
+                            'Follow new contact',            // 2
+                            'Change number of days printed', // 3
+                            'Show a user profile',           // 4
+                            'Show tweets containg word',     // 5
+                            'Help and About',                // 6
+                            'Go back to main menu'],         // 7
+                          "Other Menu");                     // menu name
     print('You picked: $option');
     switch(option) {
       case 1:
@@ -67,7 +97,42 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
         print("");
         break;
+
       case 2:
+        stdout.write("Enter username or first few letters of user's public key( or full public key): ");
+        String? $tempUserName = stdin.readLineSync();
+        String userName = $tempUserName??"";
+        if( userName != "") {
+          Set<String> pubkey = getPublicKeyFromName(userName); 
+          print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
+          print(pubkey);
+          if( pubkey.length > 1) {
+            if( pubkey.length > 1) {
+              print("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
+            }
+          } else {
+            if (pubkey.isEmpty ) {
+              print("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
+            } 
+            else {
+              String pk = pubkey.first;
+
+              Event? contactEvent = node.getContactEvent(pubkey.first);
+              
+              if( contactEvent != null) {
+                Event newContactEvent = contactEvent;
+                Contact newContact = Contact(pk, defaultServerUrl);
+                newContactEvent.eventData.contactList.add(newContact);
+
+              }
+
+              print("TBD");
+            }
+          }
+        }
+        break;
+
+      case 3:
         stdout.write("Enter number of days for which you want to see posts: ");
         String? $tempNumDays = stdin.readLineSync();
         String newNumDays = $tempNumDays??"";
@@ -85,13 +150,13 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 
         break;
 
-      case 3:
-        stdout.write("Enter username or first few letters of user's public key: ");
+      case 4:
+        stdout.write("Enter username or first few letters of user's public key( or full public key): ");
         String? $tempUserName = stdin.readLineSync();
         String userName = $tempUserName??"";
         if( userName != "") {
           Set<String> pubkey = getPublicKeyFromName(userName); 
-          print("In main: got ${ pubkey.length} public keys from the given name");
+          print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
           print(pubkey);
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
@@ -122,7 +187,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
           }
         }
         break;
-      case 4:
+      case 5:
         stdout.write("Enter word(s) to search: ");
         String? $tempWords = stdin.readLineSync();
         String words = $tempWords??"";
@@ -132,11 +197,11 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         }
         break;
 
-      case 5:
-        node.showChatRooms();
-        break;
-
       case 6:
+        print(helpAndAbout);
+        break;
+  
+      case 7:
         continueOtherMenu = false;
         break;
 
@@ -146,6 +211,67 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   }
   return;
 }
+
+Future<void> chatMenuUi(Tree node, var contactList) async {
+  gDebug = 0;
+  bool continueChatMenu = true;
+  while(continueChatMenu) {
+    int option = showMenu([ 'Show channels',          // 1 
+                            'Enter channel',          // 2
+                            'Go back to main menu'],  // 3
+                          "Channel Menu"); // name of menu
+    print('You picked: $option');
+    switch(option) {
+      case 1:
+        node.showChatRooms();
+        break;
+      case 2:
+        bool showChannelOption = true;
+        stdout.write("\nType unique channel id or name, or their 1st few letters; or type 'x' to go back to exit channel: ");
+        String? $tempUserInput = stdin.readLineSync();
+        String channelId = $tempUserInput??"";
+
+        if( channelId == "x") {
+          showChannelOption = false; 
+        }
+        while(showChannelOption) {
+          String fullChannelId = node.showChannel(channelId);
+          if( fullChannelId == "") {
+            print("Could not find the given channel.");
+            showChannelOption = false;
+            break;
+          }
+
+          stdout.write("\nType message to send to this room; or type 'x' to exit the channel, or just press <enter> to refresh: ");
+          $tempUserInput = stdin.readLineSync();
+          String messageToSend = $tempUserInput??"";
+
+          if( messageToSend != "") {
+            if( messageToSend == 'x') {
+              showChannelOption = false;
+            } else {
+              // send message to the given room
+              await sendChatMessage(node, fullChannelId, messageToSend);
+            }
+          } else {
+            print("Refreshing...");
+          }
+
+          await processNotifications(node);
+        }
+        break;
+
+      case 3:
+        continueChatMenu = false;
+        break;
+
+      default:
+        break;
+    }
+  }
+  return;
+}
+
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
     gDebug = 0;
@@ -162,27 +288,13 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
         }
       }
 
-      // need a bit of wait to give other events to execute, so do a delay, which allows
-      // relays to recieve and handle new events
-      const int waitMilliSeconds = 400;
-      Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
-        
-        List<String> newEventsId = node.insertEvents(getRecievedEvents());
-        node.printNotifications(newEventsId, getAuthorName(userPublicKey));
-        clearEvents();
-      });
-
-      Future<void> foo() async {
-        await Future.delayed(Duration(milliseconds: waitMilliSeconds + 100));
-        return;
-      }
-      await foo();
-
+      await processNotifications(node);
       // the main menu
       int option = showMenu(['Display events',    // 1 
                              'Post/Reply',        // 2
-                             'Other Options',     // 3
-                             'Quit'],             // 4
+                             'Chat',              // 3
+                             'Other Options',     // 4
+                             'Quit'],             // 5
                              "Main Menu");
       print('You picked: $option');
       switch(option) {
@@ -216,21 +328,20 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
             print("Sending a like to given post.");
             replyKind = "7";
           }
-          String strTags = node.getTagStr(replyToId, exename);
-          int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
-          
-          String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
-          String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
-          String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
-          relays.sendMessage(toSendMessage, defaultServerUrl);
+          await sendMessage(node, replyToId, replyKind, content);
+
           break;
 
         case 3:
-          otherMenuUi(node, contactList);
+          await chatMenuUi(node, contactList);
           break;
 
         case 4:
+          await otherMenuUi(node, contactList);
+          break;
+
+        case 5:
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);

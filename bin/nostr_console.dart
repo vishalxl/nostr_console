@@ -126,14 +126,22 @@ Future<void> main(List<String> arguments) async {
       }
 
       if( argResults[requestArg] != null) {
-        stdout.write("Got argument request ${argResults[requestArg]}");
+        //stdout.write("Got argument request: ${argResults[requestArg]}");
+        stdout.write('Sending request and waiting for events...');
+
         sendRequest(defaultServerUrl, argResults[requestArg]);
         Future.delayed(const Duration(milliseconds: 6000), () {
             List<Event> receivedEvents = getRecievedEvents();
+            stdout.write("received ${receivedEvents.length - numFileEvents} events from $defaultServerUrl\n");
+
             // remove bots
             receivedEvents.removeWhere((e) => gBots.contains(e.eventData.pubkey));
+            
+            // create tree
             Tree node = getTree(getRecievedEvents());
-            clearEvents();
+            clearEvents(); // cause we have consumed them above
+            
+            // call main menu
             mainMenuUi(node, []);
         });
         return;

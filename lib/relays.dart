@@ -80,6 +80,8 @@ class Relays {
       return;
     }
 
+    if( gDebug > 0) print ("\nIn relay.sendRequest for relay $relay and $request = $request");
+
     IOWebSocketChannel?  fws;
     if(relays.containsKey(relay)) {
       fws = relays[relay];

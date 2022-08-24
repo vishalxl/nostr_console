@@ -71,23 +71,28 @@ bool isNumeric(String s) {
  return double.tryParse(s) != null;
 }
 
+bool isWhitespace(String s) {
+  if( s.length != 1) {
+    return false;
+  }
+  return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t';
+}
+
 extension StringX on String {
   isLatinAlphabet({caseSensitive = false}) {
     if( length < 6) { // since smaller words can be smileys can should not be translated
       return true;
     }
-
     int countLatinletters = 0;
     for (int i = 0; i < length; i++) {
       final target = caseSensitive ? this[i] : this[i].toLowerCase();
-      if ( (target.codeUnitAt(0) > 96 && target.codeUnitAt(0) < 123)  || ( isNumeric(target) )) {
+      if ( (target.codeUnitAt(0) > 96 && target.codeUnitAt(0) < 123)  || ( isNumeric(target) ) || isWhitespace(target)) {
         countLatinletters++; 
       }
-
     }
-
-    if( gDebug > 0) print("in isLatinAlphabet: latin letters: $countLatinletters and total = $length ");
+    
     if( countLatinletters < ( 40.0/100 ) * length ) {
+      if( gDebug > 0) print("in isLatinAlphabet: latin letters: $countLatinletters and total = $length ");
       return false;
     } else {
       return true;

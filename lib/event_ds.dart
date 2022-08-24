@@ -56,9 +56,6 @@ Map< String, List<List<String>> > gReactions = {};
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
 
-// chat rooms , mappint from chat room kind 40 event to its information as list where even = key, odd = value
-Map<String, List<String>> gChatRooms = {};
-
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
@@ -324,12 +321,7 @@ class EventData {
     if( kind != 42) {
       return "";
     }
-    for(int i = 0; i < tags.length; i++) {
-      if( tags[i][0] == "#e") {
-        return tags[i][1];
-      }
-    }
-    return "";
+    return getParent();
   }
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
@@ -576,6 +568,8 @@ Set<String> getPublicKeyFromName(String userName) {
       pubkeys.add(key);
     }
   });
+
+
 
   return pubkeys;
 }

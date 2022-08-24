@@ -56,6 +56,7 @@ class Tree {
           } else {
             List<String> temp = [];
             temp.add(eId);
+            //String name = json['name'];
             ChatRoom room = ChatRoom(chatRoomId, "", "", "", temp);
             rooms[chatRoomId] = room;
             if( gDebug > 0) print("Added new chat room object $chatRoomId and added message to it. ");
@@ -68,18 +69,19 @@ class Tree {
 
       if(eKind == 40) {
         String chatRoomId = eId;
+        dynamic json = jsonDecode(value.e.eventData.content);
+
         if( rooms.containsKey(chatRoomId)) {
           if( rooms[chatRoomId]?.name == "") {
-            dynamic json = jsonDecode(value.e.eventData.content);
             if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
             rooms[chatRoomId]?.name = json['name'];
           }
         } else {
           List<String> temp = [];
-          temp.add(eId);
-          ChatRoom room = ChatRoom(chatRoomId, "", "", "", temp);
+          //temp.add(eId);
+          ChatRoom room = ChatRoom(chatRoomId, json['name'], json['about'], "", []);
           rooms[chatRoomId] = room;
-          if( gDebug > 0) print("Added new chat room $chatRoomId.");
+          if( gDebug > 0) print("Added new chat room $chatRoomId with name ${json['name']} .");
         }
       }
 
@@ -381,6 +383,19 @@ class Tree {
 
       print("-----------$name---------");
       print("Total number of messages: $numMessages");
+
+      List<String> messageIds = value.messageIds;
+      for( int i = 0; i < messageIds.length; i++) {
+        if( allChildEventsMap.containsKey(messageIds[i])) {
+          Event? e = allChildEventsMap[messageIds[i]]?.e;
+          if( e!= null) {
+            e.printEvent(0);
+            print("");
+          }
+        }
+
+      }
+
       print("\n\n");
     });
   }
@@ -459,6 +474,12 @@ class Tree {
     }
 
     strTags += '["client","$clientName"]' ;
+
+    // in case we are given valid length id, but we can't find the event in our internal db, then we just send the reply to given id
+    if( latestEventId.isEmpty && replyToId.length == 64) {
+      latestEventId = replyToId;  
+    }
+
     if( latestEventId.isNotEmpty) {
       String? pTagPubkey = allChildEventsMap[latestEventId]?.e.eventData.pubkey;
       if( pTagPubkey != null) {

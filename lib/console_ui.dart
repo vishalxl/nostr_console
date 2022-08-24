@@ -81,11 +81,11 @@ int showMenu(List<String> menuOptions, String menuName) {
 Future<void> otherMenuUi(Tree node, var contactList) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
-    int option = showMenu([ 'Display Contact List',          // 1 
+    int option = showMenu([ 'Display contact list',          // 1 
                             'Follow new contact',            // 2
                             'Change number of days printed', // 3
                             'Show a user profile',           // 4
-                            'Show tweets containg word',     // 5
+                            'Search (a word)',               // 5
                             'Help and About',                // 6
                             'Go back to main menu'],         // 7
                           "Other Menu");                     // menu name
@@ -217,13 +217,13 @@ Future<void> chatMenuUi(Tree node, var contactList) async {
   bool continueChatMenu = true;
   while(continueChatMenu) {
     int option = showMenu([ 'Show channels',          // 1 
-                            'Enter channel',          // 2
+                            'Enter a channel',          // 2
                             'Go back to main menu'],  // 3
                           "Channel Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
       case 1:
-        node.showChatRooms();
+        node.printAllChannelsInfo();
         break;
       case 2:
         bool showChannelOption = true;
@@ -290,9 +290,9 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
 
       await processNotifications(node);
       // the main menu
-      int option = showMenu(['Display events',    // 1 
-                             'Post/Reply',        // 2
-                             'Chat',              // 3
+      int option = showMenu(['Display feed',     // 1 
+                             'Post/Reply/Like',  // 2
+                             'Channels',          // 3
                              'Other Options',     // 4
                              'Quit'],             // 5
                              "Main Menu");

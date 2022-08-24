@@ -30,12 +30,12 @@ class Tree {
     }
 
     // create a map from list of events, key is eventId and value is event itself
-    Map<String, Tree> allChildEventsMap = {};
+    Map<String, Tree> tempChildEventsMap = {};
     events.forEach((event) { 
       // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
-      if( event.eventData.kind == 40 || event.eventData.kind == 42) if( gDebug > 0)  print("in from Events: got a kind 40/42 event of id ${event.eventData.id} and kind ${event.eventData.kind}" );
+      //if( event.eventData.kind == 40 || event.eventData.kind == 42) if( gDebug > 0)  print("in from Events: got a kind 40/42 event of id ${event.eventData.id} and kind ${event.eventData.kind}" );
       if( typesInEventMap.contains(event.eventData.kind)) {
-        allChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
+        tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
       }
     });
 
@@ -45,7 +45,7 @@ class Tree {
     List<String> tempWithoutParent = [];
     Map<String, ChatRoom> rooms = {};
 
-    allChildEventsMap.forEach((key, value) {
+    tempChildEventsMap.forEach((key, value) {
       String eId = value.e.eventData.id;
       int    eKind = value.e.eventData.kind;
 
@@ -53,7 +53,8 @@ class Tree {
         String chatRoomId = value.e.eventData.getChatRoomId();
         if( chatRoomId != "") {
           if( rooms.containsKey(chatRoomId)) {
-            rooms[chatRoomId]?.insertMessage(eId);
+            if( gDebug > 0) print("Adding new message $key to a chat room $chatRoomId. ");
+            addMessageToChannel(chatRoomId, eId, tempChildEventsMap, rooms);
             if( gDebug > 0) print("Added new message to a chat room $chatRoomId. ");
           } else {
             List<String> temp = [];
@@ -97,16 +98,16 @@ class Tree {
         //stdout.write("added to parent a child\n");
         String id = key;
         String parentId = value.e.eventData.getParent();
-        if( allChildEventsMap.containsKey(parentId)) {
+        if( tempChildEventsMap.containsKey(parentId)) {
         }
 
-        if(allChildEventsMap.containsKey( parentId)) {
-          if( allChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
+        if(tempChildEventsMap.containsKey( parentId)) {
+          if( tempChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
             if( gDebug > 0) print("In Tree.fromEvents: got a kind 1 event whose parent is not a type 1 post: $id");
             return;
           }
 
-          allChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
+          tempChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
@@ -122,10 +123,10 @@ class Tree {
            topLevelTrees.add(dummyTopNode);
         }
       }
-    });
+    }); // going over tempChildEventsMap 
 
     // add parent trees as top level child trees of this tree
-    for( var value in allChildEventsMap.values) {
+    for( var value in tempChildEventsMap.values) {
         if( value.e.eventData.kind == 1 &&  value.e.eventData.eTagsRest.isEmpty) {  // only posts which are parents
             topLevelTrees.add(value);
         }
@@ -136,7 +137,7 @@ class Tree {
 
     // create a dummy top level tree and then create the main Tree object
     Event dummy = Event("","",  EventData("non","", 0, 1, "Dummy Top event. Should not be printed.", [], [], [], [[]], {}), [""], "[json]");
-    return Tree( dummy, topLevelTrees, allChildEventsMap, tempWithoutParent, true, rooms);
+    return Tree( dummy, topLevelTrees, tempChildEventsMap, tempWithoutParent, true, rooms);
   } // end fromEvents()
 
   /*
@@ -204,7 +205,8 @@ class Tree {
             if( channelId != "") {
               if( chatRooms.containsKey(channelId)) {
                 print("added event to chat room in insert event");
-                chatRooms[channelId]?.messageIds.add(newTree.e.eventData.id);
+                addMessageToChannel(channelId, newTree.e.eventData.id, allChildEventsMap, chatRooms);
+                //chatRooms[channelId]?.messageIds.add(newTree.e.eventData.id);
               }
             } else {
               print("error: in insert events, could not find parent/channel id");
@@ -221,6 +223,7 @@ class Tree {
 
     return newEventsId;
   }
+
 
   /*
    * @printNotifications Add the given events to the Tree, and print the events as notifications
@@ -384,12 +387,8 @@ class Tree {
     return numPrinted;
   }
 
-  void showChatRooms() {
+  void printAllChannelsInfo() {
     print("\n\nChat Rooms:");
-    printChatRoomInfo();
-  }
-
-  void printChatRoomInfo() {
     chatRooms.forEach((key, value) {
       String name = "";
       if( value.name == "") {
@@ -419,7 +418,8 @@ class Tree {
     });
   }
 
-  void printRoom(ChatRoom room)  {
+  void printChannel(ChatRoom room)  {
+
       for(int i = 0; i < room.messageIds.length; i++) {
         String eId = room.messageIds[i];
         Event? e = allChildEventsMap[eId]?.e;
@@ -438,7 +438,7 @@ class Tree {
       if( key.substring(0, channelId.length) == channelId ) {
         ChatRoom? room = chatRooms[key];
         if( room != null) {
-          printRoom(room);
+          printChannel(room);
         }
         return key;
       }
@@ -454,7 +454,7 @@ class Tree {
 
           print("room = ${room.name} channelId = $channelId");
           if( room.name.substring(0, channelId.length) == channelId ) {
-            printRoom(room);
+            printChannel(room);
             return key;
           }
         }
@@ -707,7 +707,49 @@ class Tree {
 
       return null;
   }
+
 } // end Tree
+
+  void addMessageToChannel(String channelId, String messageId, var tempChildEventsMap, var chatRooms) {
+    //chatRooms[channelId]?.messageIds.add(newTree.e.eventData.id);
+
+    int newEventTime = (tempChildEventsMap[messageId]?.e.eventData.createdAt??0);
+
+    if( chatRooms.containsKey(channelId)) {
+      ChatRoom? room = chatRooms[channelId];
+      if( room != null ) {
+        if( room.messageIds.isEmpty) {
+          if(gDebug> 0) print("room is empty. adding new message and returning. ");
+          room.messageIds.add(messageId);
+          return;
+        }
+
+        if(gDebug> 0) print("room has ${room.messageIds.length} messages already. adding new one to it. ");
+
+        for(int i = 0; i < room.messageIds.length; i++) {
+          int eventTime = (tempChildEventsMap[room.messageIds[i]]?.e.eventData.createdAt??0);
+          if( newEventTime < eventTime) {
+            // shift current i and rest one to the right, and put event Time here
+            room.messageIds.insert(i, messageId);
+            return;
+          }
+        }
+
+        // insert at end
+        room.messageIds.add(messageId);
+        return;
+
+      } else {
+      print("In addMessageToChannel: could not find room");
+    }
+    } else {
+      print("In addMessageToChannel: could not find channel id");
+    }
+  
+
+    print("In addMessageToChannel: returning without inserting message");
+  }
+
 
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.e.eventData.createdAt < b.e.eventData.createdAt) {

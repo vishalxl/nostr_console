@@ -403,9 +403,7 @@ class ChatRoom {
   List<String> messageIds;  // all the 42 kind events in this
 
   ChatRoom(this.chatRoomId, this.name, this.about, this.picture, this.messageIds);
-  void insertMessage(String msg) {
-    messageIds.add(msg);
-  }
+  
  }
 
 List<String> getpTags(List<Event> events) {

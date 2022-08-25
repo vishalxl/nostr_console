@@ -336,18 +336,16 @@ class Tree {
 
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
-      // continue if this children isn't going to get printed anyway
-      //if( gDebug > 0) print("going to call tree selector");
-      if( !treeSelector(children[i])) {
-        continue;
-      }
 
       if(!whetherTopMost) {
         stdout.write("\n");  
         printDepth(depth+1);
         stdout.write("|\n");
       } else {
-
+        // continue if this children isn't going to get printed anyway; selector is only called for top most tree
+        if( !treeSelector(children[i])) {
+          continue;
+        }
 
         Tree newestChild = children[i].getMostRecent(0);
         DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChild.e.eventData.createdAt *1000);

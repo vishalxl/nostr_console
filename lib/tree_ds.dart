@@ -101,6 +101,11 @@ class Tree {
         if( tempChildEventsMap.containsKey(parentId)) {
         }
 
+        if( value.e.eventData.id == gCheckEventId) {
+          if(gDebug > 0) print("In Tree FromEvents: got id: $gCheckEventId");
+        }
+
+
         if(tempChildEventsMap.containsKey( parentId)) {
           if( tempChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
             if( gDebug > 0) print("In Tree.fromEvents: got a kind 1 event whose parent is not a type 1 post: $id");
@@ -204,12 +209,12 @@ class Tree {
             String channelId = newTree.e.eventData.getParent();
             if( channelId != "") {
               if( chatRooms.containsKey(channelId)) {
-                print("added event to chat room in insert event");
+                if( gDebug > 0) print("added event to chat room in insert event");
                 addMessageToChannel(channelId, newTree.e.eventData.id, allChildEventsMap, chatRooms);
                 //chatRooms[channelId]?.messageIds.add(newTree.e.eventData.id);
               }
             } else {
-              print("error: in insert events, could not find parent/channel id");
+              print("info: in insert events, could not find parent/channel id");
             }
             
             break;
@@ -707,7 +712,8 @@ class Tree {
       // if contact list was found, get user's feed, and keep the contact list for later use 
       if (latestContactEvent != "") {
         if( gDebug > 0) {
-          print("latest pubkey : $latestContactEvent");
+          print("latest contact event : $latestContactEvent with total contacts = ${allChildEventsMap[latestContactEvent]?.e.eventData.contactList.length}");
+          print(allChildEventsMap[latestContactEvent]?.e.originalJson);
         }
         return allChildEventsMap[latestContactEvent]?.e;
       }

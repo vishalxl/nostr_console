@@ -29,7 +29,6 @@ void printUsage() {
 
 
 Future<void> main(List<String> arguments) async {
-    int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
     
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
@@ -160,6 +159,12 @@ Future<void> main(List<String> arguments) async {
     // then get the events of user-id's mentioned in p-tags of received events
     // then display them all
     getUserEvents(defaultServerUrl, userPublicKey, 1000, 0);
+/*    getUserEvents("wss://relay.damus.io", userPublicKey, 1000, 0);
+    getUserEvents("wss://nostr-relay.wlvs.space", userPublicKey, 1000, 0);
+    getUserEvents("wss://nostr-pub.wellorder.net	", userPublicKey, 1000, 0);
+    getUserEvents("wss://relay.damus.io", userPublicKey, 1000, 0);
+*/
+    
 
     const int numWaitSeconds = 2500;
     stdout.write('Waiting for user posts to come in.....');
@@ -177,6 +182,7 @@ Future<void> main(List<String> arguments) async {
       if (contactEvent != null ) {
         if(gDebug > 0) print("In main: found kind 3 contact list: \n ${contactEvent.originalJson}");
         contactList = getContactFeed(contactEvent.eventData.contactList, 300);
+
         if( !gContactLists.containsKey(userPublicKey)) {
           gContactLists[userPublicKey] = contactEvent.eventData.contactList;
         }

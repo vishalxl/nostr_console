@@ -207,9 +207,8 @@ class EventData {
       print("----------------------------------------Creating EventData with content: ${json['content']}");
     }
 
-    String checkEventId = "078e89dcd3c2bde3d26648fae73411aafced5f3096c4d292169affab747276a8";
-    if( json['id'] == checkEventId) {
-      if(gDebug > 0) print("got message: $checkEventId");
+    if( json['id'] == gCheckEventId) {
+      if(gDebug > 0) print("In Event fromJson: got message: $gCheckEventId");
     }
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
@@ -290,6 +289,14 @@ class EventData {
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
   void printEventData(int depth) {
+    if( id == gCheckEventId) {
+      if(gDebug > 0) { 
+        print("In Event printEventData: got message: $gCheckEventId");
+        isNotification = true;
+      }
+    }
+
+
     int n = 3;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$colorEndMarker"):stdout.write(s);
@@ -527,8 +534,10 @@ Set<String> getPublicKeyFromName(String userName) {
       pubkeys.add(key);
     }
 
-    if( key.substring(0, userName.length) == userName) {
-      pubkeys.add(key);
+    if( userName.length <= key.length) {
+      if( key.substring(0, userName.length) == userName) {
+        pubkeys.add(key);
+      }
     }
   });
 

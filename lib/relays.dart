@@ -4,6 +4,8 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:web_socket_channel/io.dart';
 
+
+
 /*
  * @class Relays Contains connections to all relays. 
  */
@@ -132,7 +134,7 @@ class Relays {
       }
     }
 
-    if(gDebug != 0) print('sending request: $request to $relay\n');
+    if(gDebug > 0) print('sending request: $request to $relay\n');
     fws?.sink.add(request);
   }
 
@@ -172,7 +174,7 @@ class Relays {
       }
     }
 
-    if(gDebug !=0) print('sending message: $message to $relay\n');
+    if(gDebug > 0) print('sending message: $message to $relay\n');
     fws?.sink.add(message);
   }
 

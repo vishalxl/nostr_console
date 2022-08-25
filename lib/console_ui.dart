@@ -47,6 +47,33 @@ Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) 
   relays.sendMessage(toSendMessage, defaultServerUrl);
 }
 
+Future<void> sendEvent(Tree node, Event e) async {
+  String strTags = "";
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+  String content = addEscapeChars( e.eventData.content);
+
+  if( e.eventData.kind == 3) {
+    strTags = ""; // only new contacts will be sent
+    for(int i = 0; i < e.eventData.contactList.length; i++) {
+      String relay = e.eventData.contactList[i].relay;
+      if( relay == "") {
+        relay = defaultServerUrl;
+      }
+      String strContact = '["p","${e.eventData.contactList[i].id}"]';
+      strTags += strContact;
+      if( i < e.eventData.contactList.length - 1) {
+        strTags += ",";
+      }
+    }
+  }
+
+  String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
+  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+
+  String toSendMessage = '["EVENT", {"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
+  relays.sendMessage(toSendMessage, defaultServerUrl);
+}
+
 
 int showMenu(List<String> menuOptions, String menuName) {
   print("\n$menuName\n${getNumDashes(menuName.length)}");
@@ -79,6 +106,7 @@ int showMenu(List<String> menuOptions, String menuName) {
 }
 
 Future<void> otherMenuUi(Tree node, var contactList) async {
+  gDebug = 0;
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
     int option = showMenu([ 'Display contact list',          // 1 
@@ -86,8 +114,10 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
                             'Change number of days printed', // 3
                             'Show a user profile',           // 4
                             'Search (a word)',               // 5
-                            'Help and About',                // 6
-                            'Go back to main menu'],         // 7
+                            'Rebroadcast an event',          // 6
+                            'Applicatoin stats',             // 7
+                            'Help and About',                // 8
+                            'Go back to main menu'],         // 9
                           "Other Menu");                     // menu name
     print('You picked: $option');
     switch(option) {
@@ -111,22 +141,42 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
               print("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
             }
           } else {
-            if (pubkey.isEmpty ) {
-              print("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
+            if (pubkey.isEmpty && userName.length != 64) {
+                print("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
             } 
             else {
+              if( pubkey.isEmpty) {
+                print("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
+                pubkey.add(userName);
+              }
+
               String pk = pubkey.first;
 
-              Event? contactEvent = node.getContactEvent(pubkey.first);
+              // get this users latest contact list event ( kind 3 event)
+              Event? contactEvent = node.getContactEvent(userPublicKey);
               
               if( contactEvent != null) {
                 Event newContactEvent = contactEvent;
-                Contact newContact = Contact(pk, defaultServerUrl);
-                newContactEvent.eventData.contactList.add(newContact);
+
+                bool alreadyContact = false;
+                for(int i = 0; i < newContactEvent.eventData.contactList.length; i++) {
+                  if( newContactEvent.eventData.contactList[i].id == pubkey.first) {
+                    alreadyContact = true;
+                    break;
+                  }
+                }
+                if( !alreadyContact) {
+                  Contact newContact = Contact(pk, defaultServerUrl);
+                  newContactEvent.eventData.contactList.add(newContact);
+                  sendEvent(node, newContactEvent);
+                } else {
+                  print("The contact already exists in the contact list. Republishing the old contact list.");
+                  sendEvent(node, contactEvent);
+                }
 
               }
 
-              print("TBD");
+              //print("TBD");
             }
           }
         }
@@ -196,12 +246,19 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
         }
         break;
-
       case 6:
+        print("TBD");
+        break;
+
+      case 7:
+        print("Applicatoin Info: TBD");
+        break;
+
+      case 8:
         print(helpAndAbout);
         break;
   
-      case 7:
+      case 9:
         continueOtherMenu = false;
         break;
 

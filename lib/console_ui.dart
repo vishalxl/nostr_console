@@ -293,7 +293,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   return;
 }
 
-Future<void> chatMenuUi(Tree node, var contactList) async {
+Future<void> channelMenuUI(Tree node, var contactList) async {
   gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
@@ -426,7 +426,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           break;
 
         case 3:
-          await chatMenuUi(node, contactList);
+          await channelMenuUI(node, contactList);
           break;
 
         case 4:

@@ -332,6 +332,14 @@ class EventData {
     }
   }
 
+  String getAsLine({int len = 20}) {
+    if( len == 0 || len > content.length) {
+      len = content.length;
+    }
+
+    return '"${content.substring(0, len)}..." - ${getAuthorName(pubkey)}';
+  }
+
   // looks up global map of reactions, if this event has any reactions, and then prints the reactions
   // in appropriate color( in case one is a notification, which is stored in member variable)
   void printReaction(int depth) {

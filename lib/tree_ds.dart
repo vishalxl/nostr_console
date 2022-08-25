@@ -391,33 +391,38 @@ class Tree {
   }
 
   void printAllChannelsInfo() {
-    print("\n\nChat Rooms:");
+    print("\n\nChannels/Rooms:");
+
+
+    printUnderlined("      Channel/Room Name             Num of Messages            Latest Message           ");
+    //print("");
+    
     chatRooms.forEach((key, value) {
       String name = "";
       if( value.name == "") {
-        name = value.chatRoomId;
+        name = value.chatRoomId.substring(0, 6);
       } else {
-        name = value.name;
+        name = "${value.name} ( ${value.chatRoomId.substring(0, 6)})";
       }
+
       int numMessages = value.messageIds.length;
 
-      print("-----------$name---------");
-      print("Total number of messages: $numMessages");
+      stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
 
       List<String> messageIds = value.messageIds;
       for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
           Event? e = allChildEventsMap[messageIds[i]]?.e;
           if( e!= null) {
-            e.printEvent(0);
-            print("");
+            //e.printEvent(0);
+            stdout.write("${e.eventData.getAsLine()}");
             break; // print only one event, the latest one
           }
         }
 
       }
 
-      print("\n\n");
+      print("");
     });
   }
 

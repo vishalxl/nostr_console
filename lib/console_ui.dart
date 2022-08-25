@@ -371,6 +371,9 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
       // align the text again in case the window size has been changed
       if( gAlignment == "center") {
         try {
+          if( gTextWidth > stdout.terminalColumns) {
+            gTextWidth = stdout.terminalColumns - 5;
+          }          
           gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
         } on StdoutException catch (e) {
           gNumLeftMarginSpaces = 0;

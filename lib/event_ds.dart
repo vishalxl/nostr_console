@@ -298,8 +298,7 @@ class EventData {
       }
     }
 
-
-    int n = 3;
+    int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$colorEndMarker"):stdout.write(s);
 

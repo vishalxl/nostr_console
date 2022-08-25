@@ -178,6 +178,11 @@ class Tree {
         return;
       }
 
+      // experimental
+      if( newEvent.eventData.pubkey == gRemoteAdminPubkey) {
+
+      }
+
       // expand mentions ( and translate if flag is set)
       newEvent.eventData.translateAndExpandMentions();
 
@@ -467,7 +472,7 @@ class Tree {
           if( room.name.length < channelId.length) {
             continue;
           }
-          print("room = ${room.name} channelId = $channelId");
+          if( gDebug > 0) print("room = ${room.name} channelId = $channelId");
           if( room.name.substring(0, channelId.length) == channelId ) {
             printChannel(room);
             return key;

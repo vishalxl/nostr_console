@@ -3,6 +3,8 @@
 String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
 
 
+String gRemoteAdminPubkey = "";
+
 const int numWaitSeconds = 3000;
 
 // global counters of total events read or processed

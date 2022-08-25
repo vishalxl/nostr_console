@@ -17,6 +17,8 @@ bool gTranslate = false; // translate flag
 
 int gDebug = 0;
 
+void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 
+
 void printDepth(int d) {
   for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
     stdout.write(" ");
@@ -418,17 +420,57 @@ class ChatRoom {
   
  }
 
-List<String> getpTags(List<Event> events) {
-  List<String> pTags = [];
+void addToHistogram(Map<String, int> histogram, List<String> pTags) {
+  Set tempPtags = {};
+  pTags.retainWhere((x) =>  tempPtags.add(x));
+
+  for(int i = 0; i < pTags.length; i++ ) {
+    String pTag = pTags[i];
+    if( histogram.containsKey(pTag)) {
+      int? val = histogram[pTag];
+      if( val != null) {
+        histogram[pTag] = ++val;
+      } else {
+      }
+    } else {
+      histogram[pTag] = 1;
+    }
+  }
+  //return histogram;
+}
+
+class HistogramEntry {
+  String str;
+  int    count;
+  HistogramEntry(this.str, this.count);
+  static int histogramSorter(HistogramEntry a, HistogramEntry b) {
+    if( a.count < b.count ) {
+      return 1;
+    } if( a.count == b.count ) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+}
+
+// return the numMostFrequent number of most frequent p tags ( user pubkeys) in the given events
+List<String> getpTags(List<Event> events, int numMostFrequent) {
+  List<HistogramEntry> listHistogram = [];
+  Map<String, int>   histogramMap = {};
   for(int i = 0; i < events.length; i++) {
-    pTags.addAll(events[i].eventData.pTags);
+    addToHistogram(histogramMap, events[i].eventData.pTags);
   }
 
-  // remove duplicate pTags events
-  Set tempPtags = {};
-  pTags.retainWhere((x) => tempPtags.add(x));
+  histogramMap.forEach((key, value) {listHistogram.add(HistogramEntry(key, value));/* print("added to list of histogramEntry $key $value"); */});
+  listHistogram.sort(HistogramEntry.histogramSorter);
+  List<String> ptags = [];
+  for( int i = 0; i < listHistogram.length && i < numMostFrequent; i++ ) {
+    //print ( "${listHistogram[i].str} ${listHistogram[i].count} ");
+    ptags.add(listHistogram[i].str);
+  }
 
-  return pTags;
+  return ptags;
 }
 
 // If given event is kind 0 event, then populates gKindONames with that info

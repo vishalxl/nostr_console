@@ -2,8 +2,17 @@
 // for debugging
 String gCheckEventId = "a77adfe7fb19195de2f2b3393698ea37d48671b93acd47f2f3a89c60f7a012ca";
 
+
+const int numWaitSeconds = 3000;
+
 // global counters of total events read or processed
 int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
+
+List<String> gListRelayUrls = [defaultServerUrl,
+                              "wss://nostr-verified.wellorder.net", 
+                              "wss://nostr-relay.wlvs.space", 
+                              "wss://nostr-pub.wellorder.net", 
+                              "wss://relay.damus.io"];
 
 
 // name of executable

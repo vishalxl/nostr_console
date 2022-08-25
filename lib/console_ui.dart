@@ -31,7 +31,7 @@ Future<void> sendMessage(Tree node, String replyToId, String replyKind, String c
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
   String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
-  relays.sendMessage(toSendMessage, defaultServerUrl);
+  relays.sendRequest(defaultServerUrl, toSendMessage);
 }
 
 Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) async {
@@ -44,7 +44,7 @@ Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) 
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
   String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$messageToSend","sig": "$sig"}]';
-  relays.sendMessage(toSendMessage, defaultServerUrl);
+  relays.sendRequest(defaultServerUrl, toSendMessage);
 }
 
 Future<void> sendEvent(Tree node, Event e) async {
@@ -71,7 +71,7 @@ Future<void> sendEvent(Tree node, Event e) async {
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
   String toSendMessage = '["EVENT", {"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
-  relays.sendMessage(toSendMessage, defaultServerUrl);
+  relays.sendRequest(defaultServerUrl, toSendMessage);
 }
 
 
@@ -129,6 +129,12 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         break;
 
       case 2:
+        // in case the program was invoked with --pubkey, then user can't send messages
+        if( userPrivateKey == "") {
+            print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+            break;
+        }
+
         stdout.write("Enter username or first few letters of user's public key( or full public key): ");
         String? $tempUserName = stdin.readLineSync();
         String userName = $tempUserName??"";
@@ -251,7 +257,22 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         break;
 
       case 7:
-        print("Applicatoin Info: TBD");
+
+        print("\n\n");
+        printUnderlined("Application stats");
+        print("\n");
+        relays.printInfo();
+        print("\n");
+        printUnderlined("Posts");
+        print("Total number of posts: ${node.count()}");
+        print("\n");
+        printUnderlined("User Info");
+        if( userPrivateKey.length == 64) {
+          print("You are signed in, and your public key is:       $userPublicKey");
+        } else {
+          print("You are not signed in, and are using public key: $userPublicKey");
+        }
+        print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}");
         break;
 
       case 8:
@@ -283,6 +304,12 @@ Future<void> chatMenuUi(Tree node, var contactList) async {
         node.printAllChannelsInfo();
         break;
       case 2:
+        // in case the program was invoked with --pubkey, then user can't send messages
+        if( userPrivateKey == "") {
+            print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+            break;
+        }
+
         bool showChannelOption = true;
         stdout.write("\nType unique channel id or name, or their 1st few letters; or type 'x' to go back to exit channel: ");
         String? $tempUserInput = stdin.readLineSync();
@@ -334,6 +361,8 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
     gDebug = 0;
     // at the very beginning, show the tree as it is, and them show the options menu
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
+    //relays.printInfo();
+
     bool userContinue = true;
     while(userContinue) {
       // align the text again in case the window size has been changed

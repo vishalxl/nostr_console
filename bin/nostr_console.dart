@@ -116,6 +116,7 @@ Future<void> main(List<String> arguments) async {
       }
 
       if( gEventsFilename != "") {
+        print("\n");
         stdout.write('Reading events from the given file.......');
         List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
         
@@ -154,19 +155,21 @@ Future<void> main(List<String> arguments) async {
       return;
     }    
 
+    getUserEvents(gListRelayUrls, userPublicKey, 3000, 0);
+  
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,
     // then get the events of user-id's mentioned in p-tags of received events
     // then display them all
-    getUserEvents(defaultServerUrl, userPublicKey, 1000, 0);
-/*    getUserEvents("wss://relay.damus.io", userPublicKey, 1000, 0);
+
+/*    getUserEvents(defaultServerUrl, userPublicKey, 1000, 0);
+    getUserEvents("wss://relay.damus.io", userPublicKey, 1000, 0);
     getUserEvents("wss://nostr-relay.wlvs.space", userPublicKey, 1000, 0);
     getUserEvents("wss://nostr-pub.wellorder.net	", userPublicKey, 1000, 0);
     getUserEvents("wss://relay.damus.io", userPublicKey, 1000, 0);
-*/
-    
 
-    const int numWaitSeconds = 2500;
+  */  
+
     stdout.write('Waiting for user posts to come in.....');
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events
@@ -180,8 +183,8 @@ Future<void> main(List<String> arguments) async {
       // if contact list was found, get user's feed, and keep the contact list for later use 
       List<String> contactList = [];
       if (contactEvent != null ) {
-        if(gDebug > 0) print("In main: found kind 3 contact list: \n ${contactEvent.originalJson}");
-        contactList = getContactFeed(contactEvent.eventData.contactList, 300);
+        if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
+        contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, 4000);
 
         if( !gContactLists.containsKey(userPublicKey)) {
           gContactLists[userPublicKey] = contactEvent.eventData.contactList;
@@ -199,8 +202,8 @@ Future<void> main(List<String> arguments) async {
         stdout.write("received $numFeedEvents posts from the follows\n");
 
         // get mentioned ptags, and then get the events for those users
-        List<String> pTags = getpTags(getRecievedEvents());
-        getMultiUserEvents(defaultServerUrl, pTags, 300);
+        List<String> pTags = getpTags(getRecievedEvents(), 300);
+        getMultiUserEvents(defaultServerUrl, pTags, 5000);
         
         stdout.write('Waiting for rest of posts to come in.....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {

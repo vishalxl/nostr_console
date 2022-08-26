@@ -664,19 +664,6 @@ class Tree {
   }
 
   // returns true if the treee or its children has a post by user
-  bool hasUserPost(String pubkey) {
-    if( e.eventData.pubkey == pubkey) {
-      return true;
-    }
-    for( int i = 0; i < children.length; i++ ) {
-      if( children[i].hasUserPost(pubkey)) {
-        return true;
-      }
-    }
-    return false;
-  } 
-
-  // returns true if the treee or its children has a post by user
   bool hasUserPostAndLike(String pubkey) {
     bool hasReacted = false;
 
@@ -685,6 +672,7 @@ class Tree {
       if( reactions  != null) {
         for( int i = 0; i < reactions.length; i++) {
           if( reactions[i][0] == pubkey) {
+            e.eventData.newLikes.add(pubkey);
             hasReacted = true;
             break;
           }
@@ -692,14 +680,23 @@ class Tree {
       }
     }
 
-    if( e.eventData.pubkey == pubkey || hasReacted ) {
-      return true;
-    }
+    bool childMatches = false;
     for( int i = 0; i < children.length; i++ ) {
       if( children[i].hasUserPostAndLike(pubkey)) {
-        return true;
+        childMatches = true;
       }
     }
+
+
+    if( e.eventData.pubkey == pubkey) {
+      e.eventData.isNotification = true;
+      return true;
+    }
+
+    if( hasReacted || childMatches) {
+      return true;
+    }
+
     return false;
   } 
 
@@ -710,22 +707,28 @@ class Tree {
       return false;
     }
 
-    if( e.eventData.content.toLowerCase().contains(word)) {
-      return true;
-    }
 
+    bool childMatches = false;
     for( int i = 0; i < children.length; i++ ) {
-      //if(gDebug > 0) print("this id = ${e.eventData.id} word = $word i = $i ");
-      
       // ignore too large comments
       if( children[i].e.eventData.content.length > 1000) {
         continue;
       }
 
       if( children[i].hasWords(word)) {
-        return true;
+        childMatches = true;
       }
     }
+
+    if( e.eventData.content.toLowerCase().contains(word)) {
+      e.eventData.isNotification = true;
+      return true;
+    }
+
+    if( childMatches) {
+      return true;
+    }
+
     return false;
   } 
 
@@ -733,6 +736,7 @@ class Tree {
   bool fromClientSelector(String clientName) {
     //if(gDebug > 0) print("In tree selector hasWords: this id = ${e.eventData.id} word = $word");
 
+    bool byClient = false;
     List<List<String>> tags = e.eventData.tags;
     for( int i = 0; i < tags.length; i++) {
       if( tags[i].length < 2) {
@@ -741,15 +745,22 @@ class Tree {
 
       if( tags[i][0] == "client" && tags[i][1].contains(clientName)) {
         e.eventData.isNotification = true;
-        return true;
+        byClient = true;
+        break;
       }
     }
 
+    bool childMatch = false;
     for( int i = 0; i < children.length; i++ ) {
       if( children[i].fromClientSelector(clientName)) {
-        return true;
+        childMatch = true;
       }
     }
+
+    if( byClient || childMatch) {
+      return true;
+    }
+
     return false;
   } 
 

@@ -228,7 +228,6 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
             } 
             else {
               String pk = pubkey.first;
-              //bool onlyUser (Tree t) => t.hasUserPost(pk);
               bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(pk);
               node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
               

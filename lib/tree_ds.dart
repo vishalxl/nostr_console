@@ -210,8 +210,8 @@ class Tree {
 
       // expand mentions ( and translate if flag is set)
       newEvent.eventData.translateAndExpandMentions();
-
       if( gDebug > 0) print("In insertEvents: adding event to main children map");
+
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {});
       newEventsId.add(newEvent.eventData.id);
     });
@@ -225,12 +225,23 @@ class Tree {
           case 1:
             // only kind 1 events are added to the overall tree structure
             if( newTree.e.eventData.eTagsRest.isEmpty) {
-                // if its a is a new parent event, then add it to the main top parents ( this.children)
+                // if its a new parent event, then add it to the main top parents ( this.children)
                 children.add(newTree);
             } else {
                 // if it has a parent , then add the newTree as the parent's child
                 String parentId = newTree.e.eventData.getParent();
-                allChildEventsMap[parentId]?.addChildNode(newTree);
+                if( allChildEventsMap.containsKey(parentId)) {
+                  allChildEventsMap[parentId]?.addChildNode(newTree);
+                } else {
+                  // create top unknown parent and then add it
+                  Tree dummyTopNode = Tree(Event("","",
+                                                  EventData("Unk" ,gDummyAccountPubkey, newTree.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}),
+                                                            [""], "[json]"), 
+                                            [], {}, [], false, {});
+                  dummyTopNode.addChildNode(newTree);
+                  children.add(dummyTopNode);
+                }
+
             }
             break;
 
@@ -560,14 +571,15 @@ class Tree {
    */
   String getTagStr(String replyToId, String clientName) {
     String strTags = "";
-    clientName = clientName == ""? "nostr_console": clientName; // in case its empty 
+    clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
+    strTags += '["client","$clientName"]' ;
 
     if( replyToId.isEmpty) {
-      strTags += '["client","$clientName"]' ;
       return strTags;
     }
 
-    // find the latest event with the given id
+    // find the latest event with the given id; needs to be done because we allow user to refer to events with as few as 3 or so first letters
+    // and only the event that's latest is considered as the intended recipient ( this is not perfect, but easy UI)
     int latestEventTime = 0;
     String latestEventId = "";
     for(  String k in allChildEventsMap.keys) {
@@ -579,13 +591,12 @@ class Tree {
       }
     }
 
-    strTags += '["client","$clientName"]' ;
-
     // in case we are given valid length id, but we can't find the event in our internal db, then we just send the reply to given id
     if( latestEventId.isEmpty && replyToId.length == 64) {
       latestEventId = replyToId;  
     }
 
+    // found the id of event we are replying to
     if( latestEventId.isNotEmpty) {
       String? pTagPubkey = allChildEventsMap[latestEventId]?.e.eventData.pubkey;
       if( pTagPubkey != null) {
@@ -594,6 +605,17 @@ class Tree {
 
       String relay = getRelayOfUser(userPublicKey, pTagPubkey??"");
       relay = (relay == "")? defaultServerUrl: relay;
+
+      String rootEventId = "";
+
+      // nip 10: first e tag should be the id of the top/parent event. 2nd ( or last) e tag should be id of the event being replied to.
+      Tree? t = allChildEventsMap[latestEventId];
+      if( t != null) {
+        Tree topTree = getTopTree(t);
+        rootEventId = topTree.e.eventData.id;
+        strTags +=  ',["e","$rootEventId"]';
+      }
+
       strTags +=  ',["e","$latestEventId","$relay"]';
     }
     

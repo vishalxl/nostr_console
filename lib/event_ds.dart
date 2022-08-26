@@ -5,6 +5,7 @@ import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_console/settings.dart';
 
+int gDebug = 0;
 
 // global contact list of each user, including of the logged in user.
 // maps from pubkey of a user, to the latest contact list of that user, which is the latest kind 3 message
@@ -14,8 +15,6 @@ Map< String, List<Contact>> gContactLists = {};
 final translator = GoogleTranslator();
 const int gNumTranslateDays = 4;// translate for this number of days
 bool gTranslate = false; // translate flag
-
-int gDebug = 0;
 
 void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 
 
@@ -234,20 +233,14 @@ class EventData {
 
     // replace the patterns
     List<String> placeHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]" ];
-    for(int i = 0; i < placeHolders.length; i++) {
+    for(int i = 0; i < placeHolders.length && i < tags.length; i++) {
       int     index = -1;
       Pattern p     = placeHolders[i];
       if( (index = content.indexOf(p)) != -1 ) {
-        if( i >= tags.length) {
-          continue;
+        if( tags[i].length >= 2) {
+          String author = getAuthorName(tags[i][1]);
+          content = "${content.substring(0, index)} @$author${content.substring(index + 4)}";
         }
-
-        if( tags[i].isEmpty || tags[i].length < 2) {
-          continue;
-        }
-
-        String author = getAuthorName(tags[i][1]);
-        content = "${content.substring(0, index)} @$author${content.substring(index + 4)}";
       }
     }
     return content;

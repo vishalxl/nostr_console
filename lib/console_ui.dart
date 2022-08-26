@@ -26,7 +26,11 @@ Future<void> processNotifications(Tree node)  async {
   await foo();
 }
 
-Future<void> sendMessage(Tree node, String replyToId, String replyKind, String content) async {
+/* @function sendReplyPostLike Used to send Reply, Post and Like ( event 1 for reply and post, and event 7 for like/reaction)
+ * If replyToId is blank, then it does not reference any e/p tags, and thus becomes a top post
+ * otherwise e and p tags are found for the given event being replied to, if that event data is available
+ */
+Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, String content) async {
   String strTags = node.getTagStr(replyToId, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   
@@ -442,7 +446,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
             replyKind = "7";
           }
 
-          await sendMessage(node, replyToId, replyKind, content);
+          await sendReplyPostLike(node, replyToId, replyKind, content);
 
           break;
 

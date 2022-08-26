@@ -70,7 +70,9 @@ Map< String, List<List<String>> > gReactions = {};
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
                         "f4161c88558700d23af18d8a6386eb7d7fed769048e1297811dcc34e86858fb2",  // bitcoin_bot
-                        "105dfb7467b6286f573cae17146c55133d0dcc8d65e5239844214412218a6c36"   // zerohedge
+                        "105dfb7467b6286f573cae17146c55133d0dcc8d65e5239844214412218a6c36",   // zerohedge
+                        "e89538241bf737327f80a9e31bb5771ccbe8a4508c04f1d1c0ce7336706f1bee",  // Bitcoin news
+                        ""
                       ];
 
 //const String gDefaultEventsFilename = "events_store_nostr.txt";

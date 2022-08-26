@@ -21,21 +21,16 @@ const String maxDepthArg = "maxdepth";
 const String eventFileArg = "file";
 const String translateArg = "translate";
 
-
 void printUsage() {
-
   print(gUsage);
 }
 
-
 Future<void> main(List<String> arguments) async {
-    
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
                               ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m")
                               ..addOption(eventFileArg, abbr:"f")..addFlag(translateArg, abbr: "t", defaultsTo: false);
-
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
@@ -53,23 +48,19 @@ Future<void> main(List<String> arguments) async {
         userPrivateKey = "";
         print("Going to use public key $userPublicKey. You will not be able to send posts/replies.");
       }
-
       if( argResults[prikeyArg] != null) {
         userPrivateKey = argResults[prikeyArg];
         userPublicKey = getPublicKey(userPrivateKey);
         print("Going to use the provided private key");
       }
-
       if( argResults[relayArg] != null) {
         defaultServerUrl =  argResults[relayArg];
         print("Going to use relay: $defaultServerUrl");
       }
-
       if( argResults[lastdaysArg] != null) {
         gNumLastDays =  int.parse(argResults[lastdaysArg]);
         print("Going to show posts for last $gNumLastDays days");
       }
-
       if( argResults[widthArg] != null) {
         int tempTextWidth = int.parse(argResults[widthArg]);
         if( tempTextWidth < gMinValidTextWidth ) {
@@ -79,7 +70,6 @@ Future<void> main(List<String> arguments) async {
           print("Going to use $gTextWidth columns for text on screen.");
         }
       }
-
       try {
         // can be computed only after textWidth has been found
         if( gTextWidth > stdout.terminalColumns) {
@@ -90,7 +80,6 @@ Future<void> main(List<String> arguments) async {
         print("Cannot find terminal size. Left aligning by default.");
         gNumLeftMarginSpaces = 0;
       }
-
       // undo above if left option is given
       if( argResults[alignArg] != null ) {
         if( argResults[alignArg] == "left" ) {
@@ -99,9 +88,7 @@ Future<void> main(List<String> arguments) async {
           gNumLeftMarginSpaces = 0;
         }
       }
-
       if( argResults[maxDepthArg] != null) {
-
         int tempMaxDepth = int.parse(argResults[maxDepthArg]);
         if( tempMaxDepth < gMinimumDepthAllowed || tempMaxDepth > gMaximumDepthAllowed) {
           print("Maximum depth cannot be less than $gMinimumDepthAllowed and cannot be more than $gMaximumDepthAllowed. Going to use the default maximum depth, which is $gDefaultMaxDepth.");
@@ -110,28 +97,23 @@ Future<void> main(List<String> arguments) async {
           print("Going to take threads to maximum depth of $gNumLastDays days");
         }
       }
-
       if( argResults[eventFileArg] != null) {
         gEventsFilename =  argResults[eventFileArg];
         if( gEventsFilename != "") { 
           print("Going to use file to read from and store events: $gEventsFilename");
         }
       }
-
       if( gEventsFilename != "") {
         print("\n");
         stdout.write('Reading events from the given file.......');
         List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
-        
         setRelaysIntialEvents(eventsFromFile);
         eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
         print("read $numFileEvents posts from file \"$gEventsFilename\"");
       }
-
       if( argResults[requestArg] != null) {
         //stdout.write("Got argument request: ${argResults[requestArg]}");
         stdout.write('Sending request and waiting for events...');
-
         sendRequest(gListRelayUrls, argResults[requestArg]);
         Future.delayed(const Duration(milliseconds: 6000), () {
             List<Event> receivedEvents = getRecievedEvents();
@@ -152,7 +134,6 @@ Future<void> main(List<String> arguments) async {
         });
         return;
       } 
-
     } on FormatException catch (e) {
       print(e.message);
       return;
@@ -167,15 +148,6 @@ Future<void> main(List<String> arguments) async {
     // get a user's events, then from its type 3 event, gets events of its follows,
     // then get the events of user-id's mentioned in p-tags of received events
     // then display them all
-
-/*    getUserEvents(defaultServerUrl, userPublicKey, 1000, 0);
-    getUserEvents("wss://relay.damus.io", userPublicKey, 1000, 0);
-    getUserEvents("wss://nostr-relay.wlvs.space", userPublicKey, 1000, 0);
-    getUserEvents("wss://nostr-pub.wellorder.net	", userPublicKey, 1000, 0);
-    getUserEvents("wss://relay.damus.io", userPublicKey, 1000, 0);
-
-  */  
-
     stdout.write('Waiting for user posts to come in.....');
     Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
       // count user events

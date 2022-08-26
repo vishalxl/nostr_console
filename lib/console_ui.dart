@@ -302,7 +302,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         break;
 
       case 10:
-        stdout.write("Enter client name whose events you want to see: ");
+        stdout.write("Enter nostr client name whose events you want to see: ");
         String? $tempWords = stdin.readLineSync();
         String clientName = $tempWords??"";
         if( clientName != "") {
@@ -384,12 +384,12 @@ Future<void> channelMenuUI(Tree node, var contactList) async {
   return;
 }
 
-
 Future<void> mainMenuUi(Tree node, var contactList) async {
     gDebug = 0;
-    // at the very beginning, show the tree as it is, and them show the options menu
+    // at the very beginning, show the tree as it is, and then show the options menu
+
+    //bool repliesAndLikes (Tree t) => t.repliesAndLikes(userPublicKey);
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
-    //relays.printInfo();
 
     bool userContinue = true;
     while(userContinue) {
@@ -447,7 +447,6 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           }
 
           await sendReplyPostLike(node, replyToId, replyKind, content);
-
           break;
 
         case 3:

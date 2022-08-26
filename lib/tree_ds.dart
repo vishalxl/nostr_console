@@ -31,8 +31,6 @@ class Tree {
     Map<String, Tree> tempChildEventsMap = {};
     events.forEach((event) { 
       // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
-      //if( event.eventData.kind == 40 || event.eventData.kind == 42) if( gDebug > 0)  print("in from Events: got a kind 40/42 event of id ${event.eventData.id} and kind ${event.eventData.kind}" );
-      //event.printEvent(0);
       if( typesInEventMap.contains(event.eventData.kind)) {
         tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
       }
@@ -87,6 +85,7 @@ class Tree {
             if(  json.containsKey('name') ) {
               roomName = json['name'];
             }
+            
             if( json.containsKey('about')) {
               roomAbout = json['about'];
             }
@@ -116,13 +115,11 @@ class Tree {
           if(gDebug > 0) print("In Tree FromEvents: got id: $gCheckEventId");
         }
 
-
         if(tempChildEventsMap.containsKey( parentId)) {
           if( tempChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
             if( gDebug > 0) print("In Tree.fromEvents: got a kind 1 event whose parent is not a type 1 post: $id");
             return;
           }
-
           tempChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
         } else {
             if( gDebug > 0 && key == "e9c0c91d52a2cf000bb2460406139a99dd5b7823165be435e96433a600be8e41" || parentId == "f377a303a852c8821069714f43b4eef5e341c03892eacf49abb594660b2fbb00") {
@@ -131,7 +128,6 @@ class Tree {
               print(tempChildEventsMap.containsKey(parentId));
               print("----------------------------------------------/constructor from json");
             }
-
 
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
@@ -187,7 +183,7 @@ class Tree {
           newEventsId.add(newEvent.eventData.id); // add here to process/give notification about this new reaction
           if(gDebug > 0) print("In insertEvents: got a new reaction by: ${newEvent.eventData.id} to $reactedTo");
         } else {
-          if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo");
+          if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
           return;
         }
       }
@@ -244,7 +240,6 @@ class Tree {
 
             }
             break;
-
           case 42:
             // add 42 chat message event id to its chat room
             String channelId = newTree.e.eventData.getParent();
@@ -252,12 +247,10 @@ class Tree {
               if( chatRooms.containsKey(channelId)) {
                 if( gDebug > 0) print("added event to chat room in insert event");
                 addMessageToChannel(channelId, newTree.e.eventData.id, allChildEventsMap, chatRooms);
-                //chatRooms[channelId]?.messageIds.add(newTree.e.eventData.id);
               }
             } else {
               print("info: in insert events, could not find parent/channel id");
             }
-            
             break;
           default: 
             break;
@@ -688,6 +681,42 @@ class Tree {
     }
   }
 
+/*
+  // TODO
+  // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
+  bool repliesAndLikes(String pubkey) {
+    bool hasReacted = false;
+
+    if( gReactions.containsKey(e.eventData.id)) {
+      List<List<String>>? reactions = gReactions[e.eventData.id];
+      if( reactions  != null) {
+        for( int i = 0; i < reactions.length; i++) {
+          if( reactions[i][0] == pubkey) {
+            e.eventData.newLikes.add(pubkey);
+            hasReacted = true;
+            break;
+          }
+        }
+      }
+    }
+
+    bool childMatches = false;
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].hasUserPostAndLike(pubkey)) {
+        childMatches = true;
+      }
+    }
+    if( e.eventData.pubkey == pubkey) {
+      e.eventData.isNotification = true;
+      return true;
+    }
+    if( hasReacted || childMatches) {
+      return true;
+    }
+    return false;
+  } 
+*/
+
   // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
   bool hasUserPostAndLike(String pubkey) {
     bool hasReacted = false;
@@ -773,8 +802,11 @@ class Tree {
       }
     }
     if( byClient || childMatch) {
+      //print("SOME matched $clientName ");
       return true;
     }
+    //print("none matched $clientName ");
+
     return false;
   } 
 
@@ -942,6 +974,17 @@ String processReaction(Event event) {
     int    lastEIndex = event.eventData.eTagsRest.length - 1;
     String reactedTo  = event.eventData.eTagsRest[lastEIndex];
     if( gReactions.containsKey(reactedTo)) {
+      // check if the reaction already exists by this user
+      for( int i = 0; i < ((gReactions[reactedTo]?.length)??0); i++) {
+        List<String> oldReaction = (gReactions[reactedTo]?[i])??[];
+        if( oldReaction.length == 2) {
+          //valid reaction
+          if(oldReaction[0] == reactorId) {
+            return ""; // reaction by this user already exists so return
+          }
+        }
+      }
+
       List<String> temp = [reactorId, comment];
       gReactions[reactedTo]?.add(temp);
     } else {

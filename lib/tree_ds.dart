@@ -34,6 +34,7 @@ class Tree {
     events.forEach((event) { 
       // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
       //if( event.eventData.kind == 40 || event.eventData.kind == 42) if( gDebug > 0)  print("in from Events: got a kind 40/42 event of id ${event.eventData.id} and kind ${event.eventData.kind}" );
+      //event.printEvent(0);
       if( typesInEventMap.contains(event.eventData.kind)) {
         tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
       }
@@ -44,6 +45,8 @@ class Tree {
 
     List<String> tempWithoutParent = [];
     Map<String, ChatRoom> rooms = {};
+
+    if( gDebug > 0) print("In from Events: size of tempChildEventsMap = ${tempChildEventsMap.length} ");
 
     tempChildEventsMap.forEach((key, value) {
       String eId = value.e.eventData.id;
@@ -71,20 +74,42 @@ class Tree {
       }
 
       if(eKind == 40) {
+        //print("Processing type 40");
         String chatRoomId = eId;
-        dynamic json = jsonDecode(value.e.eventData.content);
+        try {
+          //print("Processing type 40 json");
+          dynamic json = jsonDecode(value.e.eventData.content);
+          //print("Processed type 40 json"); 
 
-        if( rooms.containsKey(chatRoomId)) {
-          if( rooms[chatRoomId]?.name == "") {
-            if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
-            rooms[chatRoomId]?.name = json['name'];
+          if( rooms.containsKey(chatRoomId)) {
+            //print("in if chatRoomId key in rooms");
+            if( rooms[chatRoomId]?.name == "") {
+              if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
+              rooms[chatRoomId]?.name = json['name'];
+            }
+          } else {
+            List<String> temp = [];
+            //temp.add(eId);
+            //print("in else");
+            //print("json =  $json");
+
+            String roomName = "", roomAbout = "";
+
+            if(  json.containsKey('name') ) {
+              roomName = json['name'];
+            }
+
+            if( json.containsKey('about')) {
+              roomAbout = json['about'];
+            }
+
+            ChatRoom room = ChatRoom(chatRoomId, roomName, roomAbout, "", []);
+            rooms[chatRoomId] = room;
+            if( gDebug > 0) print("Added new chat room $chatRoomId with name ${json['name']} .");
           }
-        } else {
-          List<String> temp = [];
-          //temp.add(eId);
-          ChatRoom room = ChatRoom(chatRoomId, json['name'], json['about'], "", []);
-          rooms[chatRoomId] = room;
-          if( gDebug > 0) print("Added new chat room $chatRoomId with name ${json['name']} .");
+         
+        } on Exception catch(e) {
+          if( gDebug > 0) print("In From Event. Event type 40. Json Decode error for event id ${value.e.eventData.id}");
         }
       }
 
@@ -671,13 +696,12 @@ class Tree {
       return true;
     }
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].hasUserPost(pubkey)) {
+      if( children[i].hasUserPostAndLike(pubkey)) {
         return true;
       }
     }
     return false;
   } 
-
 
   // returns true if the given words exists in it or its children
   bool hasWords(String word) {
@@ -689,6 +713,7 @@ class Tree {
     if( e.eventData.content.toLowerCase().contains(word)) {
       return true;
     }
+
     for( int i = 0; i < children.length; i++ ) {
       //if(gDebug > 0) print("this id = ${e.eventData.id} word = $word i = $i ");
       
@@ -697,12 +722,37 @@ class Tree {
         continue;
       }
 
-      if( children[i].e.eventData.content.toLowerCase().contains(word)) {
+      if( children[i].hasWords(word)) {
         return true;
       }
     }
     return false;
   } 
+
+  // returns true if the event or any of its children were made from the given client, and they are marked for notification
+  bool fromClientSelector(String clientName) {
+    //if(gDebug > 0) print("In tree selector hasWords: this id = ${e.eventData.id} word = $word");
+
+    List<List<String>> tags = e.eventData.tags;
+    for( int i = 0; i < tags.length; i++) {
+      if( tags[i].length < 2) {
+        continue;
+      }
+
+      if( tags[i][0] == "client" && tags[i][1].contains(clientName)) {
+        e.eventData.isNotification = true;
+        return true;
+      }
+    }
+
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].fromClientSelector(clientName)) {
+        return true;
+      }
+    }
+    return false;
+  } 
+
 
   Event? getContactEvent(String pkey) {
 
@@ -728,6 +778,77 @@ class Tree {
 
       return null;
   }
+
+  //void create
+
+  List<String> getFollowers(String pubkey) {
+    if( gDebug > 0) print("Finding followrs for $pubkey");
+    List<String> followers = [];
+
+    Set<String> usersWithContactList = {};
+    allChildEventsMap.forEach((key, value) {
+      if( value.e.eventData.kind == 3) {
+        usersWithContactList.add(value.e.eventData.pubkey);
+      }
+    });
+
+    usersWithContactList.forEach((x) { 
+      Event? contactEvent = getContactEvent(x);
+
+      if( contactEvent != null) {
+        List<Contact> contacts = contactEvent.eventData.contactList;
+        for(int i = 0; i < contacts.length; i ++) {
+          if( contacts[i].id == pubkey) {
+            followers.add(x);
+            return;
+          }
+        }
+      }
+    });
+
+    return followers;
+  }
+
+  void printSocialDistance(String otherPubkey, String otherName) {
+    String otherName = getAuthorName(otherPubkey);
+
+    List<String> contactList = [];
+    Event? contactEvent = this.getContactEvent(userPublicKey);
+    bool isFollow = false;
+    int  numSecond = 0; // number of your follows who follow the other
+
+    int numContacts =  0;
+    if( contactEvent != null) {
+      List<Contact> contacts = contactEvent.eventData.contactList;
+      numContacts = contacts.length;
+      for(int i = 0; i < contacts.length; i ++) {
+        // check if you follow the other account
+        if( contacts[i].id == otherPubkey) {
+          isFollow = true;
+        }
+        // count the number of your contacts who know or follow the other account
+        List<Contact> followContactList = [];
+        Event? followContactEvent = this.getContactEvent(contacts[i].id);
+        if( followContactEvent != null) {
+          followContactList = followContactEvent.eventData.contactList;
+          for(int j = 0; j < followContactList.length; j++) {
+            if( followContactList[j].id == otherPubkey) {
+              numSecond++;
+              break;
+            }
+          }
+        }
+      }// end for loop through users contacts
+      print("\n\n");
+      if( isFollow) {
+        print("* You follow $otherName ");
+      }
+
+      print("* Of the $numContacts people you follow, $numSecond follow $otherName");
+
+    } // end if contact event was found
+}
+
 
 } // end Tree
 
@@ -829,10 +950,11 @@ void processReactions(List<Event> events) {
   return;
 }
 
+
 /*
  * @function getTree Creates a Tree out of these received List of events. 
  */
-Tree getTree(List<Event> events) {
+Future<Tree> getTree(List<Event> events) async {
     if( events.isEmpty) {
       print("Warning: In printEventsAsTree: events length = 0");
       return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true, {});

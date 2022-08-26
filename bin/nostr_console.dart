@@ -132,20 +132,23 @@ Future<void> main(List<String> arguments) async {
         //stdout.write("Got argument request: ${argResults[requestArg]}");
         stdout.write('Sending request and waiting for events...');
 
-        sendRequest(defaultServerUrl, argResults[requestArg]);
+        sendRequest(gListRelayUrls, argResults[requestArg]);
         Future.delayed(const Duration(milliseconds: 6000), () {
             List<Event> receivedEvents = getRecievedEvents();
-            stdout.write("received ${receivedEvents.length - numFileEvents} events from $defaultServerUrl\n");
+            stdout.write("received ${receivedEvents.length - numFileEvents} events\n");
 
             // remove bots
             receivedEvents.removeWhere((e) => gBots.contains(e.eventData.pubkey));
             
             // create tree
-            Tree node = getTree(getRecievedEvents());
-            clearEvents(); // cause we have consumed them above
-            
+            Future<Tree>  node = getTree(getRecievedEvents());
+            //clearEvents(); // cause we have consumed them above
+            node.then((value) { 
+                clearEvents();
+                mainMenuUi(value, []); 
+              });
             // call main menu
-            mainMenuUi(node, []);
+            
         });
         return;
       } 
@@ -216,11 +219,14 @@ Future<void> main(List<String> arguments) async {
           stdout.write("received $numOtherEvents other posts\n");
 
           // get all events in Tree form
-          Tree node = getTree(getRecievedEvents());
-          clearEvents();
+          Future<Tree> node = getTree(getRecievedEvents());
 
           // call the mein UI function
-          mainMenuUi(node, contactList);
+          node.then((value) {
+            clearEvents();
+            mainMenuUi(value, contactList);
+          });
+          
         });
       });
     });

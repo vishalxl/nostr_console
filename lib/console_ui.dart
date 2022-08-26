@@ -120,7 +120,8 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
                             'Rebroadcast an event',          // 6
                             'Applicatoin stats',             // 7
                             'Help and About',                // 8
-                            'Go back to main menu'],         // 9
+                            'Go back to main menu',          // 9
+                            'Search by client'],
                           "Other Menu");                     // menu name
     print('You picked: $option');
     switch(option) {
@@ -237,9 +238,19 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
               // if contact list was found, get user's feed, and keep the contact list for later use 
               String authorName = getAuthorName(pubkey.first);
               List<String> contactList = [];
-              print("\nShowing the profile page for ${pubkey.first} ($authorName), whose contact list has ${ (contactEvent?.eventData.contactList.length)??0} profiles.\n ");
+              print("\nShowing the profile page for ${pubkey.first} ($authorName).\n");
               if (contactEvent != null ) {
+                print("The account follows ${contactEvent.eventData.contactList.length} accounts:");
+
                 contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
+                List<String> followers = node.getFollowers(pubkey.first);
+
+                print("\n\nThe account has ${followers.length} followers: ");
+
+                followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+
+                // print social distance info. 
+                node.printSocialDistance(pubkey.first, authorName);
               }
               print("");
             }
@@ -255,6 +266,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
         }
         break;
+
       case 6:
         print("TBD");
         break;
@@ -284,6 +296,16 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   
       case 9:
         continueOtherMenu = false;
+        break;
+
+      case 10:
+        stdout.write("Enter client name whose events you want to see: ");
+        String? $tempWords = stdin.readLineSync();
+        String clientName = $tempWords??"";
+        if( clientName != "") {
+          bool fromClient (Tree t) => t.fromClientSelector(clientName);
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
+        }
         break;
 
       default:

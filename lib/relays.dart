@@ -263,8 +263,10 @@ void getMultiUserEvents(serverUrl, List<String> publicKeys, numUserEvents) {
   }
 }
 
-void sendRequest(serverUrl, request) {
-  relays.sendRequest(serverUrl, request);
+void sendRequest(List<String> serverUrls, request) {
+  for(int i = 0; i < serverUrls.length; i++) {
+    relays.sendRequest(serverUrls[i], request);
+  }
 }
 
 List<Event> getRecievedEvents() {
@@ -273,6 +275,7 @@ List<Event> getRecievedEvents() {
 
 void clearEvents() {
   relays.rEvents = [];
+  if( gDebug > 0) print("clearEvents(): returning");
 }
 
 void setRelaysIntialEvents(eventsFromFile) {

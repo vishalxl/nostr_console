@@ -406,9 +406,9 @@ class Tree {
 
       numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
       if( whetherTopMost && gDebug > 0) { 
-        print("");
-        print(children[i].getMostRecentTime(0));
-        print("-----");
+        //print("");
+        //print(children[i].getMostRecentTime(0));
+        //print("-----");
       }
       //if( gDebug > 0) print("at end for loop iteraion: numPrinted = $numPrinted");
     }
@@ -656,10 +656,10 @@ class Tree {
       int mostRecentChild = children[i].getMostRecentTime(mostRecentTime);
       if( mostRecentTime <= mostRecentChild) {
         if( gDebug > 0 && children[i].e.eventData.id == "970bbd22e63000dc1313867c61a50e0face728139afe6775fa9fe4bc61bdf664") {
-          print("plantimals 970bbd22e63000dc1313867c61a50e0face728139afe6775fa9fe4bc61bdf664");
-          print( "children[i].e.eventData. = ${children[i].e.eventData.createdAt} mostRecentChild = $mostRecentChild i = $i mostRecentIndex = $mostRecentIndex mostRecentTime = $mostRecentTime\n");
-          printTree(0, 0, (a) => true);
-          print("--------------");
+          //print("plantimals 970bbd22e63000dc1313867c61a50e0face728139afe6775fa9fe4bc61bdf664");
+          //print( "children[i].e.eventData. = ${children[i].e.eventData.createdAt} mostRecentChild = $mostRecentChild i = $i mostRecentIndex = $mostRecentIndex mostRecentTime = $mostRecentTime\n");
+          //printTree(0, 0, (a) => true);
+          //print("--------------");
         }
 
         mostRecentTime = mostRecentChild;
@@ -668,10 +668,10 @@ class Tree {
     }
     if( mostRecentIndex == -1) { 
       Tree top = getTopTree(this);
-      if( gDebug > 0 ) {
+      if( gDebug ==2 ) {
         print('\nerror: returning newer child id = ${e.eventData.id}. e.eventData.createdAt = ${e.eventData.createdAt} num child = ${children.length} 1st child time = ${children[0].e.eventData.createdAt} mostRecentTime = $mostRecentTime initial time = $initial ');
         print("its top event time and id = time ${top.e.eventData.createdAt} id ${top.e.eventData.id} num tags = ${top.e.eventData.tags} num e tags = ${top.e.eventData.eTagsRest}\n");
-        top.printTree(0,0, (a) => true);
+        //top.printTree(0,0, (a) => true);
         print("\n-----------------------------------------------------------------------\n");
       }
       // typically this should not happen. child nodes/events can't be older than parents 
@@ -824,9 +824,9 @@ class Tree {
 
       // if contact list was found, get user's feed, and keep the contact list for later use 
       if (latestContactEvent != "") {
-        if( gDebug > 0) {
-          print("latest contact event : $latestContactEvent with total contacts = ${allChildEventsMap[latestContactEvent]?.e.eventData.contactList.length}");
-          print(allChildEventsMap[latestContactEvent]?.e.originalJson);
+        if( gDebug > 1) {
+          //print("latest contact event : $latestContactEvent with total contacts = ${allChildEventsMap[latestContactEvent]?.e.eventData.contactList.length}");
+          //print(allChildEventsMap[latestContactEvent]?.e.originalJson);
         }
         return allChildEventsMap[latestContactEvent]?.e;
       }
@@ -896,6 +896,8 @@ class Tree {
       print("\n\n");
       if( isFollow) {
         print("* You follow $otherName ");
+      } else {
+        print("* You do not follow $otherName");
       }
       print("* Of the $numContacts people you follow, $numSecond follow $otherName");
 

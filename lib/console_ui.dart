@@ -67,18 +67,17 @@ Future<void> sendEvent(Tree node, Event e) async {
       if( relay == "") {
         relay = defaultServerUrl;
       }
-      String strContact = '["p","${e.eventData.contactList[i].id}"]';
+      String strContact = '["p","${e.eventData.contactList[i].id}"],';
       strTags += strContact;
-      if( i < e.eventData.contactList.length - 1) {
-        strTags += ",";
-      }
     }
+    strTags += '["client","nostr_console"]';
   }
 
   String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
   String toSendMessage = '["EVENT", {"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
+  //print("in send event: calling sendrequiest");
   relays.sendRequest(defaultServerUrl, toSendMessage);
 }
 
@@ -114,7 +113,7 @@ int showMenu(List<String> menuOptions, String menuName) {
 }
 
 Future<void> otherMenuUi(Tree node, var contactList) async {
-  gDebug = 0;
+  //gDebug = 1;
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
     int option = showMenu([ 'Display contact list',          // 1 
@@ -181,6 +180,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
                   }
                 }
                 if( !alreadyContact) {
+                  print('Sending new contact event');
                   Contact newContact = Contact(pk, defaultServerUrl);
                   newContactEvent.eventData.contactList.add(newContact);
                   sendEvent(node, newContactEvent);
@@ -320,7 +320,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 }
 
 Future<void> channelMenuUI(Tree node, var contactList) async {
-  gDebug = 0;
+  //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
     int option = showMenu([ 'Show channels',          // 1 
@@ -386,7 +386,7 @@ Future<void> channelMenuUI(Tree node, var contactList) async {
 }
 
 Future<void> mainMenuUi(Tree node, var contactList) async {
-    gDebug = 0;
+    //gDebug = 0;
     // at the very beginning, show the tree as it is, and then show the options menu
 
     //bool repliesAndLikes (Tree t) => t.repliesAndLikes(userPublicKey);

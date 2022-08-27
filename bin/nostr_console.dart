@@ -112,7 +112,12 @@ Future<void> main(List<String> arguments) async {
             } else
             {
               gCommentColor = color;
-              print("Going to use color $gCommentColor.");
+              stdout.write("Going to use color $colorGiven for text");
+              if( colorGiven == "cyan") {
+                gNotificationColor = greenColor;
+                stdout.write(". Green as notification color");
+              }
+              stdout.write(".\n");
             }
         } else {
            print("Invalid color.");
@@ -127,7 +132,7 @@ Future<void> main(List<String> arguments) async {
       String whetherDefault = "the given ";
       if( argResults[eventFileArg] != null && !argResults[disableFileArg]) {
         if( gDefaultEventsFilename == argResults[eventFileArg]) {
-          whetherDefault = "default  ";
+          whetherDefault = " default  ";
         }
 
         gEventsFilename =  argResults[eventFileArg];

@@ -33,8 +33,12 @@ Future<void> processNotifications(Tree node)  async {
  */
 Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, String content) async {
   String strTags = node.getTagStr(replyToId, exename);
+  if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
+    print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$colorEndMarker"); 
+    return; 
+  }
+
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
-  
   String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
@@ -116,27 +120,89 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   //gDebug = 1;
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
-    int option = showMenu([ 'Display contact list',          // 1 
-                            'Follow new contact',            // 2
-                            'Change number of days printed', // 3
-                            'Show a user profile',           // 4
-                            'Search (a word)',               // 5
-                            'Rebroadcast an event',          // 6
+    int option = showMenu([ 'Show user profile',             // 1
+                            'Display contact list',          // 2 
+                            'Follow new contact',            // 3
+                            'Search word(s)',                // 4
+                            'Search by client name',         // 5
+                            'Change number of days printed', // 6
                             'Applicatoin stats',             // 7
                             'Help and About',                // 8
-                            'Go back to main menu',          // 9
-                            'Search by client'],
+                            'Go back to main menu'],         // 9
                           "Other Menu");                     // menu name
     print('You picked: $option');
     switch(option) {
       case 1:
+        stdout.write("Type username or first few letters of user's public key( or full public key): ");
+        String? $tempUserName = stdin.readLineSync();
+        String userName = $tempUserName??"";
+        if( userName != "") {
+          Set<String> pubkey = getPublicKeyFromName(userName); 
+          print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
+          pubkey.forEach( (x) => print(" $x"));
+          if( pubkey.length > 1) {
+            if( pubkey.length > 1) {
+              print("Got multiple users with the same name. Try again, and try to type a more unique name or id-prefix");
+            }
+          } else {
+            if (pubkey.isEmpty ) {
+              print("Could not find the user with that id or username.");
+            } 
+            else {
+              String pk = pubkey.first;
+              bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(pk);
+              node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
+              
+              // get the latest kind 3 event for the user, which lists his 'follows' list
+              Event? contactEvent = node.getContactEvent(pubkey.first);
+
+              // if contact list was found, get user's feed, and keep the contact list for later use 
+              String authorName = gKindONames[pubkey.first]?.name??"";
+              List<String> contactList = [];
+              printUnderlined("Profile for User");
+              print("\nName   : $authorName ( ${pubkey.first} ).");
+
+              if (contactEvent != null ) {
+                String about = gKindONames[pubkey.first]?.about??"";
+                String picture = gKindONames[pubkey.first]?.picture??"";
+
+                print("About  : $about");
+                print("Picture: $picture");
+
+                if( contactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
+                    print("\n* They follow you");
+                } else {
+                    print("\n* They don't follow you");
+                }
+
+                // print social distance info. 
+                node.printSocialDistance(pubkey.first, authorName);
+                print("\n");
+                
+                stdout.write("They follows ${contactEvent.eventData.contactList.length} accounts:  ");
+                contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
+                print("\n\n");
+
+                List<String> followers = node.getFollowers(pubkey.first);
+                stdout.write("They have ${followers.length} followers:  ");
+                followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+                print("");
+
+              }
+              print("");
+            }
+          }
+        }
+        break;
+
+      case 2:
         String authorName = getAuthorName(userPublicKey);
         print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
         contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
         print("");
         break;
 
-      case 2:
+      case 3:
         // in case the program was invoked with --pubkey, then user can't send messages
         if( userPrivateKey == "") {
             print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
@@ -197,7 +263,27 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         }
         break;
 
-      case 3:
+      case 4:
+        stdout.write("Enter word(s) to search: ");
+        String? $tempWords = stdin.readLineSync();
+        String words = $tempWords??"";
+        if( words != "") {
+          bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
+        }
+        break;
+
+      case 5:
+        stdout.write("Enter nostr client name whose events you want to see: ");
+        String? $tempWords = stdin.readLineSync();
+        String clientName = $tempWords??"";
+        if( clientName != "") {
+          bool fromClient (Tree t) => t.fromClientSelector(clientName);
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
+        }
+        break;
+
+      case 6:
         stdout.write("Enter number of days for which you want to see posts: ");
         String? $tempNumDays = stdin.readLineSync();
         String newNumDays = $tempNumDays??"";
@@ -215,65 +301,6 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 
         break;
 
-      case 4:
-        stdout.write("Enter username or first few letters of user's public key( or full public key): ");
-        String? $tempUserName = stdin.readLineSync();
-        String userName = $tempUserName??"";
-        if( userName != "") {
-          Set<String> pubkey = getPublicKeyFromName(userName); 
-          print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
-          print(pubkey);
-          if( pubkey.length > 1) {
-            if( pubkey.length > 1) {
-              print("Got multiple users with the same name. Try again, and kindly enter a more unique name or id-prefix");
-            }
-          } else {
-            if (pubkey.isEmpty ) {
-              print("Could not find the user with that id or username.");
-            } 
-            else {
-              String pk = pubkey.first;
-              bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(pk);
-              node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
-              
-              // get the latest kind 3 event for the user, which lists his 'follows' list
-              Event? contactEvent = node.getContactEvent(pubkey.first);
-
-              // if contact list was found, get user's feed, and keep the contact list for later use 
-              String authorName = getAuthorName(pubkey.first);
-              List<String> contactList = [];
-              print("\nShowing the profile page for ${pubkey.first} ($authorName).\n");
-              if (contactEvent != null ) {
-                print("The account follows ${contactEvent.eventData.contactList.length} accounts:");
-
-                contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
-                List<String> followers = node.getFollowers(pubkey.first);
-
-                print("\n\nThe account has ${followers.length} followers: ");
-
-                followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
-
-                // print social distance info. 
-                node.printSocialDistance(pubkey.first, authorName);
-              }
-              print("");
-            }
-          }
-        }
-        break;
-      case 5:
-        stdout.write("Enter word(s) to search: ");
-        String? $tempWords = stdin.readLineSync();
-        String words = $tempWords??"";
-        if( words != "") {
-          bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
-        }
-        break;
-
-      case 6:
-        print("TBD");
-        break;
 
       case 7:
 
@@ -300,16 +327,6 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   
       case 9:
         continueOtherMenu = false;
-        break;
-
-      case 10:
-        stdout.write("Enter nostr client name whose events you want to see: ");
-        String? $tempWords = stdin.readLineSync();
-        String clientName = $tempWords??"";
-        if( clientName != "") {
-          bool fromClient (Tree t) => t.fromClientSelector(clientName);
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
-        }
         break;
 
       default:

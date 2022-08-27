@@ -77,8 +77,17 @@ const String gDummyAccountPubkey = "Non";
 const int gDefaultNumLastDays = 1;
 int gNumLastDays     = gDefaultNumLastDays; 
 
-// global user names from kind 0 events, mapped from public key to user name
-Map<String, String> gKindONames = {}; 
+class UserNameInfo {
+  int createdAt;
+  String name, about, picture;
+  UserNameInfo(this.createdAt, this.name, this.about, this.picture);
+}
+
+/* 
+ * global user names from kind 0 events, mapped from public key to a 3 element array of [name, about, picture]
+ *  JSON object {name: <username>, about: <string>, picture: <url, string>}
+ */
+Map<String, UserNameInfo> gKindONames = {}; 
 
 // global reactions entry. Map of form <if of event reacted to, List of Reactors>
 // reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment)

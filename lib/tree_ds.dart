@@ -568,6 +568,8 @@ class Tree {
     String latestEventId = "";
     for(  String k in allChildEventsMap.keys) {
       if( k.length >= replyToId.length && k.substring(0, replyToId.length) == replyToId) {
+        // ignore future events TODO
+
         if( ( allChildEventsMap[k]?.e.eventData.createdAt ?? 0) > latestEventTime ) {
           latestEventTime = allChildEventsMap[k]?.e.eventData.createdAt ?? 0;
           latestEventId = k;
@@ -578,6 +580,9 @@ class Tree {
     // in case we are given valid length id, but we can't find the event in our internal db, then we just send the reply to given id
     if( latestEventId.isEmpty && replyToId.length == 64) {
       latestEventId = replyToId;  
+    }
+    if( latestEventId.isEmpty && replyToId.length != 64 && replyToId.length != 0) {
+      return "";
     }
 
     // found the id of event we are replying to
@@ -863,6 +868,7 @@ class Tree {
     return followers;
   }
 
+  // finds all your followers, and then finds which of them follow the otherPubkey
   void printSocialDistance(String otherPubkey, String otherName) {
     String otherName = getAuthorName(otherPubkey);
 
@@ -893,11 +899,10 @@ class Tree {
           }
         }
       }// end for loop through users contacts
-      print("\n\n");
       if( isFollow) {
         print("* You follow $otherName ");
       } else {
-        print("* You do not follow $otherName");
+        print("* You don't follow $otherName");
       }
       print("* Of the $numContacts people you follow, $numSecond follow $otherName");
 

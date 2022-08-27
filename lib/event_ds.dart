@@ -500,33 +500,6 @@ List<String> getpTags(List<Event> events, int numMostFrequent) {
   return ptags;
 }
 
-// If given event is kind 0 event, then populates gKindONames with that info
-void processKind0Event(Event e) {
-  if( e.eventData.kind != 0) {
-    return;
-  }
-
-  String content = e.eventData.content;
-  if( content.isEmpty) {
-    return;
-  }
-  try {
-    dynamic json = jsonDecode(content);
-    if(json["name"] != Null) {
-      gKindONames[e.eventData.pubkey] = json["name"]??"";
-    }
-  } catch(ex) {
-    if( gDebug != 0) print("Warning: In processKind0Event: caught exception for content: ${e.eventData.content}");
-  }
-}
-
-// returns name by looking up global list gKindONames, which is populated by kind 0 events
-String getAuthorName(String pubkey) {
-  String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
-  String name = gKindONames[pubkey]??max3(pubkey);
-  return name;
-}
-
 List<Event> readEventsFromFile(String filename) {
   List<Event> events = [];
   final File  file   = File(filename);
@@ -593,13 +566,61 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
   return relay;
 }
 
+// If given event is kind 0 event, then populates gKindONames with that info
+void processKind0Event(Event e) {
+  if( e.eventData.kind != 0) {
+    return;
+  }
+
+  String content = e.eventData.content;
+  if( content.isEmpty) {
+    return;
+  }
+
+  String? name = "";
+  String? about = "";
+  String? picture = "";
+
+  try {
+    dynamic json = jsonDecode(content);
+    name = json["name"];
+    about = json["about"];    
+    picture = json["picture"];    
+  } catch(ex) {
+    if( gDebug != 0) print("Warning: In processKind0Event: caught exception for content: ${e.eventData.content}");
+    return;
+  }
+
+
+  if(name != Null) {
+    if( !gKindONames.containsKey(e.eventData.pubkey)) {    
+      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name??"", about??"", picture??"");
+      print("Created meta data for name: $name about: $about picture: $picture");
+    } else {
+      int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
+      if( oldTime < e.eventData.createdAt) {
+        String oldName = gKindONames[e.eventData.pubkey]?.name??"";
+         gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name??"", about??"", picture??"");
+         print("Updated meta data to name: $name  from $oldName");
+      }
+    }
+  }
+}
+
+// returns name by looking up global list gKindONames, which is populated by kind 0 events
+String getAuthorName(String pubkey) {
+  String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
+  String name = gKindONames[pubkey]?.name??max3(pubkey);
+  return name;
+}
+
 // returns full public key(s) for the given username( which can be first few letters of pubkey, or the user name)
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
   gKindONames.forEach((key, value) {
     // check both the user name, and the pubkey to search for the user
-    if( userName == value) {
+    if( userName == value.name) {
       pubkeys.add(key);
     }
 

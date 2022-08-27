@@ -9,6 +9,11 @@ const int numWaitSeconds = 3000;
 // global counters of total events read or processed
 int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 
+//String defaultServerUrl = 'wss://relay.damus.io';
+const String nostrRelayUnther = 'wss://nostr-relay.untethr.me';
+const String relayNostrInfo   = 'wss://relay.nostr.info';
+String defaultServerUrl = relayNostrInfo;
+
 List<String> gListRelayUrls = [defaultServerUrl,
                               "wss://nostr-verified.wellorder.net", 
                               "wss://nostr-relay.wlvs.space", 
@@ -64,10 +69,6 @@ String gNotificationColor = cyanColor; // cyan
 String gWarningColor = redColor; // red
 const String colorEndMarker = "\x1B[0m";
 
-
-//String defaultServerUrl = 'wss://relay.damus.io';
-const String nostrRelayUnther = 'wss://nostr-relay.untethr.me';
-String defaultServerUrl = nostrRelayUnther;
 
 // dummy account pubkey
 const String gDummyAccountPubkey = "Non";

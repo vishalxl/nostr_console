@@ -42,7 +42,7 @@ Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, St
   String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
-  String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$content","sig": "$sig"}]';
+  String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$content","sig":"$sig"}]';
   relays.sendRequest(defaultServerUrl, toSendMessage);
 }
 
@@ -55,10 +55,11 @@ Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) 
   String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
-  String toSendMessage = '["EVENT", {"id": "$id","pubkey": "$userPublicKey","created_at": $createdAt,"kind": $replyKind,"tags": [$strTags],"content": "$messageToSend","sig": "$sig"}]';
+  String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
   relays.sendRequest(defaultServerUrl, toSendMessage);
 }
 
+// send event e
 Future<void> sendEvent(Tree node, Event e) async {
   String strTags = "";
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -71,16 +72,24 @@ Future<void> sendEvent(Tree node, Event e) async {
       if( relay == "") {
         relay = defaultServerUrl;
       }
-      String strContact = '["p","${e.eventData.contactList[i].id}"],';
+
+      String comma = ",";
+      if( i == e.eventData.contactList.length - 1) {
+        comma = "";
+      }
+      String strContact = '["p","${e.eventData.contactList[i].id}","$relay"]$comma';
       strTags += strContact;
     }
-    strTags += '["client","nostr_console"]';
+    
+    // strTags += '["client","nostr_console"]';
   }
+
+  // TODO send client for kinds other than 3 ( which can only have p tags)
 
   String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
-  String toSendMessage = '["EVENT", {"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
+  String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
   //print("in send event: calling sendrequiest");
   relays.sendRequest(defaultServerUrl, toSendMessage);
 }

@@ -191,18 +191,23 @@ class EventData {
     if(json['kind'] == 3) {
       for( int i = 0; i < numTags; i++) {
         var tag = jsonTags[i];
-        var n = tag.length;
+        if( tag.length < 2) {
+          if( gDebug > 0) print("In event fromjson: invalid p tag of size 1");
+          continue;
+        }
+
         String server = defaultServerUrl;
-        if( n >=3 ) {
+        if( tag.length >=3 ) {
           server = tag[2].toString();
           if( server == 'wss://nostr.rocks' || server == "wss://nostr.bitcoiner.social") {
             server = defaultServerUrl;
           }
-          //server = defaultServerUrl;
         }
-        Contact c = Contact(tag[1] as String, server);
-        
-        contactList.add(c);
+
+        if( tag[0] == "p" && tag[1].length == 64) {
+          Contact c = Contact(tag[1] as String, server);
+          contactList.add(c); 
+        }
       }
     } else {
       if ( json['kind'] == 1 || json['kind'] == 7 || json['kind'] == 42 ) {

@@ -555,12 +555,12 @@ class Tree {
    * @parameter replyToId First few letters of an event id for which reply is being made
    */
   String getTagStr(String replyToId, String clientName) {
-    String strTags = "";
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
-
     if( replyToId.isEmpty) {
-      return strTags;
+      return '["client","$clientName"]';
     }
+
+    String strTags = "";
 
     // find the latest event with the given id; needs to be done because we allow user to refer to events with as few as 3 or so first letters
     // and only the event that's latest is considered as the intended recipient ( this is not perfect, but easy UI)
@@ -599,13 +599,10 @@ class Tree {
           strTags +=  '["e","$rootEventId"],';
         }
       }
-
       strTags +=  '["e","$latestEventId","$relay"],';
     }
 
-    if( strTags != "")
-      strTags += '["client","$clientName"]' ;
-
+    strTags += '["client","$clientName"]' ;
     return strTags;
   }
  

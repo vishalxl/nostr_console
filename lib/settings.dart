@@ -46,7 +46,7 @@ const String defaultTextColor = "green";
 
 const String greenColor = "\x1B[32m"; // green
 const String cyanColor = "\x1b[36m"; // cyan
-const String whiteColor = "\x1b[37m"; // white
+const String whiteColor = "\x1b[97m"; // white
 const String blackColor = "\x1b[30m"; // black
 const String redColor = "\x1B[31m"; // red
 const String blueColor = "\x1b[34m"; // blue

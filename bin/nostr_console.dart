@@ -149,7 +149,7 @@ Future<void> main(List<String> arguments) async {
         List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
         setRelaysIntialEvents(eventsFromFile);
         eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
-        print("read $numFileEvents posts from file \"$gEventsFilename\"");
+        print("read $numFileEvents posts from file $gEventsFilename");
       }
       if( argResults[requestArg] != null) {
         stdout.write('Sending request and waiting for events...');

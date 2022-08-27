@@ -79,7 +79,28 @@ bool isWhitespace(String s) {
   return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t';
 }
 
+
 extension StringX on String {
+  isEnglish( ) {
+
+    bool latin = isLatinAlphabet();
+    if( !latin)
+      return false;
+    bool french = isFrench();
+    return !french;
+  }
+
+  bool isFrench() {
+    List<String> frenchWords = ["oui", "je", "le" "un", "de", "et", "la"];
+    for( int i = 0; i < frenchWords.length; i++) {
+      if( this.toLowerCase().contains(" ${frenchWords[i]} ")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
   isLatinAlphabet({caseSensitive = false}) {
     if( length < 6) { // since smaller words can be smileys can should not be translated
       return true;
@@ -253,7 +274,7 @@ class EventData {
 
     if( evaluatedContent == "") {
       evaluatedContent = expandMentions(content);
-      if( gTranslate && !evaluatedContent.isLatinAlphabet()) {
+      if( gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
         //final input = "Здравствуйте. Ты в порядке?";
 

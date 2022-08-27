@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
@@ -355,7 +356,7 @@ Future<void> channelMenuUI(Tree node, var contactList) async {
           }
 
           stdout.write("\nType message to send to this room; or type 'x' to exit the channel, or just press <enter> to refresh: ");
-          $tempUserInput = stdin.readLineSync();
+          $tempUserInput = stdin.readLineSync(encoding: utf8);
           String messageToSend = $tempUserInput??"";
 
           if( messageToSend != "") {

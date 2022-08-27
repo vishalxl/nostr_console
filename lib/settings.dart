@@ -115,9 +115,9 @@ usage: $exename [OPTIONS]
                                     to it all the events (including the ones read, and any new received). Even if not given, 
                                     the default is to read from and write to $gDefaultEventsFilename . Can be turned off by 
                                     the --disable-file flag 
-      -n, --disable-file            When turned on, even the default filename is not read from.
-      -t, --translate               This flag, if present, will make the application translate some of the recent posts using
-                                    google translate.
+      -s, --disable-file            When turned on, even the default filename is not read from.
+      -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
+                                    is accessed for any translation request only if this flag is present, and not otherwise.
 
   UI Options                                
       -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default

@@ -33,7 +33,7 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
                               ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m")
-                              ..addOption(eventFileArg, abbr:"f", defaultsTo: gDefaultEventsFilename)..addFlag(disableFileArg, abbr:"n", defaultsTo: false)
+                              ..addOption(eventFileArg, abbr:"f", defaultsTo: gDefaultEventsFilename)..addFlag(disableFileArg, abbr:"s", defaultsTo: false)
                               ..addFlag(translateArg, abbr: "t", defaultsTo: false)
                               ..addOption(colorArg, abbr:"c");
     try {

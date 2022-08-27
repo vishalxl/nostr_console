@@ -13,7 +13,7 @@ int gDebug = 0;
 Map< String, List<Contact>> gContactLists = {};
 
 final translator = GoogleTranslator();
-const int gNumTranslateDays = 4;// translate for this number of days
+const int gNumTranslateDays = 1;// translate for this number of days
 bool gTranslate = false; // translate flag
 
 void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 

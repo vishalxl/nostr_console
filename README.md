@@ -3,7 +3,7 @@ Nostr console client using Dart
 
 # Use
 
-Easiest way to run nostr_console: Go to [releases](https://github.com/vishalxl/nostr_console/releases) and get an executable for your platform from the latest release.
+Easiest way to run nostr_console: Go to releases and get an executable for your platform.
 
 Otherwise do following:
 1. Install [Flutter](https://docs.flutter.dev/get-started/install) SDK, or [Dart](https://dart.dev/get-dart) SDK
@@ -19,27 +19,29 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
 
   OPTIONS
 
-      --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
-                                well known private key. When given, posts/replies can't be sent. Same as -p
-      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
-                                sent. Default is a hard-coded well known private key. Same as -k
-      --relay   <relay wss url> The relay url that is used as main relay. Default is wss://nostr-relay.untethr.me. Same as -r
-      --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
-      --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
-                                from a relay. If not provided, then events for default or given user are shown. Same as -q
-      --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
-                                to it all the events (including the ones read, and any new received). Same as -f
-      --translate               This flag, if present, will make the application translate some of the recent posts using
-                                google translate. Same as -t
+      -p, --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
+                                    well known private key. When given, posts/replies can't be sent. 
+      -k, --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
+                                    sent. Default is a hard-coded well known private key. 
+      -r, --relay   <relay wss url> The relay url that is used as main relay. Default is wss://nostr-relay.untethr.me.
+      -d, --days    <N as num>      The latest number of days for which events are shown. Default is 1.
+      -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
+                                    from a relay. If not provided, then events for default or given user are shown.
+      -f, --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
+                                    to it all the events (including the ones read, and any new received).
+      -n, --disable-file            When turned on, even the default filename is not read from.
+      -t, --translate               This flag, if present, will make the application translate some of the recent posts using
+                                    google translate.
 
   UI Options                                
-      --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
-                                the posts or text is aligned to the center of the terminal. Same as -a 
-      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 120. 
-                                Cant be less than 60. Same as -w
-      --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is 2 and
-                                maximum allowed is 12. Same as -m
-      --help                    Print this usage message and exit. Same as -h
+      -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
+                                    the posts or text is aligned to the center of the terminal. 
+      -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 120. 
+                                    Cant be less than 60.
+      -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is 2 and
+                                    maximum allowed is 12. 
+      -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
+      -h, --help                    Print this usage message and exit.
                                
 ```                                
 

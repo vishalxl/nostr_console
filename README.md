@@ -3,7 +3,7 @@ Nostr console client using Dart
 
 # Use
 
-Easiest way to run nostr_console: Go to releases and get an executable for your platform.
+Easiest way to run nostr_console: Go to [releases](https://github.com/vishalxl/nostr_console/releases) and get an executable for your platform from the latest release.
 
 Otherwise do following:
 1. Install [Flutter](https://docs.flutter.dev/get-started/install) SDK, or [Dart](https://dart.dev/get-dart) SDK

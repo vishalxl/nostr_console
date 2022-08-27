@@ -82,18 +82,26 @@ bool isWhitespace(String s) {
 
 extension StringX on String {
   isEnglish( ) {
-
-    bool latin = isLatinAlphabet();
-    if( !latin)
+    // since smaller words can be smileys they should not be translated
+    if( length < 6) 
+      return true;
+    
+    if( !isLatinAlphabet())
       return false;
-    bool french = isFrench();
-    return !french;
+
+    if (isFrench())
+      return false;
+
+    return true;
   }
 
   bool isFrench() {
-    List<String> frenchWords = ["oui", "je", "le" "un", "de", "et", "la"];
+
+    // https://www.thoughtco.com/most-common-french-words-1372759
+    List<String> frenchWords = ["oui", "je", "le", "un", "de", "et", "merci", "une", "ce", "pas"];
     for( int i = 0; i < frenchWords.length; i++) {
       if( this.toLowerCase().contains(" ${frenchWords[i]} ")) {
+        if( gDebug > 0) print("isFrench: Found ${this.toString()} is french"); 
         return true;
       }
     }
@@ -102,9 +110,6 @@ extension StringX on String {
 
 
   isLatinAlphabet({caseSensitive = false}) {
-    if( length < 6) { // since smaller words can be smileys can should not be translated
-      return true;
-    }
     int countLatinletters = 0;
     for (int i = 0; i < length; i++) {
       final target = caseSensitive ? this[i] : this[i].toLowerCase();
@@ -274,6 +279,7 @@ class EventData {
 
     if( evaluatedContent == "") {
       evaluatedContent = expandMentions(content);
+
       if( gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
         //final input = "Здравствуйте. Ты в порядке?";

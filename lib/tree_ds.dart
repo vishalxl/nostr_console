@@ -557,7 +557,6 @@ class Tree {
   String getTagStr(String replyToId, String clientName) {
     String strTags = "";
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
-    strTags += '["client","$clientName"]' ;
 
     if( replyToId.isEmpty) {
       return strTags;
@@ -585,7 +584,7 @@ class Tree {
     if( latestEventId.isNotEmpty) {
       String? pTagPubkey = allChildEventsMap[latestEventId]?.e.eventData.pubkey;
       if( pTagPubkey != null) {
-        strTags += ',["p","$pTagPubkey"]';
+        strTags += '["p","$pTagPubkey"],';
       }
       String relay = getRelayOfUser(userPublicKey, pTagPubkey??"");
       relay = (relay == "")? defaultServerUrl: relay;
@@ -597,12 +596,16 @@ class Tree {
         Tree topTree = getTopTree(t);
         rootEventId = topTree.e.eventData.id;
         if( rootEventId != latestEventId) { // if the reply is to a top/parent event, then only one e tag is sufficient
-          strTags +=  ',["e","$rootEventId"]';
+          strTags +=  '["e","$rootEventId"],';
         }
       }
 
-      strTags +=  ',["e","$latestEventId","$relay"]';
+      strTags +=  '["e","$latestEventId","$relay"],';
     }
+
+    if( strTags != "")
+      strTags += '["client","$clientName"]' ;
+
     return strTags;
   }
  

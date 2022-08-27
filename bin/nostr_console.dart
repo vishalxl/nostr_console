@@ -19,7 +19,10 @@ const String alignArg    = "align"; // can be "left"
 const String widthArg    = "width";
 const String maxDepthArg = "maxdepth";
 const String eventFileArg = "file";
+const String disableFileArg = "disable-file";
+
 const String translateArg = "translate";
+const String colorArg     = "color";
 
 void printUsage() {
   print(gUsage);
@@ -30,7 +33,9 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
                               ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m")
-                              ..addOption(eventFileArg, abbr:"f")..addFlag(translateArg, abbr: "t", defaultsTo: false);
+                              ..addOption(eventFileArg, abbr:"f", defaultsTo: gDefaultEventsFilename)..addFlag(disableFileArg, abbr:"n", defaultsTo: false)
+                              ..addFlag(translateArg, abbr: "t", defaultsTo: false)
+                              ..addOption(colorArg, abbr:"c");
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
@@ -97,25 +102,54 @@ Future<void> main(List<String> arguments) async {
           print("Going to take threads to maximum depth of $gNumLastDays days");
         }
       }
-      if( argResults[eventFileArg] != null) {
-        gEventsFilename =  argResults[eventFileArg];
-        if( gEventsFilename != "") { 
-          print("Going to use file to read from and store events: $gEventsFilename");
+
+      if( argResults[colorArg] != null) {
+        String colorGiven = argResults[colorArg].toString().toLowerCase();
+        if( gColorMap.containsKey(colorGiven)) {
+            String color = gColorMap[colorGiven]??"";
+            if( color == "") {
+              print("Invalid color.");
+            } else
+            {
+              gCommentColor = color;
+              print("Going to use color $gCommentColor.");
+            }
+        } else {
+           print("Invalid color.");
         }
       }
+
+      if( argResults[disableFileArg]) {
+        gEventsFilename = "";
+        print("Not going to use any file to read/write events.");
+      }
+
+      String whetherDefault = "the given ";
+      if( argResults[eventFileArg] != null && !argResults[disableFileArg]) {
+        if( gDefaultEventsFilename == argResults[eventFileArg]) {
+          whetherDefault = "default  ";
+        }
+
+        gEventsFilename =  argResults[eventFileArg];
+
+        if( gEventsFilename != "") { 
+          print("Going to use ${whetherDefault}file to read from and store events: $gEventsFilename");
+        }
+      }
+
+
       if( gEventsFilename != "") {
         print("\n");
-        stdout.write('Reading events from the given file.......');
+        stdout.write('Reading events from ${whetherDefault}file.......');
         List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
         setRelaysIntialEvents(eventsFromFile);
         eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
         print("read $numFileEvents posts from file \"$gEventsFilename\"");
       }
       if( argResults[requestArg] != null) {
-        //stdout.write("Got argument request: ${argResults[requestArg]}");
         stdout.write('Sending request and waiting for events...');
         sendRequest(gListRelayUrls, argResults[requestArg]);
-        Future.delayed(const Duration(milliseconds: 6000), () {
+        Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
             List<Event> receivedEvents = getRecievedEvents();
             stdout.write("received ${receivedEvents.length - numFileEvents} events\n");
 

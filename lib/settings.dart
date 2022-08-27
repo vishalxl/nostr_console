@@ -2,10 +2,9 @@
 // for debugging
 String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
 
-
 String gRemoteAdminPubkey = "";
 
-const int numWaitSeconds = 3000;
+const int numWaitSeconds = 3000; 
 
 // global counters of total events read or processed
 int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
@@ -16,10 +15,9 @@ List<String> gListRelayUrls = [defaultServerUrl,
                               "wss://nostr-pub.wellorder.net", 
                               "wss://relay.damus.io"];
 
-
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.0.6";
+const String version = "0.0.7";
 
 // well known disposable test private key
 const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
@@ -42,11 +40,30 @@ const int  gDefaultMaxDepth     = 4;
 int        maxDepthAllowed      = gDefaultMaxDepth;
 const int  leftShiftThreadsBy   = 2;
 
+
+// text color
+const String defaultTextColor = "green";
+
+const String greenColor = "\x1B[32m"; // green
+const String cyanColor = "\x1b[36m"; // cyan
+const String whiteColor = "\x1b[37m"; // white
+const String blackColor = "\x1b[30m"; // black
+const String redColor = "\x1B[31m"; // red
+const String blueColor = "\x1b[34m"; // blue
+
+Map<String, String> gColorMap = { "green": greenColor, 
+                                  "cyan" : cyanColor, 
+                                  "white": whiteColor, 
+                                  "black": blackColor, 
+                                  "red"  : redColor, 
+                                  "blue" : blueColor};
+
 // 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
-const String commentColor = "\x1B[32m"; // green
-const String notificationColor = "\x1b[36m"; // cyan
-const String warningColor = "\x1B[31m"; // red
+String gCommentColor = greenColor;
+String gNotificationColor = cyanColor; // cyan
+String gWarningColor = redColor; // red
 const String colorEndMarker = "\x1B[0m";
+
 
 //String defaultServerUrl = 'wss://relay.damus.io';
 const String nostrRelayUnther = 'wss://nostr-relay.untethr.me';
@@ -57,7 +74,8 @@ const String gDummyAccountPubkey = "Non";
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument
-int gNumLastDays     = 1; 
+const int gDefaultNumLastDays = 1;
+int gNumLastDays     = gDefaultNumLastDays; 
 
 // global user names from kind 0 events, mapped from public key to user name
 Map<String, String> gKindONames = {}; 
@@ -75,7 +93,7 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "6a9eb714c2889aa32e449cfbb7854bc9780feed4ff3d887e03910dcb22aa560a"   // "bible bot"
                       ];
 
-//const String gDefaultEventsFilename = "events_store_nostr.txt";
+const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 
 const String gUsage = """$exename version $version
@@ -85,27 +103,32 @@ usage: $exename [OPTIONS]
 
   OPTIONS
 
-      --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
-                                well known private key. When given, posts/replies can't be sent. Same as -p
-      --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
-                                sent. Default is a hard-coded well known private key. Same as -k
-      --relay   <relay wss url> The relay url that is used as main relay. Default is $nostrRelayUnther . Same as -r
-      --days    <N as num>      The latest number of days for which events are shown. Default is 1. Same as -d
-      --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
-                                from a relay. If not provided, then events for default or given user are shown. Same as -q
-      --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
-                                to it all the events (including the ones read, and any new received). Same as -f
-      --translate               This flag, if present, will make the application translate some of the recent posts using
-                                google translate. Save as -t
+      -p, --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
+                                    well known private key. When given, posts/replies can't be sent.
+      -k, --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
+                                    sent. Default is a hard-coded well known private key.
+      -r, --relay   <relay wss url> The relay url that is used as main relay. Default is $nostrRelayUnther.
+      -d, --days    <N as num>      The latest number of days for which events are shown. Default is $gDefaultNumLastDays.
+      -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
+                                    from a relay. If not provided, then events for default or given user are shown.
+      -f, --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
+                                    to it all the events (including the ones read, and any new received). Even if not given, 
+                                    the default is to read from and write to $gDefaultEventsFilename . Can be turned off by 
+                                    the --disable-file flag 
+      -n, --disable-file            When turned on, even the default filename is not read from.
+      -t, --translate               This flag, if present, will make the application translate some of the recent posts using
+                                    google translate.
+
   UI Options                                
-      --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
-                                the posts or text is aligned to the center of the terminal. Same as -a 
-      --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is $gDefaultTextWidth. 
-                                Cant be less than $gMinValidTextWidth. Same as -w
-      --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is $gMinimumDepthAllowed and
-                                maximum allowed is $gMaximumDepthAllowed. Same as -m
-      --help                    Print this usage message and exit. Same as -h
-      
+      -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
+                                    the posts or text is aligned to the center of the terminal.
+      -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is $gDefaultTextWidth. 
+                                    Cant be less than $gMinValidTextWidth.
+      -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is $gMinimumDepthAllowed and
+                                    maximum allowed is $gMaximumDepthAllowed.
+      -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
+      -h, --help                    Print this usage message and exit.
+
 """;
 
 const String helpAndAbout = 

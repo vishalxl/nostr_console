@@ -317,10 +317,10 @@ class EventData {
     printDepth(depth);
     stdout.write("|Message: ");
     if( isNotification) {
-      printInColor(contentShifted, notificationColor);
+      printInColor(contentShifted, gNotificationColor);
       isNotification = false;
     } else {
-      printInColor(contentShifted, commentColor);
+      printInColor(contentShifted, gCommentColor);
     }
   }
 
@@ -345,7 +345,7 @@ class EventData {
         String reactorId = reactors[i][0];
         if( newLikes.contains(reactorId)) {
           // colorify
-          reactorNames += notificationColor + getAuthorName(reactorId) + colorEndMarker;
+          reactorNames += gNotificationColor + getAuthorName(reactorId) + colorEndMarker;
         } else {
           reactorNames += getAuthorName(reactorId);
         }
@@ -512,7 +512,7 @@ List<Event> readEventsFromFile(String filename) {
           events.add(e);
     }
   } on Exception catch(err) {
-    print("Cannot open file $gEventsFilename");
+    print("cannot open file $gEventsFilename");
   }
 
   return events;

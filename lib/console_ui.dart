@@ -13,8 +13,8 @@ Future<void> processNotifications(Tree node)  async {
     
     List<String> newEventsId = node.insertEvents(getRecievedEvents());
     String nameToDisplay = userPrivateKey.length == 64? 
-                              "$commentColor${getAuthorName(userPublicKey)}$colorEndMarker": 
-                              "${warningColor}You are not signed in$colorEndMarker but are using public key $userPublicKey";
+                              "$gCommentColor${getAuthorName(userPublicKey)}$colorEndMarker": 
+                              "${gWarningColor}You are not signed in$colorEndMarker but are using public key $userPublicKey";
     node.printNotifications(newEventsId, nameToDisplay);
     clearEvents();
   });

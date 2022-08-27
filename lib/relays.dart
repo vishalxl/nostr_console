@@ -154,7 +154,7 @@ class Relays {
                     return;
                   }                
                 },
-                onError: (err) { print("\n${warningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
+                onError: (err) { print("\n${gWarningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
                 onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
           );
       } on WebSocketException {

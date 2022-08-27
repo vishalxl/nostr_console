@@ -159,7 +159,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
               // if contact list was found, get user's feed, and keep the contact list for later use 
               String authorName = gKindONames[pubkey.first]?.name??"";
               List<String> contactList = [];
-              printUnderlined("Profile for User");
+              printUnderlined("\nProfile for User");
               print("\nName   : $authorName ( ${pubkey.first} ).");
 
               if (contactEvent != null ) {

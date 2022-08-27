@@ -595,13 +595,13 @@ void processKind0Event(Event e) {
   if(name != Null) {
     if( !gKindONames.containsKey(e.eventData.pubkey)) {    
       gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name??"", about??"", picture??"");
-      print("Created meta data for name: $name about: $about picture: $picture");
+      //print("Created meta data for name: $name about: $about picture: $picture");
     } else {
       int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
       if( oldTime < e.eventData.createdAt) {
         String oldName = gKindONames[e.eventData.pubkey]?.name??"";
          gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name??"", about??"", picture??"");
-         print("Updated meta data to name: $name  from $oldName");
+         //print("Updated meta data to name: $name  from $oldName");
       }
     }
   }

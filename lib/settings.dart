@@ -105,6 +105,8 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
+bool         gDontWriteOldEvents    = true;
+const int    gPurgeBeforeDays       = 100;
 
 const String gUsage = """$exename version $version
 The nostr console client built using dart.

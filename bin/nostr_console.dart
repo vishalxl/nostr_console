@@ -146,7 +146,7 @@ Future<void> main(List<String> arguments) async {
       if( gEventsFilename != "") {
         print("\n");
         stdout.write('Reading events from ${whetherDefault}file.......');
-        List<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
+        Set<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
         setRelaysIntialEvents(eventsFromFile);
         eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
         print("read $numFileEvents posts from file $gEventsFilename");
@@ -155,7 +155,7 @@ Future<void> main(List<String> arguments) async {
         stdout.write('Sending request and waiting for events...');
         sendRequest(gListRelayUrls, argResults[requestArg]);
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
-            List<Event> receivedEvents = getRecievedEvents();
+            Set<Event> receivedEvents = getRecievedEvents();
             stdout.write("received ${receivedEvents.length - numFileEvents} events\n");
 
             // remove bots
@@ -220,7 +220,7 @@ Future<void> main(List<String> arguments) async {
 
         // get mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(getRecievedEvents(), 300);
-        getMultiUserEvents(defaultServerUrl, pTags, 5000);
+        getMultiUserEvents(gListRelayUrls, pTags, 5000);
         
         stdout.write('Waiting for rest of posts to come in.....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {

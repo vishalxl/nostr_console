@@ -22,7 +22,7 @@ class Tree {
 
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
-  factory Tree.fromEvents(List<Event> events) {
+  factory Tree.fromEvents(Set<Event> events) {
     if( events.isEmpty) {
       return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false, {});
     }
@@ -163,12 +163,12 @@ class Tree {
   /*
    * @insertEvents inserts the given new events into the tree, and returns the id the ones actually inserted so that they can be printed as notifications
    */
-  List<String> insertEvents(List<Event> newEvents) {
+  Set<String> insertEvents(Set<Event> newEventsSetToProcess) {
 
-    List<String> newEventsId = [];
+    Set<String> newEventIdsSet = {};
 
     // add the event to the Tree
-    newEvents.forEach((newEvent) { 
+    newEventsSetToProcess.forEach((newEvent) { 
       // don't process if the event is already present in the map
       // this condition also excludes any duplicate events sent as newEvents
       if( allChildEventsMap.containsKey(newEvent.eventData.id)) {
@@ -180,7 +180,7 @@ class Tree {
         String reactedTo = processReaction(newEvent);
         
         if( reactedTo != "") {
-          newEventsId.add(newEvent.eventData.id); // add here to process/give notification about this new reaction
+          //newEventsId.add(newEvent.eventData.id); // add here to process/give notification about this new reaction
           if(gDebug > 0) print("In insertEvents: got a new reaction by: ${newEvent.eventData.id} to $reactedTo");
         } else {
           if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
@@ -203,11 +203,11 @@ class Tree {
       if( gDebug > 0) print("In insertEvents: adding event to main children map");
 
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {});
-      newEventsId.add(newEvent.eventData.id);
+      newEventIdsSet.add(newEvent.eventData.id);
     });
     
     // now go over the newly inserted event, and add its to the tree. only for kind 1 events
-    newEventsId.forEach((newId) {
+    newEventIdsSet.forEach((newId) {
       Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
       if( newTree != null) {
 
@@ -258,9 +258,9 @@ class Tree {
       }
     });
 
-    if(gDebug > 0) print("In insertEvents: Found new ${newEventsId.length} events. ");
+    if(gDebug > 0) print("In end of insertEvents: Returning ${newEventIdsSet.length} new notification-type event: $newEventIdsSet ");
 
-    return newEventsId;
+    return newEventIdsSet;
   }
 
 
@@ -268,21 +268,19 @@ class Tree {
    * @printNotifications Add the given events to the Tree, and print the events as notifications
    *                     It should be ensured that these are only kind 1 events
    */
-  void printNotifications(List<String> newEventsId, String userName) {
-    // remove duplicates
-    Set temp = {};
-    newEventsId.retainWhere((event) => temp.add(newEventsId));
-    
+  void printNotifications(Set<String> newEventIdsSet, String userName) {
+    if( gDebug > 0) print("Info: in printNotifications: num new evetns = ${newEventIdsSet.length}");
+
     String strToWrite = "Notifications: ";
     int countNotificationEvents = 0;
-    for( int i =0 ; i < newEventsId.length; i++) {
-      int k = (allChildEventsMap[newEventsId[i]]?.e.eventData.kind??-1);
+    for( var newEventId in newEventIdsSet) {
+      int k = (allChildEventsMap[newEventId]?.e.eventData.kind??-1);
       if( k == 7 || k == 1 || k == 42 || k == 40) {
         countNotificationEvents++;
       }
 
-      if(  allChildEventsMap.containsKey(newEventsId[i])) {
-        if( gDebug > 0) print( "id = ${ (allChildEventsMap[newEventsId[i]]?.e.eventData.id??-1)}");
+      if(  allChildEventsMap.containsKey(newEventId)) {
+        if( gDebug > 0) print( "id = ${ (allChildEventsMap[newEventId]?.e.eventData.id??-1)}");
       } else {
         if( gDebug > 0) print( "Info: could not find event id in map."); // this wont later be processed
       }
@@ -290,7 +288,7 @@ class Tree {
     }
     // TODO don't print notifications for events that are too old
 
-    if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventsId count17 = $countNotificationEvents");
+    if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventIdsSet count17 = $countNotificationEvents");
     
     if( countNotificationEvents == 0) {
       strToWrite += "No new replies/posts.\n";
@@ -300,14 +298,14 @@ class Tree {
       return;
     }
     // TODO call count() less
-    strToWrite += "Number of new replies/posts = ${newEventsId.length}\n";
+    strToWrite += "Number of new replies/posts = ${newEventIdsSet.length}\n";
     stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
     stdout.write("Total posts  : ${count()}\n");
     stdout.write("Signed in as : $userName\n");
     stdout.write("\nHere are the threads with new replies or new likes: \n\n");
     
-    List<Tree> topTrees = []; // collect all top tress to display in this list. only unique tress will be displayed
-    newEventsId.forEach((eventID) { 
+    List<Tree> topNotificationTree = []; // collect all top tress to display in this list. only unique tress will be displayed
+    newEventIdsSet.forEach((eventID) { 
       
       Tree ?t = allChildEventsMap[eventID];
       if( t == null) {
@@ -319,7 +317,7 @@ class Tree {
           case 1:
             t.e.eventData.isNotification = true;
             Tree topTree = getTopTree(t);
-            topTrees.add(topTree);
+            topNotificationTree.add(topTree);
             break;
           case 7:
             Event event = t.e;
@@ -333,7 +331,7 @@ class Tree {
               if( reactedToTree != null) {
                 reactedToTree.e.eventData.newLikes.add( reactorId);
                 Tree topTree = getTopTree(reactedToTree);
-                topTrees.add(topTree);
+                topNotificationTree.add(topTree);
               } else {
                 if(gDebug > 0) print("Could not find reactedTo tree");
               }
@@ -350,9 +348,12 @@ class Tree {
 
     // remove duplicate top trees
     Set ids = {};
-    topTrees.retainWhere((t) => ids.add(t.e.eventData.id));
+    topNotificationTree.retainWhere((t) => ids.add(t.e.eventData.id));
     
-    topTrees.forEach( (t) { t.printTree(0, 0, selectAll); });
+    topNotificationTree.forEach( (t) { 
+      t.printTree(0, 0, selectAll); 
+      print("\n");
+      });
     print("\n");
   }
 
@@ -521,6 +522,13 @@ class Tree {
       for( var k in allChildEventsMap.keys) {
         Tree? t = allChildEventsMap[k];
         if( t != null) {
+          // only write if its not too old
+          if( gDontWriteOldEvents) {
+            if( t.e.eventData.createdAt < (DateTime.now().subtract(Duration(days: gPurgeBeforeDays)).millisecondsSinceEpoch ~/ 1000)) {
+              continue;
+            }
+          }
+
           String line = "${t.e.originalJson}\n";
           nLinesStr += line;
           eventCounter++;
@@ -1006,7 +1014,7 @@ String processReaction(Event event) {
 }
 
 // will go over the list of events, and update the global gReactions appropriately
-void processReactions(List<Event> events) {
+void processReactions(Set<Event> events) {
   for (Event event in events) {
     processReaction(event);
   }
@@ -1016,7 +1024,7 @@ void processReactions(List<Event> events) {
 /*
  * @function getTree Creates a Tree out of these received List of events. 
  */
-Future<Tree> getTree(List<Event> events) async {
+Future<Tree> getTree(Set<Event> events) async {
     if( events.isEmpty) {
       print("Warning: In printEventsAsTree: events length = 0");
       return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true, {});

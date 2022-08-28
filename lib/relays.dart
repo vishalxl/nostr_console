@@ -10,7 +10,8 @@ class Relay {
   IOWebSocketChannel socket;
   List<String>       users;         // is used so that duplicate requests aren't sent for same user for this same relay
   int                numReceived;
-  Relay(this.url, this.socket, this.users, this.numReceived);
+  int                numRequestsSent;
+  Relay(this.url, this.socket, this.users, this.numReceived, this.numRequestsSent);
 
   void printInfo()   { 
     //print("In Relay: printInfo"); 
@@ -23,7 +24,7 @@ class Relay {
  */
 class Relays {
   Map<String, Relay> relays;
-  List<Event>  rEvents = []; // current events received. can be used by others. Is cleared after consumption
+  Set<Event>  rEvents = {}; // current events received. can be used by others. Is cleared after consumption
   Set<String>  uniqueIdsRecieved = {} ; // id of events received. only for internal usage, so that duplicate events are rejected
   Relays(this.relays, this.rEvents, this.uniqueIdsRecieved);
 
@@ -40,10 +41,10 @@ class Relays {
     IOWebSocketChannel  fws = IOWebSocketChannel.connect(relayUrl);
     print('In Relay.relay: connecting to relay $relayUrl');
     Map<String,  Relay> mapRelay = {};
-    Relay relayObject = Relay( relayUrl, fws, [], 0);
+    Relay relayObject = Relay( relayUrl, fws, [], 0, 0);
     mapRelay[relayUrl] = relayObject;
     
-    return Relays(mapRelay, [], {});
+    return Relays(mapRelay, {}, {});
   }
 
   /* 
@@ -58,7 +59,10 @@ class Relays {
       }
     }
 
+    String subscriptionId = "single_user" + (relays[relayUrl]?.numRequestsSent??"").toString();
+
     if( relays.containsKey(relayUrl)) {
+      
       List<String>? users = relays[relayUrl]?.users;
       if( users != null) {
         // following is too restrictive casuse changed sinceWhen is not considered. TODO improve it
@@ -70,7 +74,8 @@ class Relays {
         users.add(publicKey);
       }
     }
-    String request = getUserRequest(publicKey, numEventsToGet, sinceWhen);
+    
+    String request = getUserRequest(subscriptionId, publicKey, numEventsToGet, sinceWhen);
     sendRequest(relayUrl, request);
   }    
 
@@ -98,7 +103,9 @@ class Relays {
       }
     } // if relay exists and has a user list
 
-    String request = getMultiUserRequest(reqKeys, numEventsToGet);
+    String subscriptionId = "multiple_user" + (relays[relayUrl]?.numRequestsSent??"").toString();
+
+    String request = getMultiUserRequest( subscriptionId, reqKeys, numEventsToGet);
     sendRequest(relayUrl, request);
   }    
 
@@ -116,13 +123,14 @@ class Relays {
     IOWebSocketChannel?  fws;
     if(relays.containsKey(relay)) {
       fws = relays[relay]?.socket;
+      relays[relay]?.numRequestsSent++;
     }
     else {
       if(gDebug !=0) print('connecting to $relay');
 
       try {
           IOWebSocketChannel fws2 = IOWebSocketChannel.connect(relay);
-          Relay newRelay = Relay(relay, fws2, [], 0);
+          Relay newRelay = Relay(relay, fws2, [], 0, 1);
           relays[relay] = newRelay;
           fws = fws2;
           fws2.stream.listen(
@@ -135,7 +143,7 @@ class Relays {
                     }
                     String id = json[2]['id'] as String;
                     if( uniqueIdsRecieved.contains(id)) {
-                      if( gDebug > 0) print("In relay: received duplicate event id : $id");
+                      //if( gDebug > 0) print("In relay: received duplicate event id : $id");
                       return;
                     } else {
                       uniqueIdsRecieved.add(id);
@@ -166,6 +174,7 @@ class Relays {
       }
     }
 
+    
     if(gDebug > 0) print('\nSending request: \n$request\n to $relay\n\n');
     fws?.sink.add(request);
   }
@@ -186,20 +195,20 @@ class Relays {
   }
 }
 
-Relays relays = Relays({}, [], {});
+Relays relays = Relays({}, {}, {});
 
-String getUserRequest(String publicKey, int numUserEvents, int sinceWhen) {
+String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
   }
-  var    strSubscription1  = '["REQ","single_user",{ "authors": ["';
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
   return strSubscription1 + publicKey + strSubscription2;
 }
 
-String getMultiUserRequest(List<String> publicKeys, int numUserEvents) {
-  var    strSubscription1  = '["REQ","multiple_user",{ "authors": [';
+String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int numUserEvents) {
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": [';
   var    strSubscription2  ='], "limit": $numUserEvents  } ]';
   String s = "";
 
@@ -249,17 +258,20 @@ void getUserEvents(List<String> serverUrls, publicKey, numUserEvents, sinceWhen)
     });
 }
 
-void getMultiUserEvents(serverUrl, List<String> publicKeys, numUserEvents) {
+void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, numUserEvents) {
   if( gDebug > 0) print("Sending multi user request for ${publicKeys.length} users");
   const int numMaxUserRequests = 15;
-  for( int i = 0; i < publicKeys.length; i+= numMaxUserRequests) {
-    int getUserRequests = numMaxUserRequests;
-    if( publicKeys.length - i <= numMaxUserRequests) {
-      getUserRequests = publicKeys.length - i;
+
+  for(var serverUrl in serverUrls) {
+    for( int i = 0; i < publicKeys.length; i+= numMaxUserRequests) {
+      int getUserRequests = numMaxUserRequests;
+      if( publicKeys.length - i <= numMaxUserRequests) {
+        getUserRequests = publicKeys.length - i;
+      }
+      //print("    sending request form $i to ${i + getUserRequests} ");
+      List<String> partialList = publicKeys.sublist(i, i + getUserRequests);
+      relays.getMultiUserEvents(serverUrl, partialList, numUserEvents);
     }
-    //print("    sending request form $i to ${i + getUserRequests} ");
-    List<String> partialList = publicKeys.sublist(i, i + getUserRequests);
-    relays.getMultiUserEvents(serverUrl, partialList, numUserEvents);
   }
 }
 
@@ -269,16 +281,16 @@ void sendRequest(List<String> serverUrls, request) {
   }
 }
 
-List<Event> getRecievedEvents() {
+Set<Event> getRecievedEvents() {
   return relays.rEvents;
 }
 
 void clearEvents() {
-  relays.rEvents = [];
+  relays.rEvents.clear();
   if( gDebug > 0) print("clearEvents(): returning");
 }
 
-void setRelaysIntialEvents(eventsFromFile) {
+void setRelaysIntialEvents(Set<Event> eventsFromFile) {
   relays.rEvents = eventsFromFile;
 }
 

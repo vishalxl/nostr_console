@@ -416,6 +416,11 @@ class Event {
 
   Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson);
 
+  @override
+  bool operator ==( other) {
+     return (other is Event) && eventData.id == other.eventData.id;
+  }
+
   factory Event.fromJson(String d, String relay) {
     try {
       dynamic json = jsonDecode(d);
@@ -487,11 +492,11 @@ class HistogramEntry {
 }
 
 // return the numMostFrequent number of most frequent p tags ( user pubkeys) in the given events
-List<String> getpTags(List<Event> events, int numMostFrequent) {
+List<String> getpTags(Set<Event> events, int numMostFrequent) {
   List<HistogramEntry> listHistogram = [];
   Map<String, int>   histogramMap = {};
-  for(int i = 0; i < events.length; i++) {
-    addToHistogram(histogramMap, events[i].eventData.pTags);
+  for(var event in events) {
+    addToHistogram(histogramMap, event.eventData.pTags);
   }
 
   histogramMap.forEach((key, value) {listHistogram.add(HistogramEntry(key, value));/* print("added to list of histogramEntry $key $value"); */});
@@ -505,8 +510,8 @@ List<String> getpTags(List<Event> events, int numMostFrequent) {
   return ptags;
 }
 
-List<Event> readEventsFromFile(String filename) {
-  List<Event> events = [];
+Set<Event> readEventsFromFile(String filename) {
+  Set<Event> events = {};
   final File  file   = File(filename);
 
   // sync read
@@ -524,24 +529,19 @@ List<Event> readEventsFromFile(String filename) {
 }
 
 // From the list of events provided, lookup the lastst contact information for the given user/pubkey
-Event? getContactEvent(List<Event> events, String pubkey) {
+Event? getContactEvent(Set<Event> events, String pubkey) {
 
     // get the latest kind 3 event for the user, which lists his 'follows' list
-    int latestContactsTime = 0, latestContactIndex = -1;
-    for( int i = 0; i < events.length; i++) {
-      var e = events[i];
+    Event? latestContactEvent = null;
+    int latestContactsTime = 0;
+    for( var e in events) {
       if( e.eventData.pubkey == pubkey && e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
-        latestContactIndex = i;
         latestContactsTime = e.eventData.createdAt;
+        latestContactEvent = e;
       }
     }
 
-    // if contact list was found, get user's feed, and keep the contact list for later use 
-    if (latestContactIndex != -1) {
-      return events[latestContactIndex];
-    }
-
-    return null;
+    return latestContactEvent;
 }
 
 // for the user userPubkey, returns the relay of its contact contactPubkey

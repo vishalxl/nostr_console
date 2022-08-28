@@ -12,11 +12,11 @@ Future<void> processNotifications(Tree node)  async {
   const int waitMilliSeconds = 400;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
-    List<String> newEventsId = node.insertEvents(getRecievedEvents());
+    Set<String> newEventIdsSet = node.insertEvents(getRecievedEvents());
     String nameToDisplay = userPrivateKey.length == 64? 
                               "$gCommentColor${getAuthorName(userPublicKey)}$colorEndMarker": 
                               "${gWarningColor}You are not signed in$colorEndMarker but are using public key $userPublicKey";
-    node.printNotifications(newEventsId, nameToDisplay);
+    node.printNotifications(newEventIdsSet, nameToDisplay);
     clearEvents();
   });
 

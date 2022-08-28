@@ -83,7 +83,7 @@ class Relays {
    * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
    *          received events in the given List<Event>
    */
-  void getMultiUserEvents(String relayUrl, List<String> publicKeys, int numEventsToGet) {
+  void getMultiUserEvents(String relayUrl, List<String> publicKeys, int numEventsToGet, int sinceWhen) {
     
     List<String> reqKeys = [];
     if( relays.containsKey(relayUrl)) {
@@ -105,7 +105,7 @@ class Relays {
 
     String subscriptionId = "multiple_user" + (relays[relayUrl]?.numRequestsSent??"").toString();
 
-    String request = getMultiUserRequest( subscriptionId, reqKeys, numEventsToGet);
+    String request = getMultiUserRequest( subscriptionId, reqKeys, numEventsToGet, sinceWhen);
     sendRequest(relayUrl, request);
   }    
 
@@ -207,9 +207,14 @@ String getUserRequest(String subscriptionId, String publicKey, int numUserEvents
   return strSubscription1 + publicKey + strSubscription2;
 }
 
-String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int numUserEvents) {
+String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int numUserEvents, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": [';
-  var    strSubscription2  ='], "limit": $numUserEvents  } ]';
+  var    strSubscription2  ='], "limit": $numUserEvents $strTime } ]';
   String s = "";
 
   for(int i = 0; i < publicKeys.length; i++) {
@@ -221,7 +226,7 @@ String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int n
   return strSubscription1 + s + strSubscription2;
 }
 
-List<String> getContactFeed(List<String> relayUrls, List<Contact> contacts, numEventsToGet) {
+List<String> getContactFeed(List<String> relayUrls, List<Contact> contacts, int numEventsToGet, int sinceWhen) {
   
   // maps from relay url to list of users that it supplies events for
   Map<String, List<String> > mContacts = {};
@@ -240,10 +245,10 @@ List<String> getContactFeed(List<String> relayUrls, List<Contact> contacts, numE
 
   // send request for the users events to the relays
   mContacts.forEach((key, value) { 
-    relays.getMultiUserEvents(key, value, numEventsToGet);
+    relays.getMultiUserEvents(key, value, numEventsToGet, sinceWhen);
     
     relayUrls.forEach((relayUrl) {
-      relays.getMultiUserEvents(relayUrl, value, numEventsToGet);
+      relays.getMultiUserEvents(relayUrl, value, numEventsToGet, sinceWhen);
     });
 
   });
@@ -252,13 +257,13 @@ List<String> getContactFeed(List<String> relayUrls, List<Contact> contacts, numE
   return contactList;  
 }
 
-void getUserEvents(List<String> serverUrls, publicKey, numUserEvents, sinceWhen) {
+void getUserEvents(List<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen) {
   serverUrls.forEach((serverUrl) {
       relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
     });
 }
 
-void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, numUserEvents) {
+void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, int numUserEvents, int sinceWhen) {
   if( gDebug > 0) print("Sending multi user request for ${publicKeys.length} users");
   const int numMaxUserRequests = 15;
 
@@ -270,7 +275,7 @@ void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, numUse
       }
       //print("    sending request form $i to ${i + getUserRequests} ");
       List<String> partialList = publicKeys.sublist(i, i + getUserRequests);
-      relays.getMultiUserEvents(serverUrl, partialList, numUserEvents);
+      relays.getMultiUserEvents(serverUrl, partialList, numUserEvents, sinceWhen);
     }
   }
 }

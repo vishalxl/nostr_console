@@ -181,7 +181,7 @@ Future<void> main(List<String> arguments) async {
       return;
     }    
 
-    getUserEvents(gListRelayUrls, userPublicKey, 3000, 0);
+    getUserEvents(gListRelayUrls, userPublicKey, 3000, getSecondsDaysAgo(gEventsSinceDays));
   
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,
@@ -201,7 +201,7 @@ Future<void> main(List<String> arguments) async {
       List<String> contactList = [];
       if (contactEvent != null ) {
         if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-        contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, 4000);
+        contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, 4000, getSecondsDaysAgo(gEventsSinceDays));
 
         if( !gContactLists.containsKey(userPublicKey)) {
           gContactLists[userPublicKey] = contactEvent.eventData.contactList;
@@ -220,7 +220,7 @@ Future<void> main(List<String> arguments) async {
 
         // get mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(getRecievedEvents(), 300);
-        getMultiUserEvents(gListRelayUrls, pTags, 5000);
+        getMultiUserEvents(gListRelayUrls, pTags, 5000, getSecondsDaysAgo(gEventsSinceDays));
         
         stdout.write('Waiting for rest of posts to come in.....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {

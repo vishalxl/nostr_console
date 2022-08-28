@@ -42,7 +42,7 @@ class Tree {
     List<String> tempWithoutParent = [];
     Map<String, ChatRoom> rooms = {};
 
-    if( gDebug > 0) print("In from Events: size of tempChildEventsMap = ${tempChildEventsMap.length} ");
+    if( gDebug > 0) print("In Tree from Events: size of tempChildEventsMap = ${tempChildEventsMap.length} ");
 
     tempChildEventsMap.forEach((key, value) {
       String eId = value.e.eventData.id;
@@ -52,20 +52,20 @@ class Tree {
         String chatRoomId = value.e.eventData.getChatRoomId();
         if( chatRoomId != "") {
           if( rooms.containsKey(chatRoomId)) {
-            if( gDebug > 0) print("Adding new message $key to a chat room $chatRoomId. ");
+            //if( gDebug > 0) print("Adding new message $key to a chat room $chatRoomId. ");
             addMessageToChannel(chatRoomId, eId, tempChildEventsMap, rooms);
-            if( gDebug > 0) print("Added new message to a chat room $chatRoomId. ");
+            //if( gDebug > 0) print("Added new message to a chat room $chatRoomId. ");
           } else {
             List<String> temp = [];
             temp.add(eId);
             //String name = json['name'];
             ChatRoom room = ChatRoom(chatRoomId, "", "", "", temp);
             rooms[chatRoomId] = room;
-            if( gDebug > 0) print("Added new chat room object $chatRoomId and added message to it. ");
+            //if( gDebug > 0) print("Added new chat room object $chatRoomId and added message to it. ");
           }
         } else {
           if( gDebug > 0) print("Could not get chat room id for event $eId, its original json: ");
-          if( gDebug > 0) print(value.e.originalJson);
+          //if( gDebug > 0) print(value.e.originalJson);
         }
       }
 
@@ -76,7 +76,7 @@ class Tree {
           dynamic json = jsonDecode(value.e.eventData.content);
           if( rooms.containsKey(chatRoomId)) {
             if( rooms[chatRoomId]?.name == "") {
-              if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
+              //if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
               rooms[chatRoomId]?.name = json['name'];
             }
           } else {
@@ -926,11 +926,11 @@ void addMessageToChannel(String channelId, String messageId, var tempChildEvents
     ChatRoom? room = chatRooms[channelId];
     if( room != null ) {
       if( room.messageIds.isEmpty) {
-        if(gDebug> 0) print("room is empty. adding new message and returning. ");
+        //if(gDebug> 0) print("room is empty. adding new message and returning. ");
         room.messageIds.add(messageId);
         return;
       }
-      if(gDebug> 0) print("room has ${room.messageIds.length} messages already. adding new one to it. ");
+      //if(gDebug> 0) print("room has ${room.messageIds.length} messages already. adding new one to it. ");
 
       for(int i = 0; i < room.messageIds.length; i++) {
         int eventTime = (tempChildEventsMap[room.messageIds[i]]?.e.eventData.createdAt??0);

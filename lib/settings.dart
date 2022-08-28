@@ -1,4 +1,6 @@
 
+const int gEventsSinceDays = 120;
+
 // for debugging
 String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
 

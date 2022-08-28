@@ -639,3 +639,9 @@ Set<String> getPublicKeyFromName(String userName) {
   return pubkeys;
 }
 
+// returns the seconds since eponch N days ago
+int getSecondsDaysAgo( int N) {
+  return  DateTime.now().subtract(Duration(days: N)).millisecondsSinceEpoch ~/ 1000;
+}
+
+

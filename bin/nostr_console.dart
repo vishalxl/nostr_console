@@ -7,6 +7,7 @@ import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/console_ui.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:args/args.dart';
+import 'package:logging/logging.dart';
 
 // program arguments
 const String pubkeyArg   = "pubkey";
@@ -29,6 +30,12 @@ void printUsage() {
 }
 
 Future<void> main(List<String> arguments) async {
+
+    Logger.root.level = Level.ALL; // defaults to Level.INFO
+    Logger.root.onRecord.listen((record) {
+      print('${record.level.name}: ${record.time}: ${record.message}');
+    });
+      
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
@@ -142,7 +149,6 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
-
       if( gEventsFilename != "") {
         print("\n");
         stdout.write('Reading events from ${whetherDefault}file.......');
@@ -151,23 +157,21 @@ Future<void> main(List<String> arguments) async {
         eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
         print("read $numFileEvents posts from file $gEventsFilename");
       }
+
       if( argResults[requestArg] != null) {
-        stdout.write('Sending request and waiting for events...');
+        stdout.write('Sending request ${argResults[requestArg]} and waiting for events...');
         sendRequest(gListRelayUrls, argResults[requestArg]);
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
             Set<Event> receivedEvents = getRecievedEvents();
             stdout.write("received ${receivedEvents.length - numFileEvents} events\n");
 
-            // remove bots
-            receivedEvents.removeWhere((e) => gBots.contains(e.eventData.pubkey));
+            // create tree: will process reactions, remove bots, and then create main tree
+            Tree  node = getTree(getRecievedEvents());
             
-            // create tree
-            Future<Tree>  node = getTree(getRecievedEvents());
             //clearEvents(); // cause we have consumed them above
-            node.then((value) { 
-                clearEvents();
-                mainMenuUi(value, []); 
-              });
+              if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
+              clearEvents();
+              mainMenuUi(node, []);
             // call main menu
             
         });
@@ -181,7 +185,7 @@ Future<void> main(List<String> arguments) async {
       return;
     }    
 
-    getUserEvents(gListRelayUrls, userPublicKey, 3000, getSecondsDaysAgo(gEventsSinceDays));
+    getUserEvents(gListRelayUrls, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
   
     // the default in case no arguments are given is:
     // get a user's events, then from its type 3 event, gets events of its follows,
@@ -193,6 +197,7 @@ Future<void> main(List<String> arguments) async {
       getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
       numUserEvents -= numFileEvents;
       stdout.write("...received $numUserEvents posts made by the user\n");
+      if( gDebug > 0) log.info("Received user events.");
 
       // get the latest kind 3 event for the user, which lists his 'follows' list
       Event? contactEvent = getContactEvent(getRecievedEvents(), userPublicKey);
@@ -201,7 +206,7 @@ Future<void> main(List<String> arguments) async {
       List<String> contactList = [];
       if (contactEvent != null ) {
         if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-        contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, 4000, getSecondsDaysAgo(gEventsSinceDays));
+        contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
 
         if( !gContactLists.containsKey(userPublicKey)) {
           gContactLists[userPublicKey] = contactEvent.eventData.contactList;
@@ -217,27 +222,27 @@ Future<void> main(List<String> arguments) async {
         getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
         numFeedEvents = numFeedEvents - numUserEvents - numFileEvents;
         stdout.write("received $numFeedEvents posts from the follows\n");
+        if( gDebug > 0)  log.info("Received feed.");
 
         // get mentioned ptags, and then get the events for those users
-        List<String> pTags = getpTags(getRecievedEvents(), 300);
-        getMultiUserEvents(gListRelayUrls, pTags, 5000, getSecondsDaysAgo(gEventsSinceDays));
+        List<String> pTags = getpTags(getRecievedEvents(), gMaxPtagsToGet);
+        getMultiUserEvents(gListRelayUrls, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
         
         stdout.write('Waiting for rest of posts to come in.....');
         Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
+
           // count other events
           getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
           numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents - numFileEvents;
           stdout.write("received $numOtherEvents other posts\n");
+          if( gDebug > 0) log.info("Received ptag events events.");
 
           // get all events in Tree form
-          Future<Tree> node = getTree(getRecievedEvents());
+          Tree node = getTree(getRecievedEvents());
 
           // call the mein UI function
-          node.then((value) {
-            clearEvents();
-            mainMenuUi(value, contactList);
-          });
-          
+          clearEvents();
+          mainMenuUi(node, contactList);
         });
       });
     });

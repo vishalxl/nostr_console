@@ -7,14 +7,34 @@ import 'package:nostr_console/settings.dart';
 
 int gDebug = 0;
 
+// translate 
+final translator = GoogleTranslator();
+const int gNumTranslateDays = 1;// translate for this number of days
+bool gTranslate = false; // translate flag
+
+// Structure to store kind 0 event meta data for each user. Typically will  have info from latest kind 0 event only.
+class UserNameInfo {
+  int createdAt;
+  String name, about, picture;
+  UserNameInfo(this.createdAt, this.name, this.about, this.picture);
+}
+
+/* 
+ * global user names from kind 0 events, mapped from public key to a 3 element array of [name, about, picture]
+ *  JSON object {name: <username>, about: <string>, picture: <url, string>}
+ *  only has info from latest kind 0 event
+ */
+Map<String, UserNameInfo> gKindONames = {}; 
+
+// global reactions entry. Map of form <if of event reacted to, List of Reactors>
+// reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment)
+Map< String, List<List<String>> > gReactions = {};
+
 // global contact list of each user, including of the logged in user.
 // maps from pubkey of a user, to the latest contact list of that user, which is the latest kind 3 message
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
 
-final translator = GoogleTranslator();
-const int gNumTranslateDays = 1;// translate for this number of days
-bool gTranslate = false; // translate flag
 
 void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 
 
@@ -572,19 +592,20 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
 }
 
 // If given event is kind 0 event, then populates gKindONames with that info
-void processKind0Event(Event e) {
+// returns true if entry was created or modified, false otherwise
+bool processKind0Event(Event e) {
   if( e.eventData.kind != 0) {
-    return;
+    return false;
   }
 
   String content = e.eventData.content;
   if( content.isEmpty) {
-    return;
+    return false;
   }
 
-  String? name = "";
-  String? about = "";
-  String? picture = "";
+  String name = "";
+  String about = "";
+  String picture = "";
 
   try {
     dynamic json = jsonDecode(content);
@@ -592,24 +613,30 @@ void processKind0Event(Event e) {
     about = json["about"];    
     picture = json["picture"];    
   } catch(ex) {
-    if( gDebug != 0) print("Warning: In processKind0Event: caught exception for content: ${e.eventData.content}");
-    return;
-  }
-
-
-  if(name != Null) {
-    if( !gKindONames.containsKey(e.eventData.pubkey)) {    
-      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name??"", about??"", picture??"");
-      //print("Created meta data for name: $name about: $about picture: $picture");
-    } else {
-      int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
-      if( oldTime < e.eventData.createdAt) {
-        String oldName = gKindONames[e.eventData.pubkey]?.name??"";
-         gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name??"", about??"", picture??"");
-         //print("Updated meta data to name: $name  from $oldName");
-      }
+    //if( gDebug != 0) print("Warning: In processKind0Event: caught exception for content: ${e.eventData.content}");
+    if( name.isEmpty) {
+      //return false;
     }
   }
+
+
+  bool newEntry = false, entryModified = false;
+  if( !gKindONames.containsKey(e.eventData.pubkey)) {    
+    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture);
+    newEntry = true;;
+    //print("Created meta data for name: $name about: $about picture: $picture");
+  } else {
+    int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
+    if( oldTime < e.eventData.createdAt) {
+      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture);
+      entryModified = true;;
+    }
+  }
+
+  if(gDebug > 0) { 
+    print("At end of processKind0Events: for name = $name ${newEntry? "added entry": ( entryModified?"modified entry": "No change done")} ");
+  }
+  return newEntry || entryModified;
 }
 
 // returns name by looking up global list gKindONames, which is populated by kind 0 events

@@ -1,12 +1,26 @@
+import 'package:logging/logging.dart';
 
-const int gEventsSinceDays = 120;
+final log = Logger('ExampleLogger');
 
 // for debugging
 String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
 
-String gRemoteAdminPubkey = "";
+const int numWaitSeconds = 4000; 
 
-const int numWaitSeconds = 3000; 
+const String gDefaultEventsFilename = "all_nostr_events.txt";
+String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
+bool         gDontWriteOldEvents    = true;
+const int    gDontSaveBeforeDays    = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
+
+const int gDaysToGetEventsFor = 30; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gLimitPerSubscription = 20000;
+
+ // don't show notifications for events that are older than 5 days and come when program is running
+ // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
+const int gDontHighlightEventsOlderThan = 4;
+
+const int gMaxAuthorsInOneRequest = 100; // number of author requests to send in one request
+const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 // global counters of total events read or processed
 int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
@@ -16,11 +30,13 @@ const String nostrRelayUnther = 'wss://nostr-relay.untethr.me';
 const String relayNostrInfo   = 'wss://relay.nostr.info';
 String defaultServerUrl = relayNostrInfo;
 
-List<String> gListRelayUrls = [defaultServerUrl,
-                              "wss://nostr-verified.wellorder.net", 
-                              "wss://nostr-relay.wlvs.space", 
+List<String> gListRelayUrls = [ //defaultServerUrl,
+                          //      nostrRelayUnther,
+                          //    "wss://nostr-verified.wellorder.net", 
+                              "wss://nostr-relay.wlvs.space",
                               "wss://nostr-pub.wellorder.net", 
-                              "wss://relay.damus.io"];
+                              "wss://relay.damus.io"
+                              ];
 
 // name of executable
 const String exename = "nostr_console";
@@ -80,21 +96,9 @@ const String gDummyAccountPubkey = "Non";
 const int gDefaultNumLastDays = 1;
 int gNumLastDays     = gDefaultNumLastDays; 
 
-class UserNameInfo {
-  int createdAt;
-  String name, about, picture;
-  UserNameInfo(this.createdAt, this.name, this.about, this.picture);
-}
 
-/* 
- * global user names from kind 0 events, mapped from public key to a 3 element array of [name, about, picture]
- *  JSON object {name: <username>, about: <string>, picture: <url, string>}
- */
-Map<String, UserNameInfo> gKindONames = {}; 
-
-// global reactions entry. Map of form <if of event reacted to, List of Reactors>
-// reach Reactor is a list of 2-elements ( first is public id of reactor, second is comment)
-Map< String, List<List<String>> > gReactions = {};
+// UNUSED
+String gRemoteAdminPubkey = "";
 
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
@@ -104,11 +108,6 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "e89538241bf737327f80a9e31bb5771ccbe8a4508c04f1d1c0ce7336706f1bee",  // Bitcoin news
                         "6a9eb714c2889aa32e449cfbb7854bc9780feed4ff3d887e03910dcb22aa560a"   // "bible bot"
                       ];
-
-const String gDefaultEventsFilename = "all_nostr_events.txt";
-String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
-bool         gDontWriteOldEvents    = true;
-const int    gPurgeBeforeDays       = 100;
 
 const String gUsage = """$exename version $version
 The nostr console client built using dart.

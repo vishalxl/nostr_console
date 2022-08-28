@@ -122,6 +122,7 @@ class Relays {
 
     IOWebSocketChannel?  fws;
     if(relays.containsKey(relay)) {
+      
       fws = relays[relay]?.socket;
       relays[relay]?.numRequestsSent++;
     }
@@ -143,17 +144,18 @@ class Relays {
                     }
                     String id = json[2]['id'] as String;
                     if( uniqueIdsRecieved.contains(id)) {
-                      //if( gDebug > 0) print("In relay: received duplicate event id : $id");
                       return;
-                    } else {
-                      uniqueIdsRecieved.add(id);
                     }
 
+                    uniqueIdsRecieved.add(id);
+
                     e = Event.fromJson(d, relay);
-                    if(gDebug >= 2) print("adding event to list");
                     
                     rEvents.add(e);
                     newRelay.numReceived++;
+                    String receivedSubscription = json[1];
+                    if( gDebug > 0) log.info("In relay listener: after adding element rEvents Size = ${rEvents.length}  numReceived = ${newRelay.numReceived} for relay $relay for subscription $receivedSubscription");
+
                   } on FormatException {
                     print( 'exception in fromJson for event');
                     return;
@@ -175,7 +177,7 @@ class Relays {
     }
 
     
-    if(gDebug > 0) print('\nSending request: \n$request\n to $relay\n\n');
+    if(gDebug > 0) log.info('\nSending request: \n$request\n to $relay\n\n');
     fws?.sink.add(request);
   }
 
@@ -265,12 +267,11 @@ void getUserEvents(List<String> serverUrls, String publicKey, int numUserEvents,
 
 void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, int numUserEvents, int sinceWhen) {
   if( gDebug > 0) print("Sending multi user request for ${publicKeys.length} users");
-  const int numMaxUserRequests = 15;
-
+  
   for(var serverUrl in serverUrls) {
-    for( int i = 0; i < publicKeys.length; i+= numMaxUserRequests) {
-      int getUserRequests = numMaxUserRequests;
-      if( publicKeys.length - i <= numMaxUserRequests) {
+    for( int i = 0; i < publicKeys.length; i+= gMaxAuthorsInOneRequest) {
+      int getUserRequests = gMaxAuthorsInOneRequest;
+      if( publicKeys.length - i <= gMaxAuthorsInOneRequest) {
         getUserRequests = publicKeys.length - i;
       }
       //print("    sending request form $i to ${i + getUserRequests} ");

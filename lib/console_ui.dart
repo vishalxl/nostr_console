@@ -415,8 +415,8 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
     //gDebug = 0;
     // at the very beginning, show the tree as it is, and then show the options menu
 
-    //bool repliesAndLikes (Tree t) => t.repliesAndLikes(userPublicKey);
-    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
+    bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
+    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
 
     bool userContinue = true;
     while(userContinue) {

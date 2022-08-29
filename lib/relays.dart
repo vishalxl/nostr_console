@@ -135,37 +135,45 @@ class Relays {
           relays[relay] = newRelay;
           fws = fws2;
           fws2.stream.listen(
-                (d) {
-                  Event e;
-                  try {
-                    dynamic json = jsonDecode(d);
-                    if( json.length < 3) {
-                      return;
-                    }
-                    String id = json[2]['id'] as String;
-                    if( uniqueIdsRecieved.contains(id)) {
-                      return;
-                    }
+            (d) {
+              Event e;
+              try {
+                dynamic json = jsonDecode(d);
+                if( json.length < 3) {
+                  return;
+                }
+                newRelay.numReceived++;
 
-                    uniqueIdsRecieved.add(id);
+                String id = json[2]['id'] as String;
+                if( uniqueIdsRecieved.contains(id)) { // rEvents is often cleared, but uniqueIdsRecieved contains everything received til now
+                  //if( gDebug > 0) log.info("In listener: event already present.");
+                  return;
+                } 
 
-                    e = Event.fromJson(d, relay);
-                    
-                    rEvents.add(e);
-                    newRelay.numReceived++;
-                    String receivedSubscription = json[1];
-                    if( gDebug > 0) log.info("In relay listener: after adding element rEvents Size = ${rEvents.length}  numReceived = ${newRelay.numReceived} for relay $relay for subscription $receivedSubscription");
+                e = Event.fromJson(d, relay);
 
-                  } on FormatException {
-                    print( 'exception in fromJson for event');
-                    return;
-                  } catch(err) {
-                    print('exception generic $err for relay $relay');
-                    return;
-                  }                
-                },
-                onError: (err) { print("\n${gWarningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
-                onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
+                if( gDebug > 0) log.info("In listener: Event size before adding: ${rEvents.length}");
+                if( rEvents.add(e) ) {
+                  uniqueIdsRecieved.add(id);
+                  String receivedSubscription = json[1];
+                  if( gDebug > 3) e.eventData.printEventData(0); 
+                  if( gDebug > 2) print("");
+
+                  if( gDebug > 1) log.info("In relay listener for relay url $relay: after adding element, rEvents Size = ${rEvents.length}  numReceived = ${newRelay.numReceived} for subscription $receivedSubscription");
+                  if( gDebug > 1) print("\n"); 
+                } else {
+                  //if( gDebug > 0) log.info("In listener: event was already in rEvents");
+                }
+              } on FormatException {
+                print( 'exception in fromJson for event');
+                return;
+              } catch(err) {
+                print('exception generic $err for relay $relay');
+                return;
+              }                
+            },
+            onError: (err) { print("\n${gWarningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(colorEndMarker); },
+            onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
           );
       } on WebSocketException {
         print('WebSocketException exception for relay $relay');
@@ -297,6 +305,7 @@ void clearEvents() {
 }
 
 void setRelaysIntialEvents(Set<Event> eventsFromFile) {
+  eventsFromFile.forEach((element) {relays.uniqueIdsRecieved.add(element.eventData.id);});
   relays.rEvents = eventsFromFile;
 }
 

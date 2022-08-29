@@ -178,6 +178,7 @@ class Tree {
    * @insertEvents inserts the given new events into the tree, and returns the id the ones actually inserted so that they can be printed as notifications
    */
   Set<String> insertEvents(Set<Event> newEventsSetToProcess) {
+    if( gDebug > 0) log.info("In insertEvetnts: called for ${newEventsSetToProcess.length} events");
 
     Set<String> newEventIdsSet = {};
 
@@ -214,7 +215,7 @@ class Tree {
 
       // expand mentions ( and translate if flag is set)
       newEvent.eventData.translateAndExpandMentions();
-      if( gDebug > 0) print("In insertEvents: adding event to main children map");
+      //if( gDebug > 0) print("In insertEvents: adding event to main children map");
 
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {});
 
@@ -276,8 +277,7 @@ class Tree {
       }
     });
 
-    if(gDebug > 0) print("In end of insertEvents: Returning ${newEventIdsSet.length} new notification-type event: $newEventIdsSet ");
-
+    if(gDebug > 0) print("In end of insertEvents: Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements"} ");
     return newEventIdsSet;
   }
 
@@ -379,13 +379,15 @@ class Tree {
 
     int numPrinted = 0;
 
+    // for the top most tree, create a smaller list which only has recent trees
+    List<Tree> latestTrees = [];
 
-    if( !whetherTopMost) {
-      e.printEvent(depth);
-      numPrinted++;
-    } else {
+    if( whetherTopMost) {
       depth = depth - 1;
       children.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
+    } else {
+      e.printEvent(depth);
+      numPrinted++;
     }
 
     bool leftShifted = false;
@@ -397,9 +399,9 @@ class Tree {
         stdout.write("|\n");
       } else {
         // continue if this children isn't going to get printed anyway; selector is only called for top most tree
-        if( !treeSelector(children[i])) {
+        if( treeSelector(children[i]) == false) {
           continue;
-        }
+        } 
 
         int newestChildTime = children[i].getMostRecentTime(0);
         DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChildTime *1000);
@@ -714,41 +716,43 @@ class Tree {
     }
   }
 
-/*
-  // TODO
   // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
-  bool repliesAndLikes(String pubkey) {
-    bool hasReacted = false;
+  bool hasRepliesAndLikes(String pk) {
+    //print("----- pk = $pk");
+    bool hasReaction = false;
+    bool childMatches = false;
 
-    if( gReactions.containsKey(e.eventData.id)) {
+    if( e.eventData.pubkey == pk &&  gReactions.containsKey(e.eventData.id)) {
       List<List<String>>? reactions = gReactions[e.eventData.id];
       if( reactions  != null) {
-        for( int i = 0; i < reactions.length; i++) {
-          if( reactions[i][0] == pubkey) {
-            e.eventData.newLikes.add(pubkey);
-            hasReacted = true;
-            break;
-          }
+        if( reactions.length > 0) {
+          //print("has reactions");
+          reactions.forEach((reaction) { e.eventData.newLikes.add(reaction[0]);});
+          hasReaction = true;
         }
       }
     }
 
-    bool childMatches = false;
+    if( e.eventData.pubkey == pk && children.length > 0) {
+      for( int i = 0; i < children.length; i++ ) {
+        // if child is someone else then set notifications and flag
+        children.forEach((c) {  c.e.eventData.isNotification =  ((c.e.eventData.pubkey != pk)? true: false)  ; childMatches = true; }); 
+      }
+    }
+
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].hasUserPostAndLike(pubkey)) {
+      if( children[i].hasRepliesAndLikes(pk)) {
         childMatches = true;
       }
     }
-    if( e.eventData.pubkey == pubkey) {
-      e.eventData.isNotification = true;
-      return true;
-    }
-    if( hasReacted || childMatches) {
+
+    if( hasReaction || childMatches) {
+      //print("returning true");
       return true;
     }
     return false;
   } 
-*/
+
 
   // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
   bool hasUserPostAndLike(String pubkey) {

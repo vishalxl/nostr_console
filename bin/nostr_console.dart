@@ -152,8 +152,12 @@ Future<void> main(List<String> arguments) async {
       if( gEventsFilename != "") {
         print("\n");
         stdout.write('Reading events from ${whetherDefault}file.......');
-        Set<Event> eventsFromFile = readEventsFromFile(gEventsFilename);
+
+        // read file events and give the events to relays from where they're picked up later
+        Set<Event> eventsFromFile = await readEventsFromFile(gEventsFilename);
         setRelaysIntialEvents(eventsFromFile);
+
+        // count events
         eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
         print("read $numFileEvents posts from file $gEventsFilename");
       }

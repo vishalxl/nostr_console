@@ -5,7 +5,7 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
 
-const int numWaitSeconds = 4000; 
+const int numWaitSeconds = 3000; 
 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
@@ -28,14 +28,13 @@ int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 //String defaultServerUrl = 'wss://relay.damus.io';
 const String nostrRelayUnther = 'wss://nostr-relay.untethr.me';
 const String relayNostrInfo   = 'wss://relay.nostr.info';
-String defaultServerUrl = relayNostrInfo;
+String defaultServerUrl = "wss://relay.damus.io";
 
-List<String> gListRelayUrls = [ //defaultServerUrl,
-                          //      nostrRelayUnther,
-                          //    "wss://nostr-verified.wellorder.net", 
+List<String> gListRelayUrls = [ defaultServerUrl,
+                              "wss://nostr-verified.wellorder.net", 
                               "wss://nostr-relay.wlvs.space",
-                              "wss://nostr-pub.wellorder.net", 
-                              "wss://relay.damus.io"
+                              "wss://nostr-pub.wellorder.net"
+                              //"wss://relay.damus.io"
                               ];
 
 // name of executable

@@ -5,7 +5,7 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
 
-const int numWaitSeconds = 3000; 
+const int numWaitSeconds = 3000; // is used in main()
 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
@@ -26,15 +26,15 @@ const int gMaxPtagsToGet          = 100; // maximum number of p tags that are ta
 int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
 
 //String defaultServerUrl = 'wss://relay.damus.io';
-const String nostrRelayUnther = 'wss://nostr-relay.untethr.me';
+//const String nostrRelayUnther = 'wss://nostr-relay.untethr.me'; not working 
 const String relayNostrInfo   = 'wss://relay.nostr.info';
 String defaultServerUrl = "wss://relay.damus.io";
 
 List<String> gListRelayUrls = [ defaultServerUrl,
+                                relayNostrInfo,
                               "wss://nostr-verified.wellorder.net", 
                               "wss://nostr-relay.wlvs.space",
                               "wss://nostr-pub.wellorder.net"
-                              //"wss://relay.damus.io"
                               ];
 
 // name of executable
@@ -62,7 +62,6 @@ const int  gDefaultMaxDepth     = 4;
 int        maxDepthAllowed      = gDefaultMaxDepth;
 const int  leftShiftThreadsBy   = 2;
 
-
 // text color
 const String defaultTextColor = "green";
 
@@ -86,7 +85,6 @@ String gNotificationColor = cyanColor; // cyan
 String gWarningColor = redColor; // red
 const String colorEndMarker = "\x1B[0m";
 
-
 // dummy account pubkey
 const String gDummyAccountPubkey = "Non";
 
@@ -94,10 +92,6 @@ const String gDummyAccountPubkey = "Non";
 // this can be changed with 'days' command line argument
 const int gDefaultNumLastDays = 1;
 int gNumLastDays     = gDefaultNumLastDays; 
-
-
-// UNUSED
-String gRemoteAdminPubkey = "";
 
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
@@ -119,7 +113,7 @@ usage: $exename [OPTIONS]
                                     well known private key. When given, posts/replies can't be sent.
       -k, --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
                                     sent. Default is a hard-coded well known private key.
-      -r, --relay   <relay wss url> The relay url that is used as main relay. Default is $nostrRelayUnther.
+      -r, --relay   <relay wss url> The relay url that is used as main relay. Default is wss://relay.damus.io.
       -d, --days    <N as num>      The latest number of days for which events are shown. Default is $gDefaultNumLastDays.
       -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                     from a relay. If not provided, then events for default or given user are shown.

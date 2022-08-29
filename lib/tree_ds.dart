@@ -138,7 +138,6 @@ class Tree {
           }
           tempChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
         } else {
-
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
            Tree dummyTopNode = Tree(Event("","",
@@ -167,7 +166,6 @@ class Tree {
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 40 = ${numKind40Events}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 42 = ${numKind42Events}");
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
-    
 
     // create a dummy top level tree and then create the main Tree object
     Event dummy = Event("","",  EventData("non","", 0, 1, "Dummy Top event. Should not be printed.", [], [], [], [[]], {}), [""], "[json]");
@@ -208,15 +206,8 @@ class Tree {
         return;
       }
 
-      // experimental
-      if( newEvent.eventData.pubkey == gRemoteAdminPubkey) {
-
-      }
-
-      // expand mentions ( and translate if flag is set)
+      // expand mentions ( and translate if flag is set) and then add event to main event map
       newEvent.eventData.translateAndExpandMentions();
-      //if( gDebug > 0) print("In insertEvents: adding event to main children map");
-
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {});
 
       // add to new-notification list only if tis a recent event ( because relays may send old events, and we dont want to highlight stale messages)
@@ -239,12 +230,6 @@ class Tree {
             } else {
                 // if it has a parent , then add the newTree as the parent's child
                 String parentId = newTree.e.eventData.getParent();
-                if( gDebug > 0 && newId == "e9c0c91d52a2cf000bb2460406139a99dd5b7823165be435e96433a600be8e41" || parentId == "f377a303a852c8821069714f43b4eef5e341c03892eacf49abb594660b2fbb00") {
-                  print (newTree.e.eventData.tags);
-                  print("In from json: newId = $newId parentid = $parentId for event id = ${newTree.e.eventData.id}");
-                  print(allChildEventsMap.containsKey(parentId));
-                  print("----------------------------------------------/insert events");
-                }
                 if( allChildEventsMap.containsKey(parentId)) {
                   allChildEventsMap[parentId]?.addChildNode(newTree);
                 } else {
@@ -256,7 +241,6 @@ class Tree {
                   dummyTopNode.addChildNode(newTree);
                   children.add(dummyTopNode);
                 }
-
             }
             break;
           case 42:
@@ -281,7 +265,6 @@ class Tree {
     return newEventIdsSet;
   }
 
-
   /*
    * @printNotifications Add the given events to the Tree, and print the events as notifications
    *                     It should be ensured that these are only kind 1 events
@@ -304,7 +287,6 @@ class Tree {
       }
 
     }
-    // TODO don't print notifications for events that are too old
 
     if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventIdsSet count17 = $countNotificationEvents");
     
@@ -380,7 +362,7 @@ class Tree {
     int numPrinted = 0;
 
     // for the top most tree, create a smaller list which only has recent trees
-    List<Tree> latestTrees = [];
+    List<Tree> latestTrees = []; // TODO
 
     if( whetherTopMost) {
       depth = depth - 1;
@@ -388,6 +370,7 @@ class Tree {
     } else {
       e.printEvent(depth);
       numPrinted++;
+      //latestTrees = children; 
     }
 
     bool leftShifted = false;

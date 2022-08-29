@@ -165,11 +165,9 @@ String addEscapeChars(String str) {
 
 String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
   String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
-  if( gDebug > 0) print("In getShaId: for buf = $buf");
   var bufInBytes = utf8.encode(buf);
   var value = sha256.convert(bufInBytes);
-  String id = value.toString();  
-  return id;
+  return value.toString();
 }
 
 class EventData {

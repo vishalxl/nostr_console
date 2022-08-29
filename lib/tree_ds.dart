@@ -699,7 +699,7 @@ class Tree {
     }
   }
 
-  // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
+  // returns true if the treee or its children has a reply or like for the user with public key pk; and notification flags are set for such events
   bool hasRepliesAndLikes(String pk) {
     //print("----- pk = $pk");
     bool hasReaction = false;
@@ -710,16 +710,26 @@ class Tree {
       if( reactions  != null) {
         if( reactions.length > 0) {
           //print("has reactions");
-          reactions.forEach((reaction) { e.eventData.newLikes.add(reaction[0]);});
-          hasReaction = true;
+          reactions.forEach((reaction) {  
+            // dont add notificatoin for self reaction
+            Event? reactorEvent = allChildEventsMap[reaction[0]]?.e;
+            if( reactorEvent != null) {
+              if( reactorEvent.eventData.pubkey != pk){ // ignore self likes 
+                e.eventData.newLikes.add(reaction[0]);
+                hasReaction = true;
+              }
+            }
+          });
         }
       }
     }
 
     if( e.eventData.pubkey == pk && children.length > 0) {
       for( int i = 0; i < children.length; i++ ) {
-        // if child is someone else then set notifications and flag
-        children.forEach((c) {  c.e.eventData.isNotification =  ((c.e.eventData.pubkey != pk)? true: false)  ; childMatches = true; }); 
+        children.forEach((child) {  
+          // if child is someone else then set notifications and flag, means there are replies to this event 
+          childMatches = child.e.eventData.isNotification =  ((child.e.eventData.pubkey != pk)? true: false) ; 
+        }); 
       }
     }
 
@@ -937,16 +947,20 @@ void addMessageToChannel(String channelId, String messageId, var tempChildEvents
         room.messageIds.add(messageId);
         return;
       }
-      //if(gDebug> 0) print("room has ${room.messageIds.length} messages already. adding new one to it. ");
+      
+      if(gDebug> 0) print("room has ${room.messageIds.length} messages already. adding new one to it. ");
 
       for(int i = 0; i < room.messageIds.length; i++) {
         int eventTime = (tempChildEventsMap[room.messageIds[i]]?.e.eventData.createdAt??0);
         if( newEventTime < eventTime) {
           // shift current i and rest one to the right, and put event Time here
+          if(gDebug> 0) print("In addMessageToChannel: inserted in middle to channel ${room.chatRoomId} ");
           room.messageIds.insert(i, messageId);
           return;
         }
       }
+      if(gDebug> 0) print("In addMessageToChannel: added to channel ${room.chatRoomId} ");
+
       // insert at end
       room.messageIds.add(messageId);
       return;

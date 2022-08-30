@@ -5,7 +5,7 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
 
-const int numWaitSeconds = 3000; // is used in main()
+const int gDefaultNumWaitSeconds = 3000; // is used in main()
 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
@@ -84,7 +84,7 @@ Map<String, String> gColorMap = { "green": greenColor,
 String gCommentColor = greenColor;
 String gNotificationColor = cyanColor; // cyan
 String gWarningColor = redColor; // red
-const String colorEndMarker = "\x1B[0m";
+const String gColorEndMarker = "\x1B[0m";
 
 // dummy account pubkey
 const String gDummyAccountPubkey = "Non";
@@ -103,8 +103,13 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "6a9eb714c2889aa32e449cfbb7854bc9780feed4ff3d887e03910dcb22aa560a"   // "bible bot"
                       ];
 
+// difficulty related settings
 const int gMaxDifficultyAllowed = 24;                      
 int gDifficulty = 0;
+
+// channel related settings
+const int gNumChannelMessagesToShow = 15;
+const int gMaxChannelPagesDisplayed = 50;
 
 const String gUsage = """$exename version $version
 The nostr console client built using dart.

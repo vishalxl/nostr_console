@@ -9,19 +9,19 @@ import 'package:bip340/bip340.dart';
 Future<void> processNotifications(Tree node)  async {
   // need a bit of wait to give other events to execute, so do a delay, which allows
   // relays to recieve and handle new events
-  const int waitMilliSeconds = 400;
+  const int waitMilliSeconds = 150;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
     Set<String> newEventIdsSet = node.insertEvents(getRecievedEvents());
     String nameToDisplay = userPrivateKey.length == 64? 
-                              "$gCommentColor${getAuthorName(userPublicKey)}$colorEndMarker": 
-                              "${gWarningColor}You are not signed in$colorEndMarker but are using public key $userPublicKey";
+                              "$gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
+                              "${gWarningColor}You are not signed in$gColorEndMarker but are using public key $userPublicKey";
     node.printNotifications(newEventIdsSet, nameToDisplay);
     clearEvents();
   });
 
   Future<void> foo() async {
-    await Future.delayed(Duration(milliseconds: waitMilliSeconds + 100));
+    await Future.delayed(Duration(milliseconds: waitMilliSeconds + 50));
     return;
   }
   await foo();
@@ -34,7 +34,7 @@ Future<void> processNotifications(Tree node)  async {
 Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, String content) async {
   String strTags = node.getTagStr(replyToId, exename);
   if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
-    print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$colorEndMarker"); 
+    print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$gColorEndMarker"); 
     return; 
   }
 
@@ -307,7 +307,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         if( words != "") {
           bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
-        }
+        } else print("word = $words");
         break;
 
       case 5:
@@ -405,8 +405,9 @@ Future<void> channelMenuUI(Tree node, var contactList) async {
         if( channelId == "x") {
           showChannelOption = false; 
         }
+        int pageNum = 1;
         while(showChannelOption) {
-          String fullChannelId = node.showChannel(channelId);
+          String fullChannelId = node.showChannel(channelId, pageNum);
           if( fullChannelId == "") {
             print("Could not find the given channel.");
             showChannelOption = false;
@@ -421,8 +422,13 @@ Future<void> channelMenuUI(Tree node, var contactList) async {
             if( messageToSend == 'x') {
               showChannelOption = false;
             } else {
-              // send message to the given room
-              await sendChatMessage(node, fullChannelId, messageToSend);
+              if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
+                pageNum = (int.tryParse(messageToSend))??1;
+              } else {
+                // send message to the given room
+                await sendChatMessage(node, fullChannelId, messageToSend);
+                pageNum = 1; // reset it 
+              }
             }
           } else {
             print("Refreshing...");

@@ -163,7 +163,6 @@ Future<void> main(List<String> arguments) async {
         }
 
         gEventsFilename =  argResults[eventFileArg];
-
         if( gEventsFilename != "") { 
           print("Going to use ${whetherDefault}file to read from and store events: $gEventsFilename");
         }
@@ -182,10 +181,19 @@ Future<void> main(List<String> arguments) async {
         print("read $numFileEvents posts from file $gEventsFilename");
       }
 
+      // process request string. If this is blank then the application only reads from file and does not connect to internet. 
       if( argResults[requestArg] != null) {
-        stdout.write('Sending request ${argResults[requestArg]} and waiting for events...');
-        sendRequest(gListRelayUrls, argResults[requestArg]);
-        Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
+        int numWaitSeconds = gDefaultNumWaitSeconds;
+
+        if( argResults[requestArg] != "") {
+          stdout.write('Sending request ${argResults[requestArg]} and waiting for events...');
+          sendRequest(gListRelayUrls, argResults[requestArg]);
+        } else {
+          numWaitSeconds = 0;
+          gEventsFilename = ""; // so it wont write it back to keep it faster ( and since without internet no new event is there to be written )
+        }
+        
+        Future.delayed(Duration(milliseconds: numWaitSeconds * 2), () {
             Set<Event> receivedEvents = getRecievedEvents();
             stdout.write("received ${receivedEvents.length - numFileEvents} events\n");
 
@@ -195,9 +203,8 @@ Future<void> main(List<String> arguments) async {
             //clearEvents(); // cause we have consumed them above
               if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
               clearEvents();
-              mainMenuUi(node, []);
-            // call main menu
-            
+
+              mainMenuUi(node, []);            
         });
         return;
       } 
@@ -216,7 +223,7 @@ Future<void> main(List<String> arguments) async {
     // then get the events of user-id's mentioned in p-tags of received events
     // then display them all
     stdout.write('Waiting for user posts to come in.....');
-    Future.delayed(const Duration(milliseconds: numWaitSeconds), () {
+    Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
       // count user events
       getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
       numUserEvents -= numFileEvents;
@@ -240,7 +247,7 @@ Future<void> main(List<String> arguments) async {
       }
       
       stdout.write('Waiting for feed to come in..............');
-      Future.delayed(const Duration(milliseconds: numWaitSeconds * 1), () {
+      Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
 
         // count feed events
         getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
@@ -253,7 +260,7 @@ Future<void> main(List<String> arguments) async {
         getMultiUserEvents(gListRelayUrls, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
         
         stdout.write('Waiting for rest of posts to come in.....');
-        Future.delayed(const Duration(milliseconds: numWaitSeconds * 2), () {
+        Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 2), () {
 
           // count other events
           getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});

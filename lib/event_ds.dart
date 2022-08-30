@@ -101,6 +101,16 @@ bool isWhitespace(String s) {
 
 
 extension StringX on String {
+  isChannelPageNumber(int max) {
+  
+  int? n = int.tryParse(this);
+  if( n != null) {
+    if( n < max)
+      return true;
+  }
+  return false;
+  }
+
   isEnglish( ) {
     // since smaller words can be smileys they should not be translated
     if( length < 6) 
@@ -343,7 +353,7 @@ class EventData {
 
     int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
-    void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$colorEndMarker"):stdout.write(s);
+    void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
         
    // TODO do it in one call
    final df1 = DateFormat('hh:mm a');
@@ -393,7 +403,7 @@ class EventData {
         String reactorId = reactors[i][0];
         if( newLikes.contains(reactorId)) {
           // colorify
-          reactorNames += gNotificationColor + getAuthorName(reactorId) + colorEndMarker;
+          reactorNames += gNotificationColor + getAuthorName(reactorId) + gColorEndMarker;
         } else {
           reactorNames += getAuthorName(reactorId);
         }

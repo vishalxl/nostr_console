@@ -458,7 +458,12 @@ class Tree {
     });
   }
 
-  void printChannel(ChatRoom room)  {
+  void printChannel(ChatRoom room, [int page = 1])  {
+    if( page < 1) {
+      if( gDebug > 0) log.info("In printChannel got page = $page");
+      page = 1;
+    }
+
     String displayName = room.chatRoomId;
     if( room.name != "") {
       displayName = "${room.name} ( ${displayName.substring(0, 6)} )";
@@ -469,24 +474,47 @@ class Tree {
     print(" ${getNumSpaces(gNumLeftMarginSpaces + displayName.length~/2 + 4)}In Channel");
     print("\n$str\n");
 
-      for(int i = 0; i < room.messageIds.length; i++) {
-        String eId = room.messageIds[i];
-        Event? e = allChildEventsMap[eId]?.e;
-        if( e!= null) {
-          e.printEvent(0);
-          print("");
-        }
+    
+    int i = 0, startFrom = 0, endAt = room.messageIds.length;
+    int numPages = 1;
+
+    if( room.messageIds.length > gNumChannelMessagesToShow ) {
+      startFrom = room.messageIds.length - ( room.messageIds.length ~/ gNumChannelMessagesToShow) * gNumChannelMessagesToShow - (gNumChannelMessagesToShow * (page -1));
+      endAt = startFrom + gNumChannelMessagesToShow;
+      if( startFrom < 0) startFrom = 0;
+      numPages = (room.messageIds.length ~/ gNumChannelMessagesToShow) + 1;
+      if( page > numPages) {
+        page = numPages;
       }
+    }
+    if( gDebug > 0) print("StartFrom $startFrom  endAt $endAt  numPages $numPages room.messageIds.length = ${room.messageIds.length}");
+    for( i = startFrom; i < endAt; i++) {
+      String eId = room.messageIds[i];
+      Event? e = allChildEventsMap[eId]?.e;
+      if( e!= null) {
+        e.printEvent(0);
+        print("");
+      }
+    }
+
+
+    if( startFrom != 0) {
+      print("\n");
+      printDepth(0);
+      stdout.write("${gNotificationColor}Displayed page number ${page+1} (out of total $numPages pages, where 1st is the latest 'page').\n");
+      printDepth(0);
+      stdout.write("To see older pages, enter numbers from 1-${numPages}.${gColorEndMarker}\n\n");
+    }
   }
 
   // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
-  String showChannel(String channelId) {
+  String showChannel(String channelId, [int page = 1]) {
     
     for( String key in chatRooms.keys) {
       if( key.substring(0, channelId.length) == channelId ) {
         ChatRoom? room = chatRooms[key];
         if( room != null) {
-          printChannel(room);
+          printChannel(room, page);
         }
         return key;
       }

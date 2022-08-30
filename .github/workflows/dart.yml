@@ -47,7 +47,7 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: elf64
+          name: nostr_console_elf64
           path: |
             bin/nostr_console_elf64
 
@@ -59,7 +59,7 @@ jobs:
         uses: actions/download-artifact@v3.0.0
         with:
           # Artifact name
-          name: elf64
+          name: nostr_console_elf64
           # Destination path
           path: ./
 
@@ -84,7 +84,7 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: win64
+          name: nostr_console_win64
           path: |
             bin/nostr_console_win64.exe
 
@@ -92,7 +92,7 @@ jobs:
         uses: actions/download-artifact@v3.0.0
         with:
           # Artifact name
-          name: win64
+          name: nostr_console_win64
           # Destination path
           path: ./
 
@@ -118,19 +118,15 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: win64
+          name: nostr_console_macos
           path: |
             bin/nostr_console_macOS
 
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}/bin
-          
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.0
         with:
           # Artifact name
-          name: macOS
+          name: nostr_console_macOS
           # Destination path
           path: ./
 

@@ -161,7 +161,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
     int option = showMenu([ 'Show user profile',             // 1
                             'Display contact list',          // 2 
                             'Follow new contact',            // 3
-                            'Search word(s)',                // 4
+                            'Search word(s) or event id',    // 4
                             'Search by client name',         // 5
                             'Change number of days printed', // 6
                             'Applicatoin stats',             // 7

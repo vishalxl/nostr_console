@@ -784,14 +784,14 @@ class Tree {
 
   // returns true if the given words exists in it or its children
   bool hasWords(String word) {
-    //if(gDebug > 0) print("In tree selector hasWords: this id = ${e.eventData.id} word = $word");
-    if( e.eventData.content.length > 1000) {
+    if( e.eventData.content.length > 2000) { // ignore if content is too large, takes lot of time
       return false;
     }
+
     bool childMatches = false;
     for( int i = 0; i < children.length; i++ ) {
       // ignore too large comments
-      if( children[i].e.eventData.content.length > 1000) {
+      if( children[i].e.eventData.content.length > 2000) {
         continue;
       }
 
@@ -800,7 +800,7 @@ class Tree {
       }
     }
 
-    if( e.eventData.content.toLowerCase().contains(word)) {
+    if( e.eventData.content.toLowerCase().contains(word) || e.eventData.id == word ) {
       e.eventData.isNotification = true;
       return true;
     }

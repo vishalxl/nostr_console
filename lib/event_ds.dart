@@ -541,7 +541,7 @@ Set<Event> readEventsFromFile(String filename) {
           events.add(e);
     }
   } on Exception catch(e) {
-    print("cannot open file $gEventsFilename");
+    //print("cannot open file $gEventsFilename");
     if( gDebug > 0) print("Could not open file. error =  $e");
   }
 

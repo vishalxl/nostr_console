@@ -161,6 +161,8 @@ class Tree {
         }
     }
 
+    //getEvents(tempWithoutParent);
+
     //if( gDebug != 0) print("In Tree FromEvents: at end of tree from events: Total number of chat rooms: ${rooms.length}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map which are not kind 1 = ${numEventsNotPosts}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 40 = ${numKind40Events}");
@@ -1056,8 +1058,6 @@ Tree getTree(Set<Event> events) {
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)
     events.removeWhere( (event) => !Tree.typesInEventMap.contains(event.eventData.kind));  
 
-    print("In getTree: after removing unwanted kind, number of events remaining: ${events.length}");
-
     // process kind 0 events about metadata 
     int totalKind0Processed = 0, notProcessed = 0;
     events.forEach( (event) =>  processKind0Event(event)? totalKind0Processed++: notProcessed++);
@@ -1076,9 +1076,11 @@ Tree getTree(Set<Event> events) {
     // translate and expand mentions for all
     events.forEach( (event) => event.eventData.translateAndExpandMentions());
 
+    if( gDebug > 0) print("In getTree: after removing unwanted kind, number of events remaining: ${events.length}");
+
     // create tree from events
     Tree node = Tree.fromEvents(events);
 
-    if(gDebug != 0) print("total number of events in main tree = ${node.count()}");
+    if(gDebug != 0) print("total number of posts/replies in main tree = ${node.count()}");
     return node;
 }

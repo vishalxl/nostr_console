@@ -342,8 +342,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
         relays.printInfo();
         print("\n");
         printUnderlined("Posts");
-        print("Total number of posts: ${node.count()}");
-        print("\n");
+        print("Total number of posts: ${node.count()}\n");
         printUnderlined("User Info");
         if( userPrivateKey.length == 64) {
           print("You are signed in, and your public key is:       $userPublicKey");
@@ -351,6 +350,9 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
           print("You are not signed in, and are using public key: $userPublicKey");
         }
         print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}");
+
+        //printUnderlined("Program Arguments");
+        
         break;
 
       case 8:

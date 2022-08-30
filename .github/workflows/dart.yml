@@ -43,11 +43,15 @@ jobs:
         
       - name: compile exe
         run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_elf64
-        
+
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+          
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.0
         with:
           # Artifact name
-          name: /home/runner/work/nostr_console/nostr_console/bin/nostr_console_elf64
+          name: ${{ github.workspace }}/bin/nostr_console_elf64
           # Destination path
           path: ./

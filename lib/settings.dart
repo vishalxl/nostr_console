@@ -102,6 +102,9 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "6a9eb714c2889aa32e449cfbb7854bc9780feed4ff3d887e03910dcb22aa560a"   // "bible bot"
                       ];
 
+const int gMaxDifficultyAllowed = 24;                      
+int gDifficulty = 0;
+
 const String gUsage = """$exename version $version
 The nostr console client built using dart.
 
@@ -135,6 +138,10 @@ usage: $exename [OPTIONS]
       -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
       -h, --help                    Print this usage message and exit.
 
+  Advanced
+      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
+                                    taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
+                                    time. Minimum and default is 0, which means no difficulty.
 """;
 
 const String helpAndAbout = 

@@ -31,7 +31,7 @@ Future<void> processNotifications(Tree node)  async {
  * If replyToId is blank, then it does not reference any e/p tags, and thus becomes a top post
  * otherwise e and p tags are found for the given event being replied to, if that event data is available
  */
-Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, String content, [int powLeadingBits = 0]) async {
+Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, String content) async {
   String strTags = node.getTagStr(replyToId, exename);
   if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
     print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$colorEndMarker"); 
@@ -44,19 +44,25 @@ Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, St
   // generate POW if required
 
   String vanityTag = strTags;
-  if (powLeadingBits> 0) {
-    log.info("Starting pow");
+  if (replyKind == "1" && gDifficulty > 0) {
+    if( gDebug > 0) log.info("Starting pow");
 
-    for( int i = 0; i < 1000000; i++) {
-      vanityTag = strTags + ',["nonce","$i"]';
+    int numBytes = (gDifficulty % 4 == 0)? gDifficulty ~/ 4: gDifficulty ~/ 4 + 1;
+    String zeroString = "";
+    for( int i = 0; i < numBytes; i++) {
+      zeroString += "0";
+    }
+
+    int numShaDone = 0;
+    for( numShaDone = 0; numShaDone < 100000000; numShaDone++) {
+      vanityTag = strTags + ',["nonce","$numShaDone"]';
       id = getShaId(userPublicKey, createdAt, replyKind, vanityTag, content);
-      if( id.substring(0, 4) == "000") {
+      if( id.substring(0, numBytes) == zeroString) {
         break;
       }
     }
 
-    log.info("Ending pow");
-    print("Found id: $id");
+    if( gDebug > 0) log.info("Ending pow numShaDone = $numShaDone id = $id");
   }
 
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
@@ -501,7 +507,7 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
             replyKind = "7";
           }
 
-          await sendReplyPostLike(node, replyToId, replyKind, content, 0);
+          await sendReplyPostLike(node, replyToId, replyKind, content);
           break;
 
         case 3:

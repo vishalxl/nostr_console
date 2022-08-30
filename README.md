@@ -42,7 +42,11 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
                                     maximum allowed is 12. 
       -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
       -h, --help                    Print this usage message and exit.
-                               
+
+  Advanced
+      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
+                                    taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
+                                    time. Minimum and default is 0, which means no difficulty.
 ```                                
 
 To get ALL the latest messages for last 3 days (on linux which allows backtick execution): 

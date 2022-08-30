@@ -4,7 +4,6 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:web_socket_channel/io.dart';
 
-
 class Relay { 
   String             url;
   IOWebSocketChannel socket;

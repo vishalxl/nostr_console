@@ -21,6 +21,7 @@ const String widthArg    = "width";
 const String maxDepthArg = "maxdepth";
 const String eventFileArg = "file";
 const String disableFileArg = "disable-file";
+const String difficultyArg  = "difficulty";
 
 const String translateArg = "translate";
 const String colorArg     = "color";
@@ -42,7 +43,8 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m")
                               ..addOption(eventFileArg, abbr:"f", defaultsTo: gDefaultEventsFilename)..addFlag(disableFileArg, abbr:"s", defaultsTo: false)
                               ..addFlag(translateArg, abbr: "t", defaultsTo: false)
-                              ..addOption(colorArg, abbr:"c");
+                              ..addOption(colorArg, abbr:"c")
+                              ..addOption(difficultyArg, abbr:"y");
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
@@ -131,6 +133,23 @@ Future<void> main(List<String> arguments) async {
            print("Invalid color.");
         }
       }
+
+      if( argResults[difficultyArg] != null) {
+        gDifficulty =  int.parse(argResults[difficultyArg]);
+
+        if( gDifficulty > gMaxDifficultyAllowed) {
+          print("Difficulty cannot be larger than $gMaxDifficultyAllowed. Going to use difficulty of $gMaxDifficultyAllowed");
+          gDifficulty = gMaxDifficultyAllowed;
+        }
+        else {
+          if( gDifficulty < 0) {
+            print("Difficulty cannot be less than 0. Going to use difficulty of 0 bits.");
+          } else {
+            print("Going to use difficulty of value: $gDifficulty bits");
+          }
+        }
+      }
+
 
       if( argResults[disableFileArg]) {
         gEventsFilename = "";

@@ -6,11 +6,12 @@
 name: Dart
 
 # do a built only on change to pubspec.yaml file with its version change
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
 
 on:
   push:
-    branches:
-      - 'main/pubspec.yaml'
+    paths:
+      - 'pubspec.yaml'
       
   pull_request:
     branches: [ "main" ]

@@ -90,7 +90,6 @@ class Tree {
               rooms[chatRoomId]?.name = json['name'];
             }
           } else {
-            List<String> temp = [];
             String roomName = "", roomAbout = "";
             if(  json.containsKey('name') ) {
               roomName = json['name'];
@@ -104,7 +103,7 @@ class Tree {
             //if( gDebug > 0) print("Added new chat room $chatRoomId with name ${json['name']} .");
           }
         } on Exception catch(e) {
-          if( gDebug > 0) print("In From Event. Event type 40. Json Decode error for event id ${value.e.eventData.id}");
+          if( gDebug > 0) print("In From Event. Event type 40. Json Decode error for event id ${value.e.eventData.id}. error = $e");
         }
       }
 
@@ -364,7 +363,7 @@ class Tree {
     int numPrinted = 0;
 
     // for the top most tree, create a smaller list which only has recent trees
-    List<Tree> latestTrees = []; // TODO
+    //List<Tree> latestTrees = []; // TODO
 
     if( whetherTopMost) {
       depth = depth - 1;
@@ -555,8 +554,9 @@ class Tree {
       }
 
       print("\n\nWrote total $eventCounter events to file \"$gEventsFilename\" of which ${countPosts + 1} are posts.")  ; // TODO remove extra 1
-    } on Exception catch (err) {
+    } on Exception catch (e) {
       print("Could not open file $filename.");
+      if( gDebug > 0) print("Could not open file: $e");
     }      
     
     return;
@@ -899,7 +899,6 @@ class Tree {
   void printSocialDistance(String otherPubkey, String otherName) {
     String otherName = getAuthorName(otherPubkey);
 
-    List<String> contactList = [];
     Event? contactEvent = this.getContactEvent(userPublicKey);
     bool isFollow = false;
     int  numSecond = 0; // number of your follows who follow the other

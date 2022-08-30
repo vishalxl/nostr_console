@@ -313,7 +313,7 @@ class EventData {
           try {
           translator
               .translate(content, to: 'en')
-              .catchError( (error, stackTrace) =>   null )
+              //.catchError( (error, stackTrace) =>   null )
               .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} 
                      );
           } on Exception catch(err) {
@@ -344,9 +344,7 @@ class EventData {
     int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$colorEndMarker"):stdout.write(s);
-    
-    DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
-    
+        
    // TODO do it in one call
    final df1 = DateFormat('hh:mm a');
    final df2 = DateFormat(DateFormat.YEAR_ABBR_MONTH_DAY);
@@ -449,6 +447,9 @@ class Event {
       }
       return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
     } on Exception catch(e) {
+      if( gDebug> 0) {
+        print("Could not create event. returning dummy event. $e");
+      }
       return Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]");
     }
   }
@@ -539,8 +540,9 @@ Set<Event> readEventsFromFile(String filename) {
           Event e = Event.fromJson(lines[i], "");
           events.add(e);
     }
-  } on Exception catch(err) {
+  } on Exception catch(e) {
     print("cannot open file $gEventsFilename");
+    print("Could not open file. error =  $e");
   }
 
   return events;

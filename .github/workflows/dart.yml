@@ -48,6 +48,6 @@ jobs:
         uses: actions/download-artifact@v3.0.0
         with:
           # Artifact name
-          name: nostr_console_elf64
+          name: bin/nostr_console_elf64
           # Destination path
           path: ./

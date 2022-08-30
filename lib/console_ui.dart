@@ -190,7 +190,6 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 
               // if contact list was found, get user's feed, and keep the contact list for later use 
               String authorName = gKindONames[pubkey.first]?.name??"";
-              List<String> contactList = [];
               printUnderlined("\nProfile for User");
               print("\nName   : $authorName ( ${pubkey.first} ).");
 
@@ -324,10 +323,12 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
           gNumLastDays =  int.parse(newNumDays);
           print("Changed number of days printed to $gNumLastDays");
         } on FormatException catch (e) {
-          print("Invalid input. Kindly try again.");
+          print("Invalid input. Kindly try again."); 
+          if( gDebug > 0) print(" ${e.message}"); 
           continue;
         } on Exception catch (e) {
-          print("Invalid input. Kindly try again.");
+          print("Invalid input. Kindly try again."); 
+          if( gDebug > 0) print(" ${e}"); 
           continue;
         }    
 
@@ -453,6 +454,8 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           }          
           gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
         } on StdoutException catch (e) {
+          print("Terminal information not available");
+          if( gDebug>0)  print("${e.message}");
           gNumLeftMarginSpaces = 0;
         }
       }

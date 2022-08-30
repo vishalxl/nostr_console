@@ -90,6 +90,7 @@ Future<void> main(List<String> arguments) async {
         gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
       } on StdoutException catch (e) {
         print("Cannot find terminal size. Left aligning by default.");
+        if( gDebug > 0) log.info("${e.message}");
         gNumLeftMarginSpaces = 0;
       }
       // undo above if left option is given

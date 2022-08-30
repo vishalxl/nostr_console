@@ -191,12 +191,7 @@ class Tree {
 
       // handle reaction events and return
       if( newEvent.eventData.kind == 7) {
-        String reactedTo = processReaction(newEvent);
-        
-        if( reactedTo != "") {
-          //newEventsId.add(newEvent.eventData.id); // add here to process/give notification about this new reaction
-          if(gDebug > 0) print("In insertEvents: got a new reaction by: ${newEvent.eventData.id} to $reactedTo");
-        } else {
+        if( processReaction(newEvent) == "") {
           if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
           return;
         }
@@ -211,13 +206,13 @@ class Tree {
       newEvent.eventData.translateAndExpandMentions();
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {});
 
-      // add to new-notification list only if tis a recent event ( because relays may send old events, and we dont want to highlight stale messages)
+      // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
       if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
         newEventIdsSet.add(newEvent.eventData.id);
       }
     });
     
-    // now go over the newly inserted event, and add its to the tree. only for kind 1 events
+    // now go over the newly inserted event, and add its to the tree. only for kind 1 events. add 42 events to channels.
     newEventIdsSet.forEach((newId) {
       Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
       if( newTree != null) {
@@ -251,6 +246,7 @@ class Tree {
               if( chatRooms.containsKey(channelId)) {
                 if( gDebug > 0) print("added event to chat room in insert event");
                 addMessageToChannel(channelId, newTree.e.eventData.id, allChildEventsMap, chatRooms);
+                newTree.e.eventData.isNotification = true; // highlight it too in next printing
               }
             } else {
               print("info: in insert events, could not find parent/channel id");
@@ -479,9 +475,9 @@ class Tree {
     int numPages = 1;
 
     if( room.messageIds.length > gNumChannelMessagesToShow ) {
-      startFrom = room.messageIds.length - ( room.messageIds.length ~/ gNumChannelMessagesToShow) * gNumChannelMessagesToShow - (gNumChannelMessagesToShow * (page -1));
-      endAt = startFrom + gNumChannelMessagesToShow;
-      if( startFrom < 0) startFrom = 0;
+      endAt = room.messageIds.length - (page - 1) * gNumChannelMessagesToShow;
+      if( endAt < gNumChannelMessagesToShow) endAt = gNumChannelMessagesToShow;
+      startFrom = endAt - gNumChannelMessagesToShow;
       numPages = (room.messageIds.length ~/ gNumChannelMessagesToShow) + 1;
       if( page > numPages) {
         page = numPages;
@@ -498,10 +494,10 @@ class Tree {
     }
 
 
-    if( startFrom != 0) {
+    if( room.messageIds.length > gNumChannelMessagesToShow) {
       print("\n");
       printDepth(0);
-      stdout.write("${gNotificationColor}Displayed page number ${page+1} (out of total $numPages pages, where 1st is the latest 'page').\n");
+      stdout.write("${gNotificationColor}Displayed page number ${page} (out of total $numPages pages, where 1st is the latest 'page').\n");
       printDepth(0);
       stdout.write("To see older pages, enter numbers from 1-${numPages}.${gColorEndMarker}\n\n");
     }

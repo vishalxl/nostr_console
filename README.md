@@ -76,7 +76,7 @@ nostr_console.exe  --file=eventsFile.txt --prikey=K
  
  # Screenshots
 
-![As of](https://pbs.twimg.com/media/FachGW3agAAele4?format=png&name=4096x4096) mid Aug 2022.
+![As of](https://pbs.twimg.com/media/Fbae3H2UIAEmYlB?format=png&name=4096x4096) late Aug 2022.
 
 ![Showing Tree with re-shifting to left](https://pbs.twimg.com/media/Fao3E1bUUAAIti1?format=png&name=4096x4096) showing re-alignment of threads for easier reading.
 

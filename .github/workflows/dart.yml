@@ -46,7 +46,7 @@ jobs:
 
       - name: List files in the repository
         run: |
-          ls ${{ github.workspace }}
+          ls ${{ github.workspace }}/bin
           
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.0

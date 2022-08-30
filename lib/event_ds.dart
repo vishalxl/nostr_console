@@ -347,7 +347,7 @@ class EventData {
         
    // TODO do it in one call
    final df1 = DateFormat('hh:mm a');
-   final df2 = DateFormat(DateFormat.YEAR_ABBR_MONTH_DAY);
+   final df2 = DateFormat(DateFormat.ABBR_MONTH_DAY);
    String strDate = df1.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
    strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
     if( createdAt == 0) {
@@ -542,7 +542,7 @@ Set<Event> readEventsFromFile(String filename) {
     }
   } on Exception catch(e) {
     print("cannot open file $gEventsFilename");
-    print("Could not open file. error =  $e");
+    if( gDebug > 0) print("Could not open file. error =  $e");
   }
 
   return events;

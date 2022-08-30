@@ -5,9 +5,13 @@
 
 name: Dart
 
+# do a built only on change to pubspec.yaml file with its version change
+
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - 'main/pubspec.yaml'
+      
   pull_request:
     branches: [ "main" ]
 

@@ -164,7 +164,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
                             'Search word(s)',                // 4
                             'Search by client name',         // 5
                             'Change number of days printed', // 6
-                            'Applicatoin stats',             // 7
+                            'Application stats',             // 7
                             'Help and About',                // 8
                             'Go back to main menu'],         // 9
                           "Other Menu");                     // menu name

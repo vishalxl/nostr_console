@@ -34,7 +34,8 @@ List<String> gListRelayUrls = [ defaultServerUrl,
                                 relayNostrInfo,
                               "wss://nostr-verified.wellorder.net", 
                               "wss://nostr-relay.wlvs.space",
-                              "wss://nostr-pub.wellorder.net"
+                              "wss://nostr-pub.wellorder.net",
+                              "wss://nostr.ono.re"
                               ];
 
 // name of executable

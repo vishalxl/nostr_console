@@ -88,12 +88,13 @@ Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) 
   sendRequest( gListRelayUrls, toSendMessage);
 }
 
-// send event e
+// sends event e
 Future<void> sendEvent(Tree node, Event e) async {
   String strTags = "";
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   String content = addEscapeChars( e.eventData.content);
 
+  // read the contacts and make them part of the tags, and then the sha
   if( e.eventData.kind == 3) {
     strTags = ""; // only new contacts will be sent
     for(int i = 0; i < e.eventData.contactList.length; i++) {
@@ -291,7 +292,21 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
                   print("The contact already exists in the contact list. Republishing the old contact list.");
                   sendEvent(node, contactEvent);
                 }
+              } else {
+                  // TODO fix the send event functions by streamlining them
+                  print('Sending first contact event');
+                  
+                  String newId = "", newPubkey = userPublicKey,  newContent = "";
+                  int newKind = 3;
+                  List<String> newEtags = [], newPtags = [pk];
+                  List<List<String>> newTags = [[]];
+                  Set<String> newNewLikes = {};
+                  int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
+                  List<Contact> newContactList = [ Contact(pk, defaultServerUrl) ];
 
+                  EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
+                  Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
+                  sendEvent(node, newEvent);
               }
 
               //print("TBD");

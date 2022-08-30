@@ -59,11 +59,19 @@ Future<void> main(List<String> arguments) async {
 
       if( argResults[pubkeyArg] != null) {
         userPublicKey = argResults[pubkeyArg];
+        if( userPublicKey.length != 64){ 
+          print("Length of provided public key should be 64. Exiting.");
+          return;
+        }
         userPrivateKey = "";
         print("Going to use public key $userPublicKey. You will not be able to send posts/replies.");
       }
       if( argResults[prikeyArg] != null) {
         userPrivateKey = argResults[prikeyArg];
+        if( userPrivateKey.length != 64){ 
+          print("Length of provided private key should be 64. Exiting.");
+          return;
+        }
         userPublicKey = getPublicKey(userPrivateKey);
         print("Going to use the provided private key");
       }

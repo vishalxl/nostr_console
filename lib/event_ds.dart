@@ -204,7 +204,7 @@ class EventData {
 
   EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags,
             this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = ""});
-  
+   
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
 

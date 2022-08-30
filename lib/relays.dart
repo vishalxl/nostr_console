@@ -184,7 +184,7 @@ class Relays {
     }
 
     
-    if(gDebug > 0) log.info('\nSending request: \n$request\n to $relay\n\n');
+    if(gDebug > 0) log.info('Sending request: \n$request\n to $relay\n\n');
     fws?.sink.add(request);
   }
 

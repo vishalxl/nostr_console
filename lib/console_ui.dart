@@ -55,7 +55,7 @@ Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, St
 
     int numShaDone = 0;
     for( numShaDone = 0; numShaDone < 100000000; numShaDone++) {
-      vanityTag = strTags + ',["nonce","$numShaDone"]';
+      vanityTag = strTags + ',["nonce","$numShaDone","$gDifficulty"]';
       id = getShaId(userPublicKey, createdAt, replyKind, vanityTag, content);
       if( id.substring(0, numBytes) == zeroString) {
         break;
@@ -121,7 +121,7 @@ Future<void> sendEvent(Tree node, Event e) async {
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
   //print("in send event: calling sendrequiest");
-  relays.sendRequest(defaultServerUrl, toSendMessage);
+  sendRequest(gListRelayUrls, toSendMessage);
 }
 
 

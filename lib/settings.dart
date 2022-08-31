@@ -95,6 +95,8 @@ const String gColorEndMarker = "\x1B[0m";
 const int gDefaultNumLastDays = 1;
 int gNumLastDays     = gDefaultNumLastDays; 
 
+const bool gWhetherToSendClientTag = true;
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// bots related settings 
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook

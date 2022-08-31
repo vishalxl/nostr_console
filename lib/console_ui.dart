@@ -21,7 +21,7 @@ Future<void> processNotifications(Store node)  async {
   });
 
   Future<void> foo() async {
-    await Future.delayed(Duration(milliseconds: waitMilliSeconds + 50));
+    await Future.delayed(Duration(milliseconds: waitMilliSeconds + 200));
     return;
   }
   await foo();
@@ -88,7 +88,7 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend)
   sendRequest( gListRelayUrls, toSendMessage);
 }
 
-// sends event e
+// sends event e; used to send kind 3 event
 Future<void> sendEvent(Store node, Event e) async {
   String strTags = "";
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -114,7 +114,7 @@ Future<void> sendEvent(Store node, Event e) async {
     // strTags += '["client","nostr_console"]';
   }
 
-  // TODO send client for kinds other than 3 ( which can only have p tags)
+  // TODO send event for kinds other than 3 ( which can only have p tags)
 
   String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
@@ -124,6 +124,35 @@ Future<void> sendEvent(Store node, Event e) async {
   sendRequest(gListRelayUrls, toSendMessage);
 }
 
+bool sendDeleteEvent(Store node, String eventIdToDelete) {
+  if( node.allChildEventsMap.containsKey(eventIdToDelete)) {
+    Tree? tree = node.allChildEventsMap[eventIdToDelete];
+    if( tree != null) {
+      if( tree.event.eventData.id == eventIdToDelete && tree.event.eventData.pubkey == userPublicKey) {
+        // to delte this event
+        String replyKind = "5"; // delete event
+        String content = "";
+        String strTags = '["e","$eventIdToDelete"]';
+        strTags += gWhetherToSendClientTag?',["client","nostr_console"]':'';
+
+        int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+        String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
+
+        String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+        String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$content","sig":"$sig"}]';
+        sendRequest( gListRelayUrls, toSendMessage);
+        print("sent event delete request with id = $id");
+        print(toSendMessage);
+      } else {
+        print("${gWarningColor}The given id was not found and/or is not a valid id, or is not your event. Not deleted.$gColorEndMarker"); 
+      }
+    } else {
+      print("Event not found. Kindly ensure you have entered a valid event id.");
+    }
+  };
+
+  return false;
+}
 
 int showMenu(List<String> menuOptions, String menuName) {
   print("\n$menuName\n${getNumDashes(menuName.length)}");
@@ -160,14 +189,16 @@ Future<void> otherMenuUi(Store node) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
     int option = showMenu([ 'Show user profile',             // 1
-                            'Display contact list',          // 2 
-                            'Follow new contact',            // 3
-                            'Search word(s) or event id',    // 4
-                            'Search by client name',         // 5
+                            'Search by client name',         // 2
+                            'Search word(s) or event id',    // 3
+                            'Display contact list',          // 4 
+                            'Follow new contact',            // 5
                             'Change number of days printed', // 6
-                            'Application stats',             // 7
-                            'Help and About',                // 8
-                            'Go back to main menu'],         // 9
+                            'Delete event',                  // 7
+                            'Application stats',             // 8
+                            'Go back to main menu',          // 9
+                            'Help and About'],               // 10
+
                           "Other Menu");                     // menu name
     print('You picked: $option');
     switch(option) {
@@ -234,6 +265,27 @@ Future<void> otherMenuUi(Store node) async {
         break;
 
       case 2:
+        stdout.write("Enter nostr client name whose events you want to see: ");
+        String? $tempWords = stdin.readLineSync();
+        String clientName = $tempWords??"";
+        if( clientName != "") {
+          bool fromClient (Tree t) => t.fromClientSelector(clientName);
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
+        }
+        break;
+
+      case 3: // search word or event id
+        stdout.write("Enter word(s) to search: ");
+        String? $tempWords = stdin.readLineSync();
+        String words = $tempWords??"";
+        if( words != "") {
+          bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
+        } else print("Blank word entered. Try again.");
+        break;
+
+
+      case 4: // display contact list
         String authorName = getAuthorName(userPublicKey);
         List<Contact>? contactList = gKindONames[userPublicKey]?.latestContactEvent?.eventData.contactList;
         if( contactList != null) {
@@ -243,7 +295,7 @@ Future<void> otherMenuUi(Store node) async {
         }
         break;
 
-      case 3:
+      case 5: // follow new contact
         // in case the program was invoked with --pubkey, then user can't send messages
         if( userPrivateKey == "") {
             print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
@@ -311,34 +363,12 @@ Future<void> otherMenuUi(Store node) async {
                   Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
                   sendEvent(node, newEvent);
               }
-
-              //print("TBD");
             }
           }
         }
         break;
 
-      case 4:
-        stdout.write("Enter word(s) to search: ");
-        String? $tempWords = stdin.readLineSync();
-        String words = $tempWords??"";
-        if( words != "") {
-          bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
-        } else print("word = $words");
-        break;
-
-      case 5:
-        stdout.write("Enter nostr client name whose events you want to see: ");
-        String? $tempWords = stdin.readLineSync();
-        String clientName = $tempWords??"";
-        if( clientName != "") {
-          bool fromClient (Tree t) => t.fromClientSelector(clientName);
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
-        }
-        break;
-
-      case 6:
+      case 6: // change number of days printed
         stdout.write("Enter number of days for which you want to see posts: ");
         String? $tempNumDays = stdin.readLineSync();
         String newNumDays = $tempNumDays??"";
@@ -355,12 +385,18 @@ Future<void> otherMenuUi(Store node) async {
           if( gDebug > 0) print(" ${e}"); 
           continue;
         }    
+        break;
+      case 7:
+        stdout.write("Enter event id to delete: ");
+        String? $tempEventId = stdin.readLineSync();
+        String eventId = $tempEventId??"";
+        if( eventId.length == 64) {
+          sendDeleteEvent(node, eventId);
+        } else print("Invalid Event Id entered; should be of 64 byte length. Try again.");
 
         break;
 
-
-      case 7:
-
+      case 8: // application info
         print("\n\n");
         printUnderlined("Application stats");
         print("\n");
@@ -374,19 +410,17 @@ Future<void> otherMenuUi(Store node) async {
         } else {
           print("You are not signed in, and are using public key: $userPublicKey");
         }
-        print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}");
-
-        //printUnderlined("Program Arguments");
-        
+        print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}");        
         break;
 
-      case 8:
-        print(helpAndAbout);
-        break;
-  
       case 9:
         continueOtherMenu = false;
         break;
+
+      case 10:
+        print(helpAndAbout);
+        break;
+  
 
       default:
         break;

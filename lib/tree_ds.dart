@@ -188,7 +188,7 @@ class Tree {
         return;
       }
 
-      // handle reaction events and return
+      // handle reaction events and return if we could not find the reacted to. Continue otherwise to add this to notification set newEventIdsSet
       if( newEvent.eventData.kind == 7) {
         if( processReaction(newEvent) == "") {
           if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
@@ -211,7 +211,7 @@ class Tree {
       }
     });
     
-    // now go over the newly inserted event, and add its to the tree. only for kind 1 events. add 42 events to channels.
+    // now go over the newly inserted event, and add its to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
     newEventIdsSet.forEach((newId) {
       Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
       if( newTree != null) {
@@ -871,6 +871,7 @@ class Tree {
     return false;
   } 
 
+/*
   Event? getContactEvent(String pkey) {
       // get the latest kind 3 event for the user, which lists his 'follows' list
       int latestContactsTime = 0;
@@ -894,7 +895,7 @@ class Tree {
 
       return null;
   }
-
+*/
   // TODO inefficient; fix
   List<String> getFollowers(String pubkey) {
     if( gDebug > 0) print("Finding followrs for $pubkey");
@@ -928,7 +929,7 @@ class Tree {
   void printSocialDistance(String otherPubkey, String otherName) {
     String otherName = getAuthorName(otherPubkey);
 
-    Event? contactEvent = this.getContactEvent(userPublicKey);
+    Event? contactEvent = getContactEvent(userPublicKey);
     bool isFollow = false;
     int  numSecond = 0; // number of your follows who follow the other
 
@@ -943,7 +944,7 @@ class Tree {
         }
         // count the number of your contacts who know or follow the other account
         List<Contact> followContactList = [];
-        Event? followContactEvent = this.getContactEvent(contacts[i].id);
+        Event? followContactEvent = getContactEvent(contacts[i].id);
         if( followContactEvent != null) {
           followContactList = followContactEvent.eventData.contactList;
           for(int j = 0; j < followContactList.length; j++) {
@@ -1105,6 +1106,11 @@ Tree getTree(Set<Event> events) {
     int totalKind0Processed = 0, notProcessed = 0;
     events.forEach( (event) =>  processKind0Event(event)? totalKind0Processed++: notProcessed++);
     if( gDebug > 0) print("In getTree: totalKind0Processed = $totalKind0Processed  notProcessed = $notProcessed gKindONames.length = ${gKindONames.length}"); 
+
+    // process kind 3 events which is contact list. Update global info about the user (with meta data) 
+    int totalKind3Processed = 0, notProcessed3 = 0;
+    events.forEach( (event) =>  processKind3Event(event)? totalKind3Processed++: notProcessed3++);
+    if( gDebug > 0) print("In getTree: totalKind3Processed = $totalKind3Processed  notProcessed = $notProcessed3 gKindONames.length = ${gKindONames.length}"); 
 
     // process kind 7 events or reactions
     processReactions(events);

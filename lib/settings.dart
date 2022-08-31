@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = "a4479de655094679cdfb10f347521aa58f24717cdc5ddba89fb346453a8a99ed";
+String gCheckEventId = "15d86a36a620fc1f735f2322f31366b2adde786361f568faf6a0dc8368f7e534";
 
 const int gDefaultNumWaitSeconds = 3000; // is used in main()
 

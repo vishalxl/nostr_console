@@ -219,7 +219,7 @@ Future<void> main(List<String> arguments) async {
               if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
               clearEvents();
 
-              mainMenuUi(node, []);            
+              mainMenuUi(node);            
         });
         return;
       } 
@@ -245,8 +245,9 @@ Future<void> main(List<String> arguments) async {
       stdout.write("...received $numUserEvents new posts made by the user\n");
       if( gDebug > 0) log.info("Received user events.");
 
+      getRecievedEvents().forEach((e) => processKind3Event(e)); // first process the kind 3 event
       // get the latest kind 3 event for the user, which lists his 'follows' list
-      Event? contactEvent = getContactEvent(getRecievedEvents(), userPublicKey);
+      Event? contactEvent = getContactEvent(userPublicKey);
 
       // if contact list was found, get user's feed, and keep the contact list for later use 
       List<String> contactList = [];
@@ -288,7 +289,7 @@ Future<void> main(List<String> arguments) async {
 
           // call the mein UI function
           clearEvents();
-          mainMenuUi(node, contactList);
+          mainMenuUi(node);
         });
       });
     });

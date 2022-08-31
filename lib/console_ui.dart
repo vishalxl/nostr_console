@@ -155,7 +155,7 @@ int showMenu(List<String> menuOptions, String menuName) {
   }
 }
 
-Future<void> otherMenuUi(Tree node, var contactList) async {
+Future<void> otherMenuUi(Tree node) async {
   //gDebug = 1;
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
@@ -193,7 +193,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
               node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
               
               // get the latest kind 3 event for the user, which lists his 'follows' list
-              Event? contactEvent = node.getContactEvent(pubkey.first);
+              Event? contactEvent = getContactEvent(pubkey.first);
 
               // if contact list was found, get user's feed, and keep the contact list for later use 
               String authorName = gKindONames[pubkey.first]?.name??"";
@@ -215,11 +215,11 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 
                 // print social distance info. 
                 node.printSocialDistance(pubkey.first, authorName);
-                print("\n");
+                print("");
                 
                 stdout.write("They follows ${contactEvent.eventData.contactList.length} accounts:  ");
                 contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
-                print("\n\n");
+                print("\n");
 
                 List<String> followers = node.getFollowers(pubkey.first);
                 stdout.write("They have ${followers.length} followers:  ");
@@ -235,9 +235,12 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
 
       case 2:
         String authorName = getAuthorName(userPublicKey);
-        print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
-        contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
-        print("");
+        List<Contact>? contactList = gKindONames[userPublicKey]?.latestContactEvent?.eventData.contactList;
+        if( contactList != null) {
+          print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
+          contactList.forEach((Contact contact) => stdout.write("${getAuthorName(contact.id)}, "));
+          print("");
+        }
         break;
 
       case 3:
@@ -271,7 +274,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
               String pk = pubkey.first;
 
               // get this users latest contact list event ( kind 3 event)
-              Event? contactEvent = node.getContactEvent(userPublicKey);
+              Event? contactEvent = getContactEvent(userPublicKey);
               
               if( contactEvent != null) {
                 Event newContactEvent = contactEvent;
@@ -392,7 +395,7 @@ Future<void> otherMenuUi(Tree node, var contactList) async {
   return;
 }
 
-Future<void> channelMenuUI(Tree node, var contactList) async {
+Future<void> channelMenuUI(Tree node) async {
   //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
@@ -464,7 +467,7 @@ Future<void> channelMenuUI(Tree node, var contactList) async {
   return;
 }
 
-Future<void> mainMenuUi(Tree node, var contactList) async {
+Future<void> mainMenuUi(Tree node) async {
     //gDebug = 0;
     // at the very beginning, show the tree as it is, and then show the options menu
 
@@ -532,19 +535,19 @@ Future<void> mainMenuUi(Tree node, var contactList) async {
           break;
 
         case 3:
-          await channelMenuUI(node, contactList);
+          await channelMenuUI(node);
           break;
 
         case 4:
-          await otherMenuUi(node, contactList);
+          await otherMenuUi(node);
           break;
 
         case 5:
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);
-          print("\nFinished fetching feed for user $userPublicKey ($authorName), whose contact list has ${contactList.length} profiles.\n ");
-          contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+          print("\nFinished Nostr session for user with publick key: $userPublicKey ($authorName). Exiting");
+          //contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
           stdout.write("\n");
           if( gEventsFilename != "") {
             await node.writeEventsToFile(gEventsFilename);

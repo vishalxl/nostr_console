@@ -14,9 +14,11 @@ bool gTranslate = false; // translate flag
 
 // Structure to store kind 0 event meta data for each user. Typically will  have info from latest kind 0 event only.
 class UserNameInfo {
-  int createdAt;
-  String name, about, picture;
-  UserNameInfo(this.createdAt, this.name, this.about, this.picture);
+  int? createdAt;
+  String? name, about, picture;
+  int? createdAtKind3;
+  Event ?latestContactEvent;
+  UserNameInfo(this.createdAt, this.name, this.about, this.picture, this.latestContactEvent, [this.createdAtKind3 = null]);
 }
 
 /* 
@@ -561,19 +563,15 @@ Set<Event> readEventsFromFile(String filename) {
 }
 
 // From the list of events provided, lookup the lastst contact information for the given user/pubkey
-Event? getContactEvent(Set<Event> events, String pubkey) {
+Event? getContactEvent(String pubkey) {
 
     // get the latest kind 3 event for the user, which lists his 'follows' list
-    Event? latestContactEvent = null;
-    int latestContactsTime = 0;
-    for( var e in events) {
-      if( e.eventData.pubkey == pubkey && e.eventData.kind == 3 && latestContactsTime < e.eventData.createdAt) {
-        latestContactsTime = e.eventData.createdAt;
-        latestContactEvent = e;
-      }
+    if( gKindONames.containsKey(pubkey)) {
+      Event? e = (gKindONames[pubkey]?.latestContactEvent)??null;
+      return e;
     }
 
-    return latestContactEvent;
+    return null;
 }
 
 // for the user userPubkey, returns the relay of its contact contactPubkey
@@ -631,16 +629,15 @@ bool processKind0Event(Event e) {
     }
   }
 
-
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(e.eventData.pubkey)) {    
-    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture);
+    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, null);
     newEntry = true;;
-    //print("Created meta data for name: $name about: $about picture: $picture");
   } else {
     int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
     if( oldTime < e.eventData.createdAt) {
-      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture);
+      Event? oldContactEvent = gKindONames[e.eventData.pubkey]?.latestContactEvent;
+      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, oldContactEvent);
       entryModified = true;;
     }
   }
@@ -650,6 +647,36 @@ bool processKind0Event(Event e) {
   }
   return newEntry || entryModified;
 }
+
+// If given event is kind 3 event, then populates gKindONames with contact info
+// returns true if entry was created or modified, false otherwise
+bool processKind3Event(Event newContactEvent) {
+  if( newContactEvent.eventData.kind != 3) {
+    return false;
+  }
+
+  bool newEntry = false, entryModified = false;
+  if( !gKindONames.containsKey(newContactEvent.eventData.pubkey)) {
+    gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(null, null, null, null, newContactEvent, newContactEvent.eventData.createdAt);
+    newEntry = true;;
+  } else {
+    // if entry already exists, then check its old time and update only if we have a newer entry now
+    int oldTime = gKindONames[newContactEvent.eventData.pubkey]?.createdAtKind3??0;
+    if( oldTime < newContactEvent.eventData.createdAt) {
+      int? createdAt = gKindONames[newContactEvent.eventData.pubkey]?.createdAt??null;
+      String? name = gKindONames[newContactEvent.eventData.pubkey]?.name, about = gKindONames[newContactEvent.eventData.pubkey]?.about, picture = gKindONames[newContactEvent.eventData.pubkey]?.picture;
+      
+      gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(createdAt, name, about, picture, newContactEvent, newContactEvent.eventData.createdAt );
+      entryModified = true;;
+    }
+  }
+
+  if(gDebug > 0) { 
+      print("At end of processKind3Events:  ${newEntry? "added entry": ( entryModified?"modified entry": "No change done")} ");
+  }
+  return newEntry || entryModified;
+}
+
 
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
 String getAuthorName(String pubkey) {
@@ -662,19 +689,22 @@ String getAuthorName(String pubkey) {
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
-  gKindONames.forEach((key, value) {
+  print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
+
+  gKindONames.forEach((pk, value) {
     // check both the user name, and the pubkey to search for the user
     if( userName == value.name) {
-      pubkeys.add(key);
+      pubkeys.add(pk);
     }
 
-    if( userName.length <= key.length) {
-      if( key.substring(0, userName.length) == userName) {
-        pubkeys.add(key);
+    if( userName.length <= pk.length) {
+      if( pk.substring(0, userName.length) == userName) {
+        pubkeys.add(pk);
       }
     }
   });
 
+  print("returning $pubkeys");
   return pubkeys;
 }
 

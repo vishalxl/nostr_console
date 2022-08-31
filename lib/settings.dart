@@ -115,6 +115,10 @@ int gDifficulty = 0;
 const int gNumChannelMessagesToShow = 15;
 const int gMaxChannelPagesDisplayed = 50;
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// User interface messages
+String gDeletedEventMessage = "This post was deleted by its original writer";
+
 const String gUsage = """$exename version $version
 The nostr console client built using dart.
 

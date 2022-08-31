@@ -182,6 +182,15 @@ String getShaId(String pubkey, int createdAt, String kind, String strTags, Strin
   return value.toString();
 }
 
+// get printable date from seconds since epoch
+String getPrintableDate(int createdAt) {
+  final df1 = DateFormat('hh:mm a');
+  final df2 = DateFormat(DateFormat.ABBR_MONTH_DAY);
+  String strDate = df1.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
+  strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
+  return strDate;
+}
+
 class EventData {
   String             id;
   String             pubkey;
@@ -195,9 +204,12 @@ class EventData {
   String             evaluatedContent; // content which has mentions expanded, and which has been translated
   Set<String>        newLikes;    //
 
+
+
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
 
   bool               isHidden; // hidden by sending a reaction kind 7 event to this event, by the logged in user
+  bool               isDeleted; // deleted by kind 5 event
   
   String getParent() {
     if( eTagsRest.isNotEmpty) {
@@ -207,7 +219,7 @@ class EventData {
   }
 
   EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags,
-            this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = "", this.isHidden = false});
+            this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = "", this.isHidden = false, this.isDeleted = false});
    
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];
@@ -242,7 +254,8 @@ class EventData {
         }
       }
     } else {
-      if ( json['kind'] == 1 || json['kind'] == 7 || json['kind'] == 42 ) {
+      int eKind = json['kind'];
+      if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
           //stdout.write(tag);
@@ -359,11 +372,7 @@ class EventData {
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
         
-   // TODO do it in one call
-   final df1 = DateFormat('hh:mm a');
-   final df2 = DateFormat(DateFormat.ABBR_MONTH_DAY);
-   String strDate = df1.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
-   strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
+    String strDate = getPrintableDate(createdAt);
     if( createdAt == 0) {
       print("debug: createdAt == 0 for event $content");
     }

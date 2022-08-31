@@ -275,7 +275,7 @@ class Store {
     });
   }
 
-  static const Set<int>   typesInEventMap = {0, 1, 3, 7, 40, 42}; // 0 meta, 1 post, 3 follows list, 7 reactions
+  static const Set<int>   typesInEventMap = {0, 1, 3, 5, 7, 40, 42}; // 0 meta, 1 post, 3 follows list, 7 reactions
 
   static void handleChannelEvents( Map<String, ChatRoom> rooms, Map<String, Tree> tempChildEventsMap, Event ce) {
       String eId = ce.eventData.id;
@@ -352,6 +352,8 @@ class Store {
         tempChildEventsMap[event.eventData.id] = Tree.withoutStore( event, []); 
       }
     });
+
+    processDeleteEvents(tempChildEventsMap); // handle returned values perhaps later
 
     // once tempChildEventsMap has been created, create connections between them so we get a tree structure from all these events.
     List<Tree>  topLevelTrees = [];// this will become the children of the main top node. These are events without parents, which are printed at top.
@@ -445,7 +447,7 @@ class Store {
         }
       }
 
-      // only kind 0, 1, 3, 7, 40, 42 events are added to map, return otherwise
+      // only kind 0, 1, 3, 5( delete), 7, 40, 42 events are added to map, return otherwise
       if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
         return;
       }
@@ -863,18 +865,6 @@ class Store {
     return strTags;
   }
 
-
-/*
-  void addChild(Event child) {
-    Store node;
-    node = Store(child, [], {}, [], false, {}, {});
-    children.add(node);
-  }
-
-  void addChildNode(Store node) {
-    children.add(node);
-  }
-*/
   // for any tree node, returns its top most parent
   Tree getTopTree(Tree tree) {
     while( true) {
@@ -965,6 +955,35 @@ class Store {
     return totalEvents;
   }
 
+  static List<String> processDeleteEvents(Map<String, Tree> tempChildEventsMap) {
+    List<String> deletedEventIds = [];
+    tempChildEventsMap.forEach((key, tree) {
+      EventData deleterEvent = tree.event.eventData;
+      if( deleterEvent.kind == 5) {
+        deleterEvent.tags.forEach((tag) { 
+          if( tag.length < 2) {
+            return;
+          }
+          if( tag[0] == "e") {
+            String deletedEventId = tag[1];
+            // look up that event and ensure its kind 1 etc, and then mark it deleted.
+            Event? deletedEvent = tempChildEventsMap[deletedEventId]?.event;
+            if( deletedEvent != null) {
+              if( deletedEvent.eventData.kind == 1) {
+                deletedEvent.eventData.isDeleted = true;
+                deletedEvent.eventData.content = gDeletedEventMessage + " on ${getPrintableDate(deleterEvent.createdAt)}";
+                deletedEvent.eventData.evaluatedContent = "";
+                EventData ed = deletedEvent.eventData;
+                deletedEvent.originalJson = '["EVENT","none",{"id":${ed.id},"pubkey":${ed.pubkey},"createdAt":${ed.createdAt},"kind":1,"tags":[],"sig":"invalid","comment":"deleted"}]';
+                deletedEventIds.add(deletedEventId);
+              }          
+            }
+          }
+        });
+      }
+    });
+    return deletedEventIds;
+  } // end processDeleteEvents
 } // end Store
 
 void addMessageToChannel(String channelId, String messageId, Map<String, Tree> tempChildEventsMap, var chatRooms) {

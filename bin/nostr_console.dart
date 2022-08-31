@@ -196,7 +196,7 @@ Future<void> main(List<String> arguments) async {
       }
 
       // get all events in Tree form
-      Tree node = getTree(getRecievedEvents());
+      Store node = getTree(getRecievedEvents());
 
       // call the mein UI function
       clearEvents();

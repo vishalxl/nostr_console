@@ -689,7 +689,7 @@ String getAuthorName(String pubkey) {
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
-  print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
+  if(gDebug > 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
 
   gKindONames.forEach((pk, value) {
     // check both the user name, and the pubkey to search for the user
@@ -704,7 +704,6 @@ Set<String> getPublicKeyFromName(String userName) {
     }
   });
 
-  print("returning $pubkeys");
   return pubkeys;
 }
 

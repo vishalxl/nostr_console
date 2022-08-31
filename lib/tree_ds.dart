@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 
@@ -10,20 +11,269 @@ bool selectAll(Tree t) {
 }
 
 
+class Tree {
+  Event          event;                   // is dummy for very top level tree. Holds an event otherwise.
+  List<Tree>     children;            // only has kind 1 events
+  Store?         store;
+
+  Tree(this.event, this.children,this.store );
+
+  factory Tree.withoutStore(Event e, List<Tree> c) {
+    return Tree(e, c, null);
+  }
+
+  void setStore(Store s) {
+    store = s;
+  }
+
+
+  /***********************************************************************************************************************************/
+  /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
+   */
+  int printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
+
+    int numPrinted = 0;
+
+    //if( event.eventData.pubkey != gDummyAccountPubkey) { // don't print dummy events
+      event.printEvent(depth);
+      numPrinted++;
+    //}
+
+    bool leftShifted = false;
+    for( int i = 0; i < children.length; i++) {
+
+      stdout.write("\n");  
+      printDepth(depth+1);
+      stdout.write("|\n");
+
+      // if the thread becomes too 'deep' then reset its depth, so that its 
+      // children will not be displayed too much on the right, but are shifted
+      // left by about <leftShiftThreadsBy> places
+      if( depth > maxDepthAllowed) {
+        depth = maxDepthAllowed - leftShiftThreadsBy;
+        printDepth(depth+1);
+        stdout.write("<${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1)}+\n");        
+        leftShifted = true;
+      }
+
+      numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
+    }
+
+    if( leftShifted) {
+      stdout.write("\n");
+      printDepth(depth+1);
+      print(">");
+    }
+
+    return numPrinted;
+  }
+
+  // returns the time of the most recent comment
+  int getMostRecentTime(int mostRecentTime) {
+    if( children.isEmpty)   {
+      return event.eventData.createdAt;
+    }
+    if( event.eventData.createdAt > mostRecentTime) {
+      mostRecentTime = event.eventData.createdAt;
+    }
+
+    int mostRecentIndex = -1;
+    for( int i = 0; i < children.length; i++) {
+      int mostRecentChild = children[i].getMostRecentTime(mostRecentTime);
+      if( mostRecentTime <= mostRecentChild) {
+        mostRecentTime = mostRecentChild;
+        mostRecentIndex = i;
+      }
+    }
+    if( mostRecentIndex == -1) { 
+      Tree? top = store?.getTopTree(this);
+      // typically this should not happen. child nodes/events can't be older than parents 
+      return (top?.event.eventData.createdAt)??mostRecentTime;
+    } else {
+      return mostRecentTime;
+    }
+  }
+
+  // returns true if the treee or its children has a reply or like for the user with public key pk; and notification flags are set for such events
+  bool hasRepliesAndLikes(String pk) {
+    //print("----- pk = $pk");
+    bool hasReaction = false;
+    bool childMatches = false;
+
+    if( event.eventData.pubkey == pk &&  gReactions.containsKey(event.eventData.id)) {
+      List<List<String>>? reactions = gReactions[event.eventData.id];
+      if( reactions  != null) {
+        if( reactions.length > 0) {
+          //print("has reactions");
+          reactions.forEach((reaction) {  
+            // dont add notificatoin for self reaction
+            Event? reactorEvent = store?.allChildEventsMap[reaction[0]]?.event;
+            if( reactorEvent != null) {
+              if( reactorEvent.eventData.pubkey != pk){ // ignore self likes 
+                event.eventData.newLikes.add(reaction[0]);
+                hasReaction = true;
+              }
+            }
+          });
+        }
+      }
+    }
+
+    if( event.eventData.pubkey == pk && children.length > 0) {
+      for( int i = 0; i < children.length; i++ ) {
+        children.forEach((child) {  
+          // if child is someone else then set notifications and flag, means there are replies to this event 
+          childMatches = child.event.eventData.isNotification =  ((child.event.eventData.pubkey != pk)? true: false) ; 
+        }); 
+      }
+    }
+
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].hasRepliesAndLikes(pk)) {
+        childMatches = true;
+      }
+    }
+
+    if( hasReaction || childMatches) {
+      //print("returning true");
+      return true;
+    }
+    return false;
+  } 
+
+
+  // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
+  bool hasUserPostAndLike(String pubkey) {
+    bool hasReacted = false;
+
+    if( gReactions.containsKey(event.eventData.id))  {
+      List<List<String>>? reactions = gReactions[event.eventData.id];
+      if( reactions  != null) {
+        for( int i = 0; i < reactions.length; i++) {
+          if( reactions[i][0] == pubkey) {
+            event.eventData.newLikes.add(pubkey);
+            hasReacted = true;
+            break;
+          }
+        }
+      }
+    }
+
+    bool childMatches = false;
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].hasUserPostAndLike(pubkey)) {
+        childMatches = true;
+      }
+    }
+    if( event.eventData.pubkey == pubkey) {
+      event.eventData.isNotification = true;
+      return true;
+    }
+    if( hasReacted || childMatches) {
+      return true;
+    }
+    return false;
+  } 
+
+  // returns true if the given words exists in it or its children
+  bool hasWords(String word) {
+    if( event.eventData.content.length > 2000) { // ignore if content is too large, takes lot of time
+      return false;
+    }
+
+    bool childMatches = false;
+    for( int i = 0; i < children.length; i++ ) {
+      // ignore too large comments
+      if( children[i].event.eventData.content.length > 2000) {
+        continue;
+      }
+
+      if( children[i].hasWords(word)) {
+        childMatches = true;
+      }
+    }
+
+    if( event.eventData.content.toLowerCase().contains(word) || event.eventData.id == word ) {
+      event.eventData.isNotification = true;
+      return true;
+    }
+    if( childMatches) {
+      return true;
+    }
+    return false;
+  } 
+
+  // returns true if the event or any of its children were made from the given client, and they are marked for notification
+  bool fromClientSelector(String clientName) {
+    //if(gDebug > 0) print("In tree selector hasWords: this id = ${e.eventData.id} word = $word");
+
+    bool byClient = false;
+    List<List<String>> tags = event.eventData.tags;
+    for( int i = 0; i < tags.length; i++) {
+      if( tags[i].length < 2) {
+        continue;
+      }
+      if( tags[i][0] == "client" && tags[i][1].contains(clientName)) {
+        event.eventData.isNotification = true;
+        byClient = true;
+        break;
+      }
+    }
+
+    bool childMatch = false;
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].fromClientSelector(clientName)) {
+        childMatch = true;
+      }
+    }
+    if( byClient || childMatch) {
+      //print("SOME matched $clientName ");
+      return true;
+    }
+    //print("none matched $clientName ");
+
+    return false;
+  } 
+
+  // counts all valid events in the tree: ignores the dummy nodes that are added for events which aren't yet known
+  int count() {
+    int totalCount = 0;
+
+    if( event.eventData.pubkey != gDummyAccountPubkey) { // don't count dummy events
+        totalCount = 1;
+    }
+
+    for(int i = 0; i < children.length; i++) {
+      totalCount += children[i].count(); // then add all the children
+    }
+
+    return totalCount;
+  }
+
+
+} // end Tree
+
 /***********************************************************************************************************************************/
 /*  
  * The actual tree holds only kind 1 events, or only posts
- * This super-tree class holds other events too in its map, and in its chatRooms structure
+ * This Store class holds events too in its map, and in its chatRooms structure
  */
-class Tree {
-  Event             e;                   // is dummy for very top level tree. Holds an event otherwise.
+class Store {
   List<Tree>        children;            // only has kind 1 events
-  Map<String, Tree> allChildEventsMap;   // has events of kind typesInEventMap
-  List<String>      eventsWithoutParent;
-  bool              whetherTopMost;
+
+  Map<String, Tree>  allChildEventsMap;   // has events of kind typesInEventMap
+  List<String>       eventsWithoutParent;
+  bool               whetherTopMost;
   Map<String, ChatRoom> chatRooms = {};
-  Set<String>       eventsNotReadFromFile;
-  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost, this.chatRooms, this.eventsNotReadFromFile);
+  Set<String>        eventsNotReadFromFile;
+
+  Store(this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost, this.chatRooms, this.eventsNotReadFromFile) {
+    allChildEventsMap.forEach((eventId, tree) {
+      if( tree.store == null) {
+        tree.setStore(this);
+      }
+    });
+  }
 
   static const Set<int>   typesInEventMap = {0, 1, 3, 7, 40, 42}; // 0 meta, 1 post, 3 follows list, 7 reactions
 
@@ -89,9 +339,9 @@ class Tree {
   /***********************************************************************************************************************************/
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
-  factory Tree.fromEvents(Set<Event> events) {
+  factory Store.fromEvents(Set<Event> events) {
     if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false, {}, {});
+      return Store( [], {}, [], false, {}, {});
     }
 
     // create a map tempChildEventsMap from list of events, key is eventId and value is event itself
@@ -99,7 +349,7 @@ class Tree {
     events.forEach((event) { 
       // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
       if( typesInEventMap.contains(event.eventData.kind)) {
-        tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}, {}); 
+        tempChildEventsMap[event.eventData.id] = Tree.withoutStore( event, []); 
       }
     });
 
@@ -113,10 +363,10 @@ class Tree {
     int numKind42Events   = 0;
     if( gDebug > 0) print("In Tree from Events: after adding all required events of type ${typesInEventMap} to tempChildEventsMap map, its size = ${tempChildEventsMap.length} ");
 
-    tempChildEventsMap.forEach((newEventId, value) {
-      int eKind = value.e.eventData.kind;
+    tempChildEventsMap.forEach((newEventId, tree) {
+      int eKind = tree.event.eventData.kind;
       if( eKind == 42 || eKind == 40) {
-        handleChannelEvents(rooms, tempChildEventsMap, value.e);
+        handleChannelEvents(rooms, tempChildEventsMap, tree.event);
       }
 
       // only posts, of kind 1, are added to the main tree structure
@@ -125,28 +375,27 @@ class Tree {
         return;
       }
 
-      if(value.e.eventData.eTagsRest.isNotEmpty ) {
+      if(tree.event.eventData.eTagsRest.isNotEmpty ) {
         // is not a parent, find its parent and then add this element to that parent Tree
-        String parentId = value.e.eventData.getParent();
-        if( value.e.eventData.id == gCheckEventId) {
+        String parentId = tree.event.eventData.getParent();
+        if( tree.event.eventData.id == gCheckEventId) {
           if(gDebug > 0) print("In Tree FromEvents: got id: $gCheckEventId");
         }
 
         if(tempChildEventsMap.containsKey( parentId)) {
-          if( tempChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
-            if( gDebug > 1) log.info("In Tree.fromEvents: Not adding: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.e.eventData.kind}");
+          if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) { // since parent can only be a kind 1 event
+            if( gDebug > 1) log.info("In Tree.fromEvents: Not adding: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.event.eventData.kind}");
             return;
           }
-          tempChildEventsMap[parentId]?.addChildNode(value); 
+          tempChildEventsMap[parentId]?.children.add(tree); 
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Tree dummyTopNode = Tree(Event("","",
-                                          EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}),
-                                          [""], "[json]"), 
-                                    [], {}, [], false, {}, {});
-           dummyTopNode.addChildNode(value);
-           tempWithoutParent.add(value.e.eventData.id); 
+           Event dummy = Event("","",  EventData("Unk",gDummyAccountPubkey, tree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+
+           Tree dummyTopNode = Tree.withoutStore(dummy, []);
+           dummyTopNode.children.add(tree);
+           tempWithoutParent.add(tree.event.eventData.id); 
           
            // add the dummy evnets to top level trees, so that their real children get printed too with them
            // so no post is missed by reader
@@ -156,9 +405,9 @@ class Tree {
     }); // going over tempChildEventsMap and adding children to their parent's .children list
 
     // add parent trees as top level child trees of this tree
-    for( var value in tempChildEventsMap.values) {
-        if( value.e.eventData.kind == 1 &&  value.e.eventData.eTagsRest.isEmpty) {  // only posts which are parents
-            topLevelTrees.add(value);
+    for( var tree in tempChildEventsMap.values) {
+        if( tree.event.eventData.kind == 1 &&  tree.event.eventData.eTagsRest.isEmpty) {  // only posts which are parents
+            topLevelTrees.add(tree);
         }
     }
 
@@ -168,8 +417,7 @@ class Tree {
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
     // create a dummy top level tree and then create the main Tree object
-    Event dummy = Event("","",  EventData("non","", 0, 1, "Dummy Top event. Should not be printed.", [], [], [], [[]], {}), [""], "[json]");
-    return Tree( dummy, topLevelTrees, tempChildEventsMap, tempWithoutParent, true, rooms, {});
+    return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, true, rooms, {});
   } // end fromEvents()
 
    /***********************************************************************************************************************************/
@@ -207,7 +455,7 @@ class Tree {
       eventsNotReadFromFile.add(newEvent.eventData.id); // used later so that only these events are appended to the file
 
       // add them to the main store of the Tree object
-      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {}, {});
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
 
       // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
       if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
@@ -220,36 +468,34 @@ class Tree {
       Tree? newTree = allChildEventsMap[newId];
       if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above
 
-        switch(newTree.e.eventData.kind) {
+        switch(newTree.event.eventData.kind) {
           case 1:
             // only kind 1 events are added to the overall tree structure
-            if( newTree.e.eventData.eTagsRest.isEmpty) {
+            if( newTree.event.eventData.eTagsRest.isEmpty) {
                 // if its a new parent event, then add it to the main top parents ( this.children)
                 children.add(newTree);
             } else {
                 // if it has a parent , then add the newTree as the parent's child
-                String parentId = newTree.e.eventData.getParent();
+                String parentId = newTree.event.eventData.getParent();
                 if( allChildEventsMap.containsKey(parentId)) {
-                  allChildEventsMap[parentId]?.addChildNode(newTree);
+                  allChildEventsMap[parentId]?.children.add(newTree);
                 } else {
                   // create top unknown parent and then add it
-                  Tree dummyTopNode = Tree(Event("","",
-                                                  EventData("Unk" ,gDummyAccountPubkey, newTree.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}),
-                                                            [""], "[json]"), 
-                                                [], {}, [], false, {}, {});
-                  dummyTopNode.addChildNode(newTree);
+                  Event dummy = Event("","",  EventData("non", gDummyAccountPubkey, newTree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+                  Tree dummyTopNode = Tree.withoutStore(dummy, []);
+                  dummyTopNode.children.add(newTree);
                   children.add(dummyTopNode);
                 }
             }
             break;
           case 42:
             // add 42 chat message event id to its chat room
-            String channelId = newTree.e.eventData.getParent();
+            String channelId = newTree.event.eventData.getParent();
             if( channelId != "") {
               if( chatRooms.containsKey(channelId)) {
                 if( gDebug > 0) print("added event to chat room in insert event");
-                addMessageToChannel(channelId, newTree.e.eventData.id, allChildEventsMap, chatRooms);
-                newTree.e.eventData.isNotification = true; // highlight it too in next printing
+                addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms);
+                newTree.event.eventData.isNotification = true; // highlight it too in next printing
               }
             } else {
               print("info: in insert events, could not find parent/channel id");
@@ -276,13 +522,13 @@ class Tree {
     String strToWrite = "Notifications: ";
     int countNotificationEvents = 0;
     for( var newEventId in newEventIdsSet) {
-      int k = (allChildEventsMap[newEventId]?.e.eventData.kind??-1);
+      int k = (allChildEventsMap[newEventId]?.event.eventData.kind??-1);
       if( k == 7 || k == 1 || k == 42 || k == 40) {
         countNotificationEvents++;
       }
 
       if(  allChildEventsMap.containsKey(newEventId)) {
-        if( gDebug > 0) print( "id = ${ (allChildEventsMap[newEventId]?.e.eventData.id??-1)}");
+        if( gDebug > 0) print( "id = ${ (allChildEventsMap[newEventId]?.event.eventData.id??-1)}");
       } else {
         if( gDebug > 0) print( "Info: could not find event id in map."); // this wont later be processed
       }
@@ -314,23 +560,23 @@ class Tree {
         if( gDebug > 0) print("In printNotifications: Could not find event $eventID in tree");
         return;
       } else {
-        switch(t.e.eventData.kind) {
+        switch(t.event.eventData.kind) {
           case 1:
-            t.e.eventData.isNotification = true;
+            t.event.eventData.isNotification = true;
             Tree topTree = getTopTree(t);
             topNotificationTree.add(topTree);
             break;
           case 7:
-            Event event = t.e;
+            Event event = t.event;
             if(gDebug >= 0) ("Got notification of type 7");
             String reactorId  = event.eventData.pubkey;
             int    lastEIndex = event.eventData.eTagsRest.length - 1;
             String reactedTo  = event.eventData.eTagsRest[lastEIndex];
-            Event? reactedToEvent = allChildEventsMap[reactedTo]?.e;
+            Event? reactedToEvent = allChildEventsMap[reactedTo]?.event;
             if( reactedToEvent != null) {
               Tree? reactedToTree = allChildEventsMap[reactedTo];
               if( reactedToTree != null) {
-                reactedToTree.e.eventData.newLikes.add( reactorId);
+                reactedToTree.event.eventData.newLikes.add( reactorId);
                 Tree topTree = getTopTree(reactedToTree);
                 topNotificationTree.add(topTree);
               } else {
@@ -341,7 +587,7 @@ class Tree {
             }
             break;
           default:
-            if(gDebug > 0) print("got an event thats not 1 or 7(reaction). its kind = ${t.e.eventData.kind} count17 = $countNotificationEvents");
+            if(gDebug > 0) print("got an event thats not 1 or 7(reaction). its kind = ${t.event.eventData.kind} count17 = $countNotificationEvents");
             break;
         }
       }
@@ -349,7 +595,7 @@ class Tree {
 
     // remove duplicate top trees
     Set ids = {};
-    topNotificationTree.retainWhere((t) => ids.add(t.e.eventData.id));
+    topNotificationTree.retainWhere((t) => ids.add(t.event.eventData.id));
     
     topNotificationTree.forEach( (t) { 
       t.printTree(0, DateTime(0), selectAll); 
@@ -358,82 +604,41 @@ class Tree {
     print("\n");
   }
 
-  /***********************************************************************************************************************************/
+   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    */
   int printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
 
     int numPrinted = 0;
 
-    // for the top most tree, create a smaller list which only has recent trees
-    //List<Tree> latestTrees = []; // TODO
+    depth = depth - 1;
+    children.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
 
-    if( whetherTopMost) {
-      depth = depth - 1;
-      children.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
-    } else {
-      e.printEvent(depth);
-      numPrinted++;
-      //latestTrees = children; 
-    }
-
-    bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
 
-      if(!whetherTopMost) {
-        stdout.write("\n");  
-        printDepth(depth+1);
-        stdout.write("|\n");
-      } else {
-        // continue if this children isn't going to get printed anyway; selector is only called for top most tree
-        if( treeSelector(children[i]) == false) {
-          continue;
-        } 
+      // continue if this children isn't going to get printed anyway; selector is only called for top most tree
+      if( treeSelector(children[i]) == false) {
+        continue;
+      } 
 
-        // for top tree, only print the thread that are newer than the given parameter
-        int newestChildTime = children[i].getMostRecentTime(0);
-        DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChildTime *1000);
-        //print("comparing $newerThan with $dTime");
-        if( dTime.compareTo(newerThan) < 0) {
-          continue;
-        }
-        stdout.write("\n");  
-        for( int i = 0; i < gapBetweenTopTrees; i++ )  { 
-          stdout.write("\n"); 
-        }
+      // for top Store, only print the thread that are newer than the given parameter
+      int newestChildTime = children[i].getMostRecentTime(0);
+      DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChildTime *1000);
+      if( dTime.compareTo(newerThan) < 0) {
+        continue;
       }
-
-      // if the thread becomes too 'deep' then reset its depth, so that its 
-      // children will not be displayed too much on the right, but are shifted
-      // left by about <leftShiftThreadsBy> places
-      if( depth > maxDepthAllowed) {
-        depth = maxDepthAllowed - leftShiftThreadsBy;
-        printDepth(depth+1);
-        stdout.write("<${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1)}+\n");        
-        leftShifted = true;
+      stdout.write("\n");  
+      for( int i = 0; i < gapBetweenTopTrees; i++ )  { 
+        stdout.write("\n"); 
       }
 
       numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
-      if( whetherTopMost && gDebug > 0) { 
-        //print("");
-        //print(children[i].getMostRecentTime(0));
-        //print("-----");
-      }
-      //if( gDebug > 0) print("at end for loop iteraion: numPrinted = $numPrinted");
     }
 
-    if( leftShifted) {
-      stdout.write("\n");
-      printDepth(depth+1);
-      print(">");
-    }
-
-    if( whetherTopMost) {
-      print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
-    }
+    print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
     return numPrinted;
   }
-  
+ 
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
    */
@@ -453,9 +658,8 @@ class Tree {
       List<String> messageIds = value.messageIds;
       for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
-          Event? e = allChildEventsMap[messageIds[i]]?.e;
+          Event? e = allChildEventsMap[messageIds[i]]?.event;
           if( e!= null) {
-            //e.printEvent(0);
             stdout.write("${e.eventData.getAsLine()}");
             break; // print only one event, the latest one
           }
@@ -497,7 +701,7 @@ class Tree {
     if( gDebug > 0) print("StartFrom $startFrom  endAt $endAt  numPages $numPages room.messageIds.length = ${room.messageIds.length}");
     for( i = startFrom; i < endAt; i++) {
       String eId = room.messageIds[i];
-      Event? e = allChildEventsMap[eId]?.e;
+      Event? e = allChildEventsMap[eId]?.event;
       if( e!= null) {
         e.printEvent(0);
         print("");
@@ -562,15 +766,15 @@ class Tree {
         if( t != null) {
           // only write if its not too old
           if( gDontWriteOldEvents) {
-            if( t.e.eventData.createdAt < (DateTime.now().subtract(Duration(days: gDontSaveBeforeDays)).millisecondsSinceEpoch ~/ 1000)) {
+            if( t.event.eventData.createdAt < (DateTime.now().subtract(Duration(days: gDontSaveBeforeDays)).millisecondsSinceEpoch ~/ 1000)) {
               continue;
             }
           }
 
-          String line = "${t.e.originalJson}\n";
+          String line = "${t.event.originalJson}\n";
           nLinesStr += line;
           eventCounter++;
-          if( t.e.eventData.kind == 1) {
+          if( t.event.eventData.kind == 1) {
             countPosts++;
           }
         }
@@ -618,8 +822,8 @@ class Tree {
       if( k.length >= replyToId.length && k.substring(0, replyToId.length) == replyToId) {
         // ignore future events TODO
 
-        if( ( allChildEventsMap[k]?.e.eventData.createdAt ?? 0) > latestEventTime ) {
-          latestEventTime = allChildEventsMap[k]?.e.eventData.createdAt ?? 0;
+        if( ( allChildEventsMap[k]?.event.eventData.createdAt ?? 0) > latestEventTime ) {
+          latestEventTime = allChildEventsMap[k]?.event.eventData.createdAt ?? 0;
           latestEventId = k;
         }
       }
@@ -635,7 +839,7 @@ class Tree {
 
     // found the id of event we are replying to
     if( latestEventId.isNotEmpty) {
-      String? pTagPubkey = allChildEventsMap[latestEventId]?.e.eventData.pubkey;
+      String? pTagPubkey = allChildEventsMap[latestEventId]?.event.eventData.pubkey;
       if( pTagPubkey != null) {
         strTags += '["p","$pTagPubkey"],';
       }
@@ -647,7 +851,7 @@ class Tree {
       Tree? t = allChildEventsMap[latestEventId];
       if( t != null) {
         Tree topTree = getTopTree(t);
-        rootEventId = topTree.e.eventData.id;
+        rootEventId = topTree.event.eventData.id;
         if( rootEventId != latestEventId) { // if the reply is to a top/parent event, then only one e tag is sufficient
           strTags +=  '["e","$rootEventId"],';
         }
@@ -659,258 +863,40 @@ class Tree {
     return strTags;
   }
 
-  // counts all valid events in the tree: ignores the dummy nodes that are added for events which aren't yet known
-  int count() {
-    int totalCount = 0;
-    // ignore dummy events
-    if(!whetherTopMost) {
-      if( e.eventData.pubkey != gDummyAccountPubkey) // don't count dummy parents
-        totalCount = 1;
-    }
-    for(int i = 0; i < children.length; i++) {
-      totalCount += children[i].count(); // then add all the children
-    }
-    return totalCount;
-  }
 
+/*
   void addChild(Event child) {
-    Tree node;
-    node = Tree(child, [], {}, [], false, {}, {});
+    Store node;
+    node = Store(child, [], {}, [], false, {}, {});
     children.add(node);
   }
 
-  void addChildNode(Tree node) {
+  void addChildNode(Store node) {
     children.add(node);
   }
-
+*/
   // for any tree node, returns its top most parent
-  Tree getTopTree(Tree t) {
+  Tree getTopTree(Tree tree) {
     while( true) {
-      Tree? parent =  allChildEventsMap[ t.e.eventData.getParent()];
+      Tree? parent =  allChildEventsMap[ tree.event.eventData.getParent()];
       if( parent != null) {
-        t = parent;
+        tree = parent;
       } else {
         break;
       }
     }
-    return t;
+    return tree;
   }
 
-  // returns the time of the most recent comment
-  int getMostRecentTime(int mostRecentTime) {
-    int initial = mostRecentTime;
-    if( children.isEmpty)   {
-      return e.eventData.createdAt;
-    }
-    if( e.eventData.createdAt > mostRecentTime) {
-      mostRecentTime = e.eventData.createdAt;
-    }
-
-    int mostRecentIndex = -1;
-    for( int i = 0; i < children.length; i++) {
-      int mostRecentChild = children[i].getMostRecentTime(mostRecentTime);
-      if( mostRecentTime <= mostRecentChild) {
-        if( gDebug > 0 && children[i].e.eventData.id == "970bbd22e63000dc1313867c61a50e0face728139afe6775fa9fe4bc61bdf664") {
-          //print("plantimals 970bbd22e63000dc1313867c61a50e0face728139afe6775fa9fe4bc61bdf664");
-          //print( "children[i].e.eventData. = ${children[i].e.eventData.createdAt} mostRecentChild = $mostRecentChild i = $i mostRecentIndex = $mostRecentIndex mostRecentTime = $mostRecentTime\n");
-          //printTree(0, 0, (a) => true);
-          //print("--------------");
-        }
-
-        mostRecentTime = mostRecentChild;
-        mostRecentIndex = i;
-      }
-    }
-    if( mostRecentIndex == -1) { 
-      Tree top = getTopTree(this);
-      if( gDebug ==2 ) {
-        print('\nerror: returning newer child id = ${e.eventData.id}. e.eventData.createdAt = ${e.eventData.createdAt} num child = ${children.length} 1st child time = ${children[0].e.eventData.createdAt} mostRecentTime = $mostRecentTime initial time = $initial ');
-        print("its top event time and id = time ${top.e.eventData.createdAt} id ${top.e.eventData.id} num tags = ${top.e.eventData.tags} num e tags = ${top.e.eventData.eTagsRest}\n");
-        //top.printTree(0,0, (a) => true);
-        print("\n-----------------------------------------------------------------------\n");
-      }
-      // typically this should not happen. child nodes/events can't be older than parents 
-      return e.eventData.createdAt;
-    } else {
-      return mostRecentTime;
-    }
-  }
-
-  // returns true if the treee or its children has a reply or like for the user with public key pk; and notification flags are set for such events
-  bool hasRepliesAndLikes(String pk) {
-    //print("----- pk = $pk");
-    bool hasReaction = false;
-    bool childMatches = false;
-
-    if( e.eventData.pubkey == pk &&  gReactions.containsKey(e.eventData.id)) {
-      List<List<String>>? reactions = gReactions[e.eventData.id];
-      if( reactions  != null) {
-        if( reactions.length > 0) {
-          //print("has reactions");
-          reactions.forEach((reaction) {  
-            // dont add notificatoin for self reaction
-            Event? reactorEvent = allChildEventsMap[reaction[0]]?.e;
-            if( reactorEvent != null) {
-              if( reactorEvent.eventData.pubkey != pk){ // ignore self likes 
-                e.eventData.newLikes.add(reaction[0]);
-                hasReaction = true;
-              }
-            }
-          });
-        }
-      }
-    }
-
-    if( e.eventData.pubkey == pk && children.length > 0) {
-      for( int i = 0; i < children.length; i++ ) {
-        children.forEach((child) {  
-          // if child is someone else then set notifications and flag, means there are replies to this event 
-          childMatches = child.e.eventData.isNotification =  ((child.e.eventData.pubkey != pk)? true: false) ; 
-        }); 
-      }
-    }
-
-    for( int i = 0; i < children.length; i++ ) {
-      if( children[i].hasRepliesAndLikes(pk)) {
-        childMatches = true;
-      }
-    }
-
-    if( hasReaction || childMatches) {
-      //print("returning true");
-      return true;
-    }
-    return false;
-  } 
-
-
-  // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
-  bool hasUserPostAndLike(String pubkey) {
-    bool hasReacted = false;
-
-    if( gReactions.containsKey(e.eventData.id))  {
-      List<List<String>>? reactions = gReactions[e.eventData.id];
-      if( reactions  != null) {
-        for( int i = 0; i < reactions.length; i++) {
-          if( reactions[i][0] == pubkey) {
-            e.eventData.newLikes.add(pubkey);
-            hasReacted = true;
-            break;
-          }
-        }
-      }
-    }
-
-    bool childMatches = false;
-    for( int i = 0; i < children.length; i++ ) {
-      if( children[i].hasUserPostAndLike(pubkey)) {
-        childMatches = true;
-      }
-    }
-    if( e.eventData.pubkey == pubkey) {
-      e.eventData.isNotification = true;
-      return true;
-    }
-    if( hasReacted || childMatches) {
-      return true;
-    }
-    return false;
-  } 
-
-  // returns true if the given words exists in it or its children
-  bool hasWords(String word) {
-    if( e.eventData.content.length > 2000) { // ignore if content is too large, takes lot of time
-      return false;
-    }
-
-    bool childMatches = false;
-    for( int i = 0; i < children.length; i++ ) {
-      // ignore too large comments
-      if( children[i].e.eventData.content.length > 2000) {
-        continue;
-      }
-
-      if( children[i].hasWords(word)) {
-        childMatches = true;
-      }
-    }
-
-    if( e.eventData.content.toLowerCase().contains(word) || e.eventData.id == word ) {
-      e.eventData.isNotification = true;
-      return true;
-    }
-    if( childMatches) {
-      return true;
-    }
-    return false;
-  } 
-
-  // returns true if the event or any of its children were made from the given client, and they are marked for notification
-  bool fromClientSelector(String clientName) {
-    //if(gDebug > 0) print("In tree selector hasWords: this id = ${e.eventData.id} word = $word");
-
-    bool byClient = false;
-    List<List<String>> tags = e.eventData.tags;
-    for( int i = 0; i < tags.length; i++) {
-      if( tags[i].length < 2) {
-        continue;
-      }
-      if( tags[i][0] == "client" && tags[i][1].contains(clientName)) {
-        e.eventData.isNotification = true;
-        byClient = true;
-        break;
-      }
-    }
-
-    bool childMatch = false;
-    for( int i = 0; i < children.length; i++ ) {
-      if( children[i].fromClientSelector(clientName)) {
-        childMatch = true;
-      }
-    }
-    if( byClient || childMatch) {
-      //print("SOME matched $clientName ");
-      return true;
-    }
-    //print("none matched $clientName ");
-
-    return false;
-  } 
-
-/*
-  Event? getContactEvent(String pkey) {
-      // get the latest kind 3 event for the user, which lists his 'follows' list
-      int latestContactsTime = 0;
-      String latestContactEvent = "";
-
-      allChildEventsMap.forEach((key, value) {
-        if( value.e.eventData.pubkey == pkey && value.e.eventData.kind == 3 && latestContactsTime < value.e.eventData.createdAt) {
-          latestContactEvent = value.e.eventData.id;
-          latestContactsTime = value.e.eventData.createdAt;
-        }
-      });
-
-      // if contact list was found, get user's feed, and keep the contact list for later use 
-      if (latestContactEvent != "") {
-        if( gDebug > 1) {
-          //print("latest contact event : $latestContactEvent with total contacts = ${allChildEventsMap[latestContactEvent]?.e.eventData.contactList.length}");
-          //print(allChildEventsMap[latestContactEvent]?.e.originalJson);
-        }
-        return allChildEventsMap[latestContactEvent]?.e;
-      }
-
-      return null;
-  }
-*/
   // TODO inefficient; fix
   List<String> getFollowers(String pubkey) {
     if( gDebug > 0) print("Finding followrs for $pubkey");
     List<String> followers = [];
 
     Set<String> usersWithContactList = {};
-    allChildEventsMap.forEach((key, value) {
-      if( value.e.eventData.kind == 3) {
-        usersWithContactList.add(value.e.eventData.pubkey);
+    allChildEventsMap.forEach((eventId, tree) {
+      if( tree.event.eventData.kind == 3) {
+        usersWithContactList.add(tree.event.eventData.pubkey);
       }
     });
 
@@ -970,11 +956,19 @@ class Tree {
 
     } // end if contact event was found
   }
-} // end Tree
 
-void addMessageToChannel(String channelId, String messageId, var tempChildEventsMap, var chatRooms) {
-  //chatRooms[channelId]?.messageIds.add(newTree.e.eventData.id);
-  int newEventTime = (tempChildEventsMap[messageId]?.e.eventData.createdAt??0);
+  int count() {
+    int totalEvents = 0;
+    for(int i = 0; i < children.length; i++) {
+      totalEvents += children[i].count(); // calling tree's cound.
+    }
+    return totalEvents;
+  }
+
+} // end Store
+
+void addMessageToChannel(String channelId, String messageId, Map<String, Tree> tempChildEventsMap, var chatRooms) {
+  int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
 
   if( chatRooms.containsKey(channelId)) {
     ChatRoom? room = chatRooms[channelId];
@@ -988,7 +982,7 @@ void addMessageToChannel(String channelId, String messageId, var tempChildEvents
       if(gDebug> 0) print("room has ${room.messageIds.length} messages already. adding new one to it. ");
 
       for(int i = 0; i < room.messageIds.length; i++) {
-        int eventTime = (tempChildEventsMap[room.messageIds[i]]?.e.eventData.createdAt??0);
+        int eventTime = (tempChildEventsMap[room.messageIds[i]]?.event.eventData.createdAt??0);
         if( newEventTime < eventTime) {
           // shift current i and rest one to the right, and put event Time here
           if(gDebug> 0) print("In addMessageToChannel: inserted in middle to channel ${room.chatRoomId} ");
@@ -1011,10 +1005,10 @@ void addMessageToChannel(String channelId, String messageId, var tempChildEvents
 }
 
 int ascendingTimeTree(Tree a, Tree b) {
-  if(a.e.eventData.createdAt < b.e.eventData.createdAt) {
+  if(a.event.eventData.createdAt < b.event.eventData.createdAt) {
     return -1;
   } else {
-    if( a.e.eventData.createdAt == b.e.eventData.createdAt) {
+    if( a.event.eventData.createdAt == b.event.eventData.createdAt) {
       return 0;
     }
   }
@@ -1099,14 +1093,14 @@ void processReactions(Set<Event> events) {
  *             Will remove duplicate events( which should not ideally exists because we have a set), 
  *             populate global names, process reactions, remove bots, translate, and then create main tree
  */
-Tree getTree(Set<Event> events) {
+Store getTree(Set<Event> events) {
     if( events.isEmpty) {
       if(gDebug > 0) log.info("Warning: In printEventsAsTree: events length = 0");
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true, {}, {});
+      return Store([], {}, [], true, {}, {});
     }
 
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)
-    events.removeWhere( (event) => !Tree.typesInEventMap.contains(event.eventData.kind));  
+    events.removeWhere( (event) => !Store.typesInEventMap.contains(event.eventData.kind));  
 
     // process kind 0 events about metadata 
     int totalKind0Processed = 0, notProcessed = 0;
@@ -1134,7 +1128,7 @@ Tree getTree(Set<Event> events) {
     if( gDebug > 0) print("In getTree: after removing unwanted kind, number of events remaining: ${events.length}");
 
     // create tree from events
-    Tree node = Tree.fromEvents(events);
+    Store node = Store.fromEvents(events);
 
     if(gDebug != 0) print("total number of posts/replies in main tree = ${node.count()}");
     return node;

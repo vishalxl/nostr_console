@@ -6,7 +6,7 @@ import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:bip340/bip340.dart';
 
-Future<void> processNotifications(Tree node)  async {
+Future<void> processNotifications(Store node)  async {
   // need a bit of wait to give other events to execute, so do a delay, which allows
   // relays to recieve and handle new events
   const int waitMilliSeconds = 150;
@@ -31,7 +31,7 @@ Future<void> processNotifications(Tree node)  async {
  * If replyToId is blank, then it does not reference any e/p tags, and thus becomes a top post
  * otherwise e and p tags are found for the given event being replied to, if that event data is available
  */
-Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, String content) async {
+Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, String content) async {
   String strTags = node.getTagStr(replyToId, exename);
   if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
     print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$gColorEndMarker"); 
@@ -73,7 +73,7 @@ Future<void> sendReplyPostLike(Tree node, String replyToId, String replyKind, St
 }
 
 // is same as above. remove it TODO
-Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) async {
+Future<void> sendChatMessage(Store node, String channelId, String messageToSend) async {
   String replyKind = "42";
 
   String strTags = node.getTagStr(channelId, exename);
@@ -89,7 +89,7 @@ Future<void> sendChatMessage(Tree node, String channelId, String messageToSend) 
 }
 
 // sends event e
-Future<void> sendEvent(Tree node, Event e) async {
+Future<void> sendEvent(Store node, Event e) async {
   String strTags = "";
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   String content = addEscapeChars( e.eventData.content);
@@ -155,7 +155,7 @@ int showMenu(List<String> menuOptions, String menuName) {
   }
 }
 
-Future<void> otherMenuUi(Tree node) async {
+Future<void> otherMenuUi(Store node) async {
   //gDebug = 1;
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
@@ -395,7 +395,7 @@ Future<void> otherMenuUi(Tree node) async {
   return;
 }
 
-Future<void> channelMenuUI(Tree node) async {
+Future<void> channelMenuUI(Store node) async {
   //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
@@ -467,7 +467,7 @@ Future<void> channelMenuUI(Tree node) async {
   return;
 }
 
-Future<void> mainMenuUi(Tree node) async {
+Future<void> mainMenuUi(Store node) async {
     //gDebug = 0;
     // at the very beginning, show the tree as it is, and then show the options menu
 

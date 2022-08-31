@@ -303,7 +303,7 @@ class Tree {
     stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
     stdout.write("Total posts  : ${count()}\n");
     stdout.write("Signed in as : $userName\n");
-    stdout.write("\nHere are the threads with new replies or new likes: \n\n");
+    stdout.write("\nHere are the threads with new replies or new likes: \n");
     
     List<Tree> topNotificationTree = []; // collect all top tress to display in this list. only unique tress will be displayed
     newEventIdsSet.forEach((eventID) { 
@@ -548,15 +548,14 @@ class Tree {
     try {
       final File file         = File(filename);
       
-      // empty the file
-      await  file.writeAsString("", mode: FileMode.writeOnlyAppend).then( (file) => file);
+      //await  file.writeAsString("", mode: FileMode.append).then( (file) => file);
       int        eventCounter = 0;
       String     nLinesStr    = "";
       int        countPosts   = 0;
 
       const int  numLinesTogether = 100; // number of lines to write in one write call
       int        linesWritten = 0;
-      print("eventsNotReadFromFile = ${eventsNotReadFromFile.length}");
+      if(gDebug > 0) log.info("eventsNotReadFromFile = ${eventsNotReadFromFile.length}. start writing.");
       for( var k in eventsNotReadFromFile) {
         Tree? t = allChildEventsMap[k];
         if( t != null) {
@@ -587,10 +586,11 @@ class Tree {
         nLinesStr = "";
       }
 
-      print("\n\nWrote total $eventCounter events to file \"$gEventsFilename\" of which ${countPosts} are posts.")  ; // TODO remove extra 1
+      if(gDebug > 0) log.info("eventsNotReadFromFile = ${eventsNotReadFromFile.length}. finished writing eventCounter = ${eventCounter}.");
+      print("Appended $eventCounter new events to file \"$gEventsFilename\" of which ${countPosts} are posts.");
     } on Exception catch (e) {
-      print("Could not open file $filename.");
-      if( gDebug > 0) print("Could not open file: $e");
+        print("Could not open file $filename.");
+        if( gDebug > 0) print("Could not open file: $e");
     }      
     
     return;
@@ -1100,7 +1100,7 @@ void processReactions(Set<Event> events) {
  */
 Tree getTree(Set<Event> events) {
     if( events.isEmpty) {
-      print("Warning: In printEventsAsTree: events length = 0");
+      if(gDebug > 0) log.info("Warning: In printEventsAsTree: events length = 0");
       return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true, {}, {});
     }
 

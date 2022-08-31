@@ -416,7 +416,7 @@ Future<void> channelMenuUI(Tree node) async {
         }
 
         bool showChannelOption = true;
-        stdout.write("\nType unique channel id or name, or their 1st few letters; or type 'x' to go back to exit channel: ");
+        stdout.write("\nType channel id or name, or their 1st few letters; or type 'x' to go to menu: ");
         String? $tempUserInput = stdin.readLineSync();
         String channelId = $tempUserInput??"";
 
@@ -432,7 +432,7 @@ Future<void> channelMenuUI(Tree node) async {
             break;
           }
 
-          stdout.write("\nType message to send to this room; or type 'x' to exit the channel, or just press <enter> to refresh: ");
+          stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
           $tempUserInput = stdin.readLineSync(encoding: utf8);
           String messageToSend = $tempUserInput??"";
 
@@ -546,9 +546,7 @@ Future<void> mainMenuUi(Tree node) async {
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);
-          print("\nFinished Nostr session for user with publick key: $userPublicKey ($authorName). Exiting");
-          //contactList.forEach((x) => stdout.write("${getAuthorName(x)}, "));
-          stdout.write("\n");
+          print("\nFinished Nostr session for user with name and public key: ${authorName} ($userPublicKey).");
           if( gEventsFilename != "") {
             await node.writeEventsToFile(gEventsFilename);
           }

@@ -165,7 +165,6 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
-
       if( argResults[disableFileArg]) {
         gEventsFilename = "";
         print("Not going to use any file to read/write events.");
@@ -196,6 +195,12 @@ Future<void> main(List<String> arguments) async {
         print("read $numFileEvents posts from file $gEventsFilename");
       }
 
+      // get all events in Tree form
+      Tree node = getTree(getRecievedEvents());
+
+      // call the mein UI function
+      clearEvents();
+
       // process request string. If this is blank then the application only reads from file and does not connect to internet. 
       if( argResults[requestArg] != null) {
         int numWaitSeconds = gDefaultNumWaitSeconds;
@@ -212,17 +217,75 @@ Future<void> main(List<String> arguments) async {
             Set<Event> receivedEvents = getRecievedEvents();
             stdout.write("received ${receivedEvents.length - numFileEvents} events\n");
 
-            // create tree: will process reactions, remove bots, and then create main tree
-            Tree  node = getTree(getRecievedEvents());
+            node.insertEvents(getRecievedEvents());
+            clearEvents();
             
-            //clearEvents(); // cause we have consumed them above
-              if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
-              clearEvents();
-
-              mainMenuUi(node);            
+            if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
+            mainMenuUi(node);            
         });
         return;
       } 
+
+      getUserEvents(gListRelayUrls, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+    
+      // the default in case no arguments are given is:
+      // get a user's events, then from its type 3 event, gets events of its follows,
+      // then get the events of user-id's mentioned in p-tags of received events
+      // then display them all
+      stdout.write('Waiting for user posts to come in.....');
+      Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
+        // count user events
+        getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
+        stdout.write("...received $numUserEvents new posts made by the user\n");
+        if( gDebug > 0) log.info("Received user events.");
+
+        getRecievedEvents().forEach((e) => processKind3Event(e)); // first process the kind 3 event
+        // get the latest kind 3 event for the user, which lists his 'follows' list
+        Event? contactEvent = getContactEvent(userPublicKey);
+
+        // if contact list was found, get user's feed, and keep the contact list for later use 
+        List<String> contactList = [];
+        if (contactEvent != null ) {
+          if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
+          contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+
+          if( !gContactLists.containsKey(userPublicKey)) {
+            gContactLists[userPublicKey] = contactEvent.eventData.contactList;
+          }
+        } else {
+          if( gDebug > 0) print( "could not find contact list");
+        }
+        
+        stdout.write('Waiting for feed to come in..............');
+        Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
+
+          // count feed events
+          getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
+          numFeedEvents = numFeedEvents - numUserEvents;
+          stdout.write("received $numFeedEvents new posts from the follows\n");
+          if( gDebug > 0)  log.info("Received feed.");
+
+          // get mentioned ptags, and then get the events for those users
+          List<String> pTags = getpTags(getRecievedEvents(), gMaxPtagsToGet);
+          getMultiUserEvents(gListRelayUrls, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+          
+          stdout.write('Waiting for rest of posts to come in.....');
+          Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 2), () {
+
+            // count other events
+            getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
+            numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;
+            stdout.write("received $numOtherEvents new posts by others\n");
+            if( gDebug > 0) log.info("Received ptag events events.");
+
+            node.insertEvents(getRecievedEvents());
+            clearEvents();
+            mainMenuUi(node);
+          });
+        });
+      });
+
+
     } on FormatException catch (e) {
       print(e.message);
       return;
@@ -231,66 +294,4 @@ Future<void> main(List<String> arguments) async {
       return;
     }    
 
-    getUserEvents(gListRelayUrls, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
-  
-    // the default in case no arguments are given is:
-    // get a user's events, then from its type 3 event, gets events of its follows,
-    // then get the events of user-id's mentioned in p-tags of received events
-    // then display them all
-    stdout.write('Waiting for user posts to come in.....');
-    Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
-      // count user events
-      getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
-      numUserEvents -= numFileEvents;
-      stdout.write("...received $numUserEvents new posts made by the user\n");
-      if( gDebug > 0) log.info("Received user events.");
-
-      getRecievedEvents().forEach((e) => processKind3Event(e)); // first process the kind 3 event
-      // get the latest kind 3 event for the user, which lists his 'follows' list
-      Event? contactEvent = getContactEvent(userPublicKey);
-
-      // if contact list was found, get user's feed, and keep the contact list for later use 
-      List<String> contactList = [];
-      if (contactEvent != null ) {
-        if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-        contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
-
-        if( !gContactLists.containsKey(userPublicKey)) {
-          gContactLists[userPublicKey] = contactEvent.eventData.contactList;
-        }
-      } else {
-        if( gDebug > 0) print( "could not find contact list");
-      }
-      
-      stdout.write('Waiting for feed to come in..............');
-      Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
-
-        // count feed events
-        getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
-        numFeedEvents = numFeedEvents - numUserEvents - numFileEvents;
-        stdout.write("received $numFeedEvents new posts from the follows\n");
-        if( gDebug > 0)  log.info("Received feed.");
-
-        // get mentioned ptags, and then get the events for those users
-        List<String> pTags = getpTags(getRecievedEvents(), gMaxPtagsToGet);
-        getMultiUserEvents(gListRelayUrls, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
-        
-        stdout.write('Waiting for rest of posts to come in.....');
-        Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 2), () {
-
-          // count other events
-          getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
-          numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents - numFileEvents;
-          stdout.write("received $numOtherEvents new posts by others\n");
-          if( gDebug > 0) log.info("Received ptag events events.");
-
-          // get all events in Tree form
-          Tree node = getTree(getRecievedEvents());
-
-          // call the mein UI function
-          clearEvents();
-          mainMenuUi(node);
-        });
-      });
-    });
 }

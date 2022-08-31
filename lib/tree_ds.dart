@@ -9,6 +9,8 @@ bool selectAll(Tree t) {
   return true;
 }
 
+
+/***********************************************************************************************************************************/
 /*  
  * The actual tree holds only kind 1 events, or only posts
  * This super-tree class holds other events too in its map, and in its chatRooms structure
@@ -24,66 +26,37 @@ class Tree {
 
   static const Set<int>   typesInEventMap = {0, 1, 3, 7, 40, 42}; // 0 meta, 1 post, 3 follows list, 7 reactions
 
-  // @method create top level Tree from events. 
-  // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
-  factory Tree.fromEvents(Set<Event> events) {
-    if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false, {});
-    }
+  static void handleChannelEvents( Map<String, ChatRoom> rooms, Map<String, Tree> tempChildEventsMap, Event ce) {
+      String eId = ce.eventData.id;
+      int    eKind = ce.eventData.kind;
 
-    // create a map from list of events, key is eventId and value is event itself
-    Map<String, Tree> tempChildEventsMap = {};
-    events.forEach((event) { 
-      // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
-      if( typesInEventMap.contains(event.eventData.kind)) {
-        tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
-      }
-    });
-
-    // this will become the children of the main top node. These are events without parents, which are printed at top.
-    List<Tree>  topLevelTrees = [];
-
-    List<String> tempWithoutParent = [];
-    Map<String, ChatRoom> rooms = {};
-
-    int numEventsNotPosts = 0; // just for debugging info
-    int numKind40Events   = 0;
-    int numKind42Events   = 0;
-
-    if( gDebug > 0) print("In Tree from Events: after adding all required events of type ${typesInEventMap} to tempChildEventsMap map, its size = ${tempChildEventsMap.length} ");
-
-    tempChildEventsMap.forEach((key, value) {
-      String eId = value.e.eventData.id;
-      int    eKind = value.e.eventData.kind;
-
-      if(eKind == 42) {
-        numKind42Events++;
-        String chatRoomId = value.e.eventData.getChatRoomId();
+      switch(eKind) {
+      case 42:
+      {
+        //numKind42Events++;
+        String chatRoomId = ce.eventData.getChatRoomId();
         if( chatRoomId != "") {
           if( rooms.containsKey(chatRoomId)) {
             //if( gDebug > 0) print("Adding new message $key to a chat room $chatRoomId. ");
             addMessageToChannel(chatRoomId, eId, tempChildEventsMap, rooms);
-            //if( gDebug > 0) print("Added new message to a chat room $chatRoomId. ");
           } else {
             List<String> temp = [];
             temp.add(eId);
-            //String name = json['name'];
             ChatRoom room = ChatRoom(chatRoomId, "", "", "", temp);
             rooms[chatRoomId] = room;
             //if( gDebug > 0) print("Added new chat room object $chatRoomId and added message to it. ");
           }
         } else {
           //if( gDebug > 0) print("Could not get chat room id for event $eId, its original json: ");
-          //if( gDebug > 0) print(value.e.originalJson);
         }
       }
-
-      if(eKind == 40) {
-        numKind40Events++;
-        //print("Processing type 40");
+      break;
+      case 40:
+       {
+        //numKind40Events++;
         String chatRoomId = eId;
         try {
-          dynamic json = jsonDecode(value.e.eventData.content);
+          dynamic json = jsonDecode(ce.eventData.content);
           if( rooms.containsKey(chatRoomId)) {
             if( rooms[chatRoomId]?.name == "") {
               //if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
@@ -103,8 +76,46 @@ class Tree {
             //if( gDebug > 0) print("Added new chat room $chatRoomId with name ${json['name']} .");
           }
         } on Exception catch(e) {
-          if( gDebug > 0) print("In From Event. Event type 40. Json Decode error for event id ${value.e.eventData.id}. error = $e");
+          if( gDebug > 0) print("In From Event. Event type 40. Json Decode error for event id ${ce.eventData.id}. error = $e");
         }
+      }
+        break;
+      default:
+        break;  
+      } // end switch
+  }
+ 
+  /***********************************************************************************************************************************/
+  // @method create top level Tree from events. 
+  // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
+  factory Tree.fromEvents(Set<Event> events) {
+    if( events.isEmpty) {
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false, {});
+    }
+
+    // create a map tempChildEventsMap from list of events, key is eventId and value is event itself
+    Map<String, Tree> tempChildEventsMap = {};
+    events.forEach((event) { 
+      // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
+      if( typesInEventMap.contains(event.eventData.kind)) {
+        tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
+      }
+    });
+
+    // once tempChildEventsMap has been created, create connections between them so we get a tree structure from all these events.
+    List<Tree>  topLevelTrees = [];// this will become the children of the main top node. These are events without parents, which are printed at top.
+    List<String> tempWithoutParent = [];
+    Map<String, ChatRoom> rooms = {};
+
+    int numEventsNotPosts = 0; // just for debugging info
+    int numKind40Events   = 0;
+    int numKind42Events   = 0;
+    if( gDebug > 0) print("In Tree from Events: after adding all required events of type ${typesInEventMap} to tempChildEventsMap map, its size = ${tempChildEventsMap.length} ");
+
+    tempChildEventsMap.forEach((newEventId, value) {
+      int eKind = value.e.eventData.kind;
+      if( eKind == 42 || eKind == 40) {
+        handleChannelEvents(rooms, tempChildEventsMap, value.e);
       }
 
       // only posts, of kind 1, are added to the main tree structure
@@ -115,33 +126,23 @@ class Tree {
 
       if(value.e.eventData.eTagsRest.isNotEmpty ) {
         // is not a parent, find its parent and then add this element to that parent Tree
-        String id = key;
         String parentId = value.e.eventData.getParent();
-        if( tempChildEventsMap.containsKey(parentId)) {
-        }
-
         if( value.e.eventData.id == gCheckEventId) {
           if(gDebug > 0) print("In Tree FromEvents: got id: $gCheckEventId");
         }
 
         if(tempChildEventsMap.containsKey( parentId)) {
           if( tempChildEventsMap[parentId]?.e.eventData.kind != 1) { // since parent can only be a kind 1 event
-            if( gDebug > 1) {
-              print("In Tree.fromEvents: Not adding: got a kind 1 event whose parent is not a type 1 post: $id . parent kind: ${tempChildEventsMap[parentId]?.e.eventData.kind}");
-              tempChildEventsMap[parentId]?.e.printEvent(0);
-              print("");
-              value.e.printEvent(1);
-              print("");
-            }
+            if( gDebug > 1) log.info("In Tree.fromEvents: Not adding: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.e.eventData.kind}");
             return;
           }
-          tempChildEventsMap[parentId]?.addChildNode(value); // in this if condition this will get called
+          tempChildEventsMap[parentId]?.addChildNode(value); 
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
            Tree dummyTopNode = Tree(Event("","",
                                           EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}),
-                                                    [""], "[json]"), 
+                                          [""], "[json]"), 
                                     [], {}, [], false, {});
            dummyTopNode.addChildNode(value);
            tempWithoutParent.add(value.e.eventData.id); 
@@ -151,7 +152,7 @@ class Tree {
            topLevelTrees.add(dummyTopNode);
         }
       }
-    }); // going over tempChildEventsMap 
+    }); // going over tempChildEventsMap and adding children to their parent's .children list
 
     // add parent trees as top level child trees of this tree
     for( var value in tempChildEventsMap.values) {
@@ -160,9 +161,6 @@ class Tree {
         }
     }
 
-    //getEvents(tempWithoutParent);
-
-    //if( gDebug != 0) print("In Tree FromEvents: at end of tree from events: Total number of chat rooms: ${rooms.length}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map which are not kind 1 = ${numEventsNotPosts}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 40 = ${numKind40Events}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 42 = ${numKind42Events}");
@@ -173,8 +171,9 @@ class Tree {
     return Tree( dummy, topLevelTrees, tempChildEventsMap, tempWithoutParent, true, rooms);
   } // end fromEvents()
 
-  /*
-   * @insertEvents inserts the given new events into the tree, and returns the id the ones actually inserted so that they can be printed as notifications
+   /***********************************************************************************************************************************/
+   /* @insertEvents inserts the given new events into the tree, and returns the id the ones actually 
+    * inserted so that they can be printed as notifications
    */
   Set<String> insertEvents(Set<Event> newEventsSetToProcess) {
     if( gDebug > 0) log.info("In insertEvetnts: called for ${newEventsSetToProcess.length} events");
@@ -262,6 +261,7 @@ class Tree {
     return newEventIdsSet;
   }
 
+  /***********************************************************************************************************************************/
   /*
    * @printNotifications Add the given events to the Tree, and print the events as notifications
    *                     It should be ensured that these are only kind 1 events
@@ -354,6 +354,9 @@ class Tree {
     print("\n");
   }
 
+  /***********************************************************************************************************************************/
+  /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
+   */
   int printTree(int depth, var newerThan, fTreeSelector treeSelector) {
 
     int numPrinted = 0;
@@ -425,7 +428,10 @@ class Tree {
     }
     return numPrinted;
   }
-
+  
+  /**
+   * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
+   */
   void printAllChannelsInfo() {
     print("\n\nChannels/Rooms:");
     printUnderlined("      Channel/Room Name             Num of Messages            Latest Message           ");
@@ -492,7 +498,6 @@ class Tree {
         print("");
       }
     }
-
 
     if( room.messageIds.length > gNumChannelMessagesToShow) {
       print("\n");
@@ -1028,34 +1033,49 @@ int sortTreeNewestReply(Tree a, Tree b) {
 // for the given reaction event of kind 7, will update the global gReactions appropriately, returns 
 // the reactedTo event's id, blank if invalid reaction etc
 String processReaction(Event event) {
-  if( event.eventData.kind == 7 && event.eventData.eTagsRest.isNotEmpty) {
-    if(gDebug > 1) ("Got event of type 7");
+  if( event.eventData.kind == 7 
+    && event.eventData.eTagsRest.isNotEmpty) {
+    if(gDebug > 1) ("Got event of type 7"); // this can be + or !, which means 'hide' event for me
     String reactorId  = event.eventData.pubkey;
     String comment    = event.eventData.content;
     int    lastEIndex = event.eventData.eTagsRest.length - 1;
     String reactedTo  = event.eventData.eTagsRest[lastEIndex];
-    if( gReactions.containsKey(reactedTo)) {
-      // check if the reaction already exists by this user
-      for( int i = 0; i < ((gReactions[reactedTo]?.length)??0); i++) {
-        List<String> oldReaction = (gReactions[reactedTo]?[i])??[];
-        if( oldReaction.length == 2) {
-          //valid reaction
-          if(oldReaction[0] == reactorId) {
-            return ""; // reaction by this user already exists so return
+
+    if( event.eventData.content == "+") {
+      if( gReactions.containsKey(reactedTo)) {
+        // check if the reaction already exists by this user
+        for( int i = 0; i < ((gReactions[reactedTo]?.length)??0); i++) {
+          List<String> oldReaction = (gReactions[reactedTo]?[i])??[];
+          if( oldReaction.length == 2) {
+            //valid reaction
+            if(oldReaction[0] == reactorId) {
+              return ""; // reaction by this user already exists so return
+            }
           }
         }
-      }
 
-      List<String> temp = [reactorId, comment];
-      gReactions[reactedTo]?.add(temp);
+        List<String> temp = [reactorId, comment];
+        gReactions[reactedTo]?.add(temp);
+      } else {
+        // first reaction + to this event, create the entry in global map
+        List<List<String>> newReactorList = [];
+        List<String> temp = [reactorId, comment];
+        newReactorList.add(temp);
+        gReactions[reactedTo] = newReactorList;
+      }
     } else {
-      List<List<String>> newReactorList = [];
-      List<String> temp = [reactorId, comment];
-      newReactorList.add(temp);
-      gReactions[reactedTo] = newReactorList;
+      if( event.eventData.content == "!") {
+        //reactedTo needs to ve hidden if we have it in the main tree map
+        // Tree? treeReactedTo = 
+
+      }
     }
     return reactedTo;
+  } else {
+    // case where its not a kind 7 event, or we can't find the reactedTo event due to absense of e tag.
+
   }
+
   return "";
 }
 

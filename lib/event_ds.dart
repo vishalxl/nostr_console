@@ -194,6 +194,8 @@ class EventData {
   Set<String>        newLikes;    //
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
+
+  bool               isHidden; // hidden by sending a reaction kind 7 event to this event, by the logged in user
   
   String getParent() {
     if( eTagsRest.isNotEmpty) {
@@ -203,7 +205,7 @@ class EventData {
   }
 
   EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags,
-            this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = ""});
+            this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = "", this.isHidden = false});
    
   factory EventData.fromJson(dynamic json) {
     List<Contact> contactList = [];

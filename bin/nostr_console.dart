@@ -16,13 +16,12 @@ const String lastdaysArg = "days";
 const String relayArg    = "relay";
 const String requestArg  = "request";
 const String helpArg     = "help";
-const String alignArg    = "align"; // can be "left"
+const String alignArg    = "align"; // can only be "left"
 const String widthArg    = "width";
 const String maxDepthArg = "maxdepth";
 const String eventFileArg = "file";
 const String disableFileArg = "disable-file";
 const String difficultyArg  = "difficulty";
-
 const String translateArg = "translate";
 const String colorArg     = "color";
 
@@ -78,7 +77,7 @@ Future<void> main(List<String> arguments) async {
 
       // write informative message in case user is using the default private key
       if( userPrivateKey == gDefaultPrivateKey) {
-        print("${gWarningColor}You seem to be using the default private key, which comes bundled with this $exename and is used by all users of this program$gColorEndMarker");
+        print("${gWarningColor}You seem to be using the default private key, which comes bundled with this $exename and usable by almost anyone$gColorEndMarker");
         print("You can also create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
         print("You can create your own private key from ${gWarningColor}astral.ninja or branle.netlify.app$gColorEndMarker, or other such tools.\n");
       }
@@ -243,7 +242,7 @@ Future<void> main(List<String> arguments) async {
       // count user events
       getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
       numUserEvents -= numFileEvents;
-      stdout.write("...received $numUserEvents posts made by the user\n");
+      stdout.write("...received $numUserEvents new posts made by the user\n");
       if( gDebug > 0) log.info("Received user events.");
 
       // get the latest kind 3 event for the user, which lists his 'follows' list
@@ -268,7 +267,7 @@ Future<void> main(List<String> arguments) async {
         // count feed events
         getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
         numFeedEvents = numFeedEvents - numUserEvents - numFileEvents;
-        stdout.write("received $numFeedEvents posts from the follows\n");
+        stdout.write("received $numFeedEvents new posts from the follows\n");
         if( gDebug > 0)  log.info("Received feed.");
 
         // get mentioned ptags, and then get the events for those users
@@ -281,7 +280,7 @@ Future<void> main(List<String> arguments) async {
           // count other events
           getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
           numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents - numFileEvents;
-          stdout.write("received $numOtherEvents other posts\n");
+          stdout.write("received $numOtherEvents new posts by others\n");
           if( gDebug > 0) log.info("Received ptag events events.");
 
           // get all events in Tree form

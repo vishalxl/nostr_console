@@ -40,7 +40,7 @@ List<String> gListRelayUrls = [ defaultServerUrl,
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.0.7";
+const String version = "0.0.7-beta";
 
 // well known disposable test private key
 const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
@@ -48,6 +48,10 @@ const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655
 String userPrivateKey = gDefaultPrivateKey;
 String userPublicKey  = gDefaultPublicKey;
 
+// dummy account pubkey
+const String gDummyAccountPubkey = "Non";
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color related settings
 const int  gMinValidTextWidth = 60; // minimum text width acceptable
 const int  gDefaultTextWidth = 120; // default text width
 int        gTextWidth = gDefaultTextWidth; // is changed by --width option
@@ -63,9 +67,8 @@ const int  gDefaultMaxDepth     = 4;
 int        maxDepthAllowed      = gDefaultMaxDepth;
 const int  leftShiftThreadsBy   = 2;
 
-// text color
+// Color related settings
 const String defaultTextColor = "green";
-
 const String greenColor = "\x1B[32m"; // green
 const String cyanColor = "\x1b[36m"; // cyan
 const String whiteColor = "\x1b[97m"; // white
@@ -86,14 +89,13 @@ String gNotificationColor = cyanColor; // cyan
 String gWarningColor = redColor; // red
 const String gColorEndMarker = "\x1B[0m";
 
-// dummy account pubkey
-const String gDummyAccountPubkey = "Non";
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument
 const int gDefaultNumLastDays = 1;
 int gNumLastDays     = gDefaultNumLastDays; 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// bots related settings 
 // bots ignored to reduce spam
 List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2b5791c512",  // robosats orderbook
                         "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",  // bestofhn
@@ -103,11 +105,11 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "6a9eb714c2889aa32e449cfbb7854bc9780feed4ff3d887e03910dcb22aa560a"   // "bible bot"
                       ];
 
-// difficulty related settings
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// difficulty related settings
 const int gMaxDifficultyAllowed = 24;                      
 int gDifficulty = 0;
 
-// channel related settings
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// channel related settings
 const int gNumChannelMessagesToShow = 15;
 const int gMaxChannelPagesDisplayed = 50;
 

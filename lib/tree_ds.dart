@@ -217,8 +217,8 @@ class Tree {
     
     // now go over the newly inserted event, and add its to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
     newEventIdsSet.forEach((newId) {
-      Tree? newTree = allChildEventsMap[newId]; // this should return true because we just inserted this event in the allEvents in block above
-      if( newTree != null) {
+      Tree? newTree = allChildEventsMap[newId];
+      if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above
 
         switch(newTree.e.eventData.kind) {
           case 1:
@@ -352,16 +352,16 @@ class Tree {
     topNotificationTree.retainWhere((t) => ids.add(t.e.eventData.id));
     
     topNotificationTree.forEach( (t) { 
-      t.printTree(0, 0, selectAll); 
+      t.printTree(0, DateTime(0), selectAll); 
       print("\n");
-      });
+    });
     print("\n");
   }
 
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    */
-  int printTree(int depth, var newerThan, fTreeSelector treeSelector) {
+  int printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
 
     int numPrinted = 0;
 
@@ -390,6 +390,7 @@ class Tree {
           continue;
         } 
 
+        // for top tree, only print the thread that are newer than the given parameter
         int newestChildTime = children[i].getMostRecentTime(0);
         DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChildTime *1000);
         //print("comparing $newerThan with $dTime");

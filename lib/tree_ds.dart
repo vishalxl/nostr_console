@@ -22,7 +22,8 @@ class Tree {
   List<String>      eventsWithoutParent;
   bool              whetherTopMost;
   Map<String, ChatRoom> chatRooms = {};
-  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost, this.chatRooms);
+  Set<String>       eventsNotReadFromFile;
+  Tree(this.e, this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost, this.chatRooms, this.eventsNotReadFromFile);
 
   static const Set<int>   typesInEventMap = {0, 1, 3, 7, 40, 42}; // 0 meta, 1 post, 3 follows list, 7 reactions
 
@@ -90,7 +91,7 @@ class Tree {
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Tree.fromEvents(Set<Event> events) {
     if( events.isEmpty) {
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false, {});
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], false, {}, {});
     }
 
     // create a map tempChildEventsMap from list of events, key is eventId and value is event itself
@@ -98,7 +99,7 @@ class Tree {
     events.forEach((event) { 
       // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
       if( typesInEventMap.contains(event.eventData.kind)) {
-        tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}); 
+        tempChildEventsMap[event.eventData.id] = Tree(event, [], {}, [], false, {}, {}); 
       }
     });
 
@@ -143,7 +144,7 @@ class Tree {
            Tree dummyTopNode = Tree(Event("","",
                                           EventData("Unk" ,gDummyAccountPubkey, value.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}),
                                           [""], "[json]"), 
-                                    [], {}, [], false, {});
+                                    [], {}, [], false, {}, {});
            dummyTopNode.addChildNode(value);
            tempWithoutParent.add(value.e.eventData.id); 
           
@@ -168,7 +169,7 @@ class Tree {
 
     // create a dummy top level tree and then create the main Tree object
     Event dummy = Event("","",  EventData("non","", 0, 1, "Dummy Top event. Should not be printed.", [], [], [], [[]], {}), [""], "[json]");
-    return Tree( dummy, topLevelTrees, tempChildEventsMap, tempWithoutParent, true, rooms);
+    return Tree( dummy, topLevelTrees, tempChildEventsMap, tempWithoutParent, true, rooms, {});
   } // end fromEvents()
 
    /***********************************************************************************************************************************/
@@ -203,7 +204,10 @@ class Tree {
 
       // expand mentions ( and translate if flag is set) and then add event to main event map
       newEvent.eventData.translateAndExpandMentions();
-      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {});
+      eventsNotReadFromFile.add(newEvent.eventData.id); // used later so that only these events are appended to the file
+
+      // add them to the main store of the Tree object
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], {}, [], false, {}, {});
 
       // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
       if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
@@ -232,7 +236,7 @@ class Tree {
                   Tree dummyTopNode = Tree(Event("","",
                                                   EventData("Unk" ,gDummyAccountPubkey, newTree.e.eventData.createdAt , 1, "Unknown parent event", [], [], [], [[]], {}),
                                                             [""], "[json]"), 
-                                                [], {}, [], false, {});
+                                                [], {}, [], false, {}, {});
                   dummyTopNode.addChildNode(newTree);
                   children.add(dummyTopNode);
                 }
@@ -545,14 +549,15 @@ class Tree {
       final File file         = File(filename);
       
       // empty the file
-      await  file.writeAsString("", mode: FileMode.writeOnly).then( (file) => file);
+      await  file.writeAsString("", mode: FileMode.writeOnlyAppend).then( (file) => file);
       int        eventCounter = 0;
       String     nLinesStr    = "";
       int        countPosts   = 0;
 
       const int  numLinesTogether = 100; // number of lines to write in one write call
       int        linesWritten = 0;
-      for( var k in allChildEventsMap.keys) {
+      print("eventsNotReadFromFile = ${eventsNotReadFromFile.length}");
+      for( var k in eventsNotReadFromFile) {
         Tree? t = allChildEventsMap[k];
         if( t != null) {
           // only write if its not too old
@@ -582,7 +587,7 @@ class Tree {
         nLinesStr = "";
       }
 
-      print("\n\nWrote total $eventCounter events to file \"$gEventsFilename\" of which ${countPosts + 1} are posts.")  ; // TODO remove extra 1
+      print("\n\nWrote total $eventCounter events to file \"$gEventsFilename\" of which ${countPosts} are posts.")  ; // TODO remove extra 1
     } on Exception catch (e) {
       print("Could not open file $filename.");
       if( gDebug > 0) print("Could not open file: $e");
@@ -669,7 +674,7 @@ class Tree {
 
   void addChild(Event child) {
     Tree node;
-    node = Tree(child, [], {}, [], false, {});
+    node = Tree(child, [], {}, [], false, {}, {});
     children.add(node);
   }
 
@@ -1096,7 +1101,7 @@ void processReactions(Set<Event> events) {
 Tree getTree(Set<Event> events) {
     if( events.isEmpty) {
       print("Warning: In printEventsAsTree: events length = 0");
-      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true, {});
+      return Tree(Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [""], "[json]"), [], {}, [], true, {}, {});
     }
 
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)

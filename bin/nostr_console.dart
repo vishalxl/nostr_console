@@ -75,6 +75,14 @@ Future<void> main(List<String> arguments) async {
         userPublicKey = getPublicKey(userPrivateKey);
         print("Going to use the provided private key");
       }
+
+      // write informative message in case user is using the default private key
+      if( userPrivateKey == gDefaultPrivateKey) {
+        print("${gWarningColor}You seem to be using the default private key, which comes bundled with this $exename and is used by all users of this program$gColorEndMarker");
+        print("You can also create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
+        print("You can create your own private key from ${gWarningColor}astral.ninja or branle.netlify.app$gColorEndMarker, or other such tools.\n");
+      }
+
       if( argResults[relayArg] != null) {
         defaultServerUrl =  argResults[relayArg];
         print("Going to use relay: $defaultServerUrl");

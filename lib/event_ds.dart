@@ -113,7 +113,7 @@ extension StringX on String {
 
   isEnglish( ) {
     // since smaller words can be smileys they should not be translated
-    if( length < 6) 
+    if( length < 10) 
       return true;
     
     if( !isLatinAlphabet())

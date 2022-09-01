@@ -5,7 +5,7 @@ import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_console/settings.dart';
 
-int gDebug = 0;
+int gDebug = 1;
 
 // translate 
 final translator = GoogleTranslator();
@@ -100,7 +100,7 @@ class EventData {
       }
     } else {
       int eKind = json['kind'];
-      if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5) {
+      if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5 || eKind == 4) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
           //stdout.write(tag);

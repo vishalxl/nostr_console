@@ -9,7 +9,7 @@ EventData exampleEdataChild = EventData("id2", "pubkey", 1111111, 1, "content ch
 Event exampleEvent = Event('event', 'id3', exampleEdata, ['relay name'], "[json]");
 Event exampleEventChild = Event('event', 'id4', exampleEdataChild, ['relay name'], "[json]");
 
-Store exampleStore = Store([], {}, [], false, {}, {});
+Store exampleStore = Store([], {}, [], false, {}, {}, {});
 Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 
 void main() {

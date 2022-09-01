@@ -433,9 +433,11 @@ Future<void> channelMenuUI(Store node) async {
   //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
-    int option = showMenu([ 'Show channels',          // 1 
-                            'Enter a channel',          // 2
-                            'Go back to main menu'],  // 3
+    int option = showMenu([ 'Show public channels',          // 1 
+                            'Enter a public channel',        // 2
+                            'See personal Inbox',
+                            'Send a direct message',
+                            'Go back to main menu'],          // 5
                           "Channel Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
@@ -491,6 +493,11 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 3:
+        print("total direct rooms = ${node.directRooms.length}");
+        node.printDirectRoomInfo();
+        break;
+
+      case 5:
         continueChatMenu = false;
         break;
 
@@ -506,7 +513,7 @@ Future<void> mainMenuUi(Store node) async {
     // at the very beginning, show the tree as it is, and then show the options menu
 
     bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
-    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
+    //node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
 
     bool userContinue = true;
     while(userContinue) {
@@ -528,14 +535,14 @@ Future<void> mainMenuUi(Store node) async {
       // the main menu
       int option = showMenu(['Display feed',     // 1 
                              'Post/Reply/Like',  // 2
-                             'Channels',          // 3
+                             'Direct Messsage and Public Channels', // 3
                              'Other Options',     // 4
                              'Quit'],             // 5
                              "Main Menu");
       print('You picked: $option');
       switch(option) {
         case 1:
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
+          //node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
           break;
 
         case 2:

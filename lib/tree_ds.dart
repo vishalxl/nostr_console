@@ -845,24 +845,29 @@ class Store {
 
   // shows the given directRoomId, where directRoomId is prefix-id or pubkey of the other user. returns full id of other user.
   String showDirectRoom(String directRoomId, [int page = 1]) {
-    if( !directRooms.containsKey(directRoomId)) {
+    if( directRoomId.length > 64) { // TODO revisit  cause if name is > 64 should not return
       return "";
     }
-
-    if( directRoomId.length != 64) {
-      return "";
-    }
-
-    for( String key in directRooms.keys) {
-      if( key == directRoomId ) {
-        DirectMessageRoom? room = directRooms[key];
-        if( room != null) {
-          printDirectMessageRoom(room, page);
+    Set<String> lookedUpName = getPublicKeyFromName(directRoomId);
+    if( lookedUpName.length == 1) {
+      DirectMessageRoom? room = directRooms[lookedUpName.first];
+      if( room != null) {
+        printDirectMessageRoom(room, page);
+        return lookedUpName.first;
+      }
+    } else {
+      //print("got more than one pubkey for $directRoomId which are $lookedUpName");
+      for( String key in directRooms.keys) {
+        //print("in direct room key = $key");
+        if( key == directRoomId) {
+          DirectMessageRoom? room = directRooms[key];
+          if( room != null) {
+            printDirectMessageRoom(room, page);
+            return key;
+          }
         }
-        return key;
       }
     }
-
     return "";
   }
 

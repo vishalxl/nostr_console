@@ -4,20 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_console/settings.dart';
-
-import 'package:kepler/kepler.dart';
-
 import "dart:typed_data";
-import "dart:math";
 import 'dart:convert' as convert;
 import "package:pointycastle/export.dart";
-import 'package:hex/hex.dart';
-import 'package:base58check/base58.dart';
-import 'package:pointycastle/src/impl/secure_random_base.dart';
-import "package:pointycastle/src/registry/registry.dart";
-import "package:pointycastle/src/ufixnum.dart";
-import "package:pointycastle/export.dart";
-
+import 'package:kepler/kepler.dart';
 
 int gDebug = 0;
 
@@ -179,13 +169,7 @@ class EventData {
   }
 
   void translateAndExpandMentions() {
-
-
-    if (content == "") {
-      return;
-    }
-
-    if( evaluatedContent != "") {
+    if (content == "" ||  evaluatedContent != "") {
       return;
     }
 
@@ -213,75 +197,47 @@ class EventData {
     break;
 
     case 4: 
-      break;
-      // not implemented yet. has issues.
+      if( pubkey == userPublicKey)
+        break;
+
       if(!isUserDirectMessage(this)) {
         break;
       }
-      printEventData(0);
-
-      print("\n\n");
-
-{ // sample from kepler
-
-    var alice = Kepler.generateKeyPair();
-
-    print(
-      "alice private key: " +
-          Kepler.strinifyPrivateKey(alice.privateKey as ECPrivateKey),
-    );
-    print(
-      "alice public key: " +
-          Kepler.strinifyPublicKey(alice.publicKey as ECPublicKey),
-    );
-
-    // Create Bob's keypair
-    var bob = Kepler.generateKeyPair();
-
-    // This is what alice wants to say to bob
-    var rawStr = 'Encrypt and decrypt data using secp256k1';
-
-    // use alic's privatekey and bob's publickey means alice says to bob
-    var encMap = Kepler.pubkeyEncrypt(
-      Kepler.strinifyPrivateKey(alice.privateKey as ECPrivateKey),
-      Kepler.strinifyPublicKey(bob.publicKey as ECPublicKey),
-      rawStr,
-    );
-
-    // Get encrypted base64 string
-    var encStr = encMap['enc'];
-    print("encrypted text: " + encStr!);
-
-    // Get random IV
-    var iv = encMap['iv'];
-    print("iv: " + iv!);
-    // Now, you can send enc_str and IV to Bob
-
-    // Use bob's privatekey and alice's publickey to decrypt alices message, for Bob to read.
-    var decryptd = Kepler.privateDecrypt(
-      Kepler.strinifyPrivateKey(bob.privateKey as ECPrivateKey),
-      Kepler.strinifyPublicKey(alice.publicKey as ECPublicKey),
-      encStr,
-      iv,
-    );
-    print('decrypted text: $decryptd');      
-
-    }
-
-      print("in translateAndExpandMentions() for a dm pubkey = $pubkey content = $content");
-      print("tags = $tags");
-
+      /*print("in translateAndExpandMentions() for a dm \npubkey = $pubkey \ncontent = $content");
+      print("tags = $tags\n");
+      */
 
       int ivIndex = content.indexOf("?iv=");
       var enc_str = content.substring(0, ivIndex);
       var iv = content.substring( ivIndex + 4, content.length);
-      print("enc_str = $enc_str ;  iv = $iv");
-      var decryptd = myPrivateDecrypt( userPrivateKey, "03" + pubkey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
-      print('they say:${decryptd}');      
-
-    break;
+      //print("enc_str = $enc_str ;  iv = $iv");
+      var decryptd = myPrivateDecrypt( userPrivateKey, "02" + pubkey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+      
+      evaluatedContent = decryptd;
+      //printEventData(0);
+      //print("\n\n");
+      break;
     } // end switch
   } // end translateAndExpandMentions
+
+Uint8List aesCbcDecrypt(Uint8List key, Uint8List iv, Uint8List cipherText) {
+  // Create a CBC block cipher with AES, and initialize with key and IV
+
+  final cbc = CBCBlockCipher(AESFastEngine())
+    ..init(false, ParametersWithIV(KeyParameter(key), iv)); // false=decrypt
+
+  // Decrypt the cipherText block-by-block
+
+  final paddedPlainText = Uint8List(cipherText.length); // allocate space
+
+  var offset = 0;
+  while (offset < cipherText.length) {
+    offset += cbc.processBlock(cipherText, offset, paddedPlainText, offset);
+  }
+  assert(offset == cipherText.length);
+
+  return paddedPlainText;
+}
 
   // only applicable for kind 42 event
   String getChatRoomId() {
@@ -611,7 +567,6 @@ bool processKind3Event(Event newContactEvent) {
   return newEntry || entryModified;
 }
 
-
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
 String getAuthorName(String pubkey) {
   String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
@@ -623,7 +578,7 @@ String getAuthorName(String pubkey) {
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
-  if(gDebug >= 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
+  if(gDebug > 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
 
   gKindONames.forEach((pk, value) {
     // check both the user name, and the pubkey to search for the user
@@ -645,9 +600,6 @@ Set<String> getPublicKeyFromName(String userName) {
 int getSecondsDaysAgo( int N) {
   return  DateTime.now().subtract(Duration(days: N)).millisecondsSinceEpoch ~/ 1000;
 }
-
-
-
 
 void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 
 
@@ -712,7 +664,6 @@ bool isWhitespace(String s) {
   return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t';
 }
 
-
 extension StringX on String {
   isChannelPageNumber(int max) {
   
@@ -751,7 +702,6 @@ extension StringX on String {
     return false;
   }
 
-
   isLatinAlphabet({caseSensitive = false}) {
     int countLatinletters = 0;
     for (int i = 0; i < length; i++) {
@@ -769,7 +719,6 @@ extension StringX on String {
     }
   }
 }    
-
 
 // The contact only stores id and relay of contact. The actual name is stored in a global variable/map
 class Contact {
@@ -820,9 +769,7 @@ bool isUserDirectMessage(EventData directMessageData) {
   return sentToUser;
 }
 
-
-
-  /// Decrypt data using self private key
+/// Decrypt data using self private key
 String myPrivateDecrypt(
       String privateString, String publicString, String b64encoded,
       [String b64IV = ""]) {
@@ -834,20 +781,38 @@ String myPrivateDecrypt(
   }
 
 Uint8List myPrivateDecryptRaw(
-      String privateString, String publicString, Uint8List encdData,
+      String privateString, String publicString, Uint8List cipherText,
       [String b64IV = ""]) {
     final secretIV = Kepler.byteSecret(privateString, publicString);
-    final secret = Uint8List.fromList(secretIV[0]);
+    final key = Uint8List.fromList(secretIV[0]);
 
     final iv = b64IV.length > 6
         ? convert.base64.decode(b64IV)
         : Uint8List.fromList(secretIV[1]);
 
-    ChaCha20Engine _cipher = ChaCha20Engine();
 
-    _cipher.reset();
-    _cipher.init(false, buildParams(secret, iv));
-    return _cipher.process(encdData);
+// pointy castle source https://github.com/PointyCastle/pointycastle/blob/master/tutorials/aes-cbc.md
+final cbc = CBCBlockCipher(AESFastEngine())
+    ..init(false, ParametersWithIV(KeyParameter(key), iv)); // false=decrypt
+
+  // Decrypt the cipherText block-by-block
+
+  final paddedPlainText = Uint8List(cipherText.length); // allocate space
+
+  //print("going into while");
+  var offset = 0;
+  while (offset < cipherText.length) {
+/*
+    convert.Utf8Decoder decode = const convert.Utf8Decoder();
+    print('in while loop $offset $paddedPlainText len = ${paddedPlainText}');
+    print( "paddedPlainText converted: ${decode.convert(paddedPlainText)}");
+    print("");
+*/  
+    offset += cbc.processBlock(cipherText, offset, paddedPlainText, offset);
+  }
+
+  assert(offset == cipherText.length);
+  return paddedPlainText;
   }
 
  ParametersWithIV<KeyParameter> buildParams(

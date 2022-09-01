@@ -554,7 +554,7 @@ Future<void> channelMenuUI(Store node) async {
                 pageNum = (int.tryParse(messageToSend))??1;
               } else {
                 // send message to the given room
-                await sendChatMessage(node, fullChannelId, messageToSend);
+                await sendDirectMessage(node, fullChannelId, messageToSend);
                 pageNum = 1; // reset it 
               }
             }

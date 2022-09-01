@@ -956,7 +956,7 @@ class Store {
   int count() {
     int totalEvents = 0;
     for(int i = 0; i < children.length; i++) {
-      totalEvents += children[i].count(); // calling tree's cound.
+      totalEvents += children[i].count(); // calling tree's count.
     }
     return totalEvents;
   }

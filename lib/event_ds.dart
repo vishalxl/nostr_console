@@ -5,7 +5,21 @@ import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_console/settings.dart';
 
-int gDebug = 1;
+import 'package:kepler/kepler.dart';
+
+import "dart:typed_data";
+import "dart:math";
+import 'dart:convert' as convert;
+import "package:pointycastle/export.dart";
+import 'package:hex/hex.dart';
+import 'package:base58check/base58.dart';
+import 'package:pointycastle/src/impl/secure_random_base.dart';
+import "package:pointycastle/src/registry/registry.dart";
+import "package:pointycastle/src/ufixnum.dart";
+import "package:pointycastle/export.dart";
+
+
+int gDebug = 0;
 
 // translate 
 final translator = GoogleTranslator();
@@ -125,12 +139,9 @@ class EventData {
       }
     }
 
-    if(gDebug >= 2 ) {
-      print("----------------------------------------Creating EventData with content: ${json['content']}");
-    }
-
     if( json['id'] == gCheckEventId) {
-      if(gDebug > 0) print("In Event fromJson: got message: $gCheckEventId");
+      print("\n----------------------------------------Creating EventData with content: ${json['content']}");
+      print("In Event fromJson: got message: $gCheckEventId");
     }
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
@@ -168,13 +179,19 @@ class EventData {
   }
 
   void translateAndExpandMentions() {
+
+
     if (content == "") {
       return;
     }
 
-    if( evaluatedContent == "") {
-      evaluatedContent = expandMentions(content);
+    if( evaluatedContent != "") {
+      return;
+    }
 
+    switch(kind) {
+    case 1:
+      evaluatedContent = expandMentions(content);
       if( gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
         //final input = "Здравствуйте. Ты в порядке?";
@@ -187,14 +204,84 @@ class EventData {
               .translate(content, to: 'en')
               //.catchError( (error, stackTrace) =>   null )
               .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} 
-                     );
+                      );
           } on Exception catch(err) {
             if( gDebug >= 0) print("Info: Error in trying to use google translate: $err");
           }
         }
       }
+    break;
+
+    case 4: 
+      break;
+      // not implemented yet. has issues.
+      if(!isUserDirectMessage(this)) {
+        break;
+      }
+      printEventData(0);
+
+      print("\n\n");
+
+{ // sample from kepler
+
+    var alice = Kepler.generateKeyPair();
+
+    print(
+      "alice private key: " +
+          Kepler.strinifyPrivateKey(alice.privateKey as ECPrivateKey),
+    );
+    print(
+      "alice public key: " +
+          Kepler.strinifyPublicKey(alice.publicKey as ECPublicKey),
+    );
+
+    // Create Bob's keypair
+    var bob = Kepler.generateKeyPair();
+
+    // This is what alice wants to say to bob
+    var rawStr = 'Encrypt and decrypt data using secp256k1';
+
+    // use alic's privatekey and bob's publickey means alice says to bob
+    var encMap = Kepler.pubkeyEncrypt(
+      Kepler.strinifyPrivateKey(alice.privateKey as ECPrivateKey),
+      Kepler.strinifyPublicKey(bob.publicKey as ECPublicKey),
+      rawStr,
+    );
+
+    // Get encrypted base64 string
+    var encStr = encMap['enc'];
+    print("encrypted text: " + encStr!);
+
+    // Get random IV
+    var iv = encMap['iv'];
+    print("iv: " + iv!);
+    // Now, you can send enc_str and IV to Bob
+
+    // Use bob's privatekey and alice's publickey to decrypt alices message, for Bob to read.
+    var decryptd = Kepler.privateDecrypt(
+      Kepler.strinifyPrivateKey(bob.privateKey as ECPrivateKey),
+      Kepler.strinifyPublicKey(alice.publicKey as ECPublicKey),
+      encStr,
+      iv,
+    );
+    print('decrypted text: $decryptd');      
+
     }
-  }
+
+      print("in translateAndExpandMentions() for a dm pubkey = $pubkey content = $content");
+      print("tags = $tags");
+
+
+      int ivIndex = content.indexOf("?iv=");
+      var enc_str = content.substring(0, ivIndex);
+      var iv = content.substring( ivIndex + 4, content.length);
+      print("enc_str = $enc_str ;  iv = $iv");
+      var decryptd = myPrivateDecrypt( userPrivateKey, "03" + pubkey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+      print('they say:${decryptd}');      
+
+    break;
+    } // end switch
+  } // end translateAndExpandMentions
 
   // only applicable for kind 42 event
   String getChatRoomId() {
@@ -394,14 +481,18 @@ Set<Event> readEventsFromFile(String filename) {
   try {
     List<String> lines = file.readAsLinesSync();
     for( int i = 0; i < lines.length; i++ ) {
-          Event e = Event.fromJson(lines[i], "");
-          events.add(e);
+        Event e = Event.fromJson(lines[i], "");
+        if( e.eventData.id == gCheckEventId) {
+          print("read $gCheckEventId from file");
+        }
+        events.add(e);
     }
   } on Exception catch(e) {
     //print("cannot open file $gEventsFilename");
     if( gDebug > 0) print("Could not open file. error =  $e");
   }
 
+  if( gDebug > 0) print("In readEventsFromFile: returning ${events.length} total events");
   return events;
 }
 
@@ -532,7 +623,7 @@ String getAuthorName(String pubkey) {
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
-  if(gDebug > 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
+  if(gDebug >= 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
 
   gKindONames.forEach((pk, value) {
     // check both the user name, and the pubkey to search for the user
@@ -710,3 +801,57 @@ String getPrintableDate(int createdAt) {
   strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
   return strDate;
 }
+
+bool isUserDirectMessage(EventData directMessageData) {
+  if( directMessageData.pubkey == userPublicKey)  {
+    return true;
+  }
+
+  bool sentToUser = false;
+  directMessageData.tags.forEach((tag) {
+    if( tag.length < 2 )
+      return;
+    if( tag[0] == "p" && tag[1] == userPublicKey) {
+      //print("in isUserDirectMessage ${tag[1]}");
+      sentToUser = true;
+    }
+  });
+
+  return sentToUser;
+}
+
+
+
+  /// Decrypt data using self private key
+String myPrivateDecrypt(
+      String privateString, String publicString, String b64encoded,
+      [String b64IV = ""]) {
+
+    Uint8List encdData = convert.base64.decode(b64encoded);
+    final rawData = myPrivateDecryptRaw(privateString, publicString, encdData, b64IV);
+    convert.Utf8Decoder decode = const convert.Utf8Decoder();
+    return decode.convert(rawData.toList());
+  }
+
+Uint8List myPrivateDecryptRaw(
+      String privateString, String publicString, Uint8List encdData,
+      [String b64IV = ""]) {
+    final secretIV = Kepler.byteSecret(privateString, publicString);
+    final secret = Uint8List.fromList(secretIV[0]);
+
+    final iv = b64IV.length > 6
+        ? convert.base64.decode(b64IV)
+        : Uint8List.fromList(secretIV[1]);
+
+    ChaCha20Engine _cipher = ChaCha20Engine();
+
+    _cipher.reset();
+    _cipher.init(false, buildParams(secret, iv));
+    return _cipher.process(encdData);
+  }
+
+ ParametersWithIV<KeyParameter> buildParams(
+      Uint8List key, Uint8List iv) {
+    return ParametersWithIV<KeyParameter>(KeyParameter(key), iv);
+  }
+

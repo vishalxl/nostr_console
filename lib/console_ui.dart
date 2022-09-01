@@ -88,6 +88,27 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend)
   sendRequest( gListRelayUrls, toSendMessage);
 }
 
+// is same as above. remove it TODO
+Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend) async {
+  print("TBD");
+  return;
+  // TODO implement 
+
+  String replyKind = "4";
+
+  String strTags = node.getTagStr(otherPubkey, exename);
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+  
+  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
+  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+
+  String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
+  //relays.sendRequest(defaultServerUrl, toSendMessage);
+  
+  sendRequest( gListRelayUrls, toSendMessage);
+}
+
+
 // sends event e; used to send kind 3 event
 Future<void> sendEvent(Store node, Event e) async {
   String strTags = "";
@@ -436,7 +457,7 @@ Future<void> channelMenuUI(Store node) async {
     int option = showMenu([ 'Show public channels',          // 1 
                             'Enter a public channel',        // 2
                             'See personal Inbox',
-                            'Send a direct message',
+                            'Reply or Send a direct message',
                             'Go back to main menu'],          // 5
                           "Channel Menu"); // name of menu
     print('You picked: $option');
@@ -493,9 +514,58 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 3:
-        print("total direct rooms = ${node.directRooms.length}");
+        //print("total direct rooms = ${node.directRooms.length}");
         node.printDirectRoomInfo();
         break;
+      
+      case 4:
+        // in case the program was invoked with --pubkey, then user can't send messages
+        if( userPrivateKey == "") {
+            print("Since no private key has been supplied, messages and replies can't be sent. Invoke with --prikey \n");
+            break;
+        }
+
+        bool showChannelOption = true;
+        stdout.write("\nType user public key, or its 1st few letters; or type 'x' to go to menu: ");
+        String? $tempUserInput = stdin.readLineSync();
+        String directRoomId = $tempUserInput??"";
+
+        if( directRoomId == "x") {
+          showChannelOption = false; 
+        }
+        int pageNum = 1;
+        while(showChannelOption) {
+          String fullChannelId = node.showDirectRoom(directRoomId, pageNum);
+          if( fullChannelId == "") {
+            print("Could not find the given direct room.");
+            showChannelOption = false;
+            break;
+          }
+
+          stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
+          $tempUserInput = stdin.readLineSync(encoding: utf8);
+          String messageToSend = $tempUserInput??"";
+
+          if( messageToSend != "") {
+            if( messageToSend == 'x') {
+              showChannelOption = false;
+            } else {
+              if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
+                pageNum = (int.tryParse(messageToSend))??1;
+              } else {
+                // send message to the given room
+                await sendChatMessage(node, fullChannelId, messageToSend);
+                pageNum = 1; // reset it 
+              }
+            }
+          } else {
+            print("Refreshing...");
+          }
+
+          await processNotifications(node);
+        }
+        break;
+
 
       case 5:
         continueChatMenu = false;
@@ -513,7 +583,7 @@ Future<void> mainMenuUi(Store node) async {
     // at the very beginning, show the tree as it is, and then show the options menu
 
     bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
-    //node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
+    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
 
     bool userContinue = true;
     while(userContinue) {
@@ -542,7 +612,7 @@ Future<void> mainMenuUi(Store node) async {
       print('You picked: $option');
       switch(option) {
         case 1:
-          //node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
           break;
 
         case 2:

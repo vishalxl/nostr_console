@@ -21,3 +21,5 @@ dependencies:
   translator: ^0.1.7
   web_socket_channel: ^2.2.0
   logging: ^1.0.2
+  kepler: ^1.0.3
+#  secp256k1cipher: ^0.2.7

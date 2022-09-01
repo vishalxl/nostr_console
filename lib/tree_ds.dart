@@ -431,11 +431,10 @@ class Store {
 
     Set<String> newEventIdsSet = {};
 
-    // add the event to the Tree
+    // add the event to the man store thats allChildEventsMap
     newEventsSetToProcess.forEach((newEvent) { 
-      // don't process if the event is already present in the map
-      // this condition also excludes any duplicate events sent as newEvents
-      if( allChildEventsMap.containsKey(newEvent.eventData.id)) {
+     
+      if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
         return;
       }
 
@@ -445,6 +444,13 @@ class Store {
           if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
           return;
         }
+      }
+
+      // handle delete events. return if its not handled for some reason ( like deleted event not found)
+      if( newEvent.eventData.kind == 5) {
+        processDeleteEvent(allChildEventsMap, newEvent);
+        if(gDebug > 0) print("In insertEvents: For new deleteion event ${newEvent.eventData.id} could not process it.");
+        return;
       }
 
       // only kind 0, 1, 3, 5( delete), 7, 40, 42 events are added to map, return otherwise
@@ -955,31 +961,40 @@ class Store {
     return totalEvents;
   }
 
+  static List<String> processDeleteEvent(Map<String, Tree> tempChildEventsMap, Event deleterEvent) {
+    List<String> deletedEventIds = [];
+    if( deleterEvent.eventData.kind == 5) {
+      deleterEvent.eventData.tags.forEach((tag) { 
+        if( tag.length < 2) {
+          return;
+        }
+        if( tag[0] == "e") {
+          String deletedEventId = tag[1];
+          // look up that event and ensure its kind 1 etc, and then mark it deleted.
+          Event? deletedEvent = tempChildEventsMap[deletedEventId]?.event;
+          if( deletedEvent != null) {
+            if( deletedEvent.eventData.kind == 1 && deletedEvent.eventData.pubkey == deleterEvent.eventData.pubkey) {
+              deletedEvent.eventData.isDeleted = true;
+              deletedEvent.eventData.content = gDeletedEventMessage + " on ${getPrintableDate(deleterEvent.eventData.createdAt)}";
+              deletedEvent.eventData.evaluatedContent = "";
+              EventData ed = deletedEvent.eventData;
+              deletedEvent.originalJson = '["EVENT","none",{"id":${ed.id},"pubkey":${ed.pubkey},"createdAt":${ed.createdAt},"kind":1,"tags":[],"sig":"invalid","comment":"deleted"}]';
+              deletedEventIds.add( deletedEvent.eventData.id);
+            }          
+          }
+        }
+      });
+    } // end if
+    return deletedEventIds;
+  } // end processDeleteEvent
+
   static List<String> processDeleteEvents(Map<String, Tree> tempChildEventsMap) {
     List<String> deletedEventIds = [];
     tempChildEventsMap.forEach((key, tree) {
-      EventData deleterEvent = tree.event.eventData;
-      if( deleterEvent.kind == 5) {
-        deleterEvent.tags.forEach((tag) { 
-          if( tag.length < 2) {
-            return;
-          }
-          if( tag[0] == "e") {
-            String deletedEventId = tag[1];
-            // look up that event and ensure its kind 1 etc, and then mark it deleted.
-            Event? deletedEvent = tempChildEventsMap[deletedEventId]?.event;
-            if( deletedEvent != null) {
-              if( deletedEvent.eventData.kind == 1) {
-                deletedEvent.eventData.isDeleted = true;
-                deletedEvent.eventData.content = gDeletedEventMessage + " on ${getPrintableDate(deleterEvent.createdAt)}";
-                deletedEvent.eventData.evaluatedContent = "";
-                EventData ed = deletedEvent.eventData;
-                deletedEvent.originalJson = '["EVENT","none",{"id":${ed.id},"pubkey":${ed.pubkey},"createdAt":${ed.createdAt},"kind":1,"tags":[],"sig":"invalid","comment":"deleted"}]';
-                deletedEventIds.add(deletedEventId);
-              }          
-            }
-          }
-        });
+      Event deleterEvent = tree.event;
+      if( deleterEvent.eventData.kind == 5) {
+          List<String> tempIds = processDeleteEvent(tempChildEventsMap, deleterEvent);
+          tempIds.forEach((tempId) { deletedEventIds.add(tempId); });
       }
     });
     return deletedEventIds;

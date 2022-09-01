@@ -431,93 +431,93 @@ class Store {
 
     Set<String> newEventIdsSet = {};
 
-    // add the event to the man store thats allChildEventsMap
+    // add the event to the main event store thats allChildEventsMap
     newEventsSetToProcess.forEach((newEvent) { 
      
-      if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
+    if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
+      return;
+    }
+
+    // handle reaction events and return if we could not find the reacted to. Continue otherwise to add this to notification set newEventIdsSet
+    if( newEvent.eventData.kind == 7) {
+      if( processReaction(newEvent) == "") {
+        if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
         return;
       }
+    }
 
-      // handle reaction events and return if we could not find the reacted to. Continue otherwise to add this to notification set newEventIdsSet
-      if( newEvent.eventData.kind == 7) {
-        if( processReaction(newEvent) == "") {
-          if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
-          return;
-        }
-      }
+    // handle delete events. return if its not handled for some reason ( like deleted event not found)
+    if( newEvent.eventData.kind == 5) {
+      processDeleteEvent(allChildEventsMap, newEvent);
+      if(gDebug > 0) print("In insertEvents: For new deleteion event ${newEvent.eventData.id} could not process it.");
+      return;
+    }
 
-      // handle delete events. return if its not handled for some reason ( like deleted event not found)
-      if( newEvent.eventData.kind == 5) {
-        processDeleteEvent(allChildEventsMap, newEvent);
-        if(gDebug > 0) print("In insertEvents: For new deleteion event ${newEvent.eventData.id} could not process it.");
-        return;
-      }
+    // only kind 0, 1, 3, 5( delete), 7, 40, 42 events are added to map, return otherwise
+    if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
+      return;
+    }
 
-      // only kind 0, 1, 3, 5( delete), 7, 40, 42 events are added to map, return otherwise
-      if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
-        return;
-      }
+    // expand mentions ( and translate if flag is set) and then add event to main event map
+    newEvent.eventData.translateAndExpandMentions();
+    eventsNotReadFromFile.add(newEvent.eventData.id); // used later so that only these events are appended to the file
 
-      // expand mentions ( and translate if flag is set) and then add event to main event map
-      newEvent.eventData.translateAndExpandMentions();
-      eventsNotReadFromFile.add(newEvent.eventData.id); // used later so that only these events are appended to the file
+    // add them to the main store of the Tree object
+    allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
 
-      // add them to the main store of the Tree object
-      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
-
-      // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
-      if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
-        newEventIdsSet.add(newEvent.eventData.id);
-      }
-    });
+    // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
+    if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
+      newEventIdsSet.add(newEvent.eventData.id);
+    }
+  });
     
-    // now go over the newly inserted event, and add its to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
-    newEventIdsSet.forEach((newId) {
-      Tree? newTree = allChildEventsMap[newId];
-      if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above
+  // now go over the newly inserted event, and add its to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
+  newEventIdsSet.forEach((newId) {
+    Tree? newTree = allChildEventsMap[newId];
+    if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above
 
-        switch(newTree.event.eventData.kind) {
-          case 1:
-            // only kind 1 events are added to the overall tree structure
-            if( newTree.event.eventData.eTagsRest.isEmpty) {
-                // if its a new parent event, then add it to the main top parents ( this.children)
-                children.add(newTree);
-            } else {
-                // if it has a parent , then add the newTree as the parent's child
-                String parentId = newTree.event.eventData.getParent();
-                if( allChildEventsMap.containsKey(parentId)) {
-                  allChildEventsMap[parentId]?.children.add(newTree);
-                } else {
-                  // create top unknown parent and then add it
-                  Event dummy = Event("","",  EventData("non", gDummyAccountPubkey, newTree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
-                  Tree dummyTopNode = Tree.withoutStore(dummy, []);
-                  dummyTopNode.children.add(newTree);
-                  children.add(dummyTopNode);
-                }
-            }
-            break;
-          case 42:
-            // add 42 chat message event id to its chat room
-            String channelId = newTree.event.eventData.getParent();
-            if( channelId != "") {
-              if( chatRooms.containsKey(channelId)) {
-                if( gDebug > 0) print("added event to chat room in insert event");
-                addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms);
-                newTree.event.eventData.isNotification = true; // highlight it too in next printing
+      switch(newTree.event.eventData.kind) {
+        case 1:
+          // only kind 1 events are added to the overall tree structure
+          if( newTree.event.eventData.eTagsRest.isEmpty) {
+              // if its a new parent event, then add it to the main top parents ( this.children)
+              children.add(newTree);
+          } else {
+              // if it has a parent , then add the newTree as the parent's child
+              String parentId = newTree.event.eventData.getParent();
+              if( allChildEventsMap.containsKey(parentId)) {
+                allChildEventsMap[parentId]?.children.add(newTree);
+              } else {
+                // create top unknown parent and then add it
+                Event dummy = Event("","",  EventData("non", gDummyAccountPubkey, newTree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+                Tree dummyTopNode = Tree.withoutStore(dummy, []);
+                dummyTopNode.children.add(newTree);
+                children.add(dummyTopNode);
               }
-            } else {
-              print("info: in insert events, could not find parent/channel id");
+          }
+          break;
+        case 42:
+          // add 42 chat message event id to its chat room
+          String channelId = newTree.event.eventData.getParent();
+          if( channelId != "") {
+            if( chatRooms.containsKey(channelId)) {
+              if( gDebug > 0) print("added event to chat room in insert event");
+              addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms);
+              newTree.event.eventData.isNotification = true; // highlight it too in next printing
             }
-            break;
-          default: 
-            break;
-        }
+          } else {
+            print("info: in insert events, could not find parent/channel id");
+          }
+          break;
+        default: 
+          break;
       }
-    });
+    }
+  });
 
-    if(gDebug > 0) print("In end of insertEvents: Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements"} ");
-    return newEventIdsSet;
-  }
+  if(gDebug > 0) print("In end of insertEvents: Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements"} ");
+  return newEventIdsSet;
+}
 
   /***********************************************************************************************************************************/
   /*

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:bip340/bip340.dart';
-
+import 'package:translator/translator.dart';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
@@ -54,6 +54,7 @@ Future<void> main(List<String> arguments) async {
       if( argResults[translateArg]) {
         gTranslate = true;
         print("Going to translate comments in last $gNumTranslateDays days using Google translate service");
+        translator = GoogleTranslator();
       }
 
       if( argResults[pubkeyArg] != null) {

@@ -12,7 +12,8 @@ import 'package:kepler/kepler.dart';
 int gDebug = 0;
 
 // translate 
-final translator = GoogleTranslator();
+GoogleTranslator? translator; // initialized in main when argument given
+ 
 const int gNumTranslateDays = 1;// translate for this number of days
 bool gTranslate = false; // translate flag
 
@@ -176,21 +177,20 @@ class EventData {
     switch(kind) {
     case 1:
       evaluatedContent = expandMentions(content);
-      if( gTranslate && !evaluatedContent.isEnglish()) {
+      if( translator != null && gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
-        //final input = "Здравствуйте. Ты в порядке?";
 
-        // Using the Future API
+        // only translate for latest events
         if( DateTime.fromMillisecondsSinceEpoch(createdAt *1000).compareTo( DateTime.now().subtract(Duration(days:gNumTranslateDays)) ) > 0 ) {
           if( gDebug > 0) print("Sending google request: translating $content");
-          try {
-          translator
-              .translate(content, to: 'en')
-              //.catchError( (error, stackTrace) =>   null )
-              .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} 
-                      );
-          } on Exception catch(err) {
-            if( gDebug >= 0) print("Info: Error in trying to use google translate: $err");
+          if( translator != null) {
+            try {
+            translator?.translate(content, to: 'en')
+                      .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} 
+                        );
+            } on Exception catch(err) {
+              if( gDebug >= 0) print("Info: Error in trying to use google translate: $err");
+            }
           }
         }
       }

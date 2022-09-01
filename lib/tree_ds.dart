@@ -9,16 +9,6 @@ bool selectAll(Tree t) {
   return true;
 }
 
-class Message {
-  String text;
-  Message(this.text);
-}
-class ImgMessage extends Message {
-  String imageUrl;
-  ImgMessage(String text,  this.imageUrl, tx) :
-    super( tx);
-}
-
 class ScrollableMessages {
   String       topHeader;
   List<String> messageIds;
@@ -31,13 +21,9 @@ class ScrollableMessages {
       page = 1;
     }
 
-    //print(topHeader);
-
     String displayName = topHeader;
-
-    int lenDashes = 10;
+    int    lenDashes   = 10;
     String str = getNumSpaces(gNumLeftMarginSpaces + 10) + getNumDashes(lenDashes) + displayName + getNumDashes(lenDashes);
-    //print(" ${getNumSpaces(gNumLeftMarginSpaces + displayName.length~/2 + 4)}In Channel");
     print("\n$str\n");
 
     int i = 0, startFrom = 0, endAt = messageIds.length;
@@ -104,7 +90,6 @@ class Tree {
   Store?         store;
 
   Tree(this.event, this.children,this.store );
-
   factory Tree.withoutStore(Event e, List<Tree> c) {
     return Tree(e, c, null);
   }
@@ -112,7 +97,6 @@ class Tree {
   void setStore(Store s) {
     store = s;
   }
-
 
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
@@ -1063,30 +1047,21 @@ class Store {
     return tree;
   }
 
-  // TODO inefficient; fix
+  // get followers of given pubkey 
   List<String> getFollowers(String pubkey) {
     if( gDebug > 0) print("Finding followrs for $pubkey");
     List<String> followers = [];
 
-    Set<String> usersWithContactList = {};
-    allChildEventsMap.forEach((eventId, tree) {
-      if( tree.event.eventData.kind == 3) {
-        usersWithContactList.add(tree.event.eventData.pubkey);
-      }
-    });
-
-    usersWithContactList.forEach((x) { 
-      Event? contactEvent = getContactEvent(x);
-
-      if( contactEvent != null) {
-        List<Contact> contacts = contactEvent.eventData.contactList;
-        for(int i = 0; i < contacts.length; i ++) {
-          if( contacts[i].id == pubkey) {
-            followers.add(x);
-            return;
+    gKindONames.forEach((otherPubkey, userInfo) { 
+        List<Contact>? contactList = userInfo.latestContactEvent?.eventData.contactList;
+        if( contactList != null ) {
+          for(int i = 0; i < contactList.length; i ++) {
+            if( contactList[i].id == pubkey) {
+              followers.add(otherPubkey);
+              return;
+            }
           }
         }
-      }
     });
 
     return followers;
@@ -1411,5 +1386,4 @@ String getDirectRoomId(EventData eventData) {
   } else { 
     return eventData.pubkey;
   }
-
 }

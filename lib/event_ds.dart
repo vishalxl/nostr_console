@@ -12,7 +12,8 @@ final translator = GoogleTranslator();
 const int gNumTranslateDays = 1;// translate for this number of days
 bool gTranslate = false; // translate flag
 
-// Structure to store kind 0 event meta data for each user. Typically will  have info from latest kind 0 event only.
+// Structure to store kind 0 event meta data, and kind 3 meta data for each user. Will have info from latest
+// kind 0 event and/or kind 3 event, both with their own time stamps.
 class UserNameInfo {
   int? createdAt;
   String? name, about, picture;
@@ -37,160 +38,6 @@ Map< String, List<List<String>> > gReactions = {};
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
 
-
-void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 
-
-void printDepth(int d) {
-  for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
-    stdout.write(" ");
-  }
-}
-
-String getNumSpaces(int num) {
-  String s = "";
-  for( int i = 0; i < num; i++) {
-    s += " ";
-  }
-  return s;
-}
-
-String getNumDashes(int num) {
-  String s = "";
-  for( int i = 0; i < num; i++) {
-    s += "-";
-  }
-  return s;
-}
-
-String rightShiftContent(String s, int numSpaces) {
-  String newString = "";
-  int    newlineCounter = 0;
-  String spacesString = getNumSpaces(numSpaces + gNumLeftMarginSpaces);
-
-  for(int i = 0; i < s.length; i++) {
-    if( s[i] == '\n') {
-      newString += "\n";
-      newString += spacesString;
-      newlineCounter = 0;
-    } else {
-      if( newlineCounter >= (gTextWidth - numSpaces)) {
-        newString += "\n";
-        newString += spacesString;
-        newlineCounter = 0;
-      } 
-      newString += s[i];
-    }
-    newlineCounter++;
-  }
-  return newString;
-}
-
-bool nonEnglish(String str) {
-  bool result = false;
-  return result;
-}
-
-bool isNumeric(String s) {
- return double.tryParse(s) != null;
-}
-
-bool isWhitespace(String s) {
-  if( s.length != 1) {
-    return false;
-  }
-  return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t';
-}
-
-
-extension StringX on String {
-  isChannelPageNumber(int max) {
-  
-  int? n = int.tryParse(this);
-  if( n != null) {
-    if( n < max)
-      return true;
-  }
-  return false;
-  }
-
-  isEnglish( ) {
-    // since smaller words can be smileys they should not be translated
-    if( length < 10) 
-      return true;
-    
-    if( !isLatinAlphabet())
-      return false;
-
-    if (isFrench())
-      return false;
-
-    return true;
-  }
-
-  bool isFrench() {
-
-    // https://www.thoughtco.com/most-common-french-words-1372759
-    List<String> frenchWords = ["oui", "je", "le", "un", "de", "et", "merci", "une", "ce", "pas"];
-    for( int i = 0; i < frenchWords.length; i++) {
-      if( this.toLowerCase().contains(" ${frenchWords[i]} ")) {
-        if( gDebug > 0) print("isFrench: Found ${this.toString()} is french"); 
-        return true;
-      }
-    }
-    return false;
-  }
-
-
-  isLatinAlphabet({caseSensitive = false}) {
-    int countLatinletters = 0;
-    for (int i = 0; i < length; i++) {
-      final target = caseSensitive ? this[i] : this[i].toLowerCase();
-      if ( (target.codeUnitAt(0) > 96 && target.codeUnitAt(0) < 123)  || ( isNumeric(target) ) || isWhitespace(target)) {
-        countLatinletters++; 
-      }
-    }
-    
-    if( countLatinletters < ( 40.0/100 ) * length ) {
-      if( gDebug > 0) print("in isLatinAlphabet: latin letters: $countLatinletters and total = $length ");
-      return false;
-    } else {
-      return true;
-    }
-  }
-}    
-
-
-// The contact only stores id and relay of contact. The actual name is stored in a global variable/map
-class Contact {
-  String id, relay;
-  Contact(this.id, this.relay);
-
-  @override 
-  String toString() {
-    return 'id: $id ( ${getAuthorName(id)})     relay: $relay';
-  }
-}
-
-String addEscapeChars(String str) {
-  return str.replaceAll("\"", "\\\"");
-}
-
-String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
-  String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
-  var bufInBytes = utf8.encode(buf);
-  var value = sha256.convert(bufInBytes);
-  return value.toString();
-}
-
-// get printable date from seconds since epoch
-String getPrintableDate(int createdAt) {
-  final df1 = DateFormat('hh:mm a');
-  final df2 = DateFormat(DateFormat.ABBR_MONTH_DAY);
-  String strDate = df1.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
-  strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
-  return strDate;
-}
-
 class EventData {
   String             id;
   String             pubkey;
@@ -203,8 +50,6 @@ class EventData {
   bool               isNotification; // whether its to be highlighted using highlight color
   String             evaluatedContent; // content which has mentions expanded, and which has been translated
   Set<String>        newLikes;    //
-
-
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
 
@@ -488,17 +333,6 @@ class Event {
   }
 }
 
-class ChatRoom {
-  String       chatRoomId; // id of the kind 40 start event
-  String       name; 
-  String       about;
-  String       picture;
-  List<String> messageIds;  // all the 42 kind events in this
-
-  ChatRoom(this.chatRoomId, this.name, this.about, this.picture, this.messageIds);
-  
- }
-
 void addToHistogram(Map<String, int> histogram, List<String> pTags) {
   Set tempPtags = {};
   pTags.retainWhere((x) =>  tempPtags.add(x));
@@ -722,3 +556,157 @@ int getSecondsDaysAgo( int N) {
 }
 
 
+
+
+void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 
+
+void printDepth(int d) {
+  for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
+    stdout.write(" ");
+  }
+}
+
+String getNumSpaces(int num) {
+  String s = "";
+  for( int i = 0; i < num; i++) {
+    s += " ";
+  }
+  return s;
+}
+
+String getNumDashes(int num) {
+  String s = "";
+  for( int i = 0; i < num; i++) {
+    s += "-";
+  }
+  return s;
+}
+
+String rightShiftContent(String s, int numSpaces) {
+  String newString = "";
+  int    newlineCounter = 0;
+  String spacesString = getNumSpaces(numSpaces + gNumLeftMarginSpaces);
+
+  for(int i = 0; i < s.length; i++) {
+    if( s[i] == '\n') {
+      newString += "\n";
+      newString += spacesString;
+      newlineCounter = 0;
+    } else {
+      if( newlineCounter >= (gTextWidth - numSpaces)) {
+        newString += "\n";
+        newString += spacesString;
+        newlineCounter = 0;
+      } 
+      newString += s[i];
+    }
+    newlineCounter++;
+  }
+  return newString;
+}
+
+bool nonEnglish(String str) {
+  bool result = false;
+  return result;
+}
+
+bool isNumeric(String s) {
+ return double.tryParse(s) != null;
+}
+
+bool isWhitespace(String s) {
+  if( s.length != 1) {
+    return false;
+  }
+  return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t';
+}
+
+
+extension StringX on String {
+  isChannelPageNumber(int max) {
+  
+  int? n = int.tryParse(this);
+  if( n != null) {
+    if( n < max)
+      return true;
+  }
+  return false;
+  }
+
+  isEnglish( ) {
+    // since smaller words can be smileys they should not be translated
+    if( length < 10) 
+      return true;
+    
+    if( !isLatinAlphabet())
+      return false;
+
+    if (isFrench())
+      return false;
+
+    return true;
+  }
+
+  bool isFrench() {
+
+    // https://www.thoughtco.com/most-common-french-words-1372759
+    List<String> frenchWords = ["oui", "je", "le", "un", "de", "et", "merci", "une", "ce", "pas"];
+    for( int i = 0; i < frenchWords.length; i++) {
+      if( this.toLowerCase().contains(" ${frenchWords[i]} ")) {
+        if( gDebug > 0) print("isFrench: Found ${this.toString()} is french"); 
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  isLatinAlphabet({caseSensitive = false}) {
+    int countLatinletters = 0;
+    for (int i = 0; i < length; i++) {
+      final target = caseSensitive ? this[i] : this[i].toLowerCase();
+      if ( (target.codeUnitAt(0) > 96 && target.codeUnitAt(0) < 123)  || ( isNumeric(target) ) || isWhitespace(target)) {
+        countLatinletters++; 
+      }
+    }
+    
+    if( countLatinletters < ( 40.0/100 ) * length ) {
+      if( gDebug > 0) print("in isLatinAlphabet: latin letters: $countLatinletters and total = $length ");
+      return false;
+    } else {
+      return true;
+    }
+  }
+}    
+
+
+// The contact only stores id and relay of contact. The actual name is stored in a global variable/map
+class Contact {
+  String id, relay;
+  Contact(this.id, this.relay);
+
+  @override 
+  String toString() {
+    return 'id: $id ( ${getAuthorName(id)})     relay: $relay';
+  }
+}
+
+String addEscapeChars(String str) {
+  return str.replaceAll("\"", "\\\"");
+}
+
+String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
+  String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
+  var bufInBytes = utf8.encode(buf);
+  var value = sha256.convert(bufInBytes);
+  return value.toString();
+}
+
+// get printable date from seconds since epoch
+String getPrintableDate(int createdAt) {
+  final df1 = DateFormat('hh:mm a');
+  final df2 = DateFormat(DateFormat.ABBR_MONTH_DAY);
+  String strDate = df1.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
+  strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
+  return strDate;
+}

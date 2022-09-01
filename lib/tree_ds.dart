@@ -10,6 +10,94 @@ bool selectAll(Tree t) {
   return true;
 }
 
+class Message {
+  String text;
+  Message(this.text);
+}
+class ImgMessage extends Message {
+  String imageUrl;
+  ImgMessage(String text,  this.imageUrl, tx) :
+    super( tx);
+}
+
+class ScrollableMessages {
+  String       topHeader;
+  List<String> messageIds;
+
+  ScrollableMessages(this.topHeader, this.messageIds);
+
+  void printOnePage(Map<String, Tree> tempChildEventsMap, [int page = 1])  {
+    if( page < 1) {
+      if( gDebug > 0) log.info("In ScrollableMessages::printOnepage  got page = $page");
+      page = 1;
+    }
+
+    print(topHeader);
+
+    String displayName = topHeader;
+
+    int lenDashes = 10;
+    String str = getNumSpaces(gNumLeftMarginSpaces + 10) + getNumDashes(lenDashes) + displayName + getNumDashes(lenDashes);
+    //print(" ${getNumSpaces(gNumLeftMarginSpaces + displayName.length~/2 + 4)}In Channel");
+    print("\n$str\n");
+
+    int i = 0, startFrom = 0, endAt = messageIds.length;
+    int numPages = 1;
+
+    if( messageIds.length > gNumChannelMessagesToShow ) {
+      endAt = messageIds.length - (page - 1) * gNumChannelMessagesToShow;
+      if( endAt < gNumChannelMessagesToShow) endAt = gNumChannelMessagesToShow;
+      startFrom = endAt - gNumChannelMessagesToShow;
+      numPages = (messageIds.length ~/ gNumChannelMessagesToShow) + 1;
+      if( page > numPages) {
+        page = numPages;
+      }
+    }
+    if( gDebug > 0) print("StartFrom $startFrom  endAt $endAt  numPages $numPages room.messageIds.length = ${messageIds.length}");
+    for( i = startFrom; i < endAt; i++) {
+      String eId = messageIds[i];
+      Event? e = tempChildEventsMap[eId]?.event;
+      if( e!= null) {
+        e.printEvent(0);
+        print("");
+      }
+    }
+
+    if( messageIds.length > gNumChannelMessagesToShow) {
+      print("\n");
+      printDepth(0);
+      stdout.write("${gNotificationColor}Displayed page number ${page} (out of total $numPages pages, where 1st is the latest 'page').\n");
+      printDepth(0);
+      stdout.write("To see older pages, enter numbers from 1-${numPages}.${gColorEndMarker}\n\n");
+    }
+  }
+}
+
+class ChatRoom extends ScrollableMessages {
+  String       chatRoomId; // id of the kind 40 start event
+  String       internalChatRoomName; 
+  String       about;
+  String       picture;
+
+  ChatRoom(this.chatRoomId, this.internalChatRoomName, this.about, this.picture, messageIds) : 
+            super ( "${internalChatRoomName} ( ${chatRoomId.substring(0, 6)}", messageIds);
+
+  String get chatRoomName {
+    return internalChatRoomName;
+  }
+
+  void set chatRoomName(String newName){
+    internalChatRoomName = newName;
+    super.topHeader = newName + " (${chatRoomId.substring(0,6)})";
+  }
+ }
+
+class DirectMessageRoom extends ScrollableMessages{
+  String       otherPubkey; // id of user this DM is happening
+
+  DirectMessageRoom(this.otherPubkey, messageIds):
+            super ( "${getAuthorName(otherPubkey)}", messageIds);
+ }
 
 class Tree {
   Event          event;                   // is dummy for very top level tree. Holds an event otherwise.
@@ -309,9 +397,9 @@ class Store {
         try {
           dynamic json = jsonDecode(ce.eventData.content);
           if( rooms.containsKey(chatRoomId)) {
-            if( rooms[chatRoomId]?.name == "") {
+            if( rooms[chatRoomId]?.chatRoomName == "") {
               //if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
-              rooms[chatRoomId]?.name = json['name'];
+              rooms[chatRoomId]?.chatRoomName = json['name'];
             }
           } else {
             String roomName = "", roomAbout = "";
@@ -322,7 +410,8 @@ class Store {
             if( json.containsKey('about')) {
               roomAbout = json['about'];
             }
-            ChatRoom room = ChatRoom(chatRoomId, roomName, roomAbout, "", []);
+            List<String> emptyMessageList = [];
+            ChatRoom room = ChatRoom(chatRoomId, roomName, roomAbout, "", emptyMessageList);
             rooms[chatRoomId] = room;
             //if( gDebug > 0) print("Added new chat room $chatRoomId with name ${json['name']} .");
           }
@@ -655,10 +744,10 @@ class Store {
     printUnderlined("      Channel/Room Name             Num of Messages            Latest Message           ");
     chatRooms.forEach((key, value) {
       String name = "";
-      if( value.name == "") {
+      if( value.chatRoomName == "") {
         name = value.chatRoomId.substring(0, 6);
       } else {
-        name = "${value.name} ( ${value.chatRoomId.substring(0, 6)})";
+        name = "${value.chatRoomName} ( ${value.chatRoomId.substring(0, 6)})";
       }
 
       int numMessages = value.messageIds.length;
@@ -683,47 +772,18 @@ class Store {
       page = 1;
     }
 
-    String displayName = room.chatRoomId;
-    if( room.name != "") {
-      displayName = "${room.name} ( ${displayName.substring(0, 6)} )";
-    }
-
-    int lenDashes = 10;
-    String str = getNumSpaces(gNumLeftMarginSpaces + 10) + getNumDashes(lenDashes) + displayName + getNumDashes(lenDashes);
-    print(" ${getNumSpaces(gNumLeftMarginSpaces + displayName.length~/2 + 4)}In Channel");
-    print("\n$str\n");
-
-    
-    int i = 0, startFrom = 0, endAt = room.messageIds.length;
-    int numPages = 1;
-
-    if( room.messageIds.length > gNumChannelMessagesToShow ) {
-      endAt = room.messageIds.length - (page - 1) * gNumChannelMessagesToShow;
-      if( endAt < gNumChannelMessagesToShow) endAt = gNumChannelMessagesToShow;
-      startFrom = endAt - gNumChannelMessagesToShow;
-      numPages = (room.messageIds.length ~/ gNumChannelMessagesToShow) + 1;
-      if( page > numPages) {
-        page = numPages;
-      }
-    }
-    if( gDebug > 0) print("StartFrom $startFrom  endAt $endAt  numPages $numPages room.messageIds.length = ${room.messageIds.length}");
-    for( i = startFrom; i < endAt; i++) {
-      String eId = room.messageIds[i];
-      Event? e = allChildEventsMap[eId]?.event;
-      if( e!= null) {
-        e.printEvent(0);
-        print("");
-      }
-    }
-
-    if( room.messageIds.length > gNumChannelMessagesToShow) {
-      print("\n");
-      printDepth(0);
-      stdout.write("${gNotificationColor}Displayed page number ${page} (out of total $numPages pages, where 1st is the latest 'page').\n");
-      printDepth(0);
-      stdout.write("To see older pages, enter numbers from 1-${numPages}.${gColorEndMarker}\n\n");
-    }
+    room.printOnePage(allChildEventsMap, page);
   }
+
+  void printDirectMessageRoom(DirectMessageRoom directRoom, [int page = 1])  {
+    if( page < 1) {
+      if( gDebug > 0) log.info("In printChannel got page = $page");
+      page = 1;
+    }
+
+    directRoom.printOnePage(allChildEventsMap, page);
+  }
+
 
   // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
   String showChannel(String channelId, [int page = 1]) {
@@ -742,11 +802,11 @@ class Store {
     for( String key in chatRooms.keys) {
         ChatRoom? room = chatRooms[key];
         if( room != null) {
-          if( room.name.length < channelId.length) {
+          if( room.chatRoomName.length < channelId.length) {
             continue;
           }
-          if( gDebug > 0) print("room = ${room.name} channelId = $channelId");
-          if( room.name.substring(0, channelId.length) == channelId ) {
+          if( gDebug > 0) print("room = ${room.chatRoomName} channelId = $channelId");
+          if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
             printChannel(room);
             return key;
           }

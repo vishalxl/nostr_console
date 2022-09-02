@@ -202,7 +202,6 @@ Future<void> main(List<String> arguments) async {
         print("read $numFilePosts posts from file $gEventsFilename");
       }
 
-
       // process request string. If this is blank then the application only reads from file and does not connect to internet. 
       if( argResults[requestArg] != null) {
         int numWaitSeconds = gDefaultNumWaitSeconds;

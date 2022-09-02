@@ -537,7 +537,7 @@ class Store {
     *                        returns the id of the relevant ones actually inserted so that they can be printed as notifications. 
     */
   Set<String> processIncomingEvent(Set<Event> newEventsToProcess) {
-    if( gDebug >= 0) log.info("In insertEvetnts: allChildEventsMap size = ${allChildEventsMap.length}, called for ${newEventsToProcess.length} NEW events");
+    if( gDebug > 0) log.info("In insertEvetnts: allChildEventsMap size = ${allChildEventsMap.length}, called for ${newEventsToProcess.length} NEW events");
 
     Set<String> newEventIdsSet = {};
 
@@ -657,8 +657,8 @@ class Store {
     });
     int totalTreeSize = 0;
     topPosts.forEach((element) {totalTreeSize += element.count();});
-    if(gDebug >= 0) print("In end of insertEvents: allChildEventsMap size = ${allChildEventsMap.length}; mainTree count = $totalTreeSize");
-    if(gDebug >= 0)  print("Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements>"} ");
+    if(gDebug > 0) print("In end of insertEvents: allChildEventsMap size = ${allChildEventsMap.length}; mainTree count = $totalTreeSize");
+    if(gDebug > 0)  print("Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements>"} ");
     return newEventIdsSet;
   } // end insertEvents()
 
@@ -853,7 +853,24 @@ class Store {
     if( directRoomId.length > 64) { // TODO revisit  cause if name is > 64 should not return
       return "";
     }
-    Set<String> lookedUpName = getPublicKeyFromName(directRoomId);
+    Set<String> lookedUpName = {};
+
+    // TODO improve lookup logic. 
+    directRooms.forEach((roomId, directRoom) {
+      print("looking up $directRoomId in  $roomId ${directRoom.otherPubkey}");
+      if( directRoomId == roomId) {
+        lookedUpName.add(roomId);
+      }
+
+      if( directRoom.otherPubkey.substring(0, directRoomId.length) == directRoomId){
+        lookedUpName.add(roomId);
+      }
+
+      if( getAuthorName( directRoom.otherPubkey) == directRoomId){
+        lookedUpName.add(roomId);
+      }
+    });
+
    
     if( lookedUpName.length == 1) {
       DirectMessageRoom? room = directRooms[lookedUpName.first];
@@ -862,7 +879,7 @@ class Store {
         return lookedUpName.first;
       }
     } else {
-      print("got more than one pubkey for $directRoomId which are $lookedUpName");
+      print("Got keys $lookedUpName for $directRoomId ");
       for( String key in directRooms.keys) {
         //print("in direct room key = $key");
         if( key == directRoomId) {

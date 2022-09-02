@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -197,47 +198,30 @@ class EventData {
     break;
 
     case 4: 
-      if( pubkey == userPublicKey)
-        break;
-
+      if( pubkey == userPublicKey)  break; // crashes right now otherwise 
       if(!isUserDirectMessage(this)) {
         break;
       }
-      /*print("in translateAndExpandMentions() for a dm \npubkey = $pubkey \ncontent = $content");
-      print("tags = $tags\n");
-      */
-
+      //print("in translateAndExpandMentions() for a dm \npubkey = $pubkey \ncontent = $content");
+      //print("tags = $tags\n");
       int ivIndex = content.indexOf("?iv=");
       var enc_str = content.substring(0, ivIndex);
       var iv = content.substring( ivIndex + 4, content.length);
       //print("enc_str = $enc_str ;  iv = $iv");
-      var decryptd = myPrivateDecrypt( userPrivateKey, "02" + pubkey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
-      
+
+      String userKey = userPrivateKey ;
+      String otherUserPubKey = "02" + pubkey;
+      if( pubkey == userPublicKey) {
+        userKey =  userPrivateKey;
+        otherUserPubKey = "02" + pubkey;
+        //iv = "";
+      } 
+      var decryptd = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
       evaluatedContent = decryptd;
-      //printEventData(0);
-      //print("\n\n");
       break;
     } // end switch
   } // end translateAndExpandMentions
 
-Uint8List aesCbcDecrypt(Uint8List key, Uint8List iv, Uint8List cipherText) {
-  // Create a CBC block cipher with AES, and initialize with key and IV
-
-  final cbc = CBCBlockCipher(AESFastEngine())
-    ..init(false, ParametersWithIV(KeyParameter(key), iv)); // false=decrypt
-
-  // Decrypt the cipherText block-by-block
-
-  final paddedPlainText = Uint8List(cipherText.length); // allocate space
-
-  var offset = 0;
-  while (offset < cipherText.length) {
-    offset += cbc.processBlock(cipherText, offset, paddedPlainText, offset);
-  }
-  assert(offset == cipherText.length);
-
-  return paddedPlainText;
-}
 
   // only applicable for kind 42 event
   String getChatRoomId() {
@@ -340,28 +324,29 @@ class Event {
   EventData eventData;
   String originalJson;
   List<String> seenOnRelays;
+  bool readFromFile;
 
-  Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson);
+  Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson, [this.readFromFile = false]);
 
   @override
   bool operator ==( other) {
      return (other is Event) && eventData.id == other.eventData.id;
   }
 
-  factory Event.fromJson(String d, String relay) {
+  factory Event.fromJson(String d, String relay, [bool fromFile = false]) {
     try {
       dynamic json = jsonDecode(d);
       if( json.length < 3) {
         String e = "";
         e = json.length > 1? json[0]: "";
-        return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]");
+        return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]", fromFile);
       }
-      return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d );
+      return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d, fromFile );
     } on Exception catch(e) {
       if( gDebug> 0) {
         print("Could not create event. returning dummy event. $e");
       }
-      return Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]");
+      return Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]", fromFile);
     }
   }
 
@@ -427,29 +412,6 @@ List<String> getpTags(Set<Event> events, int numMostFrequent) {
   }
 
   return ptags;
-}
-
-Set<Event> readEventsFromFile(String filename) {
-  Set<Event> events = {};
-  final File  file   = File(filename);
-
-  // sync read
-  try {
-    List<String> lines = file.readAsLinesSync();
-    for( int i = 0; i < lines.length; i++ ) {
-        Event e = Event.fromJson(lines[i], "");
-        if( e.eventData.id == gCheckEventId) {
-          print("read $gCheckEventId from file");
-        }
-        events.add(e);
-    }
-  } on Exception catch(e) {
-    //print("cannot open file $gEventsFilename");
-    if( gDebug > 0) print("Could not open file. error =  $e");
-  }
-
-  if( gDebug > 0) print("In readEventsFromFile: returning ${events.length} total events");
-  return events;
 }
 
 // From the list of events provided, lookup the lastst contact information for the given user/pubkey
@@ -568,8 +530,8 @@ bool processKind3Event(Event newContactEvent) {
 }
 
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
-String getAuthorName(String pubkey) {
-  String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
+String getAuthorName(String pubkey, [int len = 3]) {
+  String max3(String v) => v.length > len? v.substring(0,len) : v.substring(0, v.length);
   String name = gKindONames[pubkey]?.name??max3(pubkey);
   return name;
 }
@@ -578,15 +540,17 @@ String getAuthorName(String pubkey) {
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
-  if(gDebug > 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
+  if(gDebug >= 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
 
-  gKindONames.forEach((pk, value) {
+  gKindONames.forEach((pk, userInfo) {
     // check both the user name, and the pubkey to search for the user
-    if( userName == value.name) {
+    //print(userInfo.name);
+    if( userName == userInfo.name) {
       pubkeys.add(pk);
     }
 
     if( userName.length <= pk.length) {
+      print("$pk $userName" );
       if( pk.substring(0, userName.length) == userName) {
         pubkeys.add(pk);
       }
@@ -770,19 +734,20 @@ bool isUserDirectMessage(EventData directMessageData) {
 }
 
 /// Decrypt data using self private key
-String myPrivateDecrypt(
-      String privateString, String publicString, String b64encoded,
-      [String b64IV = ""]) {
+String myPrivateDecrypt( String privateString, 
+                         String publicString, 
+                         String b64encoded,
+                        [String b64IV = ""]) {
+  Uint8List encdData = convert.base64.decode(b64encoded);
+  final rawData = myPrivateDecryptRaw(privateString, publicString, encdData, b64IV);
+  convert.Utf8Decoder decode = const convert.Utf8Decoder();
+  return decode.convert(rawData.toList());
+}
 
-    Uint8List encdData = convert.base64.decode(b64encoded);
-    final rawData = myPrivateDecryptRaw(privateString, publicString, encdData, b64IV);
-    convert.Utf8Decoder decode = const convert.Utf8Decoder();
-    return decode.convert(rawData.toList());
-  }
-
-Uint8List myPrivateDecryptRaw(
-      String privateString, String publicString, Uint8List cipherText,
-      [String b64IV = ""]) {
+Uint8List myPrivateDecryptRaw( String privateString, 
+                               String publicString, 
+                               Uint8List cipherText,
+                               [String b64IV = ""]) {
     final secretIV = Kepler.byteSecret(privateString, publicString);
     final key = Uint8List.fromList(secretIV[0]);
 
@@ -790,33 +755,78 @@ Uint8List myPrivateDecryptRaw(
         ? convert.base64.decode(b64IV)
         : Uint8List.fromList(secretIV[1]);
 
+    bool debug = false;
+    if( debug) print("iv = $iv ");
+   
+    // pointy castle source https://github.com/PointyCastle/pointycastle/blob/master/tutorials/aes-cbc.md
 
-// pointy castle source https://github.com/PointyCastle/pointycastle/blob/master/tutorials/aes-cbc.md
-final cbc = CBCBlockCipher(AESFastEngine())
-    ..init(false, ParametersWithIV(KeyParameter(key), iv)); // false=decrypt
 
-  // Decrypt the cipherText block-by-block
+  final cbc = CBCBlockCipher(AESFastEngine())
+    ..init(false, ParametersWithIV(KeyParameter(key), iv) ) ; 
+  
 
-  final paddedPlainText = Uint8List(cipherText.length); // allocate space
+  // 2
 
-  //print("going into while");
+  //PaddedBlockCipher('AES/CBC/PKCS7').KeyParameter = KeyParameter;
+  PaddedBlockCipher p = PaddedBlockCipher('AES/CBC/PKCS7');
+  if( debug) print("p cipher: ${p.cipher}");
+  p.cipher.init(false, ParametersWithIV(KeyParameter(key), iv) ) ; 
+  
+  
+  PaddedBlockCipherParameters paddedParams = PaddedBlockCipherParameters (  ParametersWithIV(KeyParameter(key), iv), null );
+
+  final pbc = CBCBlockCipher(p)..init(false, ParametersWithIV(paddedParams, iv) ) ;
+   
+
+  // 3 https://github.com/Dhuliang/flutter-bsv/blob/42a2d92ec6bb9ee3231878ffe684e1b7940c7d49/lib/src/aescbc.dart
+
+  CipherParameters params = new PaddedBlockCipherParameters(
+      new ParametersWithIV(new KeyParameter(key), iv), null);
+
+  PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
+      new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
+
+  cipherImpl.init(false,
+                  params as PaddedBlockCipherParameters<CipherParameters?,
+                                                        CipherParameters?>);
+
+  final Uint8List  paddedPlainText = Uint8List(cipherText.length); // allocate space
+
   var offset = 0;
   while (offset < cipherText.length) {
-/*
     convert.Utf8Decoder decode = const convert.Utf8Decoder();
-    print('in while loop $offset $paddedPlainText len = ${paddedPlainText}');
-    print( "paddedPlainText converted: ${decode.convert(paddedPlainText)}");
-    print("");
-*/  
-    offset += cbc.processBlock(cipherText, offset, paddedPlainText, offset);
+    offset += cipherImpl.processBlock(cipherText, offset, paddedPlainText, offset);
   }
 
   assert(offset == cipherText.length);
-  return paddedPlainText;
+
+  final pd = PKCS7Padding ();
+  Uint8List retval = paddedPlainText;// p.process(false, paddedPlainText);
+  return  retval.sublist(0, retval.length);
   }
 
- ParametersWithIV<KeyParameter> buildParams(
-      Uint8List key, Uint8List iv) {
-    return ParametersWithIV<KeyParameter>(KeyParameter(key), iv);
+ParametersWithIV<KeyParameter> 
+buildParams( Uint8List key, Uint8List iv) {
+  return ParametersWithIV<KeyParameter>(KeyParameter(key), iv);
+}
+
+Set<Event> readEventsFromFile(String filename) {
+  Set<Event> events = {};
+  final File  file   = File(filename);
+
+  // sync read
+  try {
+    List<String> lines = file.readAsLinesSync();
+    for( int i = 0; i < lines.length; i++ ) {
+        Event e = Event.fromJson(lines[i], "", true);
+        events.add(e);
+    }
+  } on Exception catch(e) {
+    //print("cannot open file $gEventsFilename");
+    if( gDebug > 0) print("Could not open file. error =  $e");
   }
+
+  if( gDebug > 0) print("In readEventsFromFile: returning ${events.length} total events");
+  return events;
+}
 

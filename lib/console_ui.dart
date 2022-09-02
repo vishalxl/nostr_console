@@ -12,7 +12,7 @@ Future<void> processNotifications(Store node)  async {
   const int waitMilliSeconds = 150;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
-    Set<String> newEventIdsSet = node.insertEvents(getRecievedEvents());
+    Set<String> newEventIdsSet = node.processIncomingEvent(getRecievedEvents());
     String nameToDisplay = userPrivateKey.length == 64? 
                               "$gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
                               "${gWarningColor}You are not signed in$gColorEndMarker but are using public key $userPublicKey";
@@ -269,16 +269,15 @@ Future<void> otherMenuUi(Store node) async {
                 node.printSocialDistance(pubkey.first, authorName);
                 print("");
                 
-                stdout.write("They follows ${contactEvent.eventData.contactList.length} accounts:  ");
+                stdout.write("They follow ${contactEvent.eventData.contactList.length} accounts:  ");
                 contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
                 print("\n");
-
-                List<String> followers = node.getFollowers(pubkey.first);
-                stdout.write("They have ${followers.length} followers:  ");
-                followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
-                print("");
-
               }
+
+              List<String> followers = node.getFollowers(pubkey.first);
+              stdout.write("They have ${followers.length} followers:  ");
+              followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+              print("");              
               print("");
             }
           }
@@ -584,7 +583,7 @@ Future<void> mainMenuUi(Store node) async {
 
     bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
-
+    
     bool userContinue = true;
     while(userContinue) {
       // align the text again in case the window size has been changed
@@ -602,6 +601,7 @@ Future<void> mainMenuUi(Store node) async {
       }
 
       await processNotifications(node);
+
       // the main menu
       int option = showMenu(['Display feed',     // 1 
                              'Post/Reply/Like',  // 2
@@ -657,11 +657,11 @@ Future<void> mainMenuUi(Store node) async {
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);
-          print("\nFinished Nostr session for user with name and public key: ${authorName} ($userPublicKey).");
+          print("\nFinished Nostr session for user with name and public key: ${authorName} ($userPublicKey)");
           if( gEventsFilename != "") {
             await node.writeEventsToFile(gEventsFilename);
           }
           exit(0);
-      }
+      } // end menu switch
     } // end while
-}
+} // end mainMenu

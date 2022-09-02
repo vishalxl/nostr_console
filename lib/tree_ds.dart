@@ -330,17 +330,14 @@ class Tree {
  * This Store class holds events too in its map, and in its chatRooms structure
  */
 class Store {
-  List<Tree>        children;            // only has kind 1 events
+  List<Tree>        topPosts;            // only has kind 1 events
 
   Map<String, Tree>  allChildEventsMap;   // has events of kind typesInEventMap
   List<String>       eventsWithoutParent;
-  bool               whetherTopMost;
   Map<String, ChatRoom> chatRooms = {};
   Map<String, DirectMessageRoom> directRooms = {};
 
-  Set<String>        eventsNotReadFromFile;
-
-  Store(this.children, this.allChildEventsMap, this.eventsWithoutParent, this.whetherTopMost, this.chatRooms, this.directRooms, this.eventsNotReadFromFile) {
+  Store(this.topPosts, this.allChildEventsMap, this.eventsWithoutParent, this.chatRooms, this.directRooms) {
     allChildEventsMap.forEach((eventId, tree) {
       if( tree.store == null) {
         tree.setStore(this);
@@ -448,7 +445,7 @@ class Store {
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Store.fromEvents(Set<Event> events) {
     if( events.isEmpty) {
-      return Store( [], {}, [], false, {}, {}, {});
+      return Store( [], {}, [], {}, {});
     }
 
     // create a map tempChildEventsMap from list of events, key is eventId and value is event itself
@@ -532,133 +529,138 @@ class Store {
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
     // create a dummy top level tree and then create the main Tree object
-    return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, true, rooms, tempDirectRooms, {});
+    return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, rooms, tempDirectRooms);
   } // end fromEvents()
 
    /***********************************************************************************************************************************/
-   /* @insertEvents inserts the given new events into the tree, and returns the id the ones actually 
-    * inserted so that they can be printed as notifications
-   */
-  Set<String> insertEvents(Set<Event> newEventsSetToProcess) {
-    if( gDebug > 0) log.info("In insertEvetnts: called for ${newEventsSetToProcess.length} events");
+   /* @processIncomingEvent inserts the relevant events into the tree and otherwise processes likes, delete events etc.
+    *                        returns the id of the relevant ones actually inserted so that they can be printed as notifications. 
+    */
+  Set<String> processIncomingEvent(Set<Event> newEventsToProcess) {
+    if( gDebug >= 0) log.info("In insertEvetnts: allChildEventsMap size = ${allChildEventsMap.length}, called for ${newEventsToProcess.length} NEW events");
 
     Set<String> newEventIdsSet = {};
 
     // add the event to the main event store thats allChildEventsMap
-    newEventsSetToProcess.forEach((newEvent) { 
-     
-    if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
-      return;
-    }
-
-    // handle reaction events and return if we could not find the reacted to. Continue otherwise to add this to notification set newEventIdsSet
-    if( newEvent.eventData.kind == 7) {
-      if( processReaction(newEvent) == "") {
-        if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
+    newEventsToProcess.forEach((newEvent) { 
+      
+      if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
         return;
       }
-    }
 
-    // handle delete events. return if its not handled for some reason ( like deleted event not found)
-    if( newEvent.eventData.kind == 5) {
-      processDeleteEvent(allChildEventsMap, newEvent);
-      if(gDebug > 0) print("In insertEvents: For new deleteion event ${newEvent.eventData.id} could not process it.");
-      return;
-    }
-
-    if( !isUserDirectMessage(newEvent.eventData)) { // direct message not relevant to user are ignored 
-      return;
-    }
-
-
-    // only kind 0, 1, 3, 4, 5( delete), 7, 40, 42 events are added to map, return otherwise
-    if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
-      return;
-    }
-
-    // expand mentions ( and translate if flag is set) and then add event to main event map
-    newEvent.eventData.translateAndExpandMentions(); // this also handles dm decryption for kind 4 messages, for kind 1 will do translation/expansion; 
-
-    eventsNotReadFromFile.add(newEvent.eventData.id); // used later so that only these events are appended to the file
-
-    // add them to the main store of the Tree object
-    allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
-
-    // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
-    if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
-      newEventIdsSet.add(newEvent.eventData.id);
-    }
-  });
-    
-  // now go over the newly inserted event, and add its to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
-  newEventIdsSet.forEach((newId) {
-    Tree? newTree = allChildEventsMap[newId];
-    if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above
-
-      switch(newTree.event.eventData.kind) {
-        case 1:
-          // only kind 1 events are added to the overall tree structure
-          if( newTree.event.eventData.eTagsRest.isEmpty) {
-              // if its a new parent event, then add it to the main top parents ( this.children)
-              children.add(newTree);
-          } else {
-              // if it has a parent , then add the newTree as the parent's child
-              String parentId = newTree.event.eventData.getParent();
-              if( allChildEventsMap.containsKey(parentId)) {
-                allChildEventsMap[parentId]?.children.add(newTree);
-              } else {
-                // create top unknown parent and then add it
-                Event dummy = Event("","",  EventData("non", gDummyAccountPubkey, newTree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
-                Tree dummyTopNode = Tree.withoutStore(dummy, []);
-                dummyTopNode.children.add(newTree);
-                children.add(dummyTopNode);
-              }
-          }
-          break;
-        case 4:
-          // add kind 4 direct chat message event to its direct massage room
-          String directRoomId = getDirectRoomId(newTree.event.eventData);
-          //print("in insert events: got directRoomId = ${directRoomId}");
-          if( directRoomId != "") {
-            if( directRooms.containsKey(directRoomId)) {
-              if( gDebug > 0) print("added event to direct room in insert event");
-              addMessageToDirectRoom(directRoomId, newTree.event.eventData.id, allChildEventsMap, directRooms);
-              newTree.event.eventData.isNotification = true; // highlight it too in next printing
-              //print("   in from event: added it to a direct room");
-              break;
-            }
-          }
-
-          List<String> temp = [];
-          temp.add(newTree.event.eventData.id);
-          directRooms[directRoomId] = DirectMessageRoom(directRoomId, temp); // TODO sort it 
-
-          break;
-
-        case 42:
-          newTree.event.eventData.isNotification = true; // highlight it too in next printing
-          // add 42 chat message event id to its chat room
-          String channelId = newTree.event.eventData.getParent();
-          if( channelId != "") {
-            if( chatRooms.containsKey(channelId)) {
-              if( gDebug > 0) print("added event to chat room in insert event");
-              addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms); // adds in order
-              break;
-            } else {
-              chatRooms[channelId] = ChatRoom(channelId, "", "", "", []);
-              addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms);
-            }
-          } 
-          break;
-        default: 
-          break;
+      // handle reaction events and return if we could not find the reacted to. Continue otherwise to add this to notification set newEventIdsSet
+      if( newEvent.eventData.kind == 7) {
+        if( processReaction(newEvent) == "") {
+          if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
+          return;
+        }
       }
-    }
-  });
 
-  if(gDebug > 0) print("In end of insertEvents: Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements"} ");
-  return newEventIdsSet;
-}
+      // handle delete events. return if its not handled for some reason ( like deleted event not found)
+      if( newEvent.eventData.kind == 5) {
+        processDeleteEvent(allChildEventsMap, newEvent);
+        if(gDebug > 0) print("In insertEvents: For new deleteion event ${newEvent.eventData.id} could not process it.");
+        return;
+      }
+
+      if( newEvent.eventData.kind == 4) {
+        if( !isUserDirectMessage(newEvent.eventData)) { // direct message not relevant to user are ignored 
+          return;
+        }
+      }
+
+      if( newEvent.eventData.kind == 0) {
+        processKind0Event(newEvent);
+      }
+
+      // only kind 0, 1, 3, 4, 5( delete), 7, 40, 42 events are added to map, return otherwise
+      if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
+        return;
+      }
+
+      // expand mentions ( and translate if flag is set) and then add event to main event map
+      newEvent.eventData.translateAndExpandMentions(); // this also handles dm decryption for kind 4 messages, for kind 1 will do translation/expansion; 
+
+      // add them to the main store of the Tree object
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
+
+      // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
+      if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
+        newEventIdsSet.add(newEvent.eventData.id);
+      }
+    });
+    
+    // now go over the newly inserted event, and add its to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
+    newEventIdsSet.forEach((newId) {
+      Tree? newTree = allChildEventsMap[newId];
+      if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above
+
+        switch(newTree.event.eventData.kind) {
+          case 1:
+            // only kind 1 events are added to the overall tree structure
+            if( newTree.event.eventData.eTagsRest.isEmpty) {
+                // if its a new parent event, then add it to the main top parents ( this.children)
+                topPosts.add(newTree);
+            } else {
+                // if it has a parent , then add the newTree as the parent's child
+                String parentId = newTree.event.eventData.getParent();
+                if( allChildEventsMap.containsKey(parentId)) {
+                  allChildEventsMap[parentId]?.children.add(newTree);
+                } else {
+                  // create top unknown parent and then add it
+                  Event dummy = Event("","",  EventData("non", gDummyAccountPubkey, newTree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+                  Tree dummyTopNode = Tree.withoutStore(dummy, []);
+                  dummyTopNode.children.add(newTree);
+                  topPosts.add(dummyTopNode);
+                }
+            }
+            break;
+          case 4:
+            // add kind 4 direct chat message event to its direct massage room
+            String directRoomId = getDirectRoomId(newTree.event.eventData);
+            //print("in insert events: got directRoomId = ${directRoomId}");
+            if( directRoomId != "") {
+              if( directRooms.containsKey(directRoomId)) {
+                if( gDebug > 0) print("added event to direct room in insert event");
+                addMessageToDirectRoom(directRoomId, newTree.event.eventData.id, allChildEventsMap, directRooms);
+                newTree.event.eventData.isNotification = true; // highlight it too in next printing
+                //print("   in from event: added it to a direct room");
+                break;
+              }
+            }
+
+            List<String> temp = [];
+            temp.add(newTree.event.eventData.id);
+            directRooms[directRoomId] = DirectMessageRoom(directRoomId, temp); // TODO sort it 
+
+            break;
+
+          case 42:
+            newTree.event.eventData.isNotification = true; // highlight it too in next printing
+            // add 42 chat message event id to its chat room
+            String channelId = newTree.event.eventData.getParent();
+            if( channelId != "") {
+              if( chatRooms.containsKey(channelId)) {
+                if( gDebug > 0) print("added event to chat room in insert event");
+                addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms); // adds in order
+                break;
+              } else {
+                chatRooms[channelId] = ChatRoom(channelId, "", "", "", []);
+                addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms);
+              }
+            } 
+            break;
+          default: 
+            break;
+        }
+      }
+    });
+    int totalTreeSize = 0;
+    topPosts.forEach((element) {totalTreeSize += element.count();});
+    if(gDebug >= 0) print("In end of insertEvents: allChildEventsMap size = ${allChildEventsMap.length}; mainTree count = $totalTreeSize");
+    if(gDebug >= 0)  print("Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements>"} ");
+    return newEventIdsSet;
+  } // end insertEvents()
 
   /***********************************************************************************************************************************/
   /*
@@ -761,17 +763,17 @@ class Store {
     int numPrinted = 0;
 
     depth = depth - 1;
-    children.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
+    topPosts.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
 
-    for( int i = 0; i < children.length; i++) {
+    for( int i = 0; i < topPosts.length; i++) {
 
       // continue if this children isn't going to get printed anyway; selector is only called for top most tree
-      if( treeSelector(children[i]) == false) {
+      if( treeSelector(topPosts[i]) == false) {
         continue;
       } 
 
       // for top Store, only print the thread that are newer than the given parameter
-      int newestChildTime = children[i].getMostRecentTime(0);
+      int newestChildTime = topPosts[i].getMostRecentTime(0);
       DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChildTime *1000);
       if( dTime.compareTo(newerThan) < 0) {
         continue;
@@ -781,7 +783,7 @@ class Store {
         stdout.write("\n"); 
       }
 
-      numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
+      numPrinted += topPosts[i].printTree(depth+1, newerThan,  treeSelector);
     }
 
     print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
@@ -825,10 +827,12 @@ class Store {
     print("\n\nDirect messages inbox:");
     printUnderlined("      From                Num of Messages            Latest Message           ");
     directRooms.forEach((key, value) {
-      String name = getAuthorName(key);
+      String name = getAuthorName(key, 4);
 
       int numMessages = value.messageIds.length;
       stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
+
+      // print latest event in one lin
       List<String> messageIds = value.messageIds;
       for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
@@ -845,10 +849,12 @@ class Store {
 
   // shows the given directRoomId, where directRoomId is prefix-id or pubkey of the other user. returns full id of other user.
   String showDirectRoom(String directRoomId, [int page = 1]) {
+    print("In show DirectRoom $directRoomId");
     if( directRoomId.length > 64) { // TODO revisit  cause if name is > 64 should not return
       return "";
     }
     Set<String> lookedUpName = getPublicKeyFromName(directRoomId);
+   
     if( lookedUpName.length == 1) {
       DirectMessageRoom? room = directRooms[lookedUpName.first];
       if( room != null) {
@@ -856,7 +862,7 @@ class Store {
         return lookedUpName.first;
       }
     } else {
-      //print("got more than one pubkey for $directRoomId which are $lookedUpName");
+      print("got more than one pubkey for $directRoomId which are $lookedUpName");
       for( String key in directRooms.keys) {
         //print("in direct room key = $key");
         if( key == directRoomId) {
@@ -925,7 +931,7 @@ class Store {
 
   // Write the tree's events to file as one event's json per line
   Future<void> writeEventsToFile(String filename) async {
-    //print("opening $filename to write to");
+    if( gDebug > 0) print("opening $filename to write to.");
     try {
       final File file         = File(filename);
       
@@ -936,23 +942,26 @@ class Store {
 
       const int  numLinesTogether = 100; // number of lines to write in one write call
       int        linesWritten = 0;
-      if(gDebug > 0) log.info("eventsNotReadFromFile = ${eventsNotReadFromFile.length}. start writing.");
-      for( var k in eventsNotReadFromFile) {
-        Tree? t = allChildEventsMap[k];
-        if( t != null) {
-          // only write if its not too old
-          if( gDontWriteOldEvents) {
-            if( t.event.eventData.createdAt < (DateTime.now().subtract(Duration(days: gDontSaveBeforeDays)).millisecondsSinceEpoch ~/ 1000)) {
-              continue;
-            }
-          }
+      for( var tree in allChildEventsMap.values) {
 
-          String line = "${t.event.originalJson}\n";
-          nLinesStr += line;
-          eventCounter++;
-          if( t.event.eventData.kind == 1) {
-            countPosts++;
+        if( tree.event.readFromFile) { // ignore those already in file; only the new ones are writen/appended to file
+          continue;
+        }
+
+        // only write if its not too old
+        if( gDontWriteOldEvents) {
+          if( tree.event.eventData.createdAt <  getSecondsDaysAgo(gDontSaveBeforeDays)) {
+            continue;
           }
+        }
+
+        //print("writing event ");
+        //tree.event.printEvent(0); print("");
+        String line = "${tree.event.originalJson}\n";
+        nLinesStr += line;
+        eventCounter++;
+        if( tree.event.eventData.kind == 1) {
+          countPosts++;
         }
 
         if( eventCounter % numLinesTogether == 0) {
@@ -960,14 +969,15 @@ class Store {
           nLinesStr = "";
           linesWritten += numLinesTogether;
         }
-      }
+      } // end for
 
       if(  eventCounter > linesWritten) {
+        //print("writing..");
         await  file.writeAsString(nLinesStr, mode: FileMode.append).then( (file) => file);
         nLinesStr = "";
       }
 
-      if(gDebug > 0) log.info("eventsNotReadFromFile = ${eventsNotReadFromFile.length}. finished writing eventCounter = ${eventCounter}.");
+      if(gDebug > 0) log.info("finished writing eventCounter = ${eventCounter}.");
       print("Appended $eventCounter new events to file \"$gEventsFilename\" of which ${countPosts} are posts.");
     } on Exception catch (e) {
         print("Could not open file $filename.");
@@ -1114,8 +1124,8 @@ class Store {
 
   int count() {
     int totalEvents = 0;
-    for(int i = 0; i < children.length; i++) {
-      totalEvents += children[i].count(); // calling tree's count.
+    for(int i = 0; i < topPosts.length; i++) {
+      totalEvents += topPosts[i].count(); // calling tree's count.
     }
     return totalEvents;
   }
@@ -1331,7 +1341,7 @@ void processReactions(Set<Event> events) {
 Store getTree(Set<Event> events) {
     if( events.isEmpty) {
       if(gDebug > 0) log.info("Warning: In printEventsAsTree: events length = 0");
-      return Store([], {}, [], true, {}, {}, {});
+      return Store([], {}, [], {}, {});
     }
 
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)

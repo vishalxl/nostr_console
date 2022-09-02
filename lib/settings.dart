@@ -12,7 +12,7 @@ String       gEventsFilename        = ""; // is set in arguments, and if set, th
 bool         gDontWriteOldEvents    = true;
 const int    gDontSaveBeforeDays    = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
 
-const int gDaysToGetEventsFor = 30; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gDaysToGetEventsFor = 100; // when getting events, this is the since field (unless a fully formed request is given in command line)
 const int gLimitPerSubscription = 20000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
@@ -23,7 +23,7 @@ const int gMaxAuthorsInOneRequest = 100; // number of author requests to send in
 const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 // global counters of total events read or processed
-int numFileEvents = 0, numUserEvents = 0, numFeedEvents = 0, numOtherEvents = 0;
+int numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
 //String defaultServerUrl = 'wss://relay.damus.io';
 //const String nostrRelayUnther = 'wss://nostr-relay.untethr.me'; not working 
@@ -34,7 +34,6 @@ List<String> gListRelayUrls = [ defaultServerUrl,
                                 relayNostrInfo,
                               "wss://nostr-verified.wellorder.net", 
                               "wss://nostr-relay.wlvs.space",
-                              "wss://nostr-pub.wellorder.net",
                               "wss://nostr.ono.re"
                               ];
 

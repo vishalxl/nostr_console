@@ -43,13 +43,19 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(eventFileArg, abbr:"f", defaultsTo: gDefaultEventsFilename)..addFlag(disableFileArg, abbr:"s", defaultsTo: false)
                               ..addFlag(translateArg, abbr: "t", defaultsTo: false)
                               ..addOption(colorArg, abbr:"c")
-                              ..addOption(difficultyArg, abbr:"y");
+                              ..addOption(difficultyArg, abbr:"y")
+                              ..addFlag("debug");
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
         printUsage();
         return;
       }
+
+      if( argResults["debug"]) {
+        gDebug = 1;
+      }
+
 
       if( argResults[translateArg]) {
         gTranslate = true;
@@ -183,24 +189,19 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
+      Set<Event> initialEvents = {}; // collect all events here and then create tree out of them
+
       if( gEventsFilename != "") {
-        print("\n");
         stdout.write('Reading events from ${whetherDefault}file.......');
 
         // read file events and give the events to relays from where they're picked up later
-        Set<Event> eventsFromFile = await readEventsFromFile(gEventsFilename);
-        setRelaysIntialEvents(eventsFromFile);
+        initialEvents = await readEventsFromFile(gEventsFilename);
 
         // count events
-        eventsFromFile.forEach((element) { element.eventData.kind == 1? numFileEvents++: numFileEvents;});
-        print("read $numFileEvents posts from file $gEventsFilename");
+        initialEvents.forEach((element) { element.eventData.kind == 1? numFilePosts++: numFilePosts;});
+        print("read $numFilePosts posts from file $gEventsFilename");
       }
 
-      // get all events in Tree form
-      Store node = getTree(getRecievedEvents());
-
-      // call the mein UI function
-      clearEvents();
 
       // process request string. If this is blank then the application only reads from file and does not connect to internet. 
       if( argResults[requestArg] != null) {
@@ -216,11 +217,14 @@ Future<void> main(List<String> arguments) async {
         
         Future.delayed(Duration(milliseconds: numWaitSeconds * 2), () {
             Set<Event> receivedEvents = getRecievedEvents();
-            stdout.write("received ${receivedEvents.length - numFileEvents} events\n");
+            //stdout.write("received ${receivedEvents.length - numFilePosts} events\n");
 
-            node.insertEvents(getRecievedEvents());
-            clearEvents();
+            initialEvents.addAll(receivedEvents);
+
+            // Creat tree from all events read form file
+            Store node = getTree(initialEvents);
             
+            clearEvents();
             if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
             mainMenuUi(node);            
         });
@@ -236,50 +240,65 @@ Future<void> main(List<String> arguments) async {
       stdout.write('Waiting for user posts to come in.....');
       Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
         // count user events
-        getRecievedEvents().forEach((element) { element.eventData.kind == 1? numUserEvents++: numUserEvents;});
-        stdout.write("...received $numUserEvents new posts made by the user\n");
+
+        initialEvents.addAll(getRecievedEvents());
+        clearEvents();
+
+        //print("numUserPosts $numUserPosts numFilePosts $numFilePosts numFeedPosts $numFeedPosts");
+        initialEvents.forEach((element) { element.eventData.kind == 1? numUserPosts++: numUserPosts;});
+        numUserPosts -= numFilePosts;
+        stdout.write("...done.\n");//received $numUserPosts new posts made by the user\n");
         if( gDebug > 0) log.info("Received user events.");
 
-        getRecievedEvents().forEach((e) => processKind3Event(e)); // first process the kind 3 event
+        initialEvents.forEach((e) => processKind3Event(e)); // first process the kind 3 event
         // get the latest kind 3 event for the user, which lists his 'follows' list
         Event? contactEvent = getContactEvent(userPublicKey);
 
         // if contact list was found, get user's feed, and keep the contact list for later use 
-        List<String> contactList = [];
         if (contactEvent != null ) {
           if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-          contactList = getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+          getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
 
           if( !gContactLists.containsKey(userPublicKey)) {
             gContactLists[userPublicKey] = contactEvent.eventData.contactList;
           }
         } else {
-          if( gDebug > 0) print( "could not find contact list");
+          if( gDebug >= 0) log.info( "Could not find contact list");
         }
         
         stdout.write('Waiting for feed to come in..............');
         Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
 
+          initialEvents.addAll(getRecievedEvents());
+          clearEvents();
+
           // count feed events
-          getRecievedEvents().forEach((element) { element.eventData.kind == 1? numFeedEvents++: numFeedEvents;});
-          numFeedEvents = numFeedEvents - numUserEvents;
-          stdout.write("received $numFeedEvents new posts from the follows\n");
-          if( gDebug > 0)  log.info("Received feed.");
+          initialEvents.forEach((element) { element.eventData.kind == 1? numFeedPosts++: numFeedPosts;});
+          numFeedPosts = numFeedPosts - numUserPosts - numFilePosts;
+          stdout.write("done\n");//received $numFeedPosts new posts from the follows\n");
 
           // get mentioned ptags, and then get the events for those users
-          List<String> pTags = getpTags(getRecievedEvents(), gMaxPtagsToGet);
+          List<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
           getMultiUserEvents(gListRelayUrls, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
           
+          //print("before others: initialEvents = ${initialEvents.length}");
           stdout.write('Waiting for rest of posts to come in.....');
           Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 2), () {
 
+            initialEvents.addAll(getRecievedEvents());
+            clearEvents();
+
+            //print("after adding others: initialEvents = ${initialEvents.length}");
+
             // count other events
-            getRecievedEvents().forEach((element) { element.eventData.kind == 1? numOtherEvents++: numOtherEvents;});
-            numOtherEvents = numOtherEvents - numFeedEvents - numUserEvents;
-            stdout.write("received $numOtherEvents new posts by others\n");
+            initialEvents.forEach((element) { element.eventData.kind == 1? numOtherPosts++: numOtherPosts;});
+            numOtherPosts = numOtherPosts - numFeedPosts - numUserPosts - numFilePosts;
+            stdout.write("done\n");
             if( gDebug > 0) log.info("Received ptag events events.");
 
-            node.insertEvents(getRecievedEvents());
+            // Creat tree from all events read form file
+            Store node = getTree(initialEvents);
+
             clearEvents();
             mainMenuUi(node);
           });

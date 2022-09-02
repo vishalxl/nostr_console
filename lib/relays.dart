@@ -51,19 +51,16 @@ class Relays {
    *          received events in the given List<Event>
    */
   void getUserEvents(String relayUrl, String publicKey, int numEventsToGet, int sinceWhen) {
-    for(int i = 0; i < gBots.length; i++) {
+    for(int i = 0; i < gBots.length; i++) { // ignore bots
       if( publicKey == gBots[i]) {
-        //print("In gerUserEvents: ignoring bot: $publicKey");
         return;
       }
     }
 
     String subscriptionId = "single_user" + (relays[relayUrl]?.numRequestsSent??"").toString();
-
     if( relays.containsKey(relayUrl)) {
-      
       List<String>? users = relays[relayUrl]?.users;
-      if( users != null) {
+      if( users != null) { // get a user only if it has not already been requested
         // following is too restrictive casuse changed sinceWhen is not considered. TODO improve it
         for(int i = 0; i < users.length; i++) {
           if( users[i] == publicKey) {
@@ -254,7 +251,7 @@ List<String> getContactFeed(List<String> relayUrls, List<Contact> contacts, int 
 
   // send request for the users events to the relays
   mContacts.forEach((key, value) { 
-    relays.getMultiUserEvents(key, value, numEventsToGet, sinceWhen);
+    //relays.getMultiUserEvents(key, value, numEventsToGet, sinceWhen);
     
     relayUrls.forEach((relayUrl) {
       relays.getMultiUserEvents(relayUrl, value, numEventsToGet, sinceWhen);

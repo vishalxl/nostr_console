@@ -825,7 +825,7 @@ class Store {
    */
   void printDirectRoomInfo() {
     print("\n\nDirect messages inbox:");
-    printUnderlined("      From                Num of Messages            Latest Message           ");
+    printUnderlined(" From                                    Num of Messages          Latest Message           ");
     directRooms.forEach((key, value) {
       String name = getAuthorName(key, 4);
 
@@ -849,7 +849,7 @@ class Store {
 
   // shows the given directRoomId, where directRoomId is prefix-id or pubkey of the other user. returns full id of other user.
   String showDirectRoom(String directRoomId, [int page = 1]) {
-    print("In show DirectRoom $directRoomId");
+    //print("In show DirectRoom $directRoomId");
     if( directRoomId.length > 64) { // TODO revisit  cause if name is > 64 should not return
       return "";
     }
@@ -857,7 +857,7 @@ class Store {
 
     // TODO improve lookup logic. 
     directRooms.forEach((roomId, directRoom) {
-      print("looking up $directRoomId in  $roomId ${directRoom.otherPubkey}");
+      //print("looking up $directRoomId in  $roomId ${directRoom.otherPubkey}");
       if( directRoomId == roomId) {
         lookedUpName.add(roomId);
       }

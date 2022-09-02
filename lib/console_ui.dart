@@ -455,21 +455,14 @@ Future<void> channelMenuUI(Store node) async {
   while(continueChatMenu) {
     int option = showMenu([ 'Show public channels',          // 1 
                             'Enter a public channel',        // 2
-                            'See personal Inbox',
-                            'Reply or Send a direct message',
-                            'Go back to main menu'],          // 5
-                          "Channel Menu"); // name of menu
+                            'Go back to main menu'],         // 3
+                          "Public Channels Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
       case 1:
         node.printAllChannelsInfo();
         break;
       case 2:
-        // in case the program was invoked with --pubkey, then user can't send messages
-        if( userPrivateKey == "") {
-            print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
-            break;
-        }
 
         bool showChannelOption = true;
         stdout.write("\nType channel id or name, or their 1st few letters; or type 'x' to go to menu: ");
@@ -499,9 +492,16 @@ Future<void> channelMenuUI(Store node) async {
               if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
                 pageNum = (int.tryParse(messageToSend))??1;
               } else {
-                // send message to the given room
-                await sendChatMessage(node, fullChannelId, messageToSend);
-                pageNum = 1; // reset it 
+
+                // in case the program was invoked with --pubkey, then user can't send messages
+                if( userPrivateKey == "") {
+                    print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+                    
+                } else {
+                  // send message to the given room
+                  await sendChatMessage(node, fullChannelId, messageToSend);
+                  pageNum = 1; // reset it 
+                }
               }
             }
           } else {
@@ -513,11 +513,32 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 3:
+        continueChatMenu = false;
+        break;
+
+      default:
+        break;
+    }
+  }
+  return;
+}
+
+Future<void> PrivateMenuUI(Store node) async {
+  //gDebug = 0;
+  bool continueChatMenu = true;
+  while(continueChatMenu) {
+    int option = showMenu([ 'See personal Inbox',
+                            'Reply or Send a direct message',
+                            'Go back to main menu'],          // 5
+                          "Private Message Menu"); // name of menu
+    print('You picked: $option');
+    switch(option) {
+      case 1:
         //print("total direct rooms = ${node.directRooms.length}");
         node.printDirectRoomInfo();
         break;
       
-      case 4:
+      case 2:
         // in case the program was invoked with --pubkey, then user can't send messages
         if( userPrivateKey == "") {
             print("Since no private key has been supplied, messages and replies can't be sent. Invoke with --prikey \n");
@@ -552,9 +573,13 @@ Future<void> channelMenuUI(Store node) async {
               if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
                 pageNum = (int.tryParse(messageToSend))??1;
               } else {
-                // send message to the given room
-                await sendDirectMessage(node, fullChannelId, messageToSend);
-                pageNum = 1; // reset it 
+                  // in case the program was invoked with --pubkey, then user can't send messages
+                  if( userPrivateKey == "") {
+                    print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+                  }
+                  // send message to the given room
+                  await sendDirectMessage(node, fullChannelId, messageToSend);
+                  pageNum = 1; // reset it 
               }
             }
           } else {
@@ -566,7 +591,7 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
 
-      case 5:
+      case 3:
         continueChatMenu = false;
         break;
 
@@ -577,15 +602,16 @@ Future<void> channelMenuUI(Store node) async {
   return;
 }
 
-Future<void> mainMenuUi(Store node) async {
-    //gDebug = 0;
-    // at the very beginning, show the tree as it is, and then show the options menu
 
+Future<void> mainMenuUi(Store node) async {
+
+    // at the very beginning, show the tree with re reply and likes, and then show the options menu
     bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
     
     bool userContinue = true;
     while(userContinue) {
+
       // align the text again in case the window size has been changed
       if( gAlignment == "center") {
         try {
@@ -600,14 +626,15 @@ Future<void> mainMenuUi(Store node) async {
         }
       }
 
-      await processNotifications(node);
+      await processNotifications(node); // this takes 300 ms
 
       // the main menu
       int option = showMenu(['Display feed',     // 1 
                              'Post/Reply/Like',  // 2
-                             'Direct Messsage and Public Channels', // 3
-                             'Other Options',     // 4
-                             'Quit'],             // 5
+                             'Public Channels',  // 3
+                             'Private Messages', // 4
+                             'Other Options',    // 5
+                             'Quit'],            // 6
                              "Main Menu");
       print('You picked: $option');
       switch(option) {
@@ -650,10 +677,14 @@ Future<void> mainMenuUi(Store node) async {
           break;
 
         case 4:
-          await otherMenuUi(node);
+          await PrivateMenuUI(node);
           break;
 
         case 5:
+          await otherMenuUi(node);
+          break;
+
+        case 6:
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);

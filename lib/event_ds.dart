@@ -198,7 +198,10 @@ class EventData {
     break;
 
     case 4: 
-      if( pubkey == userPublicKey)  break; // crashes right now otherwise 
+      if( userPrivateKey == ""){ // cant process if private key not given
+        break;
+      }
+      if( pubkey == userPublicKey )  break; // crashes right now otherwise 
       if(!isUserDirectMessage(this)) {
         break;
       }
@@ -540,7 +543,7 @@ String getAuthorName(String pubkey, [int len = 3]) {
 Set<String> getPublicKeyFromName(String userName) {
   Set<String> pubkeys = {};
 
-  if(gDebug >= 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
+  //if(gDebug > 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
 
   gKindONames.forEach((pk, userInfo) {
     // check both the user name, and the pubkey to search for the user
@@ -550,7 +553,7 @@ Set<String> getPublicKeyFromName(String userName) {
     }
 
     if( userName.length <= pk.length) {
-      print("$pk $userName" );
+      //print("$pk $userName" );
       if( pk.substring(0, userName.length) == userName) {
         pubkeys.add(pk);
       }

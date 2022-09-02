@@ -10,10 +10,11 @@ const int gDefaultNumWaitSeconds = 3000; // is used in main()
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 bool         gDontWriteOldEvents    = true;
-const int    gDontSaveBeforeDays    = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
+const int gDontSaveBeforeDays = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
+
 
 const int gDaysToGetEventsFor = 100; // when getting events, this is the since field (unless a fully formed request is given in command line)
-const int gLimitPerSubscription = 20000;
+const int gLimitPerSubscription = 10000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable

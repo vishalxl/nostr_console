@@ -263,7 +263,7 @@ Future<void> main(List<String> arguments) async {
             gContactLists[userPublicKey] = contactEvent.eventData.contactList;
           }
         } else {
-          if( gDebug >= 0) log.info( "Could not find contact list");
+          if( gDebug > 0) log.info( "Could not find contact list");
         }
         
         stdout.write('Waiting for feed to come in..............');

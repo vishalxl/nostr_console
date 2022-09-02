@@ -239,12 +239,10 @@ Future<void> main(List<String> arguments) async {
       // then display them all
       stdout.write('Waiting for user posts to come in.....');
       Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
-        // count user events
 
         initialEvents.addAll(getRecievedEvents());
         clearEvents();
 
-        //print("numUserPosts $numUserPosts numFilePosts $numFilePosts numFeedPosts $numFeedPosts");
         initialEvents.forEach((element) { element.eventData.kind == 1? numUserPosts++: numUserPosts;});
         numUserPosts -= numFilePosts;
         stdout.write("...done.\n");//received $numUserPosts new posts made by the user\n");
@@ -281,14 +279,11 @@ Future<void> main(List<String> arguments) async {
           List<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
           getMultiUserEvents(gListRelayUrls, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
           
-          //print("before others: initialEvents = ${initialEvents.length}");
           stdout.write('Waiting for rest of posts to come in.....');
           Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 2), () {
 
             initialEvents.addAll(getRecievedEvents());
             clearEvents();
-
-            //print("after adding others: initialEvents = ${initialEvents.length}");
 
             // count other events
             initialEvents.forEach((element) { element.eventData.kind == 1? numOtherPosts++: numOtherPosts;});
@@ -313,5 +308,4 @@ Future<void> main(List<String> arguments) async {
       print(e);
       return;
     }    
-
 }

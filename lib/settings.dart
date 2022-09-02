@@ -10,11 +10,11 @@ const int gDefaultNumWaitSeconds = 3000; // is used in main()
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 bool         gDontWriteOldEvents    = true;
-const int gDontSaveBeforeDays = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
+const int gDontSaveBeforeDays       = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
 
 
-const int gDaysToGetEventsFor = 100; // when getting events, this is the since field (unless a fully formed request is given in command line)
-const int gLimitPerSubscription = 10000;
+const int gDaysToGetEventsFor       = 100; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gLimitPerSubscription     = 10000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
@@ -29,7 +29,7 @@ int numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 //String defaultServerUrl = 'wss://relay.damus.io';
 //const String nostrRelayUnther = 'wss://nostr-relay.untethr.me'; not working 
 const String relayNostrInfo   = 'wss://relay.nostr.info';
-String defaultServerUrl = "wss://relay.damus.io";
+String defaultServerUrl       = "wss://relay.damus.io";
 
 List<String> gListRelayUrls = [ defaultServerUrl,
                                 relayNostrInfo,
@@ -52,29 +52,29 @@ String userPublicKey  = gDefaultPublicKey;
 const String gDummyAccountPubkey = "Non";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color related settings
-const int  gMinValidTextWidth = 60; // minimum text width acceptable
-const int  gDefaultTextWidth = 120; // default text width
-int        gTextWidth = gDefaultTextWidth; // is changed by --width option
-const int  gSpacesPerDepth = 8;     // constant
+const int  gMinValidTextWidth   = 60; // minimum text width acceptable
+const int  gDefaultTextWidth    = 120; // default text width
+int        gTextWidth           = gDefaultTextWidth; // is changed by --width option
+const int  gSpacesPerDepth      = 8;     // constant
 int        gNumLeftMarginSpaces = 0;// this number is modified in main 
-String     gAlignment = "center";   // is modified in main if --align argument is given
-const int  gapBetweenTopTrees = 1;
+String     gAlignment           = "center";   // is modified in main if --align argument is given
+const int  gapBetweenTopTrees   = 1;
 
 // after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
 const int  gMinimumDepthAllowed = 2;
-const int  gMaximumDepthAllowed  = 12;
+const int  gMaximumDepthAllowed = 12;
 const int  gDefaultMaxDepth     = 4;
 int        maxDepthAllowed      = gDefaultMaxDepth;
 const int  leftShiftThreadsBy   = 2;
 
 // Color related settings
 const String defaultTextColor = "green";
-const String greenColor = "\x1B[32m"; // green
-const String cyanColor = "\x1b[36m"; // cyan
-const String whiteColor = "\x1b[97m"; // white
-const String blackColor = "\x1b[30m"; // black
-const String redColor = "\x1B[31m"; // red
-const String blueColor = "\x1b[34m"; // blue
+const String greenColor       = "\x1B[32m"; // green
+const String cyanColor        = "\x1b[36m"; // cyan
+const String whiteColor       = "\x1b[97m"; // white
+const String blackColor       = "\x1b[30m"; // black
+const String redColor         = "\x1B[31m"; // red
+const String blueColor        = "\x1b[34m"; // blue
 
 Map<String, String> gColorMap = { "green": greenColor, 
                                   "cyan" : cyanColor, 
@@ -224,7 +224,7 @@ Source Code and Binaries: https://github.com/vishalxl/nostr_console
 
 void printIntro(String msg) {
 
-String toPrint = 
+String intro = 
 """
 
            ▀█▄   ▀█▀                  ▄           
@@ -243,6 +243,6 @@ String toPrint =
 
 """;                         
 
-print("\n$toPrint\n");
+print("\n$intro\n");
 
 }

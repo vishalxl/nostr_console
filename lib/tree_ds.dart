@@ -1185,6 +1185,22 @@ class Store {
     });
     return deletedEventIds;
   } // end processDeleteEvents
+
+  Set<String> getEventEidFromPrefix(String eventId) {
+    if( eventId.length > 64) {
+      return {};
+    }
+    
+    Set<String> foundEventIds = {};
+    for(  String k in allChildEventsMap.keys) {
+      if( k.length >= eventId.length && k.substring(0, eventId.length) == eventId) {
+        foundEventIds.add(k);
+      }
+    }
+
+    return foundEventIds;
+  }
+
 } // end Store
 
 void addMessageToChannel(String channelId, String messageId, Map<String, Tree> tempChildEventsMap, var chatRooms) {

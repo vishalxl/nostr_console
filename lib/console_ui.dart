@@ -409,10 +409,16 @@ Future<void> otherMenuUi(Store node) async {
       case 7:
         stdout.write("Enter event id to delete: ");
         String? $tempEventId = stdin.readLineSync();
-        String eventId = $tempEventId??"";
-        if( eventId.length == 64) {
-          sendDeleteEvent(node, eventId);
-        } else print("Invalid Event Id entered; should be of 64 byte length. Try again.");
+        String userInputId = $tempEventId??"";
+        Set<String> eventIdToDelete = node.getEventEidFromPrefix(userInputId);
+
+        if( eventIdToDelete.length == 1) {
+          String toDeleteId = eventIdToDelete.first;
+          print("Going to send a delete event for the following event with id ${toDeleteId}");
+          sendDeleteEvent(node, eventIdToDelete.first);
+        } else {
+          print("Invalid Event Id(s) entered = {$eventIdToDelete}");
+        }
 
         break;
 

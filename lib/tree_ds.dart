@@ -43,8 +43,8 @@ class ScrollableMessages {
       String eId = messageIds[i];
       Event? e = tempChildEventsMap[eId]?.event;
       if( e!= null) {
-        e.printEvent(0);
-        print("");
+        print(e.eventData.getStrForChannel(0));
+        //print("");
       }
     }
 

@@ -294,6 +294,37 @@ class EventData {
     return '"${content.substring(0, len)}..." - ${getAuthorName(pubkey)}';
   }
 
+  String getStrForChannel(int depth) {
+    String strToPrint = "";
+    String name = getAuthorName(pubkey);    
+    String strDate = getPrintableDate(createdAt);
+    String tempEvaluatedContent = evaluatedContent;
+    String tempContent = content;
+    
+    if( isHidden) {
+      name = "<hidden>";
+      strDate = "<hidden>";
+      tempEvaluatedContent = tempContent = "<You have hidden this post>";
+    }
+
+    // delete supercedes hidden
+    if( isDeleted) {
+      name = "<deleted>";
+      strDate = "<deleted>";
+      tempEvaluatedContent = tempContent = content; // content would be changed so show that 
+    }
+
+
+    String nameToPrint = name.padLeft(gSpacesPerDepth * 2).substring(0, gSpacesPerDepth * 2);
+    String dateToPrint = strDate.padLeft(gSpacesPerDepth * 2).substring(0, gSpacesPerDepth * 2);
+    strToPrint = "${getDepthSpaces(depth)}      $dateToPrint$nameToPrint: ";
+    int contentDepth = depth + 4  + 1;
+    String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
+    strToPrint += contentShifted;
+    return strToPrint;
+  }
+
+
   // looks up global map of reactions, if this event has any reactions, and then prints the reactions
   // in appropriate color( in case one is a notification, which is stored in member variable)
   String getReactionStr(int depth) {
@@ -868,3 +899,18 @@ Set<Event> readEventsFromFile(String filename) {
   return events;
 }
 
+void readjustAlignment() {
+    // align the text again in case the window size has been changed
+    if( gAlignment == "center") {
+      try {
+        if( gTextWidth > stdout.terminalColumns) {
+          gTextWidth = stdout.terminalColumns - 5;
+        }          
+        gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
+      } on StdoutException catch (e) {
+        print("Terminal information not available");
+        if( gDebug>0)  print("${e.message}");
+        gNumLeftMarginSpaces = 0;
+      }
+    }
+}

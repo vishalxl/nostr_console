@@ -459,6 +459,7 @@ Future<void> channelMenuUI(Store node) async {
   //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
+    readjustAlignment();
     int option = showMenu([ 'Show public channels',          // 1 
                             'Enter a public channel',        // 2
                             'Go back to main menu'],         // 3
@@ -480,6 +481,7 @@ Future<void> channelMenuUI(Store node) async {
         }
         int pageNum = 1;
         while(showChannelOption) {
+          readjustAlignment();
           String fullChannelId = node.showChannel(channelId, pageNum);
           if( fullChannelId == "") {
             print("Could not find the given channel.");
@@ -618,19 +620,7 @@ Future<void> mainMenuUi(Store node) async {
     bool userContinue = true;
     while(userContinue) {
 
-      // align the text again in case the window size has been changed
-      if( gAlignment == "center") {
-        try {
-          if( gTextWidth > stdout.terminalColumns) {
-            gTextWidth = stdout.terminalColumns - 5;
-          }          
-          gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
-        } on StdoutException catch (e) {
-          print("Terminal information not available");
-          if( gDebug>0)  print("${e.message}");
-          gNumLeftMarginSpaces = 0;
-        }
-      }
+      readjustAlignment();
 
       await processNotifications(node); // this takes 300 ms
 

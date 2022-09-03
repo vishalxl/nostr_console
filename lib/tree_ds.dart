@@ -102,7 +102,7 @@ class Tree {
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    */
-  int printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
+  int printTree(int depth, DateTime newerThan) {
 
     int numPrinted = 0;
 
@@ -128,7 +128,7 @@ class Tree {
         leftShifted = true;
       }
 
-      numPrinted += children[i].printTree(depth+1, newerThan,  treeSelector);
+      numPrinted += children[i].printTree(depth+1, newerThan);
     }
 
     if( leftShifted) {
@@ -757,7 +757,7 @@ class Store {
     topNotificationTree.retainWhere((t) => ids.add(t.event.eventData.id));
     
     topNotificationTree.forEach( (t) { 
-      t.printTree(0, DateTime(0), selectAll); 
+      t.printTree(0, DateTime(0)); 
       print("\n");
     });
     print("\n");
@@ -791,7 +791,7 @@ class Store {
         stdout.write("\n"); 
       }
 
-      numPrinted += topPosts[i].printTree(depth+1, newerThan,  treeSelector);
+      numPrinted += topPosts[i].printTree(depth+1, newerThan);
     }
 
     print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");

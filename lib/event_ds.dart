@@ -239,6 +239,7 @@ class EventData {
     int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
+    String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 
     String name = getAuthorName(pubkey);    
     String strDate = getPrintableDate(createdAt);
@@ -264,19 +265,25 @@ class EventData {
    
     String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * depth + 10);
     
-    printDepth(depth);
-    stdout.write("+-------+\n");
-    printDepth(depth);
-    stdout.write("|Author : $name  id: ${maxN(id)}  Time: $strDate\n");
-    printReaction(depth);    // only prints if there are any likes/reactions
-    printDepth(depth);
-    stdout.write("|Message: ");
+    String strToPrint = "";
+
+    strToPrint += getDepthSpaces(depth); // printDepth(depth);
+    strToPrint += ("+-------+\n"); // stdout.write("+-------+\n");
+    strToPrint += getDepthSpaces(depth); //  printDepth(depth);
+    strToPrint += "|Author : $name  id: ${maxN(id)}  Time: $strDate\n"; //stdout.write("|Author : $name  id: ${maxN(id)}  Time: $strDate\n");
+    strToPrint += getReactionStr(depth);    // only prints if there are any likes/reactions
+    strToPrint += getDepthSpaces(depth); // printDepth(depth);
+    strToPrint += "|Message: ";  //stdout.write("|Message: ");
+ 
+    String commentColor = "";
     if( isNotification) {
-      printInColor(contentShifted, gNotificationColor);
+      commentColor = gNotificationColor;
       isNotification = false;
     } else {
-      printInColor(contentShifted, gCommentColor);
+      commentColor = gCommentColor;
     }
+    strToPrint += getStrInColor(contentShifted , commentColor);
+    stdout.write(strToPrint);
   }
 
   String getAsLine({int len = 20}) {
@@ -289,9 +296,15 @@ class EventData {
 
   // looks up global map of reactions, if this event has any reactions, and then prints the reactions
   // in appropriate color( in case one is a notification, which is stored in member variable)
-  void printReaction(int depth) {
+  String getReactionStr(int depth) {
+    String reactorNames = "";
+
+    if( isHidden  ||  isDeleted) {
+      return "";
+    }
+
     if( gReactions.containsKey(id)) {
-      String reactorNames = "|Likes  : ";
+      reactorNames = getDepthSpaces(depth) + "|Likes  : ";
       int numReactions = gReactions[id]?.length??0;
       List<List<String>> reactors = gReactions[id]??[];
       bool firstEntry = true;
@@ -310,16 +323,12 @@ class EventData {
             reactorNames += getAuthorName(reactorId);
             firstEntry = false;
         }
-        
       } // end for
-
-      if( !isHidden && !isDeleted) {
-        printDepth(depth);
-        print(reactorNames);
-      } else {
-      }
       newLikes.clear();
+      reactorNames += "\n";
     }
+    
+    return reactorNames;
   }
 
   @override
@@ -592,6 +601,15 @@ void printDepth(int d) {
     stdout.write(" ");
   }
 }
+
+String getDepthSpaces(int d) {
+  String str = "";
+  for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
+    str += " ";
+  }
+  return str;
+}
+
 
 String getNumSpaces(int num) {
   String s = "";

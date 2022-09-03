@@ -177,6 +177,7 @@ class EventData {
 
     switch(kind) {
     case 1:
+    case 42:
       evaluatedContent = expandMentions(content);
       if( translator != null && gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
@@ -287,11 +288,12 @@ class EventData {
   }
 
   String getAsLine({int len = 20}) {
-    if( len == 0 || len > content.length) {
-      len = content.length;
+    String contentToPrint = evaluatedContent.isEmpty? content: evaluatedContent;
+    if( len == 0 || len > contentToPrint.length) {
+      len = contentToPrint.length;
     }
 
-    return '"${content.substring(0, len)}..." - ${getAuthorName(pubkey)}';
+    return '"${contentToPrint.substring(0, len)}..." - ${getAuthorName(pubkey)}';
   }
 
   String getStrForChannel(int depth) {
@@ -299,7 +301,7 @@ class EventData {
     String name = getAuthorName(pubkey);    
     String strDate = getPrintableDate(createdAt);
     String tempEvaluatedContent = evaluatedContent;
-    String tempContent = content;
+    String tempContent = evaluatedContent.isEmpty? content: evaluatedContent;
     
     if( isHidden) {
       name = "<hidden>";

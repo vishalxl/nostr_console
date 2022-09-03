@@ -1,7 +1,8 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console.
 version: 0.0.7-beta
-homepage: https://github.com/vishalxl/nostr_console for 3-4 sept 2022
+homepage: https://github.com/vishalxl/nostr_console 
+# translations and mentions enabled for channel messages while printing
 
 # build where dm can be read 
 

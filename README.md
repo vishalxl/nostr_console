@@ -81,8 +81,8 @@ nostr_console.exe  --file=eventsFile.txt --prikey=K
 ![Showing Tree with re-shifting to left](https://pbs.twimg.com/media/Fao3E1bUUAAIti1?format=png&name=4096x4096) showing re-alignment of threads for easier reading.
 
 
+# Contact
+
+[Nostr Telegram Channel](https://t.me/nostr_protocol) or at Nostr Pulic Channel 52cab2e3e504ad6447d284b85b5cc601ca0613b151641e77facfec851c2ca816
 
 
-
-
- 

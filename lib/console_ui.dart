@@ -673,6 +673,9 @@ Future<void> mainMenuUi(Store node) async {
           if( content == "+") {
             print("Sending a like to given post.");
             replyKind = "7";
+          } else if( content == "!") {
+            print("Hiding the given post.");
+            replyKind = "7";
           }
 
           await sendReplyPostLike(node, replyToId, replyKind, content);

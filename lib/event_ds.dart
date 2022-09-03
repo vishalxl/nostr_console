@@ -50,7 +50,7 @@ class EventData {
   int                createdAt;
   int                kind;
   String             content;
-  List<String>       eTagsRest;// rest of e tags
+  List<String>       eTags;// rest of e tags
   List<String>       pTags;// list of p tags for kind:1
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
@@ -63,13 +63,13 @@ class EventData {
   bool               isDeleted; // deleted by kind 5 event
   
   String getParent() {
-    if( eTagsRest.isNotEmpty) {
-      return eTagsRest[eTagsRest.length - 1];
+    if( eTags.isNotEmpty) {
+      return eTags[eTags.length - 1];
     }
     return "";
   }
 
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTagsRest, this.pTags,
+  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTags, this.pTags,
             this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = "", this.isHidden = false, this.isDeleted = false});
    
   factory EventData.fromJson(dynamic json) {
@@ -205,19 +205,15 @@ class EventData {
       if(!isUserDirectMessage(this)) {
         break;
       }
-      //print("in translateAndExpandMentions() for a dm \npubkey = $pubkey \ncontent = $content");
-      //print("tags = $tags\n");
       int ivIndex = content.indexOf("?iv=");
       var enc_str = content.substring(0, ivIndex);
       var iv = content.substring( ivIndex + 4, content.length);
-      //print("enc_str = $enc_str ;  iv = $iv");
 
       String userKey = userPrivateKey ;
       String otherUserPubKey = "02" + pubkey;
       if( pubkey == userPublicKey) {
         userKey =  userPrivateKey;
         otherUserPubKey = "02" + pubkey;
-        //iv = "";
       } 
       var decryptd = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
       evaluatedContent = decryptd;
@@ -236,28 +232,41 @@ class EventData {
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
   void printEventData(int depth) {
-    if( id == gCheckEventId) {
-      if(gDebug > 0) { 
-        print("In Event printEventData: got message: $gCheckEventId");
-        isNotification = true;
-      }
+    if( !(kind == 1 || kind == 4 || kind == 42)) {
+      return; // only print kind 1 and 42 and 4
     }
 
     int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
-        
+
+    String name = getAuthorName(pubkey);    
     String strDate = getPrintableDate(createdAt);
+    String tempEvaluatedContent = evaluatedContent;
+    String tempContent = content;
+
+    if( isHidden) {
+      name = "<hidden>";
+      strDate = "<hidden>";
+      tempEvaluatedContent = tempContent = "<You have hidden this post>";
+    }
+
+    // delete supercedes hidden
+    if( isDeleted) {
+      name = "<deleted>";
+      strDate = "<deleted>";
+      tempEvaluatedContent = tempContent = content; // content would be changed so show that 
+    }
+
     if( createdAt == 0) {
       print("debug: createdAt == 0 for event $content");
     }
    
-    String contentShifted = rightShiftContent(evaluatedContent==""?content: evaluatedContent, gSpacesPerDepth * depth + 10);
+    String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * depth + 10);
     
     printDepth(depth);
     stdout.write("+-------+\n");
     printDepth(depth);
-    String name = getAuthorName(pubkey);
     stdout.write("|Author : $name  id: ${maxN(id)}  Time: $strDate\n");
     printReaction(depth);    // only prints if there are any likes/reactions
     printDepth(depth);
@@ -283,24 +292,32 @@ class EventData {
   void printReaction(int depth) {
     if( gReactions.containsKey(id)) {
       String reactorNames = "|Likes  : ";
-      printDepth(depth);
-      //print("All Likes:");
       int numReactions = gReactions[id]?.length??0;
       List<List<String>> reactors = gReactions[id]??[];
+      bool firstEntry = true;
       for( int i = 0; i <numReactions; i++) {
+        
+        String comma = (firstEntry)?"":", ";
+
         String reactorId = reactors[i][0];
-        if( newLikes.contains(reactorId)) {
-          // colorify
-          reactorNames += gNotificationColor + getAuthorName(reactorId) + gColorEndMarker;
+        if( newLikes.contains(reactorId) && reactors[i][1] == "+") {
+          // this is a notifications, print it and then later empty newLikes
+          reactorNames += gNotificationColor + getAuthorName(reactorId) + gColorEndMarker + comma;
+          firstEntry = false;
         } else {
-          reactorNames += getAuthorName(reactorId);
+          // this is normal printing of the reaction. only print for + for now
+          if( reactors[i][1] == "+")
+            reactorNames += getAuthorName(reactorId);
+            firstEntry = false;
         }
         
-        if( i < numReactions -1) {
-          reactorNames += ", ";
-        }
+      } // end for
+
+      if( !isHidden && !isDeleted) {
+        printDepth(depth);
+        print(reactorNames);
+      } else {
       }
-      print(reactorNames);
       newLikes.clear();
     }
   }

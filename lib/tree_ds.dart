@@ -65,7 +65,8 @@ class ChatRoom extends ScrollableMessages {
   String       picture;
 
   ChatRoom(this.chatRoomId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds) : 
-            super ( "${internalChatRoomName} ( ${chatRoomId.substring(0, 6)}", messageIds);
+            super (  internalChatRoomName.isEmpty? chatRoomId: internalChatRoomName + "( " + chatRoomId + " )" , 
+                     messageIds);
 
   String get chatRoomName {
     return internalChatRoomName;
@@ -459,6 +460,9 @@ class Store {
 
     processDeleteEvents(tempChildEventsMap); // handle returned values perhaps later
 
+    processReactions(events, tempChildEventsMap);
+
+
     // once tempChildEventsMap has been created, create connections between them so we get a tree structure from all these events.
     List<Tree>  topLevelTrees = [];// this will become the children of the main top node. These are events without parents, which are printed at top.
     List<String> tempWithoutParent = [];
@@ -480,14 +484,13 @@ class Store {
         handleDirectMessages(tempDirectRooms, tempChildEventsMap, tree.event);
       }
 
-
       // only posts, of kind 1, are added to the main tree structure
       if( eKind != 1) {
         numEventsNotPosts++;
         return;
       }
 
-      if(tree.event.eventData.eTagsRest.isNotEmpty ) {
+      if(tree.event.eventData.eTags.isNotEmpty ) {
         // is not a parent, find its parent and then add this element to that parent Tree
         String parentId = tree.event.eventData.getParent();
         if( tree.event.eventData.id == gCheckEventId) {
@@ -518,7 +521,7 @@ class Store {
 
     // add parent trees as top level child trees of this tree
     for( var tree in tempChildEventsMap.values) {
-        if( tree.event.eventData.kind == 1 &&  tree.event.eventData.eTagsRest.isEmpty) {  // only posts which are parents
+        if( tree.event.eventData.kind == 1 &&  tree.event.eventData.eTags.isEmpty) {  // only posts which are parents
             topLevelTrees.add(tree);
         }
     }
@@ -550,7 +553,8 @@ class Store {
 
       // handle reaction events and return if we could not find the reacted to. Continue otherwise to add this to notification set newEventIdsSet
       if( newEvent.eventData.kind == 7) {
-        if( processReaction(newEvent) == "") {
+        //print("going to call processRreactin");
+        if( processReaction(newEvent, allChildEventsMap) == "") {
           if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
           return;
         }
@@ -598,7 +602,7 @@ class Store {
         switch(newTree.event.eventData.kind) {
           case 1:
             // only kind 1 events are added to the overall tree structure
-            if( newTree.event.eventData.eTagsRest.isEmpty) {
+            if( newTree.event.eventData.eTags.isEmpty) {
                 // if its a new parent event, then add it to the main top parents ( this.children)
                 topPosts.add(newTree);
             } else {
@@ -719,17 +723,21 @@ class Store {
             break;
           case 7:
             Event event = t.event;
-            if(gDebug >= 0) ("Got notification of type 7");
+            if(gDebug > 0) ("Got notification of type 7");
             String reactorId  = event.eventData.pubkey;
-            int    lastEIndex = event.eventData.eTagsRest.length - 1;
-            String reactedTo  = event.eventData.eTagsRest[lastEIndex];
+            int    lastEIndex = event.eventData.eTags.length - 1;
+            String reactedTo  = event.eventData.eTags[lastEIndex];
             Event? reactedToEvent = allChildEventsMap[reactedTo]?.event;
             if( reactedToEvent != null) {
               Tree? reactedToTree = allChildEventsMap[reactedTo];
               if( reactedToTree != null) {
-                reactedToTree.event.eventData.newLikes.add( reactorId);
-                Tree topTree = getTopTree(reactedToTree);
-                topNotificationTree.add(topTree);
+                if(event.eventData.content == "+" ) {
+                  reactedToTree.event.eventData.newLikes.add( reactorId);
+                  Tree topTree = getTopTree(reactedToTree);
+                  topNotificationTree.add(topTree);
+                } else if(event.eventData.content == "!" ) {
+                  reactedToTree.event.eventData.isHidden = true;
+                }
               } else {
                 if(gDebug > 0) print("Could not find reactedTo tree");
               }
@@ -961,7 +969,7 @@ class Store {
       int        linesWritten = 0;
       for( var tree in allChildEventsMap.values) {
 
-        if( tree.event.readFromFile) { // ignore those already in file; only the new ones are writen/appended to file
+        if( tree.event.readFromFile || tree.event.eventData.isDeleted) { // ignore those already in file; only the new ones are writen/appended to file, or those deleted
           continue;
         }
 
@@ -1161,7 +1169,7 @@ class Store {
           if( deletedEvent != null) {
             if( deletedEvent.eventData.kind == 1 && deletedEvent.eventData.pubkey == deleterEvent.eventData.pubkey) {
               deletedEvent.eventData.isDeleted = true;
-              deletedEvent.eventData.content = gDeletedEventMessage + " on ${getPrintableDate(deleterEvent.eventData.createdAt)}";
+              deletedEvent.eventData.content = gDeletedEventMessage;
               deletedEvent.eventData.evaluatedContent = "";
               EventData ed = deletedEvent.eventData;
               deletedEvent.originalJson = '["EVENT","none",{"id":${ed.id},"pubkey":${ed.pubkey},"createdAt":${ed.createdAt},"kind":1,"tags":[],"sig":"invalid","comment":"deleted"}]';
@@ -1201,7 +1209,80 @@ class Store {
     return foundEventIds;
   }
 
-} // end Store
+  // for the given reaction event of kind 7, will update the global gReactions appropriately, returns 
+  // the reactedTo event's id, blank if invalid reaction etc
+  static String processReaction(Event event, Map<String, Tree> tempChildEventsMap) {
+
+    if(  gDebug > 0 && event.eventData.id == "e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e")
+        print("in processReaction: 0 got reaction e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e");
+
+
+    List<String> validReactionList = ["+", "!"]; // TODO support opposite reactions 
+    List<String> opppositeReactions = ['-', "~"];
+
+    if( event.eventData.kind == 7 
+      && event.eventData.eTags.isNotEmpty) {
+
+      if(gDebug > 1) ("Got event of type 7"); // this can be + or !, which means 'hide' event for me
+      String reactorPubkey  = event.eventData.pubkey;
+      String comment    = event.eventData.content;
+      int    lastEIndex = event.eventData.eTags.length - 1;
+      String reactedTo  = event.eventData.eTags[lastEIndex];
+
+      if( gDebug > 0 && event.eventData.id == "e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e")
+         print("in processReaction: 1 got reaction e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e");
+
+      if( !validReactionList.any((element) => element == comment)) {
+        return "";
+      }
+
+      // check if the reaction already exists by this user
+      if( gReactions.containsKey(reactedTo)) {
+        for( int i = 0; i < ((gReactions[reactedTo]?.length)??0); i++) {
+          List<String> oldReaction = (gReactions[reactedTo]?[i])??[];
+          if( oldReaction.length == 2) {
+            //valid reaction
+            if(oldReaction[0] == reactorPubkey && oldReaction[1] == comment) {
+              
+              return ""; // reaction by this user already exists so return
+            }
+          }
+        }
+        List<String> temp = [reactorPubkey, comment];
+        gReactions[reactedTo]?.add(temp);
+      } else {
+        // first reaction to this event, create the entry in global map
+        List<List<String>> newReactorList = [];
+        List<String> temp = [reactorPubkey, comment];
+        newReactorList.add(temp);
+        gReactions[reactedTo] = newReactorList;
+      }
+      // set isHidden for reactedTo if it exists in map
+
+      if(  gDebug > 0 && event.eventData.id == "e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e")
+         print("in processReaction: 2 got reaction e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e");
+
+      if( comment == "!" &&  event.eventData.pubkey == userPublicKey) {
+        tempChildEventsMap[reactedTo]?.event.eventData.isHidden = true;
+      }
+      return reactedTo;
+    } else {
+      // case where its not a kind 7 event, or we can't find the reactedTo event due to absense of e tag.
+    }
+
+    return "";
+  }
+
+  // will go over the list of events, and update the global gReactions appropriately
+  static void processReactions(Set<Event> events, Map<String, Tree> tempChildEventsMap) {
+    print("in processReactions");    
+    for (Event event in events) {
+      processReaction(event, tempChildEventsMap);
+    }
+    return;
+  }
+
+} //================================================================================================================================ end Store
 
 void addMessageToChannel(String channelId, String messageId, Map<String, Tree> tempChildEventsMap, var chatRooms) {
   int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
@@ -1309,62 +1390,6 @@ int sortTreeNewestReply(Tree a, Tree b) {
   }
 }
 
-// for the given reaction event of kind 7, will update the global gReactions appropriately, returns 
-// the reactedTo event's id, blank if invalid reaction etc
-String processReaction(Event event) {
-  if( event.eventData.kind == 7 
-    && event.eventData.eTagsRest.isNotEmpty) {
-    if(gDebug > 1) ("Got event of type 7"); // this can be + or !, which means 'hide' event for me
-    String reactorId  = event.eventData.pubkey;
-    String comment    = event.eventData.content;
-    int    lastEIndex = event.eventData.eTagsRest.length - 1;
-    String reactedTo  = event.eventData.eTagsRest[lastEIndex];
-
-    if( event.eventData.content == "+") {
-      if( gReactions.containsKey(reactedTo)) {
-        // check if the reaction already exists by this user
-        for( int i = 0; i < ((gReactions[reactedTo]?.length)??0); i++) {
-          List<String> oldReaction = (gReactions[reactedTo]?[i])??[];
-          if( oldReaction.length == 2) {
-            //valid reaction
-            if(oldReaction[0] == reactorId) {
-              return ""; // reaction by this user already exists so return
-            }
-          }
-        }
-
-        List<String> temp = [reactorId, comment];
-        gReactions[reactedTo]?.add(temp);
-      } else {
-        // first reaction + to this event, create the entry in global map
-        List<List<String>> newReactorList = [];
-        List<String> temp = [reactorId, comment];
-        newReactorList.add(temp);
-        gReactions[reactedTo] = newReactorList;
-      }
-    } else {
-      if( event.eventData.content == "!") {
-        //reactedTo needs to ve hidden if we have it in the main tree map
-        // Tree? treeReactedTo = 
-
-      }
-    }
-    return reactedTo;
-  } else {
-    // case where its not a kind 7 event, or we can't find the reactedTo event due to absense of e tag.
-
-  }
-
-  return "";
-}
-
-// will go over the list of events, and update the global gReactions appropriately
-void processReactions(Set<Event> events) {
-  for (Event event in events) {
-    processReaction(event);
-  }
-  return;
-}
 
 /*
  * @function getTree Creates a Tree out of these received List of events. 
@@ -1391,7 +1416,7 @@ Store getTree(Set<Event> events) {
     if( gDebug > 0) print("In getTree: totalKind3Processed = $totalKind3Processed  notProcessed = $notProcessed3 gKindONames.length = ${gKindONames.length}"); 
 
     // process kind 7 events or reactions
-    processReactions(events);
+    //processReactions(events);
 
     // remove bot events
     events.removeWhere( (event) => gBots.contains(event.eventData.pubkey));
@@ -1412,7 +1437,7 @@ Store getTree(Set<Event> events) {
     return node;
 }
 
-// sort all participants by id; then create a large string with them together, thats the unique id for now
+//   returns the id of event since only one p is expected in an event ( for future: sort all participants by id; then create a large string with them together, thats the unique id for now)
 String getDirectRoomId(EventData eventData) {
 
   List<String> participantIds = [];
@@ -1427,8 +1452,10 @@ String getDirectRoomId(EventData eventData) {
 
   participantIds.sort();
   String uniqueId = "";
-  participantIds.forEach((element) {uniqueId += element;});
+  participantIds.forEach((element) {uniqueId += element;}); // TODO ensure its only one thats added s
 
+  
+  // send the other persons pubkey as identifier 
   if( eventData.pubkey == userPublicKey) {
     return uniqueId;
   } else { 

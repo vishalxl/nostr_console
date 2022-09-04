@@ -191,6 +191,7 @@ int showMenu(List<String> menuOptions, String menuName) {
         int? valueOption = int.tryParse(userOption);
         if( valueOption != null) {
           if( valueOption >= 1 && valueOption <= menuOptions.length) {
+            readjustAlignment(); // in case user has changed alignment
             return valueOption;
           }
         }
@@ -459,7 +460,6 @@ Future<void> channelMenuUI(Store node) async {
   //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
-    readjustAlignment();
     int option = showMenu([ 'Show public channels',          // 1 
                             'Enter a public channel',        // 2
                             'Go back to main menu'],         // 3
@@ -619,8 +619,6 @@ Future<void> mainMenuUi(Store node) async {
     
     bool userContinue = true;
     while(userContinue) {
-
-      readjustAlignment();
 
       await processNotifications(node); // this takes 300 ms
 

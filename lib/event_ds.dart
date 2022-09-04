@@ -1,6 +1,7 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math';
 import 'package:intl/intl.dart';
 import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
@@ -675,13 +676,31 @@ String rightShiftContent(String s, int numSpaces) {
       numCharsInCurLine = 0;
     } else {
       if( numCharsInCurLine >= (gTextWidth - numSpaces)) {
-        if( i > 1 && (!isWordSeparater(s[i-1]) &&  !isWordSeparater(s[i])) ) {
-          
+        if( i > 1 &&  !isWordSeparater(s[i])) {
+          // go back in output string and readjust it if needed
+          const int lookForSpace = 6;
+          bool foundSpace = false;
+          for(int j = 0; j < min(newString.length, lookForSpace); j++) {
+            if( newString[newString.length-1-j] == " ") {
+              foundSpace = true;
+              String charsInNextLine = "";
+              charsInNextLine = newString.substring(newString.length-j, newString.length);
+              String temp = newString.substring(0, newString.length-j) + "\n" + spacesString + charsInNextLine;
+              newString = temp;
+              numCharsInCurLine = charsInNextLine.length;
+              break;
+            }
+          }
+          if(!foundSpace) {
+            newString += "\n";
+            newString += spacesString;
+            numCharsInCurLine = 0;
+          }
+        } else {
+          newString += "\n";
+          newString += spacesString;
+          numCharsInCurLine = 0;
         }
-
-        newString += "\n";
-        newString += spacesString;
-        numCharsInCurLine = 0;
       } 
       newString += s[i];
     }

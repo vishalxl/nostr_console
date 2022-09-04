@@ -16,7 +16,7 @@ int gDebug = 0;
 // translate 
 GoogleTranslator? translator; // initialized in main when argument given
  
-const int gNumTranslateDays = 1;// translate for this number of days
+const int gNumTranslateDays = 2;// translate for this number of days
 bool gTranslate = false; // translate flag
 
 // Structure to store kind 0 event meta data, and kind 3 meta data for each user. Will have info from latest
@@ -262,20 +262,20 @@ class EventData {
     }
 
     if( createdAt == 0) {
-      print("debug: createdAt == 0 for event $content");
+      print("debug: createdAt == 0 for event $id $content");
     }
    
     String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * depth + 10);
     
     String strToPrint = "";
 
-    strToPrint += getDepthSpaces(depth); // printDepth(depth);
-    strToPrint += ("+-------+\n"); // stdout.write("+-------+\n");
-    strToPrint += getDepthSpaces(depth); //  printDepth(depth);
-    strToPrint += "|Author : $name  id: ${maxN(id)}  Time: $strDate\n"; //stdout.write("|Author : $name  id: ${maxN(id)}  Time: $strDate\n");
+    strToPrint += getDepthSpaces(depth);
+    strToPrint += ("+-------+\n");
+    strToPrint += getDepthSpaces(depth);
+    strToPrint += "|Author : $name  id: ${maxN(id)}  Time: $strDate\n";
     strToPrint += getReactionStr(depth);    // only prints if there are any likes/reactions
-    strToPrint += getDepthSpaces(depth); // printDepth(depth);
-    strToPrint += "|Message: ";  //stdout.write("|Message: ");
+    strToPrint += getDepthSpaces(depth);
+    strToPrint += "|Message: ";
  
     String commentColor = "";
     if( isNotification) {
@@ -305,15 +305,13 @@ class EventData {
     String tempContent = evaluatedContent.isEmpty? content: evaluatedContent;
     
     if( isHidden) {
-      name = "<hidden>";
-      strDate = "<hidden>";
+      name = strDate = "<hidden>";
       tempEvaluatedContent = tempContent = "<You have hidden this post>";
     }
 
     // delete supercedes hidden
     if( isDeleted) {
-      name = "<deleted>";
-      strDate = "<deleted>";
+      name = strDate = "<deleted>";
       tempEvaluatedContent = tempContent = content; // content would be changed so show that 
     }
 

@@ -457,7 +457,6 @@ Future<void> otherMenuUi(Store node) async {
 }
 
 Future<void> channelMenuUI(Store node) async {
-  //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
     int option = showMenu([ 'Show public channels',          // 1 
@@ -532,7 +531,6 @@ Future<void> channelMenuUI(Store node) async {
 }
 
 Future<void> PrivateMenuUI(Store node) async {
-  //gDebug = 0;
   bool continueChatMenu = true;
   while(continueChatMenu) {
     int option = showMenu([ 'See personal Inbox',
@@ -612,9 +610,8 @@ Future<void> PrivateMenuUI(Store node) async {
 
 
 Future<void> mainMenuUi(Store node) async {
-
     // at the very beginning, show the tree with re reply and likes, and then show the options menu
-    //bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
+    // bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
     
     bool userContinue = true;
@@ -692,4 +689,4 @@ Future<void> mainMenuUi(Store node) async {
           exit(0);
       } // end menu switch
     } // end while
-} // end mainMenu
+} // end mainMenuUi()

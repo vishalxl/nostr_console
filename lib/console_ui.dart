@@ -484,7 +484,7 @@ Future<void> channelMenuUI(Store node) async {
           readjustAlignment();
           String fullChannelId = node.showChannel(channelId, pageNum);
           if( fullChannelId == "") {
-            print("Could not find the given channel.");
+            //print("Could not find the given channel.");
             showChannelOption = false;
             break;
           }
@@ -614,8 +614,8 @@ Future<void> PrivateMenuUI(Store node) async {
 Future<void> mainMenuUi(Store node) async {
 
     // at the very beginning, show the tree with re reply and likes, and then show the options menu
-    bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
-    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
+    //bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
+    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
     
     bool userContinue = true;
     while(userContinue) {

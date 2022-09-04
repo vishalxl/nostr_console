@@ -922,35 +922,49 @@ class Store {
 
 
   // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
+  // looks for channelId in id first, then in names. 
   String showChannel(String channelId, [int page = 1]) {
     if( channelId.length > 64 ) {
       return "";
     }
     
+    Set<String> fullChannelId = {};
     for( String key in chatRooms.keys) {
       if( key.substring(0, channelId.length) == channelId ) {
-        ChatRoom? room = chatRooms[key];
-        if( room != null) {
-          printChannel(room, page);
-        }
-        return key;
+        fullChannelId.add(key);
       }
     }
 
-    // since channelId was not found in channel id, search for it in channel name
-    for( String key in chatRooms.keys) {
-        ChatRoom? room = chatRooms[key];
-        if( room != null) {
-          if( room.chatRoomName.length < channelId.length) {
-            continue;
+    if(fullChannelId.length != 1) {
+      for( String key in chatRooms.keys) {
+          ChatRoom? room = chatRooms[key];
+          if( room != null) {
+            if( room.chatRoomName.length < channelId.length) {
+              continue;
+            }
+            if( gDebug > 0) print("room = ${room.chatRoomName} channelId = $channelId");
+            if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
+              fullChannelId.add(key);
+            }
           }
-          if( gDebug > 0) print("room = ${room.chatRoomName} channelId = $channelId");
-          if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
-            printChannel(room);
-            return key;
-          }
-        }
+      } // end for
     }
+
+    if( fullChannelId.length == 1) {
+      ChatRoom? room = chatRooms[fullChannelId.first];
+      if( room != null) {
+        printChannel(room, page);
+      }
+      return fullChannelId.first;
+    } else {
+      if( fullChannelId.length == 0) {
+        print("Could not find the channel.");
+      }
+      else {
+        print("Found more than 1 channel: $fullChannelId");
+      }
+    }
+
     return "";
   }
 
@@ -1216,7 +1230,6 @@ class Store {
     if(  gDebug > 0 && event.eventData.id == "e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e")
         print("in processReaction: 0 got reaction e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e");
 
-
     List<String> validReactionList = ["+", "!"]; // TODO support opposite reactions 
     List<String> opppositeReactions = ['-', "~"];
 
@@ -1362,7 +1375,6 @@ void addMessageToDirectRoom(String directRoomId, String messageId, Map<String, T
   print("In addMessageToChannel: returning without inserting message");
 }
 
-
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.event.eventData.createdAt < b.event.eventData.createdAt) {
     return -1;
@@ -1389,7 +1401,6 @@ int sortTreeNewestReply(Tree a, Tree b) {
     }
   }
 }
-
 
 /*
  * @function getTree Creates a Tree out of these received List of events. 
@@ -1454,7 +1465,6 @@ String getDirectRoomId(EventData eventData) {
   String uniqueId = "";
   participantIds.forEach((element) {uniqueId += element;}); // TODO ensure its only one thats added s
 
-  
   // send the other persons pubkey as identifier 
   if( eventData.pubkey == userPublicKey) {
     return uniqueId;

@@ -403,7 +403,10 @@ class Event {
         e = json.length > 1? json[0]: "";
         return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]", fromFile);
       }
-      return Event(json[0] as String, json[1] as String,  EventData.fromJson(json[2]), [relay], d, fromFile );
+      EventData newEventData = EventData.fromJson(json[2]);
+      if( !fromFile) 
+        newEventData.isNotification = true;
+      return Event(json[0] as String, json[1] as String, newEventData, [relay], d, fromFile );
     } on Exception catch(e) {
       if( gDebug> 0) {
         print("Could not create event. returning dummy event. $e");
@@ -662,23 +665,27 @@ String getNumDashes(int num) {
 
 String rightShiftContent(String s, int numSpaces) {
   String newString = "";
-  int    newlineCounter = 0;
+  int    numCharsInCurLine = 0;
   String spacesString = getNumSpaces(numSpaces + gNumLeftMarginSpaces);
 
   for(int i = 0; i < s.length; i++) {
     if( s[i] == '\n') {
       newString += "\n";
       newString += spacesString;
-      newlineCounter = 0;
+      numCharsInCurLine = 0;
     } else {
-      if( newlineCounter >= (gTextWidth - numSpaces)) {
+      if( numCharsInCurLine >= (gTextWidth - numSpaces)) {
+        if( i > 1 && (!isWordSeparater(s[i-1]) &&  !isWordSeparater(s[i])) ) {
+          
+        }
+
         newString += "\n";
         newString += spacesString;
-        newlineCounter = 0;
+        numCharsInCurLine = 0;
       } 
       newString += s[i];
     }
-    newlineCounter++;
+    numCharsInCurLine++;
   }
   return newString;
 }
@@ -691,6 +698,15 @@ bool nonEnglish(String str) {
 bool isNumeric(String s) {
  return double.tryParse(s) != null;
 }
+
+bool isWordSeparater(String s) {
+  if( s.length != 1) {
+    return false;
+  }
+  return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t' 
+      || s[0] == ',' || s[0] == '.' || s[0] == '-' || s[0] == '('|| s[0] == ')';
+}
+
 
 bool isWhitespace(String s) {
   if( s.length != 1) {

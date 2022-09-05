@@ -575,7 +575,7 @@ Future<void> PrivateMenuUI(Store node) async {
         }
 
         bool showChannelOption = true;
-        stdout.write("\nType user public key, or its 1st few letters; or type 'x' to go to menu: ");
+        stdout.write("\nType user public key, or their name, or their 1st few letters; or type 'x' to cancel: ");
         String? $tempUserInput = stdin.readLineSync();
         String directRoomId = $tempUserInput??"";
 

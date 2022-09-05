@@ -337,11 +337,15 @@ class EventData {
       tempEvaluatedContent = tempContent = content; // content would be changed so show that 
     }
 
+    const int nameWidthDepth = 3; // how wide name will be in depth spaces
+    const int timeWidthDepth = 2;
+    int nameWidth = gSpacesPerDepth * nameWidthDepth;
+    String nameToPrint = name.padLeft(nameWidth).substring(0, nameWidth);
+    String dateToPrint = strDate.padLeft(gSpacesPerDepth * timeWidthDepth).substring(0, gSpacesPerDepth * timeWidthDepth);
 
-    String nameToPrint = name.padLeft(gSpacesPerDepth * 2).substring(0, gSpacesPerDepth * 2);
-    String dateToPrint = strDate.padLeft(gSpacesPerDepth * 2).substring(0, gSpacesPerDepth * 2);
     strToPrint = "${getDepthSpaces(depth)}      $dateToPrint$nameToPrint: ";
-    int contentDepth = depth + 4  + 1;
+    // depth above + ( depth numberof spaces = 1) + (depth of time = 2) + (depth of name = 3)
+    int contentDepth = depth + 1 + timeWidthDepth + nameWidthDepth;
     String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
     strToPrint += contentShifted;
     return strToPrint;
@@ -657,6 +661,17 @@ void printDepth(int d) {
   for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
     stdout.write(" ");
   }
+}
+
+void printCenteredHeadline(displayName) {
+  int numDashes = 10; // num of dashes on each side
+  int startText = gNumLeftMarginSpaces + ( gTextWidth - (displayName.length + 2 * numDashes)) ~/ 2; 
+  if( startText < 0) 
+    startText = 0;
+
+  String str = getNumSpaces(startText) + getNumDashes(numDashes) + displayName + getNumDashes(numDashes);
+  print(str);
+   
 }
 
 String getDepthSpaces(int d) {

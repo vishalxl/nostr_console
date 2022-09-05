@@ -21,10 +21,7 @@ class ScrollableMessages {
       page = 1;
     }
 
-    String displayName = topHeader;
-    int    lenDashes   = 10;
-    String str = getNumSpaces(gNumLeftMarginSpaces + 10) + getNumDashes(lenDashes) + displayName + getNumDashes(lenDashes);
-    print("\n$str\n");
+    printCenteredHeadline(topHeader);
 
     int i = 0, startFrom = 0, endAt = messageIds.length;
     int numPages = 1;
@@ -82,8 +79,8 @@ class DirectMessageRoom extends ScrollableMessages{
   String       otherPubkey; // id of user this DM is happening
 
   DirectMessageRoom(this.otherPubkey, List<String> messageIds):
-            super ( "${getAuthorName(otherPubkey)}", messageIds) {
-              print ("Created direct foom with otherPubkey = $otherPubkey");
+            super ( "${getAuthorName(otherPubkey)} ($otherPubkey)", messageIds) {
+              //print ("Created direct room with otherPubkey = $otherPubkey");
             }
  }
 

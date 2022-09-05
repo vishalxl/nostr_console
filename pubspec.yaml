@@ -4,7 +4,7 @@ version: 0.0.7-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
 
-# improved display
+# fixed end color marker getting clipped when padding etc
 
 environment:
   sdk: '>=2.17.3 <3.0.0'

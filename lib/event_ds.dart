@@ -320,17 +320,16 @@ class EventData {
     contentToPrint = contentToPrint.replaceAll("\n", " ");
     contentToPrint = contentToPrint.replaceAll("\r", " ");
     String strToPrint = '${contentToPrint.substring(0, len)}... - ${getAuthorName(pubkey)}';
-    if( isNotification) {
-      strToPrint = "$gNotificationColor$strToPrint$gColorEndMarker";
-      isNotification = false;
-    }
 
     int strWidth = 40;
     String paddedStrToPrint = strToPrint.padLeft(strWidth);
     //print("\n$paddedStrToPrint");
     paddedStrToPrint = paddedStrToPrint.substring(0, strWidth);
 
-    //print("\nstrToPrint = $strToPrint len = ${strToPrint.length}  paddedStrToPrint = $paddedStrToPrint len = ${paddedStrToPrint.length}");
+    if( isNotification) {
+      paddedStrToPrint = "$gNotificationColor$paddedStrToPrint$gColorEndMarker";
+      isNotification = false;
+    }
     return paddedStrToPrint;
   }
 

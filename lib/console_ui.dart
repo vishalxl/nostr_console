@@ -88,31 +88,26 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend)
   sendRequest( gListRelayUrls, toSendMessage);
 }
 
-// is same as above. remove it TODO
+// send DM
 Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend) async {
   String otherPubkey02 = "02" + otherPubkey;
   String encryptedMessageToSend =        myEncrypt(userPrivateKey, otherPubkey02, messageToSend);
 
-
-  //print("encrypted = $encryptedMessageToSend");
-  int ivIndex = encryptedMessageToSend.indexOf("?iv=");
+/*  int ivIndex = encryptedMessageToSend.indexOf("?iv=");
   var iv = encryptedMessageToSend.substring( ivIndex + 4, encryptedMessageToSend.length);
   var enc_str = encryptedMessageToSend.substring(0, ivIndex);
-  //print("enc_str = $enc_str len = ${enc_str.length}          iv = $iv len = ${iv.length}");
   String decrypted = myPrivateDecrypt(userPrivateKey, otherPubkey02, enc_str, iv);
-  //print( "decrypted = |$decrypted|");;
+*/
 
   String replyKind = "4";
   String strTags = '["p","$otherPubkey"]';
   strTags += gWhetherToSendClientTag?',["client","nostr_console"]':'';
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
-  
+
   String id = getShaId(userPublicKey, createdAt, replyKind, strTags, encryptedMessageToSend);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
-
   String eventStrToSend = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$encryptedMessageToSend","sig":"$sig"}]';
-  //print(toSendMessage);
-  
+ 
   sendRequest( gListRelayUrls, eventStrToSend);
 }
 

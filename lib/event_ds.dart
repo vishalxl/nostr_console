@@ -310,19 +310,28 @@ class EventData {
 
   String getAsLine({int len = 20}) {
     String contentToPrint = evaluatedContent.isEmpty? content: evaluatedContent;
+    //print("$contentToPrint|");
+    //print("len = ${contentToPrint.length}");
     if( len == 0 || len > contentToPrint.length) {
       len = contentToPrint.length;
     }
     
+    contentToPrint = contentToPrint.padLeft(len);
     contentToPrint = contentToPrint.replaceAll("\n", " ");
     contentToPrint = contentToPrint.replaceAll("\r", " ");
-    String strToPrint = '"${contentToPrint.substring(0, len)}..." - ${getAuthorName(pubkey)}';
+    String strToPrint = '${contentToPrint.substring(0, len)}... - ${getAuthorName(pubkey)}';
     if( isNotification) {
       strToPrint = "$gNotificationColor$strToPrint$gColorEndMarker";
       isNotification = false;
     }
 
-    return strToPrint;
+    int strWidth = 40;
+    String paddedStrToPrint = strToPrint.padLeft(strWidth);
+    //print("\n$paddedStrToPrint");
+    paddedStrToPrint = paddedStrToPrint.substring(0, strWidth);
+
+    //print("\nstrToPrint = $strToPrint len = ${strToPrint.length}  paddedStrToPrint = $paddedStrToPrint len = ${paddedStrToPrint.length}");
+    return paddedStrToPrint;
   }
 
   String getStrForChannel(int depth) {
@@ -343,7 +352,7 @@ class EventData {
       tempEvaluatedContent = tempContent = content; // content would be changed so show that 
     }
 
-    const int nameWidthDepth = 3; // how wide name will be in depth spaces
+    const int nameWidthDepth = 2; // how wide name will be in depth spaces
     const int timeWidthDepth = 2;
     int nameWidth = gSpacesPerDepth * nameWidthDepth;
     String nameToPrint = name.padLeft(nameWidth).substring(0, nameWidth);
@@ -949,7 +958,7 @@ try {
   offset += cipherImpl.doFinal(cipherText, offset, finalPlainText, offset);
   assert(offset == cipherText.length);
 
-  return  finalPlainText.sublist(0, finalPlainText.length);
+  return  finalPlainText.sublist(0, offset);
 } catch(e) {
     //print("cannot open file $gEventsFilename");
     if( gDebug >= 0) print("Decryption error =  $e");

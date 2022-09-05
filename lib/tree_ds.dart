@@ -839,13 +839,14 @@ class Store {
       int numMessages = value.messageIds.length;
       stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
 
-      // print latest event in one lin
+      // print latest event in one line
       List<String> messageIds = value.messageIds;
       for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
           Event? e = allChildEventsMap[messageIds[i]]?.event;
           if( e!= null) {
-            stdout.write("${e.eventData.getAsLine()}");
+            String line = e.eventData.getAsLine();
+            stdout.write(line);
             break; // print only one event, the latest one
           }
         }
@@ -984,6 +985,10 @@ class Store {
     try {
       final File file         = File(filename);
       
+      if( gOverWriteFile) {
+        await  file.writeAsString("", mode: FileMode.write).then( (file) => file);
+      }
+
       //await  file.writeAsString("", mode: FileMode.append).then( (file) => file);
       int        eventCounter = 0;
       String     nLinesStr    = "";
@@ -993,8 +998,14 @@ class Store {
       int        linesWritten = 0;
       for( var tree in allChildEventsMap.values) {
 
-        if( tree.event.readFromFile || tree.event.eventData.isDeleted) { // ignore those already in file; only the new ones are writen/appended to file, or those deleted
-          continue;
+        if( tree.event.eventData.isDeleted) { // dont write those deleted
+          continue; 
+        }
+
+        if( gOverWriteFile == false) {
+          if( tree.event.readFromFile) { // ignore those already in file; only the new ones are writen/appended to file
+            continue;
+          }
         }
 
         // only write if its not too old

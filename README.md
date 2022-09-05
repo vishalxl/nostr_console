@@ -47,6 +47,10 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
                                     taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
                                     time. Minimum and default is 0, which means no difficulty.
+      -v, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
+                                    useful when the file has to be cleared of old unused events. A backup should be made just in case
+                                    of original file before invoking.
+
 ```                                
 
 To get ALL the latest messages for last 3 days (on linux which allows backtick execution): 

@@ -24,6 +24,7 @@ const String disableFileArg = "disable-file";
 const String difficultyArg  = "difficulty";
 const String translateArg = "translate";
 const String colorArg     = "color";
+const String overWriteFlag = "overwrite";
 
 void printUsage() {
   print(gUsage);
@@ -44,6 +45,7 @@ Future<void> main(List<String> arguments) async {
                               ..addFlag(translateArg, abbr: "t", defaultsTo: false)
                               ..addOption(colorArg, abbr:"c")
                               ..addOption(difficultyArg, abbr:"y")
+                              ..addFlag(overWriteFlag, abbr:"v", defaultsTo: false)
                               ..addFlag("debug");
     try {
       ArgResults argResults = parser.parse(arguments);
@@ -54,6 +56,11 @@ Future<void> main(List<String> arguments) async {
 
       if( argResults["debug"]) {
         gDebug = 1;
+      }
+
+      if( argResults[overWriteFlag]) {
+        print("Going to overwrite file at the end of program execution.");
+        gOverWriteFile = true;
       }
 
 

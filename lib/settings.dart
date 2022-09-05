@@ -7,10 +7,12 @@ String gCheckEventId = ""; //"1763016774ceaa8c135dce01e77923994c5afad4cd3e126704
 
 const int gDefaultNumWaitSeconds = 3000; // is used in main()
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// file related settings 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 bool         gDontWriteOldEvents    = true;
 const int gDontSaveBeforeDays       = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
+bool         gOverWriteFile         = false; // overwrite the file, and don't just append. Will write all events in memory. 
 
 
 const int gDaysToGetEventsFor       = 100; // when getting events, this is the since field (unless a fully formed request is given in command line)
@@ -156,6 +158,9 @@ usage: $exename [OPTIONS]
       -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
                                     taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
                                     time. Minimum and default is 0, which means no difficulty.
+      -v, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
+                                    useful when the file has to be cleared of old unused events. A backup should be made just in case
+                                    of original file before invoking.
 """;
 
 const String helpAndAbout = 

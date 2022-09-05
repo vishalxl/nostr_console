@@ -102,7 +102,6 @@ class Tree {
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    */
   int printTree(int depth, DateTime newerThan) {
-
     int numPrinted = 0;
 
     //if( event.eventData.pubkey != gDummyAccountPubkey) { // don't print dummy events
@@ -505,7 +504,7 @@ class Store {
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Event dummy = Event("","",  EventData("Unk",gDummyAccountPubkey, tree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+           Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
 
            Tree dummyTopNode = Tree.withoutStore(dummy, []);
            dummyTopNode.children.add(tree);
@@ -611,7 +610,7 @@ class Store {
                   allChildEventsMap[parentId]?.children.add(newTree);
                 } else {
                   // create top unknown parent and then add it
-                  Event dummy = Event("","",  EventData("non", gDummyAccountPubkey, newTree.event.eventData.createdAt, -1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+                  Event dummy = Event("","",  EventData(parentId, gDummyAccountPubkey, newTree.event.eventData.createdAt, 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
                   Tree dummyTopNode = Tree.withoutStore(dummy, []);
                   dummyTopNode.children.add(newTree);
                   topPosts.add(dummyTopNode);
@@ -1003,6 +1002,10 @@ class Store {
           if( tree.event.eventData.createdAt <  getSecondsDaysAgo(gDontSaveBeforeDays)) {
             continue;
           }
+        }
+
+        if( gDummyAccountPubkey == tree.event.eventData.pubkey) {
+          continue; // dont write dummy events
         }
 
         //print("writing event ");

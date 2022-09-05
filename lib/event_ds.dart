@@ -426,6 +426,9 @@ class Event {
       if( json.length < 3) {
         String e = "";
         e = json.length > 1? json[0]: "";
+        if( gDebug> 0) {
+          print("Could not create event. returning dummy event. json.length = ${json.length} string d= $d $e");
+        }
         return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]", fromFile);
       }
       EventData newEventData = EventData.fromJson(json[2]);
@@ -442,7 +445,7 @@ class Event {
 
   void printEvent(int depth) {
     eventData.printEventData(depth);
-    //stdout.write("\n$originalJson \n");
+    //stdout.write("\n$originalJson --------------------------------\n\n");
   }
 
   @override 

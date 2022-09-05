@@ -81,8 +81,10 @@ class ChatRoom extends ScrollableMessages {
 class DirectMessageRoom extends ScrollableMessages{
   String       otherPubkey; // id of user this DM is happening
 
-  DirectMessageRoom(this.otherPubkey, messageIds):
-            super ( "${getAuthorName(otherPubkey)}", messageIds);
+  DirectMessageRoom(this.otherPubkey, List<String> messageIds):
+            super ( "${getAuthorName(otherPubkey)}", messageIds) {
+              print ("Created direct foom with otherPubkey = $otherPubkey");
+            }
  }
 
 class Tree {
@@ -412,7 +414,7 @@ class Store {
       String eId = ce.eventData.id;
       int    eKind = ce.eventData.kind;
 
-      if( !isUserDirectMessage(ce.eventData)) {
+      if( !isValidDirectMessage(ce.eventData)) {
         return;
       }
 
@@ -568,7 +570,7 @@ class Store {
       }
 
       if( newEvent.eventData.kind == 4) {
-        if( !isUserDirectMessage(newEvent.eventData)) { // direct message not relevant to user are ignored 
+        if( !isValidDirectMessage(newEvent.eventData)) { // direct message not relevant to user are ignored; also otherwise validates the message that it has one p tag
           return;
         }
       }
@@ -623,9 +625,10 @@ class Store {
             // add kind 4 direct chat message event to its direct massage room
             String directRoomId = getDirectRoomId(newTree.event.eventData);
             //print("in insert events: got directRoomId = ${directRoomId}");
+
             if( directRoomId != "") {
               if( directRooms.containsKey(directRoomId)) {
-                if( gDebug > 0) print("added event to direct room in insert event");
+                if( gDebug > 0) print("added event to direct room $directRoomId in insert event");
                 addMessageToDirectRoom(directRoomId, newTree.event.eventData.id, allChildEventsMap, directRooms);
                 newTree.event.eventData.isNotification = true; // highlight it too in next printing
                 //print("   in from event: added it to a direct room");
@@ -857,7 +860,7 @@ class Store {
 
   // shows the given directRoomId, where directRoomId is prefix-id or pubkey of the other user. returns full id of other user.
   String showDirectRoom(String directRoomId, [int page = 1]) {
-    //print("In show DirectRoom $directRoomId");
+    //print("In show DirectRoom to show with id: $directRoomId");
     if( directRoomId.length > 64) { // TODO revisit  cause if name is > 64 should not return
       return "";
     }
@@ -870,6 +873,7 @@ class Store {
         lookedUpName.add(roomId);
       }
 
+      //print("directRoom.otherPubkey = ${directRoom.otherPubkey} len = ${directRoom.otherPubkey.length}");
       if( directRoom.otherPubkey.substring(0, directRoomId.length) == directRoomId){
         lookedUpName.add(roomId);
       }
@@ -885,21 +889,31 @@ class Store {
       if( room != null) {
         printDirectMessageRoom(room, page);
         return lookedUpName.first;
-      }
-    } else {
-      print("Got keys $lookedUpName for $directRoomId ");
-      for( String key in directRooms.keys) {
-        //print("in direct room key = $key");
-        if( key == directRoomId) {
-          DirectMessageRoom? room = directRooms[key];
-          if( room != null) {
-            printDirectMessageRoom(room, page);
-            return key;
-          }
+      } else {
+        if( isValidPubkey(lookedUpName.first)) {
+          print("Could not find a conversation or room with the given id. Creating one with ${lookedUpName.first}");
+          createDirectRoom(directRoomId);
+          return directRoomId;
         }
       }
+    } else {
+      if( lookedUpName.length > 0)
+      print("Got more than one public id for the name given, which are: ${lookedUpName.length}");
+      else {
+        if( isValidPubkey(directRoomId)) {
+          print("Could not find a conversation or room with the given id. Creating one with $directRoomId");
+          createDirectRoom(directRoomId);
+          return directRoomId;
+        } 
+      }
+      return "";
     }
     return "";
+  }
+
+  void createDirectRoom(String directRoomId) {
+    if( !directRooms.containsKey(directRoomId))
+      directRooms[directRoomId] = DirectMessageRoom(directRoomId, []); 
   }
 
   void printChannel(ChatRoom room, [int page = 1])  {
@@ -1288,7 +1302,7 @@ class Store {
 
   // will go over the list of events, and update the global gReactions appropriately
   static void processReactions(Set<Event> events, Map<String, Tree> tempChildEventsMap) {
-    print("in processReactions");    
+    //print("in processReactions");    
     for (Event event in events) {
       processReaction(event, tempChildEventsMap);
     }

@@ -90,24 +90,31 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend)
 
 // is same as above. remove it TODO
 Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend) async {
-  print("TBD");
-  return;
-  // TODO implement 
+  String otherPubkey02 = "02" + otherPubkey;
+  String encryptedMessageToSend =        myEncrypt(userPrivateKey, otherPubkey02, messageToSend);
+
+
+  //print("encrypted = $encryptedMessageToSend");
+  int ivIndex = encryptedMessageToSend.indexOf("?iv=");
+  var iv = encryptedMessageToSend.substring( ivIndex + 4, encryptedMessageToSend.length);
+  var enc_str = encryptedMessageToSend.substring(0, ivIndex);
+  //print("enc_str = $enc_str len = ${enc_str.length}          iv = $iv len = ${iv.length}");
+  String decrypted = myPrivateDecrypt(userPrivateKey, otherPubkey02, enc_str, iv);
+  //print( "decrypted = |$decrypted|");;
 
   String replyKind = "4";
-
-  String strTags = node.getTagStr(otherPubkey, exename);
+  String strTags = '["p","$otherPubkey"]';
+  strTags += gWhetherToSendClientTag?',["client","nostr_console"]':'';
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   
-  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
+  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, encryptedMessageToSend);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
-  String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
-  //relays.sendRequest(defaultServerUrl, toSendMessage);
+  String eventStrToSend = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$encryptedMessageToSend","sig":"$sig"}]';
+  //print(toSendMessage);
   
-  sendRequest( gListRelayUrls, toSendMessage);
+  sendRequest( gListRelayUrls, eventStrToSend);
 }
-
 
 // sends event e; used to send kind 3 event
 Future<void> sendEvent(Store node, Event e) async {
@@ -601,6 +608,7 @@ Future<void> PrivateMenuUI(Store node) async {
                   }
                   // send message to the given room
                   await sendDirectMessage(node, fullChannelId, messageToSend);
+                  print("in privateMenuUI: sent message");
                   pageNum = 1; // reset it 
               }
             }

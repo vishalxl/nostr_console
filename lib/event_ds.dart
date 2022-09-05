@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:math';
@@ -51,12 +50,12 @@ class EventData {
   int                createdAt;
   int                kind;
   String             content;
-  List<String>       eTags;// rest of e tags
+  List<String>       eTags;// e tags
   List<String>       pTags;// list of p tags for kind:1
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
   String             evaluatedContent; // content which has mentions expanded, and which has been translated
-  Set<String>        newLikes;    //
+  Set<String>        newLikes;    // user for notifications, are colored as notifications and then reset  
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
 
@@ -171,6 +170,7 @@ class EventData {
     return content;
   }
 
+  // is called only once for each event received ( or read from file)
   void translateAndExpandMentions() {
     if (content == "" ||  evaluatedContent != "") {
       return;
@@ -204,39 +204,45 @@ class EventData {
         break;
       }
       //if( pubkey == userPublicKey )  break; // crashes right now otherwise 
-      if(!isUserDirectMessage(this)) {
+      if(!isValidDirectMessage(this)) {
         break;
       }
-      int ivIndex = content.indexOf("?iv=");
-      var enc_str = content.substring(0, ivIndex);
-      var iv = content.substring( ivIndex + 4, content.length);
-
-      String userKey = userPrivateKey ;
-      String otherUserPubKey = "02" + pubkey;
-      if( pubkey == userPublicKey) {
-        userKey =  userPrivateKey;
-        // otherUserPubKey = "02" + pubkey;
-        int numPtags = 0;
-        tags.forEach((tag) {
-          if(tag[0] == "p" ) {
-            otherUserPubKey = "02" + tag[1];
-            numPtags++;
-          }
-        }); // if there are more than one p tags, we don't know who its for
-        if( numPtags != 1) {
-          if( gDebug >= 0) print(" in translateAndExpand: got event $id with more than one p tags : $numPtags . not decrypting");
-          break;
-        }
-      } 
-      //print("going to decrypt eventid : $id to be decrypted content: $enc_str");
-      //print("original message: $content");
-      var decryptd = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
-      evaluatedContent = decryptd;
-      //print("decrypted: $evaluatedContent\n---------------");
+      String? decrypted = decryptContent();
+      if( decrypted != null) {
+        evaluatedContent = decrypted;
+      }
       break;
     } // end switch
   } // end translateAndExpandMentions
 
+  String? decryptContent() {
+    int ivIndex = content.indexOf("?iv=");
+    var iv = content.substring( ivIndex + 4, content.length);
+    var enc_str = content.substring(0, ivIndex);
+
+    String userKey = userPrivateKey ;
+    String otherUserPubKey = "02" + pubkey;
+    if( pubkey == userPublicKey) { // if user themselve is the sender change public key used to decrypt
+      userKey =  userPrivateKey;
+      int numPtags = 0;
+      tags.forEach((tag) {
+        if(tag[0] == "p" ) {
+          otherUserPubKey = "02" + tag[1];
+          numPtags++;
+        }
+      }); 
+      // if there are more than one p tags, we don't know who its for
+      if( numPtags != 1) {
+        if( gDebug >= 0) print(" in translateAndExpand: got event $id with number of p tags != one : $numPtags . not decrypting");
+          return null;
+      }
+    } 
+    //print("going to decrypt eventid : $id to be decrypted content: $enc_str");
+    //print("original message: $content");
+    var decrypted = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+    //print("decrypted: $evaluatedContent\n---------------");
+    return decrypted;
+  }
 
   // only applicable for kind 42 event
   String getChatRoomId() {
@@ -309,6 +315,7 @@ class EventData {
     }
     
     contentToPrint = contentToPrint.replaceAll("\n", " ");
+    contentToPrint = contentToPrint.replaceAll("\r", " ");
     return '"${contentToPrint.substring(0, len)}..." - ${getAuthorName(pubkey)}';
   }
 
@@ -838,23 +845,37 @@ String getPrintableDate(int createdAt) {
   return strDate;
 }
 
-bool isUserDirectMessage(EventData directMessageData) {
-  if( directMessageData.pubkey == userPublicKey)  {
-    return true;
-  }
+/*
+ * Returns true if this is a valid direct message to just this user
+ */
+bool isValidDirectMessage(EventData directMessageData) {
+  bool validUserMessage = false;
 
-  bool sentToUser = false;
+  List<String> allPtags = [];
   directMessageData.tags.forEach((tag) {
     if( tag.length < 2 )
       return;
-    if( tag[0] == "p" && tag[1] == userPublicKey) {
-      //print("in isUserDirectMessage ${tag[1]}");
-      sentToUser = true;
+    if( tag[0] == "p" && tag[1].length == 64) { // basic length sanity test
+      allPtags.add(tag[1]);
     }
   });
 
-  return sentToUser;
+  if( directMessageData.pubkey == userPublicKey && allPtags.length == 1) {
+    validUserMessage = true; // case where this user is sender
+  } else {
+    if ( directMessageData.pubkey != userPublicKey) {
+      if( allPtags.length == 1 && allPtags[0] == userPublicKey) {
+        validUserMessage = true; // case where this user is recipeint 
+      }
+    }
+  }
+  return validUserMessage;
 }
+
+   
+// pointy castle source https://github.com/PointyCastle/pointycastle/blob/master/tutorials/aes-cbc.md
+// https://github.com/bcgit/pc-dart/blob/master/tutorials/aes-cbc.md
+// 3 https://github.com/Dhuliang/flutter-bsv/blob/42a2d92ec6bb9ee3231878ffe684e1b7940c7d49/lib/src/aescbc.dart
 
 /// Decrypt data using self private key
 String myPrivateDecrypt( String privateString, 
@@ -863,46 +884,21 @@ String myPrivateDecrypt( String privateString,
                         [String b64IV = ""]) {
   Uint8List encdData = convert.base64.decode(b64encoded);
   final rawData = myPrivateDecryptRaw(privateString, publicString, encdData, b64IV);
-  convert.Utf8Decoder decode = const convert.Utf8Decoder();
-  //print(rawData);
-  return decode.convert(rawData.toList());
+  return convert.Utf8Decoder().convert(rawData.toList());
 }
 
 Uint8List myPrivateDecryptRaw( String privateString, 
                                String publicString, 
                                Uint8List cipherText,
                                [String b64IV = ""]) {
-    final secretIV = Kepler.byteSecret(privateString, publicString);
-    final key = Uint8List.fromList(secretIV[0]);
-
-    final iv = b64IV.length > 6
-        ? convert.base64.decode(b64IV)
-        : Uint8List.fromList(secretIV[1]);
-
-    bool debug = false;
-    if( debug) print("iv = $iv ");
-   
-    // pointy castle source https://github.com/PointyCastle/pointycastle/blob/master/tutorials/aes-cbc.md
-    // https://github.com/bcgit/pc-dart/blob/master/tutorials/aes-cbc.md
-
-  final cbc = CBCBlockCipher(AESFastEngine())
-    ..init(false, ParametersWithIV(KeyParameter(key), iv) ) ; 
+try {
+  final secretIV = Kepler.byteSecret(privateString, publicString);
   
+  final key = Uint8List.fromList(secretIV[0]);
 
-  // 2
-
-  //PaddedBlockCipher('AES/CBC/PKCS7').KeyParameter = KeyParameter;
-  PaddedBlockCipher p = PaddedBlockCipher('AES/CBC/PKCS7');
-  if( debug) print("p cipher: ${p.cipher}");
-  p.cipher.init(false, ParametersWithIV(KeyParameter(key), iv) ) ; 
-  
-  
-  PaddedBlockCipherParameters paddedParams = PaddedBlockCipherParameters (  ParametersWithIV(KeyParameter(key), iv), null );
-
-  final pbc = CBCBlockCipher(p)..init(false, ParametersWithIV(paddedParams, iv) ) ;
-   
-
-  // 3 https://github.com/Dhuliang/flutter-bsv/blob/42a2d92ec6bb9ee3231878ffe684e1b7940c7d49/lib/src/aescbc.dart
+  final iv = b64IV.length > 6
+      ? convert.base64.decode(b64IV)
+      : Uint8List.fromList(secretIV[1]);
 
   CipherParameters params = new PaddedBlockCipherParameters(
       new ParametersWithIV(new KeyParameter(key), iv), null);
@@ -914,43 +910,81 @@ Uint8List myPrivateDecryptRaw( String privateString,
                   params as PaddedBlockCipherParameters<CipherParameters?,
                                                         CipherParameters?>);
 
-  final Uint8List  paddedPlainText = Uint8List(cipherText.length); // allocate space
+  final Uint8List  finalPlainText = Uint8List(cipherText.length); // allocate space
 
   var offset = 0;
   while (offset < cipherText.length - 16) {
-    convert.Utf8Decoder decode = const convert.Utf8Decoder();
-    offset += cipherImpl.processBlock(cipherText, offset, paddedPlainText, offset);
+    offset += cipherImpl.processBlock(cipherText, offset, finalPlainText, offset);
   }
 
-  //print("calling dofinal");
-  offset += cipherImpl.doFinal(cipherText, offset, paddedPlainText, offset);
- 
+  //remove padding
+  offset += cipherImpl.doFinal(cipherText, offset, finalPlainText, offset);
   assert(offset == cipherText.length);
 
-  final pd = PKCS7Padding ();
-  Uint8List retval = paddedPlainText;// p.process(false, paddedPlainText);
-  return  retval.sublist(0, retval.length);
-  }
-
-ParametersWithIV<KeyParameter> 
-buildParams( Uint8List key, Uint8List iv) {
-  return ParametersWithIV<KeyParameter>(KeyParameter(key), iv);
+  return  finalPlainText.sublist(0, finalPlainText.length);
+} catch(e) {
+    //print("cannot open file $gEventsFilename");
+    if( gDebug >= 0) print("Decryption error =  $e");
+    return Uint8List(0);
+}
 }
 
+/// Encrypt data using self private key in nostr format ( with trailing ?iv=)
+String myEncrypt( String privateString, 
+                         String publicString, 
+                         String plainText) {
+  //Uint8List encdData = convert.base64.decode(b64encoded);
+  Uint8List uintInputText = convert.Utf8Encoder().convert(plainText);
+  final encryptedString = myEncryptRaw(privateString, publicString, uintInputText);
+  return encryptedString;
+  //return convert.Utf8Decoder().convert(rawData.toList());
+}
 
+String myEncryptRaw( String privateString, 
+                     String publicString, 
+                     Uint8List uintInputText) {
+  final secretIV = Kepler.byteSecret(privateString, publicString);
+  final key = Uint8List.fromList(secretIV[0]);
 
+  // generate iv  https://stackoverflow.com/questions/63630661/aes-engine-not-initialised-with-pointycastle-securerandom
+  FortunaRandom fr = FortunaRandom();
+  final _sGen = Random.secure();;
+  fr.seed(KeyParameter(
+      Uint8List.fromList(List.generate(32, (_) => _sGen.nextInt(255)))));
+  final iv = fr.nextBytes(16); //Uint8List.fromList(secretIV[1]);
+  //print("iv = $iv");
+   
+  CipherParameters params = new PaddedBlockCipherParameters(
+      new ParametersWithIV(new KeyParameter(key), iv), null);
 
+  PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
+      new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
 
+  cipherImpl.init(true,  // means to encrypt
+                  params as PaddedBlockCipherParameters<CipherParameters?,
+                                                        CipherParameters?>);
+  
+  final Uint8List  outputEncodedText = Uint8List(uintInputText.length + 16); // allocate space
 
+  var offset = 0;
+  //print("    uintInputText len = ${uintInputText.length} ");
+  while (offset < uintInputText.length - 16) {
+    //print("       in while offset: $offset");
+    offset += cipherImpl.processBlock(uintInputText, offset, outputEncodedText, offset);
+  }
 
+  //add padding 
+  offset += cipherImpl.doFinal(uintInputText, offset, outputEncodedText, offset);
+  assert(offset == uintInputText.length);
+  final Uint8List finalEncodedText = outputEncodedText.sublist(0, offset);
+  //print("    final offset after doFinal in encrypting: $offset finalEncodedText.lenth = ${finalEncodedText.length}");
 
-
-
-
-
-
-
-
+  String stringIv = convert.base64.encode(iv);;
+  String outputPlainText = convert.base64.encode(finalEncodedText);
+  //print("    outputPlainText = $outputPlainText len = ${outputPlainText.length}");
+  outputPlainText = outputPlainText + "?iv=" + stringIv;
+  return  outputPlainText;
+}
 
 
 Set<Event> readEventsFromFile(String filename) {
@@ -973,3 +1007,10 @@ Set<Event> readEventsFromFile(String filename) {
   return events;
 }
 
+bool isValidPubkey(String pubkey) {
+  if( pubkey.length == 64) {
+    return true;
+  }
+
+  return false;
+}

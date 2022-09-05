@@ -316,7 +316,13 @@ class EventData {
     
     contentToPrint = contentToPrint.replaceAll("\n", " ");
     contentToPrint = contentToPrint.replaceAll("\r", " ");
-    return '"${contentToPrint.substring(0, len)}..." - ${getAuthorName(pubkey)}';
+    String strToPrint = '"${contentToPrint.substring(0, len)}..." - ${getAuthorName(pubkey)}';
+    if( isNotification) {
+      strToPrint = "$gNotificationColor$strToPrint$gColorEndMarker";
+      isNotification = false;
+    }
+
+    return strToPrint;
   }
 
   String getStrForChannel(int depth) {
@@ -348,6 +354,10 @@ class EventData {
     int contentDepth = depth + 1 + timeWidthDepth + nameWidthDepth;
     String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
     strToPrint += contentShifted;
+    if( isNotification) {
+      strToPrint = "$gNotificationColor$strToPrint$gColorEndMarker";
+      isNotification = false;
+    }
     return strToPrint;
   }
 

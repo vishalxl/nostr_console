@@ -175,6 +175,22 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
   return false;
 }
 
+void readjustAlignment() {
+    // align the text again in case the window size has been changed
+    if( gAlignment == "center") {
+      try {
+        if( gTextWidth > stdout.terminalColumns) {
+          gTextWidth = stdout.terminalColumns - 5;
+        }          
+        gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
+      } on StdoutException catch (e) {
+        print("Terminal information not available");
+        if( gDebug>0)  print("${e.message}");
+        gNumLeftMarginSpaces = 0;
+      }
+    }
+}
+
 int showMenu(List<String> menuOptions, String menuName) {
   print("\n$menuName\n${getNumDashes(menuName.length)}");
   print('Pick an option:');
@@ -535,7 +551,7 @@ Future<void> PrivateMenuUI(Store node) async {
   while(continueChatMenu) {
     int option = showMenu([ 'See personal Inbox',
                             'Reply or Send a direct message',
-                            'Go back to main menu'],          // 5
+                            'Go back to main menu'],          // 3
                           "Private Message Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
@@ -591,11 +607,9 @@ Future<void> PrivateMenuUI(Store node) async {
           } else {
             print("Refreshing...");
           }
-
           await processNotifications(node);
         }
         break;
-
 
       case 3:
         continueChatMenu = false;
@@ -607,7 +621,6 @@ Future<void> PrivateMenuUI(Store node) async {
   }
   return;
 }
-
 
 Future<void> mainMenuUi(Store node) async {
     // at the very beginning, show the tree with re reply and likes, and then show the options menu

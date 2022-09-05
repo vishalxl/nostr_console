@@ -203,7 +203,7 @@ class EventData {
       if( userPrivateKey == ""){ // cant process if private key not given
         break;
       }
-      if( pubkey == userPublicKey )  break; // crashes right now otherwise 
+      //if( pubkey == userPublicKey )  break; // crashes right now otherwise 
       if(!isUserDirectMessage(this)) {
         break;
       }
@@ -215,10 +215,24 @@ class EventData {
       String otherUserPubKey = "02" + pubkey;
       if( pubkey == userPublicKey) {
         userKey =  userPrivateKey;
-        otherUserPubKey = "02" + pubkey;
+        // otherUserPubKey = "02" + pubkey;
+        int numPtags = 0;
+        tags.forEach((tag) {
+          if(tag[0] == "p" ) {
+            otherUserPubKey = "02" + tag[1];
+            numPtags++;
+          }
+        }); // if there are more than one p tags, we don't know who its for
+        if( numPtags != 1) {
+          if( gDebug >= 0) print(" in translateAndExpand: got event $id with more than one p tags : $numPtags . not decrypting");
+          break;
+        }
       } 
+      //print("going to decrypt eventid : $id to be decrypted content: $enc_str");
+      //print("original message: $content");
       var decryptd = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
       evaluatedContent = decryptd;
+      //print("decrypted: $evaluatedContent\n---------------");
       break;
     } // end switch
   } // end translateAndExpandMentions
@@ -293,7 +307,8 @@ class EventData {
     if( len == 0 || len > contentToPrint.length) {
       len = contentToPrint.length;
     }
-
+    
+    contentToPrint = contentToPrint.replaceAll("\n", " ");
     return '"${contentToPrint.substring(0, len)}..." - ${getAuthorName(pubkey)}';
   }
 
@@ -757,6 +772,10 @@ extension StringX on String {
     return true;
   }
 
+  isPortugese() {
+    false; // https://1000mostcommonwords.com/1000-most-common-portuguese-words/
+  }
+
   bool isFrench() {
 
     // https://www.thoughtco.com/most-common-french-words-1372759
@@ -845,6 +864,7 @@ String myPrivateDecrypt( String privateString,
   Uint8List encdData = convert.base64.decode(b64encoded);
   final rawData = myPrivateDecryptRaw(privateString, publicString, encdData, b64IV);
   convert.Utf8Decoder decode = const convert.Utf8Decoder();
+  //print(rawData);
   return decode.convert(rawData.toList());
 }
 
@@ -863,7 +883,7 @@ Uint8List myPrivateDecryptRaw( String privateString,
     if( debug) print("iv = $iv ");
    
     // pointy castle source https://github.com/PointyCastle/pointycastle/blob/master/tutorials/aes-cbc.md
-
+    // https://github.com/bcgit/pc-dart/blob/master/tutorials/aes-cbc.md
 
   final cbc = CBCBlockCipher(AESFastEngine())
     ..init(false, ParametersWithIV(KeyParameter(key), iv) ) ; 
@@ -897,11 +917,14 @@ Uint8List myPrivateDecryptRaw( String privateString,
   final Uint8List  paddedPlainText = Uint8List(cipherText.length); // allocate space
 
   var offset = 0;
-  while (offset < cipherText.length) {
+  while (offset < cipherText.length - 16) {
     convert.Utf8Decoder decode = const convert.Utf8Decoder();
     offset += cipherImpl.processBlock(cipherText, offset, paddedPlainText, offset);
   }
 
+  //print("calling dofinal");
+  offset += cipherImpl.doFinal(cipherText, offset, paddedPlainText, offset);
+ 
   assert(offset == cipherText.length);
 
   final pd = PKCS7Padding ();
@@ -913,6 +936,22 @@ ParametersWithIV<KeyParameter>
 buildParams( Uint8List key, Uint8List iv) {
   return ParametersWithIV<KeyParameter>(KeyParameter(key), iv);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Set<Event> readEventsFromFile(String filename) {
   Set<Event> events = {};
@@ -934,18 +973,3 @@ Set<Event> readEventsFromFile(String filename) {
   return events;
 }
 
-void readjustAlignment() {
-    // align the text again in case the window size has been changed
-    if( gAlignment == "center") {
-      try {
-        if( gTextWidth > stdout.terminalColumns) {
-          gTextWidth = stdout.terminalColumns - 5;
-        }          
-        gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
-      } on StdoutException catch (e) {
-        print("Terminal information not available");
-        if( gDebug>0)  print("${e.message}");
-        gNumLeftMarginSpaces = 0;
-      }
-    }
-}

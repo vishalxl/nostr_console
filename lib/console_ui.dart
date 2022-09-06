@@ -387,6 +387,7 @@ Future<void> otherMenuUi(Store node) async {
                 } else {
                   print("The contact already exists in the contact list. Republishing the old contact list.");
                   sendEvent(node, contactEvent);
+                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
                 }
               } else {
                   // TODO fix the send event functions by streamlining them
@@ -403,6 +404,7 @@ Future<void> otherMenuUi(Store node) async {
                   EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
                   Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
                   sendEvent(node, newEvent);
+                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
               }
             }
           }

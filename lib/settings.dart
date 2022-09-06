@@ -15,7 +15,7 @@ const int gDontSaveBeforeDays       = 100; // dont save events older than this m
 bool         gOverWriteFile         = false; // overwrite the file, and don't just append. Will write all events in memory. 
 
 
-const int gDaysToGetEventsFor       = 30; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gDaysToGetEventsFor       = 70; // when getting events, this is the since field (unless a fully formed request is given in command line)
 const int gLimitPerSubscription     = 5000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
@@ -23,7 +23,7 @@ const int gLimitPerSubscription     = 5000;
 const int gDontHighlightEventsOlderThan = 4;
 
 const int gMaxAuthorsInOneRequest = 100; // number of author requests to send in one request
-const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
+const int gMaxPtagsToGet          = 150; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 // global counters of total events read or processed
 int numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
@@ -33,9 +33,12 @@ int numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 const String relayNostrInfo   = 'wss://relay.nostr.info';
 String defaultServerUrl       = "wss://relay.damus.io";
 
-List<String> gListRelayUrls = [ defaultServerUrl,
+List<String> gListRelayUrls1 = [ defaultServerUrl,
                                 relayNostrInfo,
-                              "wss://nostr-verified.wellorder.net", 
+                                "wss://nostr-verified.wellorder.net"
+                              ];
+
+List<String> gListRelayUrls2 = [
                               "wss://nostr-relay.wlvs.space",
                               "wss://nostr.ono.re"
                               ];
@@ -61,10 +64,16 @@ List<String> gDefaultFollows = [
                   "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437", // balas
                   "46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d", // Giszmo
                   "8c0da4862130283ff9e67d889df264177a508974e2feb96de139804ea66d6168", // monlovesmango
-                  "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c", // vishalxl
                   "c5072866b41d6b88ab2ffee16ad7cb648f940867371a7808aaa94cf7d01f4188", // randymcmillan
                   "2183e94758481d0f124fbd93c56ccaa45e7e545ceeb8d52848f98253f497b975", // Brill
-                  "c7eda660a6bc8270530e82b4a7712acdea2e31dc0a56f8dc955ac009efd97c86" ]; // shawn 
+                  "00000000827ffaa94bfea288c3dfce4422c794fbb96625b6b31e9049f729d700", // cameri
+                  "dd81a8bacbab0b5c3007d1672fb8301383b4e9583d431835985057223eb298a5", // plantimals
+                  "1c6b3be353041dd9e09bb568a4a92344e240b39ef5eb390f5e9e821273f0ae6f", // johnonchain
+                  "52b4a076bcbbbdc3a1aefa3735816cf74993b1b8db202b01c883c58be7fad8bd", // semisol
+                  "47bae3a008414e24b4d91c8c170f7fce777dedc6780a462d010761dca6482327", // slaninas
+                  "c7eda660a6bc8270530e82b4a7712acdea2e31dc0a56f8dc955ac009efd97c86", // shawn 
+                  "b2d670de53b27691c0c3400225b65c35a26d06093bcc41f48ffc71e0907f9d4a", // 0xtr
+                  "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"]; // vishalxl ]; 
 
  
 // dummy account pubkey

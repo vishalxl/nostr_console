@@ -83,6 +83,32 @@ class Relays {
     sendRequest(relayUrl, request);
   }    
 
+  void getMentionEvents(String relayUrl, String publicKey, int limit, int sinceWhen) {
+    for(int i = 0; i < gBots.length; i++) { // ignore bots
+      if( publicKey == gBots[i]) {
+        return;
+      }
+    }
+
+    String subscriptionId = "mention" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
+    if( relays.containsKey(relayUrl)) {
+      List<String>? users = relays[relayUrl]?.users;
+      if( users != null) { // get a user only if it has not already been requested
+        // following is too restrictive casuse changed sinceWhen is not considered. TODO improve it
+        for(int i = 0; i < users.length; i++) {
+          if( users[i] == publicKey) {
+            return;
+          }
+        }
+        users.add(publicKey);
+      }
+    }
+    
+    String request = getMentionRequest(subscriptionId, publicKey, limit, sinceWhen);
+    sendRequest(relayUrl, request);
+  }    
+
+
   /* 
    * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
    *          received events in the given List<Event>
@@ -231,12 +257,24 @@ String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinc
   //print(strRequest);
   return strRequest;
 }
+
 String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
   }
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": ["';
+  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
+  return strSubscription1 + publicKey + strSubscription2;
+}
+
+
+String getMentionRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "#p": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
   return strSubscription1 + publicKey + strSubscription2;
 }
@@ -260,8 +298,9 @@ String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int n
   return strSubscription1 + s + strSubscription2;
 }
 
-void getContactFeed(List<String> relayUrls, List<String> contacts, int numEventsToGet, int sinceWhen) {
+void getContactFeed(List<String> relayUrls, Set<String> setContacts, int numEventsToGet, int sinceWhen) {
   
+  List<String> contacts = setContacts.toList();
 
   for( int i = 0; i < contacts.length; i += gMaxAuthorsInOneRequest) {
 
@@ -290,6 +329,13 @@ void getUserEvents(List<String> serverUrls, String publicKey, int numUserEvents,
       relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
     });
 }
+
+void getMentionEvents(List<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen) {
+  serverUrls.forEach((serverUrl) {
+      relays.getMentionEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
+    });
+}
+
 
 getKindEvents(List<int> kind, List<String> serverUrls, int limit, int sinceWhen) {
   serverUrls.forEach((serverUrl) {

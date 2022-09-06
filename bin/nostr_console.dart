@@ -215,7 +215,7 @@ Future<void> main(List<String> arguments) async {
 
         if( argResults[requestArg] != "") {
           stdout.write('Sending request ${argResults[requestArg]} and waiting for events...');
-          sendRequest(gListRelayUrls, argResults[requestArg]);
+          sendRequest(gListRelayUrls1, argResults[requestArg]);
         } else {
           numWaitSeconds = 0;
           gEventsFilename = ""; // so it wont write it back to keep it faster ( and since without internet no new event is there to be written )
@@ -237,11 +237,13 @@ Future<void> main(List<String> arguments) async {
         return;
       } 
 
-      getUserEvents(gListRelayUrls, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+      getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+      getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor)); // from relay group 2
+      getKindEvents([0,3], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor* 10));
     
       // the default in case no arguments are given is:
-      // get a user's events, then from its type 3 event, gets events of its follows,
-      // then get the events of user-id's mentioned in p-tags of received events
+      // get a user's events, and get all kind 0, 3 events
+      // then get the events of user-id's mentioned in p-tags of received events and the contact list
       // then display them all
       stdout.write('Waiting for user posts to come in.....');
       Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
@@ -258,42 +260,27 @@ Future<void> main(List<String> arguments) async {
         // get the latest kind 3 event for the user, which lists his 'follows' list
         Event? contactEvent = getContactEvent(userPublicKey);
 
-        // if contact list was found, get user's feed, and keep the contact list for later use 
+        // if contact list was found, get user's feed; also get some default contacts
+        Set<String> contacts = {};
+        contacts.addAll(gDefaultFollows);
         if (contactEvent != null ) {
           if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-          getContactFeed(gListRelayUrls, contactEvent.eventData.contactList, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
-
-          if( !gContactLists.containsKey(userPublicKey)) {
-            gContactLists[userPublicKey] = contactEvent.eventData.contactList;
-          }
-        } else {
-          if( gDebug > 0) log.info( "Could not find contact list");
+          contactEvent.eventData.contactList.forEach((contact) {
+            contacts.add(contact.relay);
+          });
         }
+        getContactFeed(gListRelayUrls1, contacts, gLimitPerSubscription, getSecondsDaysAgo(2 * gDaysToGetEventsFor));
+
+        // calculate top mentioned ptags, and then get the events for those users
+        List<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
+        getMultiUserEvents(gListRelayUrls1, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
         
         stdout.write('Waiting for feed to come in..............');
         Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
 
-          initialEvents.addAll(getRecievedEvents());
-          clearEvents();
-
-          // count feed events
-          initialEvents.forEach((element) { element.eventData.kind == 1? numFeedPosts++: numFeedPosts;});
-          numFeedPosts = numFeedPosts - numUserPosts - numFilePosts;
-          stdout.write("done\n");//received $numFeedPosts new posts from the follows\n");
-
-          // get mentioned ptags, and then get the events for those users
-          List<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
-          getMultiUserEvents(gListRelayUrls, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
-          
-          stdout.write('Waiting for rest of posts to come in.....');
-          Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 2), () {
-
             initialEvents.addAll(getRecievedEvents());
             clearEvents();
 
-            // count other events
-            initialEvents.forEach((element) { element.eventData.kind == 1? numOtherPosts++: numOtherPosts;});
-            numOtherPosts = numOtherPosts - numFeedPosts - numUserPosts - numFilePosts;
             stdout.write("done\n");
             if( gDebug > 0) log.info("Received ptag events events.");
 
@@ -303,10 +290,7 @@ Future<void> main(List<String> arguments) async {
             clearEvents();
             mainMenuUi(node);
           });
-        });
       });
-
-
     } on FormatException catch (e) {
       print(e.message);
       return;

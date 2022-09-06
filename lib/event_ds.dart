@@ -357,7 +357,7 @@ class EventData {
     String nameToPrint = name.padLeft(nameWidth).substring(0, nameWidth);
     String dateToPrint = strDate.padLeft(gSpacesPerDepth * timeWidthDepth).substring(0, gSpacesPerDepth * timeWidthDepth);
 
-    strToPrint = "${getDepthSpaces(depth)}      $dateToPrint$nameToPrint: ";
+    strToPrint = "${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: ";
     // depth above + ( depth numberof spaces = 1) + (depth of time = 2) + (depth of name = 3)
     int contentDepth = depth + 1 + timeWidthDepth + nameWidthDepth;
     String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);

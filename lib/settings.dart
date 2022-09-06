@@ -5,7 +5,7 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = ""; //"1763016774ceaa8c135dce01e77923994c5afad4cd3e126704a1292ebb1a577e"; //"15d86a36a620fc1f735f2322f31366b2adde786361f568faf6a0dc8368f7e534";
 
-const int gDefaultNumWaitSeconds = 3000; // is used in main()
+const int gDefaultNumWaitSeconds = 2000; // is used in main()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// file related settings 
 const String gDefaultEventsFilename = "all_nostr_events.txt";

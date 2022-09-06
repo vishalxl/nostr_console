@@ -392,12 +392,12 @@ class EventData {
         String reactorId = reactors[i][0];
         if( newLikes.contains(reactorId) && reactors[i][1] == "+") {
           // this is a notifications, print it and then later empty newLikes
-          reactorNames += gNotificationColor + getAuthorName(reactorId) + gColorEndMarker + comma;
+          reactorNames += comma + gNotificationColor + getAuthorName(reactorId) + gColorEndMarker;
           firstEntry = false;
         } else {
           // this is normal printing of the reaction. only print for + for now
           if( reactors[i][1] == "+")
-            reactorNames += getAuthorName(reactorId);
+            reactorNames += comma + getAuthorName(reactorId);
             firstEntry = false;
         }
       } // end for

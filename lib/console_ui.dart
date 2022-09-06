@@ -9,7 +9,7 @@ import 'package:bip340/bip340.dart';
 Future<void> processNotifications(Store node)  async {
   // need a bit of wait to give other events to execute, so do a delay, which allows
   // relays to recieve and handle new events
-  const int waitMilliSeconds = 150;
+  const int waitMilliSeconds = 200;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
     Set<String> newEventIdsSet = node.processIncomingEvent(getRecievedEvents());

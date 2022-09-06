@@ -15,8 +15,8 @@ const int gDontSaveBeforeDays       = 100; // dont save events older than this m
 bool         gOverWriteFile         = false; // overwrite the file, and don't just append. Will write all events in memory. 
 
 
-const int gDaysToGetEventsFor       = 100; // when getting events, this is the since field (unless a fully formed request is given in command line)
-const int gLimitPerSubscription     = 10000;
+const int gDaysToGetEventsFor       = 30; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gLimitPerSubscription     = 5000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
@@ -50,6 +50,23 @@ const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655
 String userPrivateKey = gDefaultPrivateKey;
 String userPublicKey  = gDefaultPublicKey;
 
+// default follows; taken from nostr.io/stats 
+List<String> gDefaultFollows = [
+                  "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681", //damus
+                  "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245", // jb55
+                  "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", // fiatjaf
+                  "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5", // unclebobmarting 
+                  "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69", // Melvincarvalho
+                  "35d26e4690cbe1a898af61cc3515661eb5fa763b57bd0b42e45099c8b32fd50f", // scsibug
+                  "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437", // balas
+                  "46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d", // Giszmo
+                  "8c0da4862130283ff9e67d889df264177a508974e2feb96de139804ea66d6168", // monlovesmango
+                  "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c", // vishalxl
+                  "c5072866b41d6b88ab2ffee16ad7cb648f940867371a7808aaa94cf7d01f4188", // randymcmillan
+                  "2183e94758481d0f124fbd93c56ccaa45e7e545ceeb8d52848f98253f497b975", // Brill
+                  "c7eda660a6bc8270530e82b4a7712acdea2e31dc0a56f8dc955ac009efd97c86" ]; // shawn 
+
+ 
 // dummy account pubkey
 const String gDummyAccountPubkey = "Non";
 

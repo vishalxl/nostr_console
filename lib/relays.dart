@@ -46,18 +46,26 @@ class Relays {
     return Relays(mapRelay, {}, {});
   }
 
+
+  void getKindEvents(List<int> kind, String relayUrl, int limit, int sinceWhen) {
+    kind.toString();
+    String subscriptionId = "kind_" + kind.toString() + "_" + relayUrl.substring(6);
+    String request = getKindRequest(subscriptionId, kind,  limit, sinceWhen);
+   
+    sendRequest(relayUrl, request);
+  }
   /* 
    * @connect Connect to given relay and get all events for the given publicKey and insert the
    *          received events in the given List<Event>
    */
-  void getUserEvents(String relayUrl, String publicKey, int numEventsToGet, int sinceWhen) {
+  void getUserEvents(String relayUrl, String publicKey, int limit, int sinceWhen) {
     for(int i = 0; i < gBots.length; i++) { // ignore bots
       if( publicKey == gBots[i]) {
         return;
       }
     }
 
-    String subscriptionId = "single_user" + (relays[relayUrl]?.numRequestsSent??"").toString();
+    String subscriptionId = "single_user" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
     if( relays.containsKey(relayUrl)) {
       List<String>? users = relays[relayUrl]?.users;
       if( users != null) { // get a user only if it has not already been requested
@@ -71,7 +79,7 @@ class Relays {
       }
     }
     
-    String request = getUserRequest(subscriptionId, publicKey, numEventsToGet, sinceWhen);
+    String request = getUserRequest(subscriptionId, publicKey, limit, sinceWhen);
     sendRequest(relayUrl, request);
   }    
 
@@ -79,7 +87,7 @@ class Relays {
    * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
    *          received events in the given List<Event>
    */
-  void getMultiUserEvents(String relayUrl, List<String> publicKeys, int numEventsToGet, int sinceWhen) {
+  void getMultiUserEvents(String relayUrl, List<String> publicKeys, int limit, int sinceWhen) {
     
     List<String> reqKeys = [];
     if( relays.containsKey(relayUrl)) {
@@ -99,9 +107,9 @@ class Relays {
       }
     } // if relay exists and has a user list
 
-    String subscriptionId = "multiple_user" + (relays[relayUrl]?.numRequestsSent??"").toString();
+    String subscriptionId = "multiple_user" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
 
-    String request = getMultiUserRequest( subscriptionId, reqKeys, numEventsToGet, sinceWhen);
+    String request = getMultiUserRequest( subscriptionId, reqKeys, limit, sinceWhen);
     sendRequest(relayUrl, request);
   }    
 
@@ -168,7 +176,7 @@ class Relays {
                 return;
               }                
             },
-            onError: (err) { print("\n${gWarningColor}Warning: In SendRequest creating connection onError. Kindly check your internet connection or change the relay by command line --relay=<relay wss url>"); print(gColorEndMarker); },
+            onError: (err) { print("\n${gWarningColor}Warning: In SendRequest creating connection to $relay. Kindly check your internet connection. Or maybe only this relay is down.>"); print(gColorEndMarker); },
             onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
           );
       } on WebSocketException {
@@ -203,6 +211,26 @@ class Relays {
 
 Relays relays = Relays({}, {}, {});
 
+String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since":${sinceWhen.toString()}';
+  }
+  var    strSubscription1  = '["REQ","$subscriptionId",{"kinds":[';
+  var    strSubscription2  ='], "limit":$limit$strTime  } ]';
+
+  String strKind = "";
+  for(int i = 0; i < kind.length; i++) {
+    String comma = ",";
+    if( i == kind.length-1) {
+      comma = "";
+    }
+    strKind = strKind + kind[i].toString() + comma;
+  }
+  String strRequest = strSubscription1 + strKind + strSubscription2;
+  //print(strRequest);
+  return strRequest;
+}
 String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
   String strTime = "";
   if( sinceWhen != 0) {
@@ -232,40 +260,40 @@ String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int n
   return strSubscription1 + s + strSubscription2;
 }
 
-List<String> getContactFeed(List<String> relayUrls, List<Contact> contacts, int numEventsToGet, int sinceWhen) {
+void getContactFeed(List<String> relayUrls, List<String> contacts, int numEventsToGet, int sinceWhen) {
   
-  // maps from relay url to list of users that it supplies events for
-  Map<String, List<String> > mContacts = {};
 
-  List<String> contactList = [];
+  for( int i = 0; i < contacts.length; i += gMaxAuthorsInOneRequest) {
 
-  // creat the mapping between relay and its hosted users
-  for( int i = 0; i < contacts.length; i++) {
-    if( mContacts.containsKey(contacts[i].relay) ) {
-      mContacts[contacts[i].relay]?.add(contacts[i].id);
-    } else {
-      mContacts[contacts[i].relay] = [contacts[i].id];
+    // for last iteration change upper limit
+    int upperLimit = (i + gMaxAuthorsInOneRequest) > contacts.length? 
+                          (contacts.length - i): gMaxAuthorsInOneRequest;
+    
+    List<String> groupContacts = [];
+    for( int j = 0; j < i + upperLimit; j++) {
+      groupContacts.add(contacts[i + j]);
     }
-    contactList.add(contacts[i].id);
+
+    //print( "i = $i upperLimit = $upperLimit") ;
+    relayUrls.forEach((relayUrl) {
+      relays.getMultiUserEvents(relayUrl, groupContacts, numEventsToGet, sinceWhen);
+    });
+  
   }
 
-  // send request for the users events to the relays
-  mContacts.forEach((key, value) { 
-    //relays.getMultiUserEvents(key, value, numEventsToGet, sinceWhen);
-    
-    relayUrls.forEach((relayUrl) {
-      relays.getMultiUserEvents(relayUrl, value, numEventsToGet, sinceWhen);
-    });
-
-  });
-
   // return contact list for use by caller
-  return contactList;  
+  return;
 }
 
 void getUserEvents(List<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen) {
   serverUrls.forEach((serverUrl) {
       relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
+    });
+}
+
+getKindEvents(List<int> kind, List<String> serverUrls, int limit, int sinceWhen) {
+  serverUrls.forEach((serverUrl) {
+      relays.getKindEvents(kind, serverUrl, limit, sinceWhen); 
     });
 }
 

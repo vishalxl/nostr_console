@@ -269,14 +269,16 @@ Future<void> otherMenuUi(Store node) async {
               // if contact list was found, get user's feed, and keep the contact list for later use 
               String authorName = gKindONames[pubkey.first]?.name??"";
               printUnderlined("\nProfile for User");
-              print("\nName   : $authorName ( ${pubkey.first} ).");
+              print("\nName        : $authorName ( ${pubkey.first} ).");
 
               if (contactEvent != null ) {
                 String about = gKindONames[pubkey.first]?.about??"";
                 String picture = gKindONames[pubkey.first]?.picture??"";
+                int    dateLastUpdated    = gKindONames[pubkey.first]?.createdAt??0;
 
-                print("About  : $about");
-                print("Picture: $picture");
+                print("About       : $about");
+                print("Picture     : $picture");
+                print("Last Updated: ${getPrintableDate(dateLastUpdated)}"); 
 
                 if( contactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
                     print("\n* They follow you");

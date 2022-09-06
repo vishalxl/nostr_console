@@ -789,6 +789,10 @@ class Store {
       for( int i = 0; i < gapBetweenTopTrees; i++ )  { 
         stdout.write("\n"); 
       }
+      
+      String topPostLine = getDepthSpaces(depth+1);
+      topPostLine += ("+\n");
+      stdout.write(topPostLine);
 
       numPrinted += topPosts[i].printTree(depth+1, newerThan);
     }

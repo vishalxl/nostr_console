@@ -463,6 +463,7 @@ class Event {
 
   void printEvent(int depth) {
     eventData.printEventData(depth);
+    //print("\n$seenOnRelays");
     //stdout.write("\n$originalJson --------------------------------\n\n");
   }
 

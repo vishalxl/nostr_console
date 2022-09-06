@@ -240,6 +240,8 @@ Future<void> main(List<String> arguments) async {
       getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
       getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor)); // from relay group 2
       getKindEvents([0,3], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor* 10));
+
+      // TODO  get all 40 events, and then get all #e for them ( responses to them)
     
       // the default in case no arguments are given is:
       // get a user's events, and get all kind 0, 3 events
@@ -286,7 +288,7 @@ Future<void> main(List<String> arguments) async {
 
             // Creat tree from all events read form file
             Store node = getTree(initialEvents);
-
+            
             clearEvents();
             mainMenuUi(node);
           });

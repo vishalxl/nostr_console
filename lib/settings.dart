@@ -14,6 +14,7 @@ bool         gDontWriteOldEvents    = true;
 const int gDontSaveBeforeDays       = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
 bool         gOverWriteFile         = false; // overwrite the file, and don't just append. Will write all events in memory. 
 
+const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
 const int gDaysToGetEventsFor       = 70; // when getting events, this is the since field (unless a fully formed request is given in command line)
 const int gLimitPerSubscription     = 5000;
@@ -73,6 +74,10 @@ List<String> gDefaultFollows = [
                   "47bae3a008414e24b4d91c8c170f7fce777dedc6780a462d010761dca6482327", // slaninas
                   "c7eda660a6bc8270530e82b4a7712acdea2e31dc0a56f8dc955ac009efd97c86", // shawn 
                   "b2d670de53b27691c0c3400225b65c35a26d06093bcc41f48ffc71e0907f9d4a", // 0xtr
+                  "f43c1f9bff677b8f27b602725ea0ad51af221344f69a6b352a74991a4479bac3", // manfromhighcastle
+                  "80482e60178c2ce996da6d67577f56a2b2c47ccb1c84c81f2b7960637cb71b78", // Leo
+                  "42a0825e980b9f97943d2501d99c3a3859d4e68cd6028c02afe58f96ba661a9d", // zerosequioso
+                  "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180", // nostr_console test
                   "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"]; // vishalxl ]; 
 
  

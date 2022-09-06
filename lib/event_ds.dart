@@ -200,6 +200,7 @@ class EventData {
     break;
 
     case 4: 
+
       if( userPrivateKey == ""){ // cant process if private key not given
         break;
       }
@@ -919,17 +920,32 @@ String myPrivateDecrypt( String privateString,
                          String publicString, 
                          String b64encoded,
                         [String b64IV = ""]) {
+
   Uint8List encdData = convert.base64.decode(b64encoded);
   final rawData = myPrivateDecryptRaw(privateString, publicString, encdData, b64IV);
   return convert.Utf8Decoder().convert(rawData.toList());
 }
+
+
+Map<String, List<List<int>>> gMapByteSecret = {};
 
 Uint8List myPrivateDecryptRaw( String privateString, 
                                String publicString, 
                                Uint8List cipherText,
                                [String b64IV = ""]) {
 try {
-  final secretIV = Kepler.byteSecret(privateString, publicString);
+
+  List<List<int>> byteSecret = [];
+  if( gMapByteSecret.containsKey(publicString)) {
+      byteSecret = gMapByteSecret[publicString]??[];
+  }
+
+  if( byteSecret.isEmpty) {
+    byteSecret = Kepler.byteSecret(privateString, publicString);;
+    gMapByteSecret[publicString] = byteSecret;
+  }
+
+  final secretIV = byteSecret;
   
   final key = Uint8List.fromList(secretIV[0]);
 
@@ -937,11 +953,13 @@ try {
       ? convert.base64.decode(b64IV)
       : Uint8List.fromList(secretIV[1]);
 
+
   CipherParameters params = new PaddedBlockCipherParameters(
       new ParametersWithIV(new KeyParameter(key), iv), null);
 
   PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
       new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
+
 
   cipherImpl.init(false,
                   params as PaddedBlockCipherParameters<CipherParameters?,
@@ -957,7 +975,6 @@ try {
   //remove padding
   offset += cipherImpl.doFinal(cipherText, offset, finalPlainText, offset);
   assert(offset == cipherText.length);
-
   return  finalPlainText.sublist(0, offset);
 } catch(e) {
     //print("cannot open file $gEventsFilename");

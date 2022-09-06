@@ -1450,13 +1450,15 @@ Store getTree(Set<Event> events) {
     events.forEach( (event) =>  processKind0Event(event)? totalKind0Processed++: notProcessed++);
     if( gDebug > 0) print("In getTree: totalKind0Processed = $totalKind0Processed  notProcessed = $notProcessed gKindONames.length = ${gKindONames.length}"); 
 
+
+    if( gDebug > 0) log.info("kind 0 finished.");
+
     // process kind 3 events which is contact list. Update global info about the user (with meta data) 
     int totalKind3Processed = 0, notProcessed3 = 0;
     events.forEach( (event) =>  processKind3Event(event)? totalKind3Processed++: notProcessed3++);
     if( gDebug > 0) print("In getTree: totalKind3Processed = $totalKind3Processed  notProcessed = $notProcessed3 gKindONames.length = ${gKindONames.length}"); 
 
-    // process kind 7 events or reactions
-    //processReactions(events);
+    if( gDebug > 0) log.info("kind 3 finished.");
 
     // remove bot events
     events.removeWhere( (event) => gBots.contains(event.eventData.pubkey));
@@ -1468,12 +1470,16 @@ Store getTree(Set<Event> events) {
     // translate and expand mentions for all
     events.forEach( (event) => event.eventData.translateAndExpandMentions());
 
+    if( gDebug > 0) log.info("expand mentions finished.");
+
+
     if( gDebug > 0) print("In getTree: after removing unwanted kind, number of events remaining: ${events.length}");
 
+    if( gDebug > 0) log.info("Calling fromEvents for ${events.length} events.");
     // create tree from events
     Store node = Store.fromEvents(events);
 
-    if(gDebug != 0) print("total number of posts/replies in main tree = ${node.count()}");
+    if(gDebug > 0) print("total number of posts/replies in main tree = ${node.count()}");
     return node;
 }
 

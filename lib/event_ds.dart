@@ -12,6 +12,8 @@ import 'package:kepler/kepler.dart';
 
 int gDebug = 0;
 
+
+
 // translate 
 GoogleTranslator? translator; // initialized in main when argument given
  
@@ -131,10 +133,11 @@ class EventData {
       }
     }
 
-    if( json['id'] == gCheckEventId) {
+    if( gDebug > 0 && json['id'] == gCheckEventId) {
       print("\n----------------------------------------Creating EventData with content: ${json['content']}");
       print("In Event fromJson: got message: $gCheckEventId");
     }
+
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
                      json['created_at'] as int, json['kind'] as int,
@@ -793,6 +796,8 @@ bool isWhitespace(String s) {
 }
 
 extension StringX on String {
+
+
   isChannelPageNumber(int max) {
   
   int? n = int.tryParse(this);

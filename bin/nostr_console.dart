@@ -288,6 +288,7 @@ Future<void> main(List<String> arguments) async {
 
             // Creat tree from all events read form file
             Store node = getTree(initialEvents);
+            gStore = node;
             
             clearEvents();
             mainMenuUi(node);

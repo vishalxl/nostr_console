@@ -1,9 +1,10 @@
 import 'package:logging/logging.dart';
 
+
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = ""; //"1763016774ceaa8c135dce01e77923994c5afad4cd3e126704a1292ebb1a577e"; //"15d86a36a620fc1f735f2322f31366b2adde786361f568faf6a0dc8368f7e534";
+String gCheckEventId = "d367bb6ed06c23238f1b0b68470d332c931d635b2cc85a577f487304563946ff"; //"1763016774ceaa8c135dce01e77923994c5afad4cd3e126704a1292ebb1a577e"; //"15d86a36a620fc1f735f2322f31366b2adde786361f568faf6a0dc8368f7e534";
 
 const int gDefaultNumWaitSeconds = 2000; // is used in main()
 
@@ -16,8 +17,8 @@ bool         gOverWriteFile         = false; // overwrite the file, and don't ju
 
 const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
-const int gDaysToGetEventsFor       = 70; // when getting events, this is the since field (unless a fully formed request is given in command line)
-const int gLimitPerSubscription     = 5000;
+const int gDaysToGetEventsFor       = 30; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gLimitPerSubscription     = 6000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable

@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
@@ -5,15 +6,70 @@ import 'package:nostr_console/settings.dart';
 
 typedef fTreeSelector = bool Function(Tree a);
 
+Store? gStore = null;
+
 bool selectAll(Tree t) {
   return true;
 }
+
+int getLatestMessageTime(List<String> _messageIds) {
+  if( _messageIds.length <= 0 || gStore == null) {
+    return 0;
+  }
+
+  int latest = 0;
+  for(int i = 0; i < _messageIds.length; i++) {
+    if( gStore != null) {
+      Tree? tree = (gStore?.allChildEventsMap[_messageIds[i]]  );
+      if( tree != null) {
+        EventData ed = tree.event.eventData;
+        if( ed.createdAt > latest) {
+          latest = ed.createdAt;
+        }
+      }
+    }
+  }
+
+  return latest;
+}
+
+DirectMessageRoom? getDirectRoom(List<DirectMessageRoom> rooms, String otherPubkey) {
+  for( int i = 0; i < rooms.length; i++) {
+    if( rooms[i].otherPubkey == otherPubkey) {
+      return rooms[i];
+    }
+  }
+  return null;
+}
+
+
+int directRoomCompareTo(DirectMessageRoom a, DirectMessageRoom b) {
+
+  if( gStore == null)
+    return 0;
+
+  int otherLatest = getLatestMessageTime(b.messageIds);
+  int thisLatest =  getLatestMessageTime(a.messageIds);
+
+  if( thisLatest < otherLatest) {
+    return 1;
+  } else {
+    if( thisLatest == otherLatest) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+
+}
+
 
 class ScrollableMessages {
   String       topHeader;
   List<String> messageIds;
 
   ScrollableMessages(this.topHeader, this.messageIds);
+
 
   void printOnePage(Map<String, Tree> tempChildEventsMap, [int page = 1])  {
     if( page < 1) {
@@ -82,7 +138,46 @@ class DirectMessageRoom extends ScrollableMessages{
             super ( "${getAuthorName(otherPubkey)} ($otherPubkey)", messageIds) {
               //print ("Created direct room with otherPubkey = $otherPubkey");
             }
+
+void addMessageToDirectRoom(String messageId, Map<String, Tree> tempChildEventsMap) {
+  int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
+
+    DirectMessageRoom room = this;
+      
+    if(gDebug> 0) print("direct room has ${room.messageIds.length} messages already. adding new one to it. ");
+
+    for(int i = 0; i < room.messageIds.length; i++) {
+      int eventTime = (tempChildEventsMap[room.messageIds[i]]?.event.eventData.createdAt??0);
+      if( newEventTime < eventTime) {
+        // shift current i and rest one to the right, and put event Time here
+        if(gDebug> 0) print("In addMessageToChannel: inserted in middle to channel ${room.otherPubkey} ");
+        room.messageIds.insert(i, messageId);
+        return;
+      }
+    }
+    if(gDebug> 0) print("In addMessageToChannel: added to channel ${room.otherPubkey} ");
+
+    // insert at end
+    room.messageIds.add(messageId);
+    return;
+
+}
+
+
+  bool isPrivateMessageRoom() {
+    return false;
+  }
+
+  void printDirectMessageRoom(Store store, [int page = 1])  {
+    if( page < 1) {
+      if( gDebug > 0) log.info("In printChannel got page = $page");
+      page = 1;
+    }
+    printOnePage(store.allChildEventsMap, page);
+  }
  }
+
+
 
 class Tree {
   Event          event;                   // is dummy for very top level tree. Holds an event otherwise.
@@ -333,8 +428,9 @@ class Store {
 
   Map<String, Tree>  allChildEventsMap;   // has events of kind typesInEventMap
   List<String>       eventsWithoutParent;
+
   Map<String, ChatRoom> chatRooms = {};
-  Map<String, DirectMessageRoom> directRooms = {};
+  List<DirectMessageRoom> directRooms = [];
 
   Store(this.topPosts, this.allChildEventsMap, this.eventsWithoutParent, this.chatRooms, this.directRooms) {
     allChildEventsMap.forEach((eventId, tree) {
@@ -406,7 +502,7 @@ class Store {
       } // end switch
   }
 
-  static void handleDirectMessages( Map<String, DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap, Event ce) {
+  static void handleDirectMessages( List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap, Event ce) {
       String eId = ce.eventData.id;
       int    eKind = ce.eventData.kind;
 
@@ -419,14 +515,25 @@ class Store {
       {
         String directRoomId = getDirectRoomId(ce.eventData);
         if( directRoomId != "") {
-          if( directRooms.containsKey(directRoomId)) {
+
+          bool alreadyExists = false;
+
+          int i = 0;
+          for(i = 0; i < directRooms.length; i++) {
+            if ( directRoomId == directRooms[i].otherPubkey) {
+              alreadyExists = true;
+              break;
+            }
+          }
+
+          if( alreadyExists) {
             if( gDebug > 0) print("Adding new message ${ce.eventData.id} to a direct room $directRoomId sender pubkey = ${ce.eventData.pubkey}. ");
-            addMessageToDirectRoom(directRoomId, eId, tempChildEventsMap, directRooms);
+            directRooms[i].addMessageToDirectRoom( eId, tempChildEventsMap);
           } else {
             List<String> temp = [];
             temp.add(eId);
             DirectMessageRoom newDirectRoom= DirectMessageRoom(directRoomId,  temp);
-            directRooms[directRoomId] = newDirectRoom;
+            directRooms.add( newDirectRoom);
             if( gDebug > 0) print("Adding new message ${ce.eventData.id} to NEW direct room $directRoomId.  sender pubkey = ${ce.eventData.pubkey}.");
           }
         } else {
@@ -444,7 +551,9 @@ class Store {
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Store.fromEvents(Set<Event> events) {
     if( events.isEmpty) {
-      return Store( [], {}, [], {}, {});
+    List<DirectMessageRoom> temp = [];
+
+      return Store( [], {}, [], {}, temp);
     }
 
     // create a map tempChildEventsMap from list of events, key is eventId and value is event itself
@@ -465,7 +574,8 @@ class Store {
     List<Tree>  topLevelTrees = [];// this will become the children of the main top node. These are events without parents, which are printed at top.
     List<String> tempWithoutParent = [];
     Map<String, ChatRoom> rooms = {};
-    Map<String, DirectMessageRoom> tempDirectRooms= {};
+    List<DirectMessageRoom> tempDirectRooms = [];
+
 
     int numEventsNotPosts = 0; // just for debugging info
     int numKind40Events   = 0;
@@ -623,9 +733,10 @@ class Store {
             //print("in insert events: got directRoomId = ${directRoomId}");
 
             if( directRoomId != "") {
-              if( directRooms.containsKey(directRoomId)) {
+              DirectMessageRoom? room = getDirectRoom(directRooms, directRoomId);
+              if( room != null) {
                 if( gDebug > 0) print("added event to direct room $directRoomId in insert event");
-                addMessageToDirectRoom(directRoomId, newTree.event.eventData.id, allChildEventsMap, directRooms);
+                room.addMessageToDirectRoom(newTree.event.eventData.id, allChildEventsMap);
                 newTree.event.eventData.isNotification = true; // highlight it too in next printing
                 //print("   in from event: added it to a direct room");
                 break;
@@ -634,7 +745,7 @@ class Store {
 
             List<String> temp = [];
             temp.add(newTree.event.eventData.id);
-            directRooms[directRoomId] = DirectMessageRoom(directRoomId, temp); // TODO sort it 
+            directRooms.add(DirectMessageRoom(directRoomId, temp)); // TODO sort it 
 
             break;
 
@@ -831,92 +942,6 @@ class Store {
     });
   }
 
-  /**
-   * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
-   */
-  void printDirectRoomInfo() {
-    print("\n\nDirect messages inbox:");
-    printUnderlined(" From                                    Num of Messages          Latest Message           ");
-    directRooms.forEach((key, value) {
-      String name = getAuthorName(key, 4);
-
-      int numMessages = value.messageIds.length;
-      stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
-
-      // print latest event in one line
-      List<String> messageIds = value.messageIds;
-      for( int i = messageIds.length - 1; i >= 0; i++) {
-        if( allChildEventsMap.containsKey(messageIds[i])) {
-          Event? e = allChildEventsMap[messageIds[i]]?.event;
-          if( e!= null) {
-            String line = e.eventData.getAsLine();
-            stdout.write(line);
-            break; // print only one event, the latest one
-          }
-        }
-      }
-      print("");
-    });
-  }
-
-  // shows the given directRoomId, where directRoomId is prefix-id or pubkey of the other user. returns full id of other user.
-  String showDirectRoom(String directRoomId, [int page = 1]) {
-    //print("In show DirectRoom to show with id: $directRoomId");
-    if( directRoomId.length > 64) { // TODO revisit  cause if name is > 64 should not return
-      return "";
-    }
-    Set<String> lookedUpName = {};
-
-    // TODO improve lookup logic. 
-    directRooms.forEach((roomId, directRoom) {
-      //print("looking up $directRoomId in  $roomId ${directRoom.otherPubkey}");
-      if( directRoomId == roomId) {
-        lookedUpName.add(roomId);
-      }
-
-      //print("directRoom.otherPubkey = ${directRoom.otherPubkey} len = ${directRoom.otherPubkey.length}");
-      if( directRoom.otherPubkey.substring(0, directRoomId.length) == directRoomId){
-        lookedUpName.add(roomId);
-      }
-
-      if( getAuthorName( directRoom.otherPubkey) == directRoomId){
-        lookedUpName.add(roomId);
-      }
-    });
-
-   
-    if( lookedUpName.length == 1) {
-      DirectMessageRoom? room = directRooms[lookedUpName.first];
-      if( room != null) {
-        printDirectMessageRoom(room, page);
-        return lookedUpName.first;
-      } else {
-        if( isValidPubkey(lookedUpName.first)) {
-          print("Could not find a conversation or room with the given id. Creating one with ${lookedUpName.first}");
-          createDirectRoom(directRoomId);
-          return directRoomId;
-        }
-      }
-    } else {
-      if( lookedUpName.length > 0)
-      print("Got more than one public id for the name given, which are: ${lookedUpName.length}");
-      else {
-        if( isValidPubkey(directRoomId)) {
-          print("Could not find a conversation or room with the given id. Creating one with $directRoomId");
-          createDirectRoom(directRoomId);
-          return directRoomId;
-        } 
-      }
-      return "";
-    }
-    return "";
-  }
-
-  void createDirectRoom(String directRoomId) {
-    if( !directRooms.containsKey(directRoomId))
-      directRooms[directRoomId] = DirectMessageRoom(directRoomId, []); 
-  }
-
   void printChannel(ChatRoom room, [int page = 1])  {
     if( page < 1) {
       if( gDebug > 0) log.info("In printChannel got page = $page");
@@ -925,16 +950,6 @@ class Store {
 
     room.printOnePage(allChildEventsMap, page);
   }
-
-  void printDirectMessageRoom(DirectMessageRoom directRoom, [int page = 1])  {
-    if( page < 1) {
-      if( gDebug > 0) log.info("In printChannel got page = $page");
-      page = 1;
-    }
-
-    directRoom.printOnePage(allChildEventsMap, page);
-  }
-
 
   // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
   // looks for channelId in id first, then in names. 
@@ -982,6 +997,96 @@ class Store {
 
     return "";
   }
+
+  /**
+   * @printDirectRoomInfo Print one line information about chat rooms
+   */
+  void printDirectRoomInfo() { 
+    directRooms.sort(directRoomCompareTo);
+    print("\n\nDirect messages inbox:");
+    printUnderlined(" From                                    Num of Messages          Latest Message           ");
+    for( int j = 0; j < directRooms.length; j++) {
+      
+      DirectMessageRoom room = directRooms[j];
+      String name = getAuthorName(room.otherPubkey, 4);
+
+      int numMessages = room.messageIds.length;
+      stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
+
+      // print latest event in one line
+      List<String> messageIds = room.messageIds;
+      for( int i = messageIds.length - 1; i >= 0; i++) {
+        if( allChildEventsMap.containsKey(messageIds[i])) {
+          Event? e = allChildEventsMap[messageIds[i]]?.event;
+          if( e!= null) {
+            String line = e.eventData.getAsLine();
+            stdout.write(line);
+            break; // print only one event, the latest one
+          }
+        }
+      }
+      print("");
+    }
+  }
+
+  // shows the given directRoomId, where directRoomId is prefix-id or pubkey of the other user. returns full id of other user.
+  String showDirectRoom( String directRoomId, [int page = 1]) {
+    //print("In show DirectRoom to show with id: $directRoomId");
+    if( directRoomId.length > 64) { // TODO revisit  cause if name is > 64 should not return
+      return "";
+    }
+    Set<String> lookedUpName = {};
+
+    // TODO improve lookup logic. 
+    for( int j = 0; j < directRooms.length; j++) {
+      String roomId = directRooms[j].otherPubkey;
+      //print("looking up $directRoomId in  $roomId ${directRoom.otherPubkey}");
+      if( directRoomId == roomId) {
+        lookedUpName.add(roomId);
+      }
+
+      //print("directRoom.otherPubkey = ${directRoom.otherPubkey} len = ${directRoom.otherPubkey.length}");
+      if( directRooms[j].otherPubkey.substring(0, directRoomId.length) == directRoomId){
+        lookedUpName.add(roomId);
+      }
+
+      if( getAuthorName( directRooms[j].otherPubkey) == directRoomId){
+        lookedUpName.add(roomId);
+      }
+    }
+
+   
+    if( lookedUpName.length == 1) {
+      DirectMessageRoom? room =  getDirectRoom(directRooms, lookedUpName.first);
+      if( room != null) {
+        room.printDirectMessageRoom(this, page);
+        return lookedUpName.first;
+      } else {
+        if( isValidPubkey(lookedUpName.first)) {
+          print("Could not find a conversation or room with the given id. Creating one with ${lookedUpName.first}");
+          createDirectRoom( directRoomId);
+          return directRoomId;
+        }
+      }
+    } else {
+      if( lookedUpName.length > 0)
+      print("Got more than one public id for the name given, which are: ${lookedUpName.length}");
+      else {
+        if( isValidPubkey(directRoomId)) {
+          print("Could not find a conversation or room with the given id. Creating one with $directRoomId");
+          createDirectRoom(directRoomId);
+          return directRoomId;
+        } 
+      }
+      return "";
+    }
+    return "";
+  }
+
+  void createDirectRoom(String directRoomId) {
+      directRooms.add(DirectMessageRoom(directRoomId, [])); 
+  }
+
 
   // Write the tree's events to file as one event's json per line
   Future<void> writeEventsToFile(String filename) async {
@@ -1256,8 +1361,8 @@ class Store {
   // the reactedTo event's id, blank if invalid reaction etc
   static String processReaction(Event event, Map<String, Tree> tempChildEventsMap) {
 
-    if(  gDebug > 0 && event.eventData.id == "e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e")
-        print("in processReaction: 0 got reaction e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e");
+    if(  gDebug > 0 && event.eventData.id == gCheckEventId)
+        print("in processReaction: 0 got reaction $gCheckEventId");
 
     List<String> validReactionList = ["+", "!"]; // TODO support opposite reactions 
     List<String> opppositeReactions = ['-', "~"];
@@ -1271,8 +1376,8 @@ class Store {
       int    lastEIndex = event.eventData.eTags.length - 1;
       String reactedTo  = event.eventData.eTags[lastEIndex];
 
-      if( gDebug > 0 && event.eventData.id == "e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e")
-         print("in processReaction: 1 got reaction e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e");
+      if( gDebug > 0 && event.eventData.id == gCheckEventId)
+         print("in processReaction: 1 got reaction $gCheckEventId");
 
       if( !validReactionList.any((element) => element == comment)) {
         return "";
@@ -1368,41 +1473,6 @@ void addMessageToChannel(String channelId, String messageId, Map<String, Tree> t
   print("In addMessageToChannel: returning without inserting message");
 }
 
-void addMessageToDirectRoom(String directRoomId, String messageId, Map<String, Tree> tempChildEventsMap, var directRooms) {
-  int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
-
-  if( directRooms.containsKey(directRoomId)) {
-    DirectMessageRoom? room = directRooms[directRoomId];
-    if( room != null ) {
-      if( room.messageIds.isEmpty) {
-        room.messageIds.add(messageId);
-        return;
-      }
-      
-      if(gDebug> 0) print("direct room has ${room.messageIds.length} messages already. adding new one to it. ");
-
-      for(int i = 0; i < room.messageIds.length; i++) {
-        int eventTime = (tempChildEventsMap[room.messageIds[i]]?.event.eventData.createdAt??0);
-        if( newEventTime < eventTime) {
-          // shift current i and rest one to the right, and put event Time here
-          if(gDebug> 0) print("In addMessageToChannel: inserted in middle to channel ${room.otherPubkey} ");
-          room.messageIds.insert(i, messageId);
-          return;
-        }
-      }
-      if(gDebug> 0) print("In addMessageToChannel: added to channel ${room.otherPubkey} ");
-
-      // insert at end
-      room.messageIds.add(messageId);
-      return;
-    } else {
-      print("In addMessageToChannel: could not find room");
-    }
-  } else {
-    print("In addMessageToChannel: could not find channel id");
-  }
-  print("In addMessageToChannel: returning without inserting message");
-}
 
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.event.eventData.createdAt < b.event.eventData.createdAt) {
@@ -1439,7 +1509,9 @@ int sortTreeNewestReply(Tree a, Tree b) {
 Store getTree(Set<Event> events) {
     if( events.isEmpty) {
       if(gDebug > 0) log.info("Warning: In printEventsAsTree: events length = 0");
-      return Store([], {}, [], {}, {});
+
+      List<DirectMessageRoom> temp =[];
+      return Store([], {}, [], {}, temp);
     }
 
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)

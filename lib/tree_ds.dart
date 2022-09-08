@@ -248,20 +248,20 @@ class Tree {
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    */
-  int printTree(int depth, DateTime newerThan) {
+  int printTree(int depth, DateTime newerThan, bool topPost) {
     int numPrinted = 0;
 
     //if( event.eventData.pubkey != gDummyAccountPubkey) { // don't print dummy events
-      event.printEvent(depth);
+      event.printEvent(depth, topPost);
       numPrinted++;
     //}
 
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
 
-      stdout.write("\n");  
-      printDepth(depth+1);
-      stdout.write("|\n");
+      //stdout.write("\n");  
+      //printDepth(depth+1);
+      //stdout.write("│");
 
       // if the thread becomes too 'deep' then reset its depth, so that its 
       // children will not be displayed too much on the right, but are shifted
@@ -269,17 +269,17 @@ class Tree {
       if( depth > maxDepthAllowed) {
         depth = maxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
-        stdout.write("<${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1)}+\n");        
+        stdout.write("┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1)}+\n");        
         leftShifted = true;
       }
 
-      numPrinted += children[i].printTree(depth+1, newerThan);
+      numPrinted += children[i].printTree(depth+1, newerThan, false);
     }
 
     if( leftShifted) {
       stdout.write("\n");
       printDepth(depth+1);
-      print(">");
+      print("┴");
     }
 
     return numPrinted;
@@ -666,7 +666,7 @@ class Store {
         } else {
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+           Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
 
            Tree dummyTopNode = Tree.withoutStore(dummy, []);
            dummyTopNode.children.add(tree);
@@ -922,7 +922,7 @@ class Store {
     topNotificationTree.retainWhere((t) => ids.add(t.event.eventData.id));
     
     topNotificationTree.forEach( (t) { 
-      t.printTree(0, DateTime(0)); 
+      t.printTree(0, DateTime(0), true); 
       print("\n");
     });
     print("\n");
@@ -957,10 +957,10 @@ class Store {
       }
       
       String topPostLine = getDepthSpaces(depth+1);
-      topPostLine += ("+\n");
+      topPostLine += ("┬\n");
       stdout.write(topPostLine);
 
-      numPrinted += topPosts[i].printTree(depth+1, newerThan);
+      numPrinted += topPosts[i].printTree(depth+1, newerThan, true);
     }
 
     print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
@@ -1068,6 +1068,17 @@ class Store {
    */
   void printDirectRoomInfo(fDirectRoomSelector roomSelector) { 
     directRooms.sort(scrollableCompareTo);
+
+    int numNotificationRooms = 0;
+    for( int j = 0; j < directRooms.length; j++) {
+      if( roomSelector(directRooms[j]))
+        numNotificationRooms++;
+    }
+
+    if( numNotificationRooms == 0) {
+      return;
+    }
+
     print("\n\nDirect messages inbox:");
     printUnderlined(" From                                    Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {

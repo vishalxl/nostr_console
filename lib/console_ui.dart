@@ -9,7 +9,7 @@ import 'package:bip340/bip340.dart';
 Future<void> processNotifications(Store node)  async {
   // need a bit of wait to give other events to execute, so do a delay, which allows
   // relays to recieve and handle new events
-  const int waitMilliSeconds = 200;
+  const int waitMilliSeconds = 250;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
     Set<String> newEventIdsSet = node.processIncomingEvent(getRecievedEvents());
@@ -496,13 +496,13 @@ Future<void> otherMenuUi(Store node) async {
 Future<void> channelMenuUI(Store node) async {
   bool continueChatMenu = true;
   
-  bool justShowedAllChannels = false;
+  bool justShowedChannels = false;
   while(continueChatMenu) {
 
     //await processNotifications(node); // this takes 300 ms
-    if( !justShowedAllChannels) {
+    if( !justShowedChannels) {
       node.printAllChannelsInfo(20);
-      justShowedAllChannels = false;
+      justShowedChannels = true;
     }
 
     int option = showMenu([ 'Show all public channels',          // 1 
@@ -513,10 +513,11 @@ Future<void> channelMenuUI(Store node) async {
     switch(option) {
       case 1:
         node.printAllChannelsInfo(1000);
-        justShowedAllChannels = true;
+        justShowedChannels = true;
         break;
       case 2:
 
+        justShowedChannels = false;
         bool showChannelOption = true;
         stdout.write("\nType channel id or name, or their 1st few letters; or type 'x' to go to menu: ");
         String? $tempUserInput = stdin.readLineSync();

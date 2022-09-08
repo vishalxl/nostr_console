@@ -17,7 +17,7 @@ bool         gOverWriteFile         = false; // overwrite the file, and don't ju
 
 const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
-const int gDaysToGetEventsFor       = 30; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gDaysToGetEventsFor       = 60; // when getting events, this is the since field (unless a fully formed request is given in command line)
 const int gLimitPerSubscription     = 6000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
@@ -58,6 +58,7 @@ String userPublicKey  = gDefaultPublicKey;
 // default follows; taken from nostr.io/stats 
 List<String> gDefaultFollows = [
                   "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681", //damus
+                  "6b0d4c8d9dc59e110d380b0429a02891f1341a0fa2ba1b1cf83a3db4d47e3964"  // dergigi
                   "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245", // jb55
                   "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", // fiatjaf
                   "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5", // unclebobmarting 
@@ -89,7 +90,7 @@ const String gDummyAccountPubkey = "Non";
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable
 const int  gDefaultTextWidth    = 120; // default text width
 int        gTextWidth           = gDefaultTextWidth; // is changed by --width option
-const int  gSpacesPerDepth      = 8;     // constant
+const int  gSpacesPerDepth      = 4;     // constant
 int        gNumLeftMarginSpaces = 0;// this number is modified in main 
 String     gAlignment           = "center";   // is modified in main if --align argument is given
 const int  gapBetweenTopTrees   = 1;
@@ -117,6 +118,7 @@ Map<String, String> gColorMap = { "green": greenColor,
                                   "red"  : redColor, 
                                   "blue" : blueColor};
 
+const String brightGreenColor       = "\x1B[92m"; // bright green
 // 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
 String gCommentColor = greenColor;
 String gNotificationColor = cyanColor; // cyan

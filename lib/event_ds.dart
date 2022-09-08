@@ -257,7 +257,7 @@ class EventData {
   }
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
-  void printEventData(int depth) {
+  void printEventData(int depth, bool topPost) {
     if( !(kind == 1 || kind == 4 || kind == 42)) {
       return; // only print kind 1 and 42 and 4
     }
@@ -288,19 +288,7 @@ class EventData {
     if( createdAt == 0) {
       print("debug: createdAt == 0 for event $id $content");
     }
-   
-    String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * depth + 10);
-    
-    String strToPrint = "";
 
-    strToPrint += getDepthSpaces(depth);
-    strToPrint += ("+-------+\n");
-    strToPrint += getDepthSpaces(depth);
-    strToPrint += "|Author : $name  id: ${maxN(id)}  Time: $strDate\n";
-    strToPrint += getReactionStr(depth);    // only prints if there are any likes/reactions
-    strToPrint += getDepthSpaces(depth);
-    strToPrint += "|Message: ";
- 
     String commentColor = "";
     if( isNotification) {
       commentColor = gNotificationColor;
@@ -308,7 +296,56 @@ class EventData {
     } else {
       commentColor = gCommentColor;
     }
-    strToPrint += getStrInColor(contentShifted , commentColor);
+   
+    int extraLen = name.length + 4;
+    String strToPrint = "";
+    //strToPrint += getDepthSpaces(depth);
+
+    if(!topPost) {
+      strToPrint += "\n";
+    }
+    strToPrint += getDepthSpaces(depth);
+    strToPrint += "└ ${name}: ";
+
+    const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
+
+    String idDateLikes = "    |id: ${maxN(id)} , $strDate ${getReactionStr(depth)}" ;
+    //print("$typicalxLen ${idDateLikes.length}");
+
+    idDateLikes = idDateLikes.padRight(typicalxLen);
+    String temp = tempEvaluatedContent==""?tempContent: tempEvaluatedContent;
+
+    // comment extends from gNumLeftMarginSpaces + extraLen  TO  +gTextWidth
+
+
+    // if left_stuff + extraLen + comment len  + idStrLike < gTextWidth
+    // then pad idStrLike with  gTextWidth - ( left_stuff + extraLen + comment len )
+    if( (gSpacesPerDepth * depth + extraLen + temp.length + idDateLikes.length ) > gTextWidth) {
+
+      // number of lines taken by comment =  (comment.length + (extraLen))/ ( gTextWidth)  + 1 
+      /*int printedTextWidth = (  gTextWidth  -  ( gSpacesPerDepth * depth + extraLen));
+      int totalCommentWidth = temp.length + idDateLikes.length + 5;
+
+      int nCommentLines =  (totalCommentWidth )~/ printedTextWidth  + 1;
+      print(nCommentLines);
+
+      int lastLineLen = totalCommentWidth -  printedTextWidth * (nCommentLines - 1);
+
+      int padLeftBy = (gTextWidth - (gSpacesPerDepth * depth + extraLen)) - ( lastLineLen ) ;
+      print("comment len = ${temp.length}  iDateLikes len = ${idDateLikes.length}  dividor = ${ printedTextWidth} padLeftBy = $padLeftBy");
+      idDateLikes = idDateLikes.padLeft( padLeftBy);*/
+      temp = temp + "$idDateLikes";
+    }
+    else {
+    
+
+      idDateLikes = idDateLikes.padLeft((gTextWidth ) - (gSpacesPerDepth * depth + extraLen + temp.length));
+      temp = temp + "$idDateLikes";
+    }
+    //temp = temp + "       |$idDateLikes";
+    String contentShifted = rightShiftContent( temp, gSpacesPerDepth * depth + extraLen);
+
+    strToPrint += getStrInColor(contentShifted + "\n", commentColor);
     stdout.write(strToPrint);
   }
 
@@ -355,15 +392,15 @@ class EventData {
       tempEvaluatedContent = tempContent = content; // content would be changed so show that 
     }
 
-    const int nameWidthDepth = 2; // how wide name will be in depth spaces
-    const int timeWidthDepth = 2;
+    const int nameWidthDepth = 16~/gSpacesPerDepth; // how wide name will be in depth spaces
+    const int timeWidthDepth = 16~/gSpacesPerDepth;
     int nameWidth = gSpacesPerDepth * nameWidthDepth;
     String nameToPrint = name.padLeft(nameWidth).substring(0, nameWidth);
     String dateToPrint = strDate.padLeft(gSpacesPerDepth * timeWidthDepth).substring(0, gSpacesPerDepth * timeWidthDepth);
 
     strToPrint = "${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: ";
     // depth above + ( depth numberof spaces = 1) + (depth of time = 2) + (depth of name = 3)
-    int contentDepth = depth + 1 + timeWidthDepth + nameWidthDepth;
+    int contentDepth = depth + 2 + timeWidthDepth + nameWidthDepth;
     String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
     strToPrint += contentShifted;
     if( isNotification) {
@@ -384,7 +421,7 @@ class EventData {
     }
 
     if( gReactions.containsKey(id)) {
-      reactorNames = getDepthSpaces(depth) + "|Likes  : ";
+      reactorNames = "Likes: ";
       int numReactions = gReactions[id]?.length??0;
       List<List<String>> reactors = gReactions[id]??[];
       bool firstEntry = true;
@@ -405,7 +442,7 @@ class EventData {
         }
       } // end for
       newLikes.clear();
-      reactorNames += "\n";
+      reactorNames += "";
     }
     
     return reactorNames;
@@ -465,8 +502,8 @@ class Event {
     }
   }
 
-  void printEvent(int depth) {
-    eventData.printEventData(depth);
+  void printEvent(int depth, bool topPost) {
+    eventData.printEventData(depth, topPost);
     //print("\n$seenOnRelays");
     //stdout.write("\n$originalJson --------------------------------\n\n");
   }

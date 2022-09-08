@@ -186,7 +186,7 @@ class Relays {
                 if( rEvents.add(e) ) {
                   uniqueIdsRecieved.add(id);
                   String receivedSubscription = json[1];
-                  if( gDebug > 3) e.eventData.printEventData(0); 
+                  if( gDebug > 3) e.eventData.printEventData(0, true); 
                   if( gDebug > 2) print("");
 
                   if( gDebug > 1) log.info("In relay listener for relay url $relay: after adding element, rEvents Size = ${rEvents.length}  numReceived = ${newRelay.numReceived} for subscription $receivedSubscription");

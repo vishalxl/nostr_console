@@ -249,7 +249,7 @@ class EventData {
   }
 
   // only applicable for kind 42 event
-  String getChatRoomId() {
+  String getChannelIdForMessage() {
     if( kind != 42) {
       return "";
     }

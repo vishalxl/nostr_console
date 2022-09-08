@@ -480,15 +480,21 @@ Future<void> otherMenuUi(Store node) async {
 
 Future<void> channelMenuUI(Store node) async {
   bool continueChatMenu = true;
+  
+
   while(continueChatMenu) {
-    int option = showMenu([ 'Show public channels',          // 1 
+
+    //await processNotifications(node); // this takes 300 ms
+    node.printAllChannelsInfo(20);
+
+    int option = showMenu([ 'Show all public channels',          // 1 
                             'Enter a public channel',        // 2
                             'Go back to main menu'],         // 3
                           "Public Channels Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
       case 1:
-        node.printAllChannelsInfo();
+        node.printAllChannelsInfo(1000);
         break;
       case 2:
 
@@ -555,18 +561,23 @@ Future<void> channelMenuUI(Store node) async {
 Future<void> PrivateMenuUI(Store node) async {
   bool continueChatMenu = true;
   while(continueChatMenu) {
-    int option = showMenu([ 'See personal Inbox',
+
+    await processNotifications(node); // this takes 300 ms
+
+    node.printDirectRoomInfo();
+
+
+    int option = showMenu([ 
                             'Reply or Send a direct message',
                             'Go back to main menu'],          // 3
                           "Private Message Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
-      case 1:
+//      case 1:
         //print("total direct rooms = ${node.directRooms.length}");
-        node.printDirectRoomInfo();
-        break;
+//        break;
       
-      case 2:
+      case 1:
         // in case the program was invoked with --pubkey, then user can't send messages
         if( userPrivateKey == "") {
             print("Since no private key has been supplied, messages and replies can't be sent. Invoke with --prikey \n");
@@ -618,7 +629,7 @@ Future<void> PrivateMenuUI(Store node) async {
         }
         break;
 
-      case 3:
+      case 2:
         continueChatMenu = false;
         break;
 

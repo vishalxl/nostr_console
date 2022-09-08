@@ -33,6 +33,16 @@ int getLatestMessageTime(List<String> _messageIds) {
   return latest;
 }
 
+Channel? getChannel(List<Channel> channels, String channelId) {
+  for( int i = 0; i < channels.length; i++) {
+    if( channels[i].channelId == channelId) {
+      return channels[i];
+    }
+  }
+  return null;
+}
+
+
 DirectMessageRoom? getDirectRoom(List<DirectMessageRoom> rooms, String otherPubkey) {
   for( int i = 0; i < rooms.length; i++) {
     if( rooms[i].otherPubkey == otherPubkey) {
@@ -42,8 +52,7 @@ DirectMessageRoom? getDirectRoom(List<DirectMessageRoom> rooms, String otherPubk
   return null;
 }
 
-
-int directRoomCompareTo(DirectMessageRoom a, DirectMessageRoom b) {
+int scrollableCompareTo(ScrollableMessages a, ScrollableMessages b) {
 
   if( gStore == null)
     return 0;
@@ -62,7 +71,6 @@ int directRoomCompareTo(DirectMessageRoom a, DirectMessageRoom b) {
   }
 
 }
-
 
 class ScrollableMessages {
   String       topHeader;
@@ -111,15 +119,38 @@ class ScrollableMessages {
   }
 }
 
-class ChatRoom extends ScrollableMessages {
-  String       chatRoomId; // id of the kind 40 start event
+class Channel extends ScrollableMessages {
+  String       channelId; // id of the kind 40 start event
   String       internalChatRoomName; 
   String       about;
   String       picture;
 
-  ChatRoom(this.chatRoomId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds) : 
-            super (  internalChatRoomName.isEmpty? chatRoomId: internalChatRoomName + "( " + chatRoomId + " )" , 
+  Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds) : 
+            super (  internalChatRoomName.isEmpty? channelId: internalChatRoomName + "( " + channelId + " )" , 
                      messageIds);
+
+  //addMessageToChannel(eId, tempChildEventsMap, rooms);
+  void addMessageToChannel(String messageId, Map<String, Tree> tempChildEventsMap) {
+    int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
+
+    if(gDebug> 0) print("channel has ${messageIds.length} messages already. adding new one to it. ");
+
+    for(int i = 0; i < messageIds.length; i++) {
+      int eventTime = (tempChildEventsMap[messageIds[i]]?.event.eventData.createdAt??0);
+      if( newEventTime < eventTime) {
+        // shift current i and rest one to the right, and put event Time here
+        if(gDebug> 0) print("In addMessageToChannel: inserted in middle to channel $channelId ");
+        messageIds.insert(i, messageId);
+        return;
+      }
+    }
+    if(gDebug> 0) print("In addMessageToChannel: added to channel $channelId ");
+
+    // insert at end
+    messageIds.add(messageId);
+    return;
+  }
+
 
   String get chatRoomName {
     return internalChatRoomName;
@@ -127,7 +158,7 @@ class ChatRoom extends ScrollableMessages {
 
   void set chatRoomName(String newName){
     internalChatRoomName = newName;
-    super.topHeader = newName + " (${chatRoomId.substring(0,6)})";
+    super.topHeader = newName + " (${channelId.substring(0,6)})";
   }
  }
 
@@ -161,7 +192,7 @@ void addMessageToDirectRoom(String messageId, Map<String, Tree> tempChildEventsM
     room.messageIds.add(messageId);
     return;
 
-}
+  }
 
 
   bool isPrivateMessageRoom() {
@@ -429,10 +460,10 @@ class Store {
   Map<String, Tree>  allChildEventsMap;   // has events of kind typesInEventMap
   List<String>       eventsWithoutParent;
 
-  Map<String, ChatRoom> chatRooms = {};
+  List<Channel>   channels = [];
   List<DirectMessageRoom> directRooms = [];
 
-  Store(this.topPosts, this.allChildEventsMap, this.eventsWithoutParent, this.chatRooms, this.directRooms) {
+  Store(this.topPosts, this.allChildEventsMap, this.eventsWithoutParent, this.channels, this.directRooms) {
     allChildEventsMap.forEach((eventId, tree) {
       if( tree.store == null) {
         tree.setStore(this);
@@ -442,7 +473,7 @@ class Store {
 
   static const Set<int>   typesInEventMap = {0, 1, 3, 4, 5, 7, 40, 42}; // 0 meta, 1 post, 3 follows list, 7 reactions
 
-  static void handleChannelEvents( Map<String, ChatRoom> rooms, Map<String, Tree> tempChildEventsMap, Event ce) {
+  static void handleChannelEvents( List<Channel> rooms, Map<String, Tree> tempChildEventsMap, Event ce) {
       String eId = ce.eventData.id;
       int    eKind = ce.eventData.kind;
 
@@ -450,19 +481,19 @@ class Store {
       case 42:
       {
         if( gCheckEventId == ce.eventData.id)          print("In handleChannelEvents: processing $gCheckEventId ");
-        String chatRoomId = ce.eventData.getChatRoomId();
-        if( chatRoomId != "") { // sometimes people may forget to give e tags or give wrong tags like #e
-          if( rooms.containsKey(chatRoomId)) {
-            if( gDebug > 0) print("chat room already exists = $chatRoomId adding event to it" );
-    
-            if( gCheckEventId == ce.eventData.id) print("Adding new message $eId to a chat room $chatRoomId. ");
+        String channelId = ce.eventData.getChannelIdForMessage();
+        if( channelId != "") { // sometimes people may forget to give e tags or give wrong tags like #e
+          Channel? channel = getChannel(rooms, channelId);
+          if( channel != null) {
+            if( gDebug > 0) print("chat room already exists = $channelId adding event to it" );
+            if( gCheckEventId == ce.eventData.id) print("Adding new message $eId to a chat room $channelId. ");
    
-            addMessageToChannel(chatRoomId, eId, tempChildEventsMap, rooms);
+            channel.addMessageToChannel(eId, tempChildEventsMap);
     
           } else {
-            if( gCheckEventId == ce.eventData.id) print("Adding new message $eId to NEW chat room $chatRoomId. ");
-            rooms[chatRoomId] = ChatRoom(chatRoomId, "", "", "", []);
-            addMessageToChannel(chatRoomId, eId, tempChildEventsMap, rooms);
+            //if( gCheckEventId == ce.eventData.id) print("Adding new message $eId to NEW chat room $channelId. ");
+            Channel newChannel = Channel(channelId, "", "", "", [eId]);
+            rooms.add( newChannel);
           }
         }
       }
@@ -473,10 +504,11 @@ class Store {
         String chatRoomId = eId;
         try {
           dynamic json = jsonDecode(ce.eventData.content);
-          if( rooms.containsKey(chatRoomId)) {
-            if( rooms[chatRoomId]?.chatRoomName == "") {
+          Channel? channel = getChannel(rooms, chatRoomId);
+          if( channel != null) {
+            if( channel.chatRoomName == "") {
               //if( gDebug > 0) print('Added room name = ${json['name']} for $chatRoomId' );
-              rooms[chatRoomId]?.chatRoomName = json['name'];
+              channel.chatRoomName = json['name'];
             }
           } else {
             String roomName = "", roomAbout = "";
@@ -488,9 +520,8 @@ class Store {
               roomAbout = json['about'];
             }
             List<String> emptyMessageList = [];
-            ChatRoom room = ChatRoom(chatRoomId, roomName, roomAbout, "", emptyMessageList);
-            rooms[chatRoomId] = room;
-            //if( gDebug > 0) print("Added new chat room $chatRoomId with name ${json['name']} .");
+            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList);
+            rooms.add( room);
           }
         } on Exception catch(e) {
           if( gDebug > 0) print("In From Event. Event type 40. Json Decode error for event id ${ce.eventData.id}. error = $e");
@@ -553,7 +584,7 @@ class Store {
     if( events.isEmpty) {
     List<DirectMessageRoom> temp = [];
 
-      return Store( [], {}, [], {}, temp);
+      return Store( [], {}, [], [], temp);
     }
 
     // create a map tempChildEventsMap from list of events, key is eventId and value is event itself
@@ -573,7 +604,7 @@ class Store {
     // once tempChildEventsMap has been created, create connections between them so we get a tree structure from all these events.
     List<Tree>  topLevelTrees = [];// this will become the children of the main top node. These are events without parents, which are printed at top.
     List<String> tempWithoutParent = [];
-    Map<String, ChatRoom> rooms = {};
+    List<Channel> channels = [];
     List<DirectMessageRoom> tempDirectRooms = [];
 
 
@@ -585,7 +616,7 @@ class Store {
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
       if( eKind == 42 || eKind == 40) {
-        handleChannelEvents(rooms, tempChildEventsMap, tree.event);
+        handleChannelEvents(channels, tempChildEventsMap, tree.event);
       }
 
       if( eKind == 4) {
@@ -640,7 +671,7 @@ class Store {
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
     // create a dummy top level tree and then create the main Tree object
-    return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, rooms, tempDirectRooms);
+    return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, tempDirectRooms);
   } // end fromEvents()
 
    /***********************************************************************************************************************************/
@@ -754,13 +785,16 @@ class Store {
             // add 42 chat message event id to its chat room
             String channelId = newTree.event.eventData.getParent();
             if( channelId != "") {
-              if( chatRooms.containsKey(channelId)) {
+              Channel? channel = getChannel(channels, channelId);
+              if( channel != null) {
                 if( gDebug > 0) print("added event to chat room in insert event");
-                addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms); // adds in order
+                channel.addMessageToChannel(newTree.event.eventData.id, allChildEventsMap); // adds in order
                 break;
               } else {
-                chatRooms[channelId] = ChatRoom(channelId, "", "", "", []);
-                addMessageToChannel(channelId, newTree.event.eventData.id, allChildEventsMap, chatRooms);
+                
+                Channel newChannel = Channel(channelId, "", "", "", []);
+                newChannel.addMessageToChannel(newTree.event.eventData.id, allChildEventsMap);
+                channels.add(newChannel);
               }
             } 
             break;
@@ -915,20 +949,30 @@ class Store {
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
    */
-  void printAllChannelsInfo() {
-    print("\n\nDirect messages inbox:");
+  void printAllChannelsInfo(int numToPrint) {
+    channels.sort(scrollableCompareTo);
+    print("");
+    if( numToPrint < channels.length) {
+      print("Showing only $numToPrint/${channels.length} total channels\n");
+    } else {
+      print("Showing all ${channels.length} channels\n");
+      numToPrint = channels.length;
+    }
+
+    //print("\n\nDirect messages inbox:");
     printUnderlined("      Channel Name                Num of Messages            Latest Message           ");
-    chatRooms.forEach((key, value) {
-      String name = "direct room name";
-      if( value.chatRoomName == "") {
-        name = value.chatRoomId.substring(0, 6);
+    for(int j = 0; j < numToPrint; j++) {
+      
+      String name = "";
+      if( channels[j].chatRoomName == "") {
+        name = channels[j].channelId.substring(0, 6);
       } else {
-        name = "${value.chatRoomName} ( ${value.chatRoomId.substring(0, 6)})";
+        name = "${channels[j].chatRoomName} ( ${channels[j].channelId.substring(0, 6)})";
       }
 
-      int numMessages = value.messageIds.length;
+      int numMessages = channels[j].messageIds.length;
       stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
-      List<String> messageIds = value.messageIds;
+      List<String> messageIds = channels[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
           Event? e = allChildEventsMap[messageIds[i]]?.event;
@@ -939,10 +983,10 @@ class Store {
         }
       }
       print("");
-    });
+    }
   }
 
-  void printChannel(ChatRoom room, [int page = 1])  {
+  void printChannel(Channel room, [int page = 1])  {
     if( page < 1) {
       if( gDebug > 0) log.info("In printChannel got page = $page");
       page = 1;
@@ -958,30 +1002,29 @@ class Store {
       return "";
     }
     
+    // first check channelsId's, in case user has sent a channelId itself
     Set<String> fullChannelId = {};
-    for( String key in chatRooms.keys) {
-      if( key.substring(0, channelId.length) == channelId ) {
-        fullChannelId.add(key);
+    for(int i = 0; i < channels.length; i++) {
+      if( channels[i].channelId.substring(0, channelId.length) == channelId ) {
+        fullChannelId.add(channels[i].channelId);
       }
     }
 
     if(fullChannelId.length != 1) {
-      for( String key in chatRooms.keys) {
-          ChatRoom? room = chatRooms[key];
-          if( room != null) {
-            if( room.chatRoomName.length < channelId.length) {
-              continue;
-            }
-            if( gDebug > 0) print("room = ${room.chatRoomName} channelId = $channelId");
-            if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
-              fullChannelId.add(key);
-            }
+      for(int i = 0; i < channels.length; i++) {
+          Channel room = channels[i];
+          if( room.chatRoomName.length < channelId.length) {
+            continue;
+          }
+          //if( gDebug > 0) print("room = ${room.chatRoomName} channelId = $channelId");
+          if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
+            fullChannelId.add(room.channelId);
           }
       } // end for
     }
 
     if( fullChannelId.length == 1) {
-      ChatRoom? room = chatRooms[fullChannelId.first];
+      Channel? room = getChannel( channels, fullChannelId.first);
       if( room != null) {
         printChannel(room, page);
       }
@@ -1002,7 +1045,7 @@ class Store {
    * @printDirectRoomInfo Print one line information about chat rooms
    */
   void printDirectRoomInfo() { 
-    directRooms.sort(directRoomCompareTo);
+    directRooms.sort(scrollableCompareTo);
     print("\n\nDirect messages inbox:");
     printUnderlined(" From                                    Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {
@@ -1439,7 +1482,7 @@ void addMessageToChannel(String channelId, String messageId, Map<String, Tree> t
   }
 
   if( chatRooms.containsKey(channelId)) {
-    ChatRoom? room = chatRooms[channelId];
+    Channel? room = chatRooms[channelId];
     if( room != null ) {
       if( room.messageIds.isEmpty) {
         if(gDebug> 0 ||  gCheckEventId == messageId) print("room is empty. adding new message and returning. ");
@@ -1454,12 +1497,12 @@ void addMessageToChannel(String channelId, String messageId, Map<String, Tree> t
         if( newEventTime < eventTime) {
           // shift current i and rest one to the right, and put event Time here
           if(gDebug> 0 ||  gCheckEventId == messageId ) 
-              print("In addMessageToChannel: inserted event $messageId at position $i to channel ${room.chatRoomId} ");
+              print("In addMessageToChannel: inserted event $messageId at position $i to channel ${room.channelId} ");
           room.messageIds.insert(i, messageId);
           return;
         }
       }
-      if(gDebug> 0 ||  gCheckEventId == messageId) print("In addMessageToChannel: added to channel ${room.chatRoomId} at end");
+      if(gDebug> 0 ||  gCheckEventId == messageId) print("In addMessageToChannel: added to channel ${room.channelId} at end");
 
       // insert at end
       room.messageIds.add(messageId);
@@ -1511,7 +1554,7 @@ Store getTree(Set<Event> events) {
       if(gDebug > 0) log.info("Warning: In printEventsAsTree: events length = 0");
 
       List<DirectMessageRoom> temp =[];
-      return Store([], {}, [], {}, temp);
+      return Store([], {}, [], [], temp);
     }
 
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)

@@ -5,10 +5,15 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 
 typedef fTreeSelector = bool Function(Tree a);
+typedef fDirectRoomSelector = bool Function(DirectMessageRoom room);
 
 Store? gStore = null;
 
-bool selectAll(Tree t) {
+bool selectorShowAllTrees(Tree t) {
+  return true;
+}
+
+bool selectorShowAllDirectRooms(DirectMessageRoom room) {
   return true;
 }
 
@@ -116,6 +121,22 @@ class ScrollableMessages {
       printDepth(0);
       stdout.write("To see older pages, enter numbers from 1-${numPages}.${gColorEndMarker}\n\n");
     }
+  }
+
+  bool selectorNotifications() {
+    if( gStore == null)
+      return false;
+
+    for(int i = 0; i < messageIds.length; i++) {
+      Event? e = gStore?.allChildEventsMap[messageIds[i]]?.event;
+      if( e != null) {
+        if( e.eventData.isNotification == true) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }
 
@@ -1045,12 +1066,13 @@ class Store {
   /**
    * @printDirectRoomInfo Print one line information about chat rooms
    */
-  void printDirectRoomInfo() { 
+  void printDirectRoomInfo(fDirectRoomSelector roomSelector) { 
     directRooms.sort(scrollableCompareTo);
     print("\n\nDirect messages inbox:");
     printUnderlined(" From                                    Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {
-      
+      if( !roomSelector(directRooms[j]))
+        continue;
       DirectMessageRoom room = directRooms[j];
       String name = getAuthorName(room.otherPubkey, 4);
 
@@ -1209,7 +1231,7 @@ class Store {
    *                   Also adds 'client' tag with application name.
    * @parameter replyToId First few letters of an event id for which reply is being made
    */
-  String getTagStr(String replyToId, String clientName) {
+  String getTagStr(String replyToId, String clientName, [bool addAllP = false]) {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
     if( replyToId.isEmpty) {
       return '["client","$clientName"]';
@@ -1300,33 +1322,35 @@ class Store {
   }
 
   // finds all your followers, and then finds which of them follow the otherPubkey
-  void printSocialDistance(String otherPubkey, String otherName) {
-    
+  void printSocialDistance(Event contactEvent, String otherName) {
+    String otherPubkey = contactEvent.eventData.pubkey;
     String otherName = getAuthorName(otherPubkey);
 
-    Event? contactEvent = getContactEvent(userPublicKey);
+
     bool isFollow = false;
     int  numSecond = 0; // number of your follows who follow the other
 
-    List<String> mutualFollows = [];
+    List<String> mutualFollows = []; // displayed only if user is checking thier own profile
+    int selfNumContacts =  0;
 
-    int numContacts =  0;
-    if( contactEvent != null) {
-      List<Contact> contacts = contactEvent.eventData.contactList;
-      numContacts = contacts.length;
-      for(int i = 0; i < contacts.length; i ++) {
+    Event? selfContactEvent = getContactEvent(userPublicKey);
+
+    if( selfContactEvent != null) {
+      List<Contact> selfContacts = selfContactEvent.eventData.contactList;
+      selfNumContacts = selfContacts.length;
+      for(int i = 0; i < selfContacts.length; i ++) {
         // check if you follow the other account
-        if( contacts[i].id == otherPubkey) {
+        if( selfContacts[i].id == otherPubkey) {
           isFollow = true;
         }
         // count the number of your contacts who know or follow the other account
         List<Contact> followContactList = [];
-        Event? followContactEvent = getContactEvent(contacts[i].id);
+        Event? followContactEvent = getContactEvent(selfContacts[i].id);
         if( followContactEvent != null) {
           followContactList = followContactEvent.eventData.contactList;
           for(int j = 0; j < followContactList.length; j++) {
             if( followContactList[j].id == otherPubkey) {
-              mutualFollows.add(getAuthorName(contacts[i].id));
+              mutualFollows.add(getAuthorName(selfContacts[i].id));
               numSecond++;
               break;
             }
@@ -1343,13 +1367,15 @@ class Store {
           print("* You don't follow $otherName");
         }
 
-        stdout.write("* Of the $numContacts people you follow, $numSecond follow $otherName.");
+        stdout.write("* Of the $selfNumContacts people you follow, $numSecond follow $otherName.");
       } else {
-        stdout.write("* Of the $numContacts people you follow, $numSecond follow you back. Their names are: ");
+        stdout.write("* Of the $selfNumContacts people you follow, $numSecond follow you back. Their names are: ");
         mutualFollows.forEach((name) { stdout.write("$name, ");});
       }
       print("");
-    } // end if contact event was found
+    } else {  // end if contact event was found
+        print("* Note: Could not find your contact list");
+    }
   }
 
   int count() {
@@ -1487,49 +1513,6 @@ class Store {
   }
 
 } //================================================================================================================================ end Store
-
-void addMessageToChannel(String channelId, String messageId, Map<String, Tree> tempChildEventsMap, var chatRooms) {
-  int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
-  if( gCheckEventId == messageId) {
-    print("In addMessageToChannel: newEventTime= $newEventTime");
-    //gDebug = 1;
-  }
-
-  if( chatRooms.containsKey(channelId)) {
-    Channel? room = chatRooms[channelId];
-    if( room != null ) {
-      if( room.messageIds.isEmpty) {
-        if(gDebug> 0 ||  gCheckEventId == messageId) print("room is empty. adding new message and returning. ");
-        room.messageIds.add(messageId);
-        return;
-      }
-      
-      if(gDebug> 0 ||  gCheckEventId == messageId) print("room has ${room.messageIds.length} messages already. adding new one to it. ");
-
-      for(int i = 0; i < room.messageIds.length; i++) {
-        int eventTime = (tempChildEventsMap[room.messageIds[i]]?.event.eventData.createdAt??0);
-        if( newEventTime < eventTime) {
-          // shift current i and rest one to the right, and put event Time here
-          if(gDebug> 0 ||  gCheckEventId == messageId ) 
-              print("In addMessageToChannel: inserted event $messageId at position $i to channel ${room.channelId} ");
-          room.messageIds.insert(i, messageId);
-          return;
-        }
-      }
-      if(gDebug> 0 ||  gCheckEventId == messageId) print("In addMessageToChannel: added to channel ${room.channelId} at end");
-
-      // insert at end
-      room.messageIds.add(messageId);
-      return;
-    } else {
-      print("In addMessageToChannel: could not find room");
-    }
-  } else {
-    print("In addMessageToChannel: could not find channel id");
-  }
-  print("In addMessageToChannel: returning without inserting message");
-}
-
 
 int ascendingTimeTree(Tree a, Tree b) {
   if(a.event.eventData.createdAt < b.event.eventData.createdAt) {

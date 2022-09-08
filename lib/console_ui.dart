@@ -32,7 +32,7 @@ Future<void> processNotifications(Store node)  async {
  * otherwise e and p tags are found for the given event being replied to, if that event data is available
  */
 Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, String content) async {
-  String strTags = node.getTagStr(replyToId, exename);
+  String strTags = node.getTagStr(replyToId, exename, true);
   if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
     print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$gColorEndMarker"); 
     return; 
@@ -193,12 +193,13 @@ void readjustAlignment() {
     }
 }
 
+
 void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(profilePubkey);
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
   
   // get the latest kind 3 event for the user, which lists his 'follows' list
-  Event? contactEvent = getContactEvent(profilePubkey);
+  Event? profileContactEvent = getContactEvent(profilePubkey);
 
   // if contact list was found, get user's feed, and keep the contact list for later use 
   String authorName = gKindONames[profilePubkey]?.name??"";
@@ -213,7 +214,7 @@ void printProfile(Store node, String profilePubkey) {
 
   print("\nName        : $authorName ( ${profilePubkey} ).");
 
-  if (contactEvent != null ) {
+  if (profileContactEvent != null ) {
     String about = gKindONames[profilePubkey]?.about??"";
     String picture = gKindONames[profilePubkey]?.picture??"";
     int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
@@ -223,7 +224,7 @@ void printProfile(Store node, String profilePubkey) {
     print("Last Updated: ${getPrintableDate(dateLastUpdated)}\n"); 
 
     if( profilePubkey != userPublicKey) {
-      if( contactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
+      if( profileContactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
           print("* They follow you");
       } else {
           print("* They don't follow you");
@@ -231,11 +232,11 @@ void printProfile(Store node, String profilePubkey) {
     }
 
     // print social distance info. 
-    node.printSocialDistance(profilePubkey, authorName);
+    node.printSocialDistance(profileContactEvent, authorName);
     print("");
     
-    stdout.write("$pronoun follow ${contactEvent.eventData.contactList.length} accounts:  ");
-    contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
+    stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
+    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
     print("\n");
   }
 
@@ -582,7 +583,11 @@ Future<void> PrivateMenuUI(Store node) async {
 
     await processNotifications(node); // this takes 300 ms
 
-    node.printDirectRoomInfo();
+//    bool fromClient (Tree t) => t.fromClientSelector(clientName);
+//    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
+
+    bool showAllRooms (DirectMessageRoom room) => selectorShowAllDirectRooms(room);
+    node.printDirectRoomInfo(showAllRooms);
 
 
     int option = showMenu([ 
@@ -660,9 +665,16 @@ Future<void> PrivateMenuUI(Store node) async {
 
 Future<void> mainMenuUi(Store node) async {
     // at the very beginning, show the tree with re reply and likes, and then show the options menu
-    // bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
-    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
     
+    //Show only notifications
+
+    bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
+    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
+
+    bool showNotifications (DirectMessageRoom room) => room.selectorNotifications();
+    node.printDirectRoomInfo(showNotifications);
+
+
     bool userContinue = true;
     while(userContinue) {
 
@@ -679,7 +691,7 @@ Future<void> mainMenuUi(Store node) async {
       print('You picked: $option');
       switch(option) {
         case 1:
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectAll);
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorShowAllTrees);
           break;
 
         case 2:

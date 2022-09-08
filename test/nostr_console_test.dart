@@ -27,7 +27,7 @@ void main() {
 
     tree.children.add(treeChild);
   
-    store.printTree(0, DateTime.now().subtract(Duration(days:1)), selectAll);
+    store.printTree(0, DateTime.now().subtract(Duration(days:1)), selectorShowAllTrees);
   });
 
   test('createNodeTree_ordered', () {
@@ -39,7 +39,7 @@ void main() {
     Set<Event> listEvents = {exampleEvent1, exampleEvent2, exampleEvent3};
 
     Store node = Store.fromEvents(listEvents);
-    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectAll);
+    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorShowAllTrees);
     print("=========================");
   });
 
@@ -52,7 +52,7 @@ void main() {
     Set<Event> listEvents = { exampleEvent3, exampleEvent2,  exampleEvent1};
 
     Store node = Store.fromEvents(listEvents);
-    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectAll); // will test for ~1000 days
+    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorShowAllTrees); // will test for ~1000 days
   });
 
 

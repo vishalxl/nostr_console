@@ -495,11 +495,14 @@ Future<void> otherMenuUi(Store node) async {
 Future<void> channelMenuUI(Store node) async {
   bool continueChatMenu = true;
   
-
+  bool justShowedAllChannels = false;
   while(continueChatMenu) {
 
     //await processNotifications(node); // this takes 300 ms
-    node.printAllChannelsInfo(20);
+    if( !justShowedAllChannels) {
+      node.printAllChannelsInfo(20);
+      justShowedAllChannels = false;
+    }
 
     int option = showMenu([ 'Show all public channels',          // 1 
                             'Enter a public channel',        // 2
@@ -509,6 +512,7 @@ Future<void> channelMenuUI(Store node) async {
     switch(option) {
       case 1:
         node.printAllChannelsInfo(1000);
+        justShowedAllChannels = true;
         break;
       case 2:
 

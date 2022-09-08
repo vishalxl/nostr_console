@@ -1011,6 +1011,7 @@ class Store {
     }
 
     if(fullChannelId.length != 1) {
+      // lookup in channel room name
       for(int i = 0; i < channels.length; i++) {
           Channel room = channels[i];
           if( room.chatRoomName.length < channelId.length) {
@@ -1093,7 +1094,7 @@ class Store {
         lookedUpName.add(roomId);
       }
 
-      if( getAuthorName( directRooms[j].otherPubkey) == directRoomId){
+      if( getAuthorName( directRooms[j].otherPubkey).trim() == directRoomId){
         lookedUpName.add(roomId);
       }
     }

@@ -193,6 +193,60 @@ void readjustAlignment() {
     }
 }
 
+void printProfile(Store node, String profilePubkey) {
+  bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(profilePubkey);
+  node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
+  
+  // get the latest kind 3 event for the user, which lists his 'follows' list
+  Event? contactEvent = getContactEvent(profilePubkey);
+
+  // if contact list was found, get user's feed, and keep the contact list for later use 
+  String authorName = gKindONames[profilePubkey]?.name??"";
+  String pronoun = "";
+  if( profilePubkey == userPublicKey) {
+    printUnderlined("\nYour profile ($authorName):");
+    pronoun = "You";
+  } else {
+    printUnderlined("\nProfile for $authorName");
+    pronoun = "They";
+  }
+
+  print("\nName        : $authorName ( ${profilePubkey} ).");
+
+  if (contactEvent != null ) {
+    String about = gKindONames[profilePubkey]?.about??"";
+    String picture = gKindONames[profilePubkey]?.picture??"";
+    int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
+
+    print("About       : $about");
+    print("Picture     : $picture");
+    print("Last Updated: ${getPrintableDate(dateLastUpdated)}\n"); 
+
+    if( profilePubkey != userPublicKey) {
+      if( contactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
+          print("* They follow you");
+      } else {
+          print("* They don't follow you");
+      }
+    }
+
+    // print social distance info. 
+    node.printSocialDistance(profilePubkey, authorName);
+    print("");
+    
+    stdout.write("$pronoun follow ${contactEvent.eventData.contactList.length} accounts:  ");
+    contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
+    print("\n");
+  }
+
+  List<String> followers = node.getFollowers(profilePubkey);
+
+  stdout.write("$pronoun have ${followers.length} followers:  ");
+  followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+  print("");              
+  print("");
+}
+
 int showMenu(List<String> menuOptions, String menuName) {
   print("\n$menuName\n${getNumDashes(menuName.length)}");
   print('Pick an option:');
@@ -259,47 +313,7 @@ Future<void> otherMenuUi(Store node) async {
               print("Could not find the user with that id or username.");
             } 
             else {
-              String pk = pubkey.first;
-              bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(pk);
-              node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
-              
-              // get the latest kind 3 event for the user, which lists his 'follows' list
-              Event? contactEvent = getContactEvent(pubkey.first);
-
-              // if contact list was found, get user's feed, and keep the contact list for later use 
-              String authorName = gKindONames[pubkey.first]?.name??"";
-              printUnderlined("\nProfile for User");
-              print("\nName        : $authorName ( ${pubkey.first} ).");
-
-              if (contactEvent != null ) {
-                String about = gKindONames[pubkey.first]?.about??"";
-                String picture = gKindONames[pubkey.first]?.picture??"";
-                int    dateLastUpdated    = gKindONames[pubkey.first]?.createdAt??0;
-
-                print("About       : $about");
-                print("Picture     : $picture");
-                print("Last Updated: ${getPrintableDate(dateLastUpdated)}"); 
-
-                if( contactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
-                    print("\n* They follow you");
-                } else {
-                    print("\n* They don't follow you");
-                }
-
-                // print social distance info. 
-                node.printSocialDistance(pubkey.first, authorName);
-                print("");
-                
-                stdout.write("They follow ${contactEvent.eventData.contactList.length} accounts:  ");
-                contactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
-                print("\n");
-              }
-
-              List<String> followers = node.getFollowers(pubkey.first);
-              stdout.write("They have ${followers.length} followers:  ");
-              followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
-              print("");              
-              print("");
+              printProfile(node, pubkey.first);
             }
           }
         }
@@ -721,3 +735,5 @@ Future<void> mainMenuUi(Store node) async {
       } // end menu switch
     } // end while
 } // end mainMenuUi()
+
+

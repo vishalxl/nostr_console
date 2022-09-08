@@ -1300,11 +1300,14 @@ class Store {
 
   // finds all your followers, and then finds which of them follow the otherPubkey
   void printSocialDistance(String otherPubkey, String otherName) {
+    
     String otherName = getAuthorName(otherPubkey);
 
     Event? contactEvent = getContactEvent(userPublicKey);
     bool isFollow = false;
     int  numSecond = 0; // number of your follows who follow the other
+
+    List<String> mutualFollows = [];
 
     int numContacts =  0;
     if( contactEvent != null) {
@@ -1322,19 +1325,29 @@ class Store {
           followContactList = followContactEvent.eventData.contactList;
           for(int j = 0; j < followContactList.length; j++) {
             if( followContactList[j].id == otherPubkey) {
+              mutualFollows.add(getAuthorName(contacts[i].id));
               numSecond++;
               break;
             }
           }
         }
       }// end for loop through users contacts
-      if( isFollow) {
-        print("* You follow $otherName ");
-      } else {
-        print("* You don't follow $otherName");
-      }
-      print("* Of the $numContacts people you follow, $numSecond follow $otherName");
 
+      //print("");
+      if( otherPubkey != userPublicKey) {
+
+        if( isFollow) {
+          print("* You follow $otherName ");
+        } else {
+          print("* You don't follow $otherName");
+        }
+
+        stdout.write("* Of the $numContacts people you follow, $numSecond follow $otherName.");
+      } else {
+        stdout.write("* Of the $numContacts people you follow, $numSecond follow you back. Their names are: ");
+        mutualFollows.forEach((name) { stdout.write("$name, ");});
+      }
+      print("");
     } // end if contact event was found
   }
 

@@ -693,7 +693,11 @@ bool processKind3Event(Event newContactEvent) {
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
 String getAuthorName(String pubkey, [int len = 3]) {
   String max3(String v) => v.length > len? v.substring(0,len) : v.substring(0, v.length);
-  String name = gKindONames[pubkey]?.name??max3(pubkey);
+  String name = "";
+  if( gKindONames[pubkey]?.name == null || gKindONames[pubkey]?.name?.length == 0)
+     name = max3(pubkey);
+  else 
+    name = (gKindONames[pubkey]?.name)??max3(pubkey);
   return name;
 }
 

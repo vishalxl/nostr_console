@@ -970,7 +970,7 @@ class Store {
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
    */
-  void printAllChannelsInfo(int numToPrint, fRoomSelector selector) {
+  int printAllChannelsInfo(int numToPrint, fRoomSelector selector) {
 
     int numRoomsSelected = 0;
     for( int j = 0; j < channels.length; j++) {
@@ -979,13 +979,14 @@ class Store {
     }
 
     if( numRoomsSelected == 0) {
-      return;
+      return 0;
     }
 
     // if selected rooms is less, then print only that
     if( numRoomsSelected < numToPrint)
       numToPrint = numRoomsSelected;
 
+    int numChannelsActuallyPrinted = 0;
     channels.sort(scrollableCompareTo);
     print("");
     if( numToPrint < channels.length) {
@@ -1008,6 +1009,7 @@ class Store {
 
       int numMessages = channels[j].messageIds.length;
       stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
+      numChannelsActuallyPrinted ++;
       List<String> messageIds = channels[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
@@ -1020,6 +1022,7 @@ class Store {
       }
       print("");
     }
+    return numChannelsActuallyPrinted;
   }
 
   void printChannel(Channel room, [int page = 1])  {
@@ -1081,7 +1084,7 @@ class Store {
   /**
    * @printDirectRoomInfo Print one line information about chat rooms
    */
-  void printDirectRoomInfo(fRoomSelector roomSelector) { 
+  int printDirectRoomInfo(fRoomSelector roomSelector) { 
     directRooms.sort(scrollableCompareTo);
 
     int numNotificationRooms = 0;
@@ -1091,9 +1094,10 @@ class Store {
     }
 
     if( numNotificationRooms == 0) {
-      return;
+      return 0;
     }
 
+    int numRoomsActuallyPrinted = 0;
     print("\n\nDirect messages inbox:");
     printUnderlined(" From                                    Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {
@@ -1109,6 +1113,7 @@ class Store {
       List<String> messageIds = room.messageIds;
       for( int i = messageIds.length - 1; i >= 0; i++) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
+          numRoomsActuallyPrinted++;
           Event? e = allChildEventsMap[messageIds[i]]?.event;
           if( e!= null) {
             String line = e.eventData.getAsLine();
@@ -1119,6 +1124,8 @@ class Store {
       }
       print("");
     }
+
+    return numRoomsActuallyPrinted;
   }
 
   // shows the given directRoomId, where directRoomId is prefix-id or pubkey of the other user. returns full id of other user.

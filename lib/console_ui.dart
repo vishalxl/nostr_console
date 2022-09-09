@@ -673,14 +673,20 @@ Future<void> mainMenuUi(Store node) async {
     
     //Show only notifications
 
-    bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
-    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
+    //bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
+    //node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
+    //print("\n");
 
     bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
-    node.printDirectRoomInfo(showNotifications);
+    int numDirectRoomsPrinted = node.printDirectRoomInfo(showNotifications);
+    
+    if( numDirectRoomsPrinted > 0)
+       print("\n");
 
-    node.printAllChannelsInfo(20, showNotifications);
-
+    int numChannelsPrinted = node.printAllChannelsInfo(20, showNotifications);
+    
+    if( numChannelsPrinted > 0)
+      print("\n");
 
     bool userContinue = true;
     while(userContinue) {

@@ -359,6 +359,33 @@ void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, int nu
   }
 }
 
+//
+void sendEventsRequest(List<String> serverUrls, List<String> eventIds) {
+  if( eventIds.length == 0) 
+    return;
+
+  String eventIdsStr = "";
+  for(int i = 0; i < eventIds.length; i++) {
+    String comma = ",";
+    if( i == 0) 
+      comma = "";
+    eventIdsStr =  '$eventIdsStr$comma"${eventIds[i]}"';
+  }
+
+  String getEventRequest = '["REQ","event_${eventIds.length}",{"ids":[$eventIdsStr]}]';
+  if( gDebug > 0) log.info("sending $getEventRequest");
+  for(int i = 0; i < serverUrls.length; i++) {
+    relays.sendRequest(serverUrls[i], getEventRequest);
+  }
+
+/*    Future<void> foo() async {
+      await Future.delayed(Duration(milliseconds: 500));
+      return;
+    }
+*/
+
+}
+
 void sendRequest(List<String> serverUrls, request) {
   for(int i = 0; i < serverUrls.length; i++) {
     relays.sendRequest(serverUrls[i], request);

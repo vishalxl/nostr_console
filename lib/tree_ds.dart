@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
+import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
 
 typedef fTreeSelector = bool Function(Tree a);
@@ -629,16 +630,14 @@ class Store {
     });
 
     processDeleteEvents(tempChildEventsMap); // handle returned values perhaps later
-
     processReactions(events, tempChildEventsMap);
-
 
     // once tempChildEventsMap has been created, create connections between them so we get a tree structure from all these events.
     List<Tree>  topLevelTrees = [];// this will become the children of the main top node. These are events without parents, which are printed at top.
     List<String> tempWithoutParent = [];
     List<Channel> channels = [];
     List<DirectMessageRoom> tempDirectRooms = [];
-
+    List<String> dummyEventIds = [];
 
     int numEventsNotPosts = 0; // just for debugging info
     int numKind40Events   = 0;
@@ -682,6 +681,15 @@ class Store {
            Tree dummyTopNode = Tree.withoutStore(dummy, []);
            dummyTopNode.children.add(tree);
            tempWithoutParent.add(tree.event.eventData.id); 
+
+           if( parentId.length == 64)
+            dummyEventIds.add(parentId);
+           else {
+              if( gDebug > 0) {
+                print("got invalid parentId in fromEvents: $parentId");
+                print("tags: ${tree.event.eventData.tags}");
+              }
+           }
           
            // add the dummy evnets to top level trees, so that their real children get printed too with them
            // so no post is missed by reader
@@ -702,6 +710,9 @@ class Store {
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 42 = ${numKind42Events}");
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
+    // get dummy events
+    sendEventsRequest(gListRelayUrls1, dummyEventIds);
+
     // create a dummy top level tree and then create the main Tree object
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, tempDirectRooms);
   } // end fromEvents()
@@ -714,6 +725,8 @@ class Store {
     if( gDebug > 0) log.info("In insertEvetnts: allChildEventsMap size = ${allChildEventsMap.length}, called for ${newEventsToProcess.length} NEW events");
 
     Set<String> newEventIdsSet = {};
+
+    List<String> dummyEventIds = [];
 
     // add the event to the main event store thats allChildEventsMap
     newEventsToProcess.forEach((newEvent) { 
@@ -748,16 +761,35 @@ class Store {
         processKind0Event(newEvent);
       }
 
-      // only kind 0, 1, 3, 4, 5( delete), 7, 40, 42 events are added to map, return otherwise
+      //print("Before culling");
+      // only kind 0, 1, 3, 4, 5( delete), 7, 40, 42 events are added to map-store, return otherwise
       if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
         return;
       }
+      //print("after culling");
 
       // expand mentions ( and translate if flag is set) and then add event to main event map
       newEvent.eventData.translateAndExpandMentions(); // this also handles dm decryption for kind 4 messages, for kind 1 will do translation/expansion; 
 
-      // add them to the main store of the Tree object
-      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
+      // add them to the main store of the Tree object, but after checking that its not one of the dummy/missing events. 
+      // In that case, replace the older dummy event, and only then add it to store-map
+      // Dummy events are only added as top posts, so search there for them.
+      bool isDummyReplacement = false;
+      for(int i = 0; i < topPosts.length; i++) {
+        Tree tree = topPosts[i];
+        if( tree.event.eventData.id == newEvent.eventData.id) {
+          // its a replacement. 
+          if( gDebug > 0) log.info("In processIncoming: Replaced old dummy event of id: ${newEvent.eventData.id}");
+          tree.event = newEvent;
+          isDummyReplacement = true;
+          tree = topPosts.removeAt(i);
+          allChildEventsMap[tree.event.eventData.id] = tree;
+          break;
+        }
+      }
+
+      if( !isDummyReplacement)
+        allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
 
       // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
       if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
@@ -787,6 +819,10 @@ class Store {
                   Tree dummyTopNode = Tree.withoutStore(dummy, []);
                   dummyTopNode.children.add(newTree);
                   topPosts.add(dummyTopNode);
+
+                  // add it to list to fetch it from relays
+                  if( parentId.length == 64)
+                    dummyEventIds.add(parentId);                  
                 }
             }
             break;
@@ -835,6 +871,10 @@ class Store {
         }
       }
     });
+
+    // get dummy events
+    sendEventsRequest(gListRelayUrls2, dummyEventIds);
+
     int totalTreeSize = 0;
     topPosts.forEach((element) {totalTreeSize += element.count();});
     if(gDebug > 0) print("In end of insertEvents: allChildEventsMap size = ${allChildEventsMap.length}; mainTree count = $totalTreeSize");
@@ -1235,11 +1275,10 @@ class Store {
         }
 
         if( gDummyAccountPubkey == tree.event.eventData.pubkey) {
+          print("not writing dummy event pubkey");
           continue; // dont write dummy events
         }
 
-        //print("writing event ");
-        //tree.event.printEvent(0); print("");
         String line = "${tree.event.originalJson}\n";
         nLinesStr += line;
         eventCounter++;
@@ -1499,52 +1538,62 @@ class Store {
 
       if(gDebug > 1) ("Got event of type 7"); // this can be + or !, which means 'hide' event for me
       String reactorPubkey  = event.eventData.pubkey;
+      String reactorId      = event.eventData.id;
       String comment    = event.eventData.content;
       int    lastEIndex = event.eventData.eTags.length - 1;
-      String reactedTo  = event.eventData.eTags[lastEIndex];
+      String reactedToId  = event.eventData.eTags[lastEIndex];
 
-      if( gDebug > 0 && event.eventData.id == gCheckEventId)
-         print("in processReaction: 1 got reaction $gCheckEventId");
+      if( gDebug > 0 && event.eventData.id == gCheckEventId)print("in processReaction: 1 got reaction $gCheckEventId");
 
       if( !validReactionList.any((element) => element == comment)) {
+        if(gDebug > 0 && event.eventData.id == gCheckEventId)          print("$gCheckEventId not valid");
         return "";
       }
 
       // check if the reaction already exists by this user
-      if( gReactions.containsKey(reactedTo)) {
-        for( int i = 0; i < ((gReactions[reactedTo]?.length)??0); i++) {
-          List<String> oldReaction = (gReactions[reactedTo]?[i])??[];
+      if( gReactions.containsKey(reactedToId)) {
+        for( int i = 0; i < ((gReactions[reactedToId]?.length)??0); i++) {
+          List<String> oldReaction = (gReactions[reactedToId]?[i])??[];
           if( oldReaction.length == 2) {
             //valid reaction
             if(oldReaction[0] == reactorPubkey && oldReaction[1] == comment) {
-              
+
+              if(gDebug > 0 && event.eventData.id == gCheckEventId) print("$gCheckEventId already got it");
+
               return ""; // reaction by this user already exists so return
             }
           }
         }
         List<String> temp = [reactorPubkey, comment];
-        gReactions[reactedTo]?.add(temp);
+        gReactions[reactedToId]?.add(temp);
+        
+        if(gDebug > 0 &&  event.eventData.id == gCheckEventId)  print("$gCheckEventId milestone 3");
+        
         if( event.eventData.isNotification) {
+          //print("is a notification");
           // if the reaction is new ( a notification) then the comment it is reacting to also becomes a notification in form of newLikes
-          tempChildEventsMap[reactedTo]?.event.eventData.newLikes.add(reactorPubkey);
-          //tempChildEventsMap[reactedTo]?.event.eventData.isNotification = true;
+
+          if( gDebug > 0 && event.eventData.id == gCheckEventId) print("milestone 2 for $gCheckEventId");
+
+          tempChildEventsMap[reactedToId]?.event.eventData.newLikes.add(reactorPubkey);
+        } else {
+          if( gDebug > 0 && event.eventData.id == gCheckEventId) print("$gCheckEventId is not a notification . event from file = ${event.readFromFile}");
+
         }
       } else {
         // first reaction to this event, create the entry in global map
         List<List<String>> newReactorList = [];
         List<String> temp = [reactorPubkey, comment];
         newReactorList.add(temp);
-        gReactions[reactedTo] = newReactorList;
+        gReactions[reactedToId] = newReactorList;
       }
       // set isHidden for reactedTo if it exists in map
 
-      if(  gDebug > 0 && event.eventData.id == "e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e")
-         print("in processReaction: 2 got reaction e8a8a1f526af1023ba85ab3874d2310871e034eb8a0bcb3c289be671065ad03e");
 
       if( comment == "!" &&  event.eventData.pubkey == userPublicKey) {
-        tempChildEventsMap[reactedTo]?.event.eventData.isHidden = true;
+        tempChildEventsMap[reactedToId]?.event.eventData.isHidden = true;
       }
-      return reactedTo;
+      return reactedToId;
     } else {
       // case where its not a kind 7 event, or we can't find the reactedTo event due to absense of e tag.
     }

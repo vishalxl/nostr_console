@@ -238,7 +238,7 @@ Future<void> main(List<String> arguments) async {
       } 
 
       gDefaultFollows.add(userPublicKey);
-      //getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+      getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(gDaysToGetEventsFor));
       getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor)); // from relay group 2
       getKindEvents([0,3, 40, 42], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor* 10));

@@ -71,10 +71,14 @@ class EventData {
     return "";
   }
 
-  EventData(this.id, this.pubkey, this.createdAt, this.kind, this.content, this.eTags, this.pTags,
-            this.contactList, this.tags, this.newLikes, {this.isNotification = false, this.evaluatedContent = "", this.isHidden = false, this.isDeleted = false});
+  EventData(this.id,          this.pubkey,   this.createdAt,  this.kind,  this.content,   
+            this.eTags,   this.pTags,        this.contactList,this.tags,  this.newLikes,   
+            {
+              this.isNotification = false, this.evaluatedContent = "", this.isHidden = false, this.isDeleted = false
+            });
    
   factory EventData.fromJson(dynamic json) {
+    
     List<Contact> contactList = [];
 
     List<String>       eTagsRead = [];

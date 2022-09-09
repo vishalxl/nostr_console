@@ -237,7 +237,9 @@ Future<void> main(List<String> arguments) async {
         return;
       } 
 
-      getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+      gDefaultFollows.add(userPublicKey);
+      //getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+      getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(gDaysToGetEventsFor));
       getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor)); // from relay group 2
       getKindEvents([0,3, 40, 42], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor* 10));
 
@@ -264,7 +266,7 @@ Future<void> main(List<String> arguments) async {
 
         // if contact list was found, get user's feed; also get some default contacts
         Set<String> contacts = {};
-        contacts.addAll(gDefaultFollows);
+        //contacts.addAll(gDefaultFollows);
         if (contactEvent != null ) {
           if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
           contactEvent.eventData.contactList.forEach((contact) {

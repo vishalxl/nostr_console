@@ -265,7 +265,7 @@ String getUserRequest(String subscriptionId, String publicKey, int numUserEvents
   }
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + publicKey + strSubscription2;
+  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
 }
 
 
@@ -276,7 +276,7 @@ String getMentionRequest(String subscriptionId, String publicKey, int numUserEve
   }
   var    strSubscription1  = '["REQ","$subscriptionId",{ "#p": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + publicKey + strSubscription2;
+  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
 }
 
 String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int numUserEvents, int sinceWhen) {
@@ -290,7 +290,7 @@ String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int n
   String s = "";
 
   for(int i = 0; i < publicKeys.length; i++) {
-    s += "\"${publicKeys[i]}\"";
+    s += "\"${publicKeys[i].toLowerCase()}\"";
     if( i < publicKeys.length - 1) {
       s += ",";
     } 

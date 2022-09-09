@@ -637,6 +637,7 @@ bool processKind0Event(Event e) {
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(e.eventData.pubkey)) {    
     gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, null);
+
     newEntry = true;;
   } else {
     int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;

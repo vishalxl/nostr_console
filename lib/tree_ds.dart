@@ -920,7 +920,7 @@ class Store {
     stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
     stdout.write("Total posts  : ${count()}\n");
     stdout.write("Signed in as : $userName\n");
-    stdout.write("\nHere are the threads with new replies or new likes: \n");
+    stdout.write("\nHere are the threads with new replies or new likes: \n\n");
     
     List<Tree> topNotificationTree = []; // collect all top tress to display in this list. only unique tress will be displayed
     newEventIdsSet.forEach((eventID) { 

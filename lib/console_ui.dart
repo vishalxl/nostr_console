@@ -501,7 +501,7 @@ Future<void> channelMenuUI(Store node) async {
 
     //await processNotifications(node); // this takes 300 ms
     if( !justShowedChannels) {
-      node.printAllChannelsInfo(20);
+      node.printAllChannelsInfo(20, selectorShowAllRooms);
       justShowedChannels = true;
     }
 
@@ -512,7 +512,7 @@ Future<void> channelMenuUI(Store node) async {
     print('You picked: $option');
     switch(option) {
       case 1:
-        node.printAllChannelsInfo(1000);
+        node.printAllChannelsInfo(1000, selectorShowAllRooms);
         justShowedChannels = true;
         break;
       case 2:
@@ -587,12 +587,13 @@ Future<void> PrivateMenuUI(Store node) async {
 //    bool fromClient (Tree t) => t.fromClientSelector(clientName);
 //    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
 
-    bool showAllRooms (DirectMessageRoom room) => selectorShowAllDirectRooms(room);
+    bool showAllRooms (ScrollableMessages room) => selectorShowAllRooms(room);
     node.printDirectRoomInfo(showAllRooms);
 
 
     int option = showMenu([ 
                             'Reply or Send a direct message',
+                            'Create hub group chat',
                             'Go back to main menu'],          // 3
                           "Private Message Menu"); // name of menu
     print('You picked: $option');
@@ -654,6 +655,9 @@ Future<void> PrivateMenuUI(Store node) async {
         break;
 
       case 2:
+
+
+      case 3:
         continueChatMenu = false;
         break;
 
@@ -672,8 +676,10 @@ Future<void> mainMenuUi(Store node) async {
     bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
     node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
 
-    bool showNotifications (DirectMessageRoom room) => room.selectorNotifications();
+    bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
     node.printDirectRoomInfo(showNotifications);
+
+    node.printAllChannelsInfo(20, showNotifications);
 
 
     bool userContinue = true;

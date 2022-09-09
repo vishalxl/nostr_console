@@ -214,6 +214,13 @@ class EventData {
       String? decrypted = decryptContent();
       if( decrypted != null) {
         evaluatedContent = decrypted;
+
+        // hubgroup can have two types of messages
+        // 1. sent by self, declaring the pub/pri keys of the new group chat and its N members (not including user themselve). Its len is (64) * (2 + N) and spaces 
+        //                hub grp pubkey, hub grp prikey, participant1, participant2, .. participantN 
+        // 2. Messages from users that are to be broadcast to others
+        //                hub grp pubkey, <message> 
+        //    
       }
       break;
     } // end switch

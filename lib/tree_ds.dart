@@ -5,7 +5,7 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 
 typedef fTreeSelector = bool Function(Tree a);
-typedef fDirectRoomSelector = bool Function(DirectMessageRoom room);
+typedef fRoomSelector = bool Function(ScrollableMessages room);
 
 Store? gStore = null;
 
@@ -13,7 +13,7 @@ bool selectorShowAllTrees(Tree t) {
   return true;
 }
 
-bool selectorShowAllDirectRooms(DirectMessageRoom room) {
+bool selectorShowAllRooms(ScrollableMessages room) {
   return true;
 }
 
@@ -772,7 +772,7 @@ class Store {
                   allChildEventsMap[parentId]?.children.add(newTree);
                 } else {
                   // create top unknown parent and then add it
-                  Event dummy = Event("","",  EventData(parentId, gDummyAccountPubkey, newTree.event.eventData.createdAt, 1, "Unknown parent event", [], [], [], [[]], {}), [""], "[json]");
+                  Event dummy = Event("","",  EventData(parentId, gDummyAccountPubkey, newTree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
                   Tree dummyTopNode = Tree.withoutStore(dummy, []);
                   dummyTopNode.children.add(newTree);
                   topPosts.add(dummyTopNode);
@@ -970,7 +970,22 @@ class Store {
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
    */
-  void printAllChannelsInfo(int numToPrint) {
+  void printAllChannelsInfo(int numToPrint, fRoomSelector selector) {
+
+    int numRoomsSelected = 0;
+    for( int j = 0; j < channels.length; j++) {
+      if( selector(channels[j]))
+        numRoomsSelected++;
+    }
+
+    if( numRoomsSelected == 0) {
+      return;
+    }
+
+    // if selected rooms is less, then print only that
+    if( numRoomsSelected < numToPrint)
+      numToPrint = numRoomsSelected;
+
     channels.sort(scrollableCompareTo);
     print("");
     if( numToPrint < channels.length) {
@@ -1066,7 +1081,7 @@ class Store {
   /**
    * @printDirectRoomInfo Print one line information about chat rooms
    */
-  void printDirectRoomInfo(fDirectRoomSelector roomSelector) { 
+  void printDirectRoomInfo(fRoomSelector roomSelector) { 
     directRooms.sort(scrollableCompareTo);
 
     int numNotificationRooms = 0;

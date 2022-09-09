@@ -263,7 +263,7 @@ class Tree {
       if( depth > maxDepthAllowed) {
         depth = maxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
-        stdout.write("┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1)}+\n");        
+        stdout.write("┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘");        
         leftShifted = true;
       }
 
@@ -946,7 +946,6 @@ class Store {
 
     int numPrinted = 0;
 
-    depth = depth - 1;
     topPosts.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
 
     for( int i = 0; i < topPosts.length; i++) {
@@ -966,9 +965,9 @@ class Store {
       for( int i = 0; i < gapBetweenTopTrees; i++ )  { 
         stdout.write("\n"); 
       }
-      
-      String topPostLine = getDepthSpaces(depth+1);
-      topPostLine += ("┬\n");
+
+      String topPostLine = getDepthSpaces(depth);
+      topPostLine += ("   █┐\n");
       stdout.write(topPostLine);
 
       numPrinted += topPosts[i].printTree(depth+1, newerThan, true);
@@ -1219,7 +1218,7 @@ class Store {
       for( var tree in allChildEventsMap.values) {
 
         if( tree.event.eventData.isDeleted) { // dont write those deleted
-          continue; 
+          //continue; 
         }
 
         if( gOverWriteFile == false) {

@@ -766,10 +766,10 @@ String getNumSpaces(int num) {
   return s;
 }
 
-String getNumDashes(int num) {
+String getNumDashes(int num, [String dashType = "-"]) {
   String s = "";
   for( int i = 0; i < num; i++) {
-    s += "-";
+    s += dashType;
   }
   return s;
 }

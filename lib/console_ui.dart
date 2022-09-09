@@ -195,7 +195,7 @@ void readjustAlignment() {
 
 
 void printProfile(Store node, String profilePubkey) {
-  bool onlyUserPostAndLike (Tree t) => t.hasUserPostAndLike(profilePubkey);
+  bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike(profilePubkey);
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
   
   // get the latest kind 3 event for the user, which lists his 'follows' list
@@ -325,7 +325,7 @@ Future<void> otherMenuUi(Store node) async {
         String? $tempWords = stdin.readLineSync();
         String clientName = $tempWords??"";
         if( clientName != "") {
-          bool fromClient (Tree t) => t.fromClientSelector(clientName);
+          bool fromClient (Tree t) => t.treeSelectorClientName(clientName);
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
         }
         break;
@@ -335,7 +335,7 @@ Future<void> otherMenuUi(Store node) async {
         String? $tempWords = stdin.readLineSync();
         String words = $tempWords??"";
         if( words != "") {
-          bool onlyWords (Tree t) => t.hasWords(words.toLowerCase());
+          bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
         } else print("Blank word entered. Try again.");
         break;
@@ -673,9 +673,9 @@ Future<void> mainMenuUi(Store node) async {
     
     //Show only notifications
 
-    //bool hasRepliesAndLikes (Tree t) => t.hasRepliesAndLikes(userPublicKey);
-    //node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasRepliesAndLikes);
-    //print("\n");
+    bool hasNotifications (Tree t) => t.treeSelectorNotifications();
+    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
+    print("\n");
 
     bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
     int numDirectRoomsPrinted = node.printDirectRoomInfo(showNotifications);

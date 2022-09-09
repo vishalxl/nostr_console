@@ -36,7 +36,7 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
   UI Options                                
       -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                     the posts or text is aligned to the center of the terminal. 
-      -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 120. 
+      -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 100. 
                                     Cant be less than 60.
       -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is 2 and
                                     maximum allowed is 12. 

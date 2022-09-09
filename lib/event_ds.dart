@@ -57,7 +57,7 @@ class EventData {
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
   String             evaluatedContent; // content which has mentions expanded, and which has been translated
-  Set<String>        newLikes;    // user for notifications, are colored as notifications and then reset  
+  Set<String>        newLikes;    // used for notifications, are colored as notifications and then reset  
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
 

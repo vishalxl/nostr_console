@@ -251,17 +251,11 @@ class Tree {
   int printTree(int depth, DateTime newerThan, bool topPost) {
     int numPrinted = 0;
 
-    //if( event.eventData.pubkey != gDummyAccountPubkey) { // don't print dummy events
-      event.printEvent(depth, topPost);
-      numPrinted++;
-    //}
+    event.printEvent(depth, topPost);
+    numPrinted++;
 
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
-
-      //stdout.write("\n");  
-      //printDepth(depth+1);
-      //stdout.write("│");
 
       // if the thread becomes too 'deep' then reset its depth, so that its 
       // children will not be displayed too much on the right, but are shifted
@@ -312,8 +306,7 @@ class Tree {
   }
 
   // returns true if the treee or its children has a reply or like for the user with public key pk; and notification flags are set for such events
-  bool hasRepliesAndLikes(String pk) {
-    //print("----- pk = $pk");
+  bool treeSelectorRepliesAndLikes(String pk) {
     bool hasReaction = false;
     bool childMatches = false;
 
@@ -321,7 +314,7 @@ class Tree {
       List<List<String>>? reactions = gReactions[event.eventData.id];
       if( reactions  != null) {
         if( reactions.length > 0) {
-          //print("has reactions");
+          // has reactions
           reactions.forEach((reaction) {  
             // dont add notificatoin for self reaction
             Event? reactorEvent = store?.allChildEventsMap[reaction[0]]?.event;
@@ -346,13 +339,12 @@ class Tree {
     }
 
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].hasRepliesAndLikes(pk)) {
+      if( children[i].treeSelectorRepliesAndLikes(pk)) {
         childMatches = true;
       }
     }
 
     if( hasReaction || childMatches) {
-      //print("returning true");
       return true;
     }
     return false;
@@ -360,7 +352,7 @@ class Tree {
 
 
   // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
-  bool hasUserPostAndLike(String pubkey) {
+  bool treeSelectorUserPostAndLike(String pubkey) {
     bool hasReacted = false;
 
     if( gReactions.containsKey(event.eventData.id))  {
@@ -378,7 +370,7 @@ class Tree {
 
     bool childMatches = false;
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].hasUserPostAndLike(pubkey)) {
+      if( children[i].treeSelectorUserPostAndLike(pubkey)) {
         childMatches = true;
       }
     }
@@ -393,7 +385,7 @@ class Tree {
   } 
 
   // returns true if the given words exists in it or its children
-  bool hasWords(String word) {
+  bool treeSelectorHasWords(String word) {
     if( event.eventData.content.length > 2000) { // ignore if content is too large, takes lot of time
       return false;
     }
@@ -405,7 +397,7 @@ class Tree {
         continue;
       }
 
-      if( children[i].hasWords(word)) {
+      if( children[i].treeSelectorHasWords(word)) {
         childMatches = true;
       }
     }
@@ -421,8 +413,7 @@ class Tree {
   } 
 
   // returns true if the event or any of its children were made from the given client, and they are marked for notification
-  bool fromClientSelector(String clientName) {
-    //if(gDebug > 0) print("In tree selector hasWords: this id = ${e.eventData.id} word = $word");
+  bool treeSelectorClientName(String clientName) {
 
     bool byClient = false;
     List<List<String>> tags = event.eventData.tags;
@@ -439,15 +430,35 @@ class Tree {
 
     bool childMatch = false;
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].fromClientSelector(clientName)) {
+      if( children[i].treeSelectorClientName(clientName)) {
         childMatch = true;
       }
     }
     if( byClient || childMatch) {
-      //print("SOME matched $clientName ");
       return true;
     }
-    //print("none matched $clientName ");
+
+    return false;
+  } 
+
+  // returns true if the event or any of its children were made from the given client, and they are marked for notification
+  bool treeSelectorNotifications() {
+
+    bool hasNotifications = false;
+    if( event.eventData.isNotification || event.eventData.newLikes.length > 0) {
+        hasNotifications = true;
+    }
+
+    bool childMatch = false;
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].treeSelectorNotifications()) {
+        childMatch = true;
+        break;
+      }
+    }
+    if( hasNotifications || childMatch) {
+      return true;
+    }
 
     return false;
   } 
@@ -963,7 +974,8 @@ class Store {
       numPrinted += topPosts[i].printTree(depth+1, newerThan, true);
     }
 
-    print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
+    if( numPrinted > 0)
+      print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
     return numPrinted;
   }
  
@@ -1513,6 +1525,11 @@ class Store {
         }
         List<String> temp = [reactorPubkey, comment];
         gReactions[reactedTo]?.add(temp);
+        if( event.eventData.isNotification) {
+          // if the reaction is new ( a notification) then the comment it is reacting to also becomes a notification in form of newLikes
+          tempChildEventsMap[reactedTo]?.event.eventData.newLikes.add(reactorPubkey);
+          //tempChildEventsMap[reactedTo]?.event.eventData.isNotification = true;
+        }
       } else {
         // first reaction to this event, create the entry in global map
         List<List<String>> newReactorList = [];

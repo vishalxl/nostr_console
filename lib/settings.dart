@@ -50,9 +50,8 @@ const String exename = "nostr_console";
 const String version = "0.0.7-beta";
 
 // well known disposable test private key
-const String gDefaultPrivateKey = "9d00d99c8dfad84534d3b395280ca3b3e81be5361d69dc0abf8e0fdf5a9d52f9";
 const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
-String userPrivateKey = gDefaultPrivateKey;
+String userPrivateKey = "";
 String userPublicKey  = gDefaultPublicKey;
 
 // default follows; taken from nostr.io/stats 

@@ -90,10 +90,10 @@ Future<void> main(List<String> arguments) async {
       }
 
       // write informative message in case user is using the default private key
-      if( userPrivateKey == gDefaultPrivateKey) {
-        print("${gWarningColor}You seem to be using the default private key, which comes bundled with this $exename and usable by almost anyone$gColorEndMarker");
-        print("You can also create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
-        print("You can create your own private key from ${gWarningColor}astral.ninja or branle.netlify.app$gColorEndMarker, or other such tools.\n");
+      if( userPublicKey == gDefaultPublicKey) {
+        print("${gWarningColor}You seem to be using the default public key starting with e8c, which comes bundled with this $exename ");
+        print("You should ideally create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
+        print("You can create your own private key from ${gWarningColor}astral.ninja, branle.netlify.app$gColorEndMarker, or other such tools.\n");
       }
 
       if( argResults[relayArg] != null) {

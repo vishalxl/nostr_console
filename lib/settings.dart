@@ -101,7 +101,7 @@ const int  gMinimumDepthAllowed = 2;
 const int  gMaximumDepthAllowed = 12;
 const int  gDefaultMaxDepth     = 4;
 int        maxDepthAllowed      = gDefaultMaxDepth;
-const int  leftShiftThreadsBy   = 2;
+const int  leftShiftThreadsBy   = 3;
 
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings

@@ -310,26 +310,25 @@ class EventData {
 
     //name = "$name";
     //name = name.padLeft(gNameLengthInPost);
-    int nameEffectiveLen = name.length < gNameLengthInPost? name.length: gNameLengthInPost;
-    name = name.substring(0,nameEffectiveLen);
+    int tempEffectiveLen = name.length < gNameLengthInPost? name.length: gNameLengthInPost;
+    name = name.substring(0,tempEffectiveLen);
 
     String nameInside = " ";
-    if( name.length %2 == 1 ) // odd len names need an extra dash
-      name = name + nameInside;
 
 
-
+    int effectiveNameFieldLen = gNameLengthInPost + 3;  // get this before name is mangled by color
     String nameColor = getNameColor(name);
-    name = getNumDashes((gNameLengthInPost - name.length)~/2, nameInside ) + getStrInColor(name, nameColor) + getNumDashes((gNameLengthInPost - name.length)~/2 , nameInside);
-    
-    int extraLen = name.length + 3;  // get this before name is mangled by color
-    //name = getStrInColor(name, nameColor);
-    // colorify the name
+
+    // odd len names need an extra dash
+    // if( name.length %2 == 1 )   name = name + nameInside;
+    //name = getNumDashes((gNameLengthInPost - name.length)~/2, nameInside ) + getStrInColor(name, nameColor) + getNumDashes((gNameLengthInPost - name.length)~/2 , nameInside);
+
+    name = name.padLeft(gNameLengthInPost);
+    name = name.substring(0, gNameLengthInPost);
+    name = getStrInColor(name, nameColor);
     
 
     String strToPrint = "";
-    //strToPrint += getDepthSpaces(depth);
-
     if(!topPost) {
       strToPrint += "\n";
     }
@@ -349,7 +348,7 @@ class EventData {
 
     // if left_stuff + extraLen + comment len  + idStrLike < gTextWidth
     // then pad idStrLike with  gTextWidth - ( left_stuff + extraLen + comment len )
-    if( (gSpacesPerDepth * depth + extraLen + temp.length + idDateLikes.length ) > gTextWidth) {
+    if( (gSpacesPerDepth * depth + effectiveNameFieldLen + temp.length + idDateLikes.length ) > gTextWidth) {
 
       // number of lines taken by comment =  (comment.length + (extraLen))/ ( gTextWidth)  + 1 
       /*int printedTextWidth = (  gTextWidth  -  ( gSpacesPerDepth * depth + extraLen));
@@ -368,11 +367,11 @@ class EventData {
     else {
     
 
-      idDateLikes = idDateLikes.padLeft((gTextWidth ) - (gSpacesPerDepth * depth + extraLen + temp.length));
+      idDateLikes = idDateLikes.padLeft((gTextWidth ) - (gSpacesPerDepth * depth + effectiveNameFieldLen + temp.length));
       temp = temp + "$idDateLikes";
     }
     //temp = temp + "       |$idDateLikes";
-    String contentShifted = rightShiftContent( temp, gSpacesPerDepth * depth + extraLen);
+    String contentShifted = rightShiftContent( temp, gSpacesPerDepth * depth + effectiveNameFieldLen);
 
     strToPrint += getStrInColor(contentShifted + "\n", commentColor);
     stdout.write(strToPrint);

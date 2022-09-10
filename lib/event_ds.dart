@@ -316,7 +316,7 @@ class EventData {
 
 
     int effectiveNameFieldLen = gNameLengthInPost + 3;  // get this before name is mangled by color
-    String nameColor = getNameColor(name);
+    String nameColor = getNameColor(pubkey);
 
     // odd len names need an extra dash
     // if( name.length %2 == 1 )   name = name + nameInside;
@@ -425,7 +425,7 @@ class EventData {
     
     // get name in color and pad it too
     String nameToPrint = name.padLeft(nameWidth).substring(0, nameWidth);
-    nameToPrint = getStrInColor(nameToPrint, getNameColor(name));
+    nameToPrint = getStrInColor(nameToPrint, getNameColor(pubkey));
 
     String dateToPrint = strDate.padLeft(gSpacesPerDepth * timeWidthDepth).substring(0, gSpacesPerDepth * timeWidthDepth);
 

@@ -137,17 +137,42 @@ String gWarningColor = redColor; // red
 const String gColorEndMarker = "\x1B[0m";
 
 // blue is too bright
+/*
+e & f are red
+c & d are pink
+a & b are orange
+8 & 9 are yellow
+6 & 7 are green
+4 & 5 are light blue
+2 & 3 are blue
+0 & 1 are purple
+
+
 List<String> nameColorPalette = [brightGreenColor, brightCyanColor, brightYellowColor, brightMagentaColor, 
                                  brightBlueColor, brightRedColor, brightBlackColor, brightWhiteColor,
                                  yellowColor,        magentaColor,             redColor ];
+*/
+
+Map<String, String> pubkeyColor = { '0': brightMagentaColor, '1': brightMagentaColor,
+                                    '2': brightBlueColor, '3': brightBlueColor,  
+                                    '4': brightCyanColor, '5': brightCyanColor, 
+                                    '6': brightGreenColor, '7': brightGreenColor, 
+                                    '8': brightYellowColor,'9': brightYellowColor,  
+                                    'a': brightRedColor,  'b':  brightRedColor, 
+                                    'c': yellowColor,     'd':  yellowColor, 
+                                    'e': redColor,        'f':  redColor 
+                                   };
+
+List<String> nameColorPalette = [brightMagentaColor, brightBlueColor, brightCyanColor, brightGreenColor, 
+                                brightYellowColor,   brightRedColor,  yellowColor,   redColor        ];
 
 
-String getNameColor( String name) {
-  if( name.length == 0)
+String getNameColor( String pubkey) {
+  if( pubkey.length == 0)
     return nameColorPalette[0];
 
-  int offset = name.substring(0, 1).toLowerCase().codeUnits[0] % nameColorPalette.length;
-  return nameColorPalette[offset];
+  String firstChar = pubkey.substring(0, 1).toLowerCase();
+  return pubkeyColor[firstChar]??brightMagentaColor;
 }
 
 

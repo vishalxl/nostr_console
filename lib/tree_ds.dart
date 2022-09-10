@@ -264,7 +264,7 @@ class Tree {
       if( depth > maxDepthAllowed) {
         depth = maxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
-        stdout.write("┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘");        
+        stdout.write("    ┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘");        
         leftShifted = true;
       }
 
@@ -274,7 +274,7 @@ class Tree {
     if( leftShifted) {
       stdout.write("\n");
       printDepth(depth+1);
-      print("┴");
+      print("    ┴"); // same spaces as when its left shifted
     }
 
     return numPrinted;

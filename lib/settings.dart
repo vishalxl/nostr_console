@@ -87,7 +87,7 @@ const String gDummyAccountPubkey = "Non";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color 
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable
-const int  gDefaultTextWidth    = 100; // default text width
+const int  gDefaultTextWidth    = 120; // default text width
 int        gTextWidth           = gDefaultTextWidth; // is changed by --width option
 const int  gSpacesPerDepth      = 4;     // constant
 int        gNumLeftMarginSpaces = 0;// this number is modified in main 
@@ -98,9 +98,9 @@ const int gNameLengthInPost     = 12;
 // after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
 const int  gMinimumDepthAllowed = 2;
 const int  gMaximumDepthAllowed = 12;
-const int  gDefaultMaxDepth     = 4;
+const int  gDefaultMaxDepth     = 6;
 int        maxDepthAllowed      = gDefaultMaxDepth;
-const int  leftShiftThreadsBy   = 3;
+const int  leftShiftThreadsBy   = 4;
 
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings

@@ -370,7 +370,7 @@ class EventData {
       temp = temp + "$idDateLikes";
     }
     //temp = temp + "       |$idDateLikes";
-    String contentShifted = rightShiftContent( temp, gSpacesPerDepth * depth + effectiveNameFieldLen);
+    String contentShifted = makeParagraphAtDepth( temp, gSpacesPerDepth * depth + effectiveNameFieldLen);
 
     strToPrint += getStrInColor(contentShifted + "\n", commentColor);
     stdout.write(strToPrint);
@@ -429,14 +429,18 @@ class EventData {
 
     String dateToPrint = strDate.padLeft(gSpacesPerDepth * timeWidthDepth).substring(0, gSpacesPerDepth * timeWidthDepth);
 
-    strToPrint = "${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: ";
+    
     // depth above + ( depth numberof spaces = 1) + (depth of time = 2) + (depth of name = 3)
     int contentDepth = depth + 2 + timeWidthDepth + nameWidthDepth;
-    String contentShifted = rightShiftContent(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
-    strToPrint += contentShifted;
+    String contentShifted = makeParagraphAtDepth(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
+    
+    //strToPrint += contentShifted;
     if( isNotification) {
-      strToPrint = "$gNotificationColor$strToPrint$gColorEndMarker";
+      strToPrint = "$gNotificationColor${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: $gNotificationColor" +  contentShifted + gColorEndMarker;
+      //strToPrint = "$gNotificationColor$strToPrint$gColorEndMarker";
       isNotification = false;
+    } else {
+      strToPrint = "${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: " +  contentShifted;
     }
     return strToPrint;
   }
@@ -805,7 +809,9 @@ String getNumDashes(int num, [String dashType = "-"]) {
   return s;
 }
 
-String rightShiftContent(String s, int numSpaces) {
+// make a paragraph of s that starts at numSpaces ( from screen left), and does not extend beyond gTextWidth+gNumLeftMarginSpaces. break it, or add 
+// a newline if it goes beyond gTextWidth + gNumLeftMarginSpaces
+String makeParagraphAtDepth(String s, int numSpaces) {
   String newString = "";
   int    numCharsInCurLine = 0;
   String spacesString = getNumSpaces(numSpaces + gNumLeftMarginSpaces);
@@ -842,7 +848,7 @@ String rightShiftContent(String s, int numSpaces) {
           newString += spacesString;
           numCharsInCurLine = 0;
         }
-      } 
+      }
       newString += s[i];
     }
     numCharsInCurLine++;

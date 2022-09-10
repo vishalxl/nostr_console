@@ -86,7 +86,7 @@ List<String> gDefaultFollows = [
 // dummy account pubkey
 const String gDummyAccountPubkey = "Non";
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color related settings
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color 
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable
 const int  gDefaultTextWidth    = 100; // default text width
 int        gTextWidth           = gDefaultTextWidth; // is changed by --width option
@@ -94,6 +94,7 @@ const int  gSpacesPerDepth      = 4;     // constant
 int        gNumLeftMarginSpaces = 0;// this number is modified in main 
 String     gAlignment           = "center";   // is modified in main if --align argument is given
 const int  gapBetweenTopTrees   = 1;
+const int gNameLengthInPost     = 12;
 
 // after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
 const int  gMinimumDepthAllowed = 2;
@@ -102,29 +103,50 @@ const int  gDefaultMaxDepth     = 4;
 int        maxDepthAllowed      = gDefaultMaxDepth;
 const int  leftShiftThreadsBy   = 2;
 
+// https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings
 const String defaultTextColor = "green";
 const String greenColor       = "\x1B[32m"; // green
+const String yelloColor       = "\x1B[33m"; // yellow
+const String magentaColor     = "\x1B[35m"; // magenta
 const String cyanColor        = "\x1b[36m"; // cyan
 const String whiteColor       = "\x1b[97m"; // white
 const String blackColor       = "\x1b[30m"; // black
 const String redColor         = "\x1B[31m"; // red
 const String blueColor        = "\x1b[34m"; // blue
 
-Map<String, String> gColorMap = { "green": greenColor, 
+Map<String, String> gColorMapForArguments = { "green": greenColor, 
                                   "cyan" : cyanColor, 
                                   "white": whiteColor, 
                                   "black": blackColor, 
                                   "red"  : redColor, 
                                   "blue" : blueColor};
 
+const String brightRedColor         = "\x1B[91m"; // bright red
 const String brightGreenColor       = "\x1B[92m"; // bright green
+const String brightYellowColor      = "\x1B[93m"; // bright yellow
+const String brightBlueColor        = "\x1B[94m"; // bright blue
+const String brightCyanColor        = "\x1B[96m"; // bright cyan
+const String brightMagentaColor     = "\x1B[95m"; // bright magenta
+
+
 // 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
 String gCommentColor = greenColor;
 String gNotificationColor = cyanColor; // cyan
 String gWarningColor = redColor; // red
 const String gColorEndMarker = "\x1B[0m";
 
+List<String> nameColorPalette = [brightGreenColor, brightCyanColor, brightYellowColor, brightMagentaColor, brightBlueColor, brightRedColor, 
+                                                   yelloColor,        magentaColor,             redColor ];
+
+
+String getNameColor( String name) {
+  if( name.length == 0)
+    return nameColorPalette[0];
+
+  int offset = name.substring(0, 1).codeUnits[0] % nameColorPalette.length;
+  return nameColorPalette[offset];
+}
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument

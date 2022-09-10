@@ -307,8 +307,26 @@ class EventData {
     } else {
       commentColor = gCommentColor;
     }
-   
-    int extraLen = name.length + 4;
+
+    //name = "$name";
+    //name = name.padLeft(gNameLengthInPost);
+    int nameEffectiveLen = name.length < gNameLengthInPost? name.length: gNameLengthInPost;
+    name = name.substring(0,nameEffectiveLen);
+
+    String nameInside = " ";
+    if( name.length %2 == 1 ) // odd len names need an extra dash
+      name = name + nameInside;
+
+
+
+    String nameColor = getNameColor(name);
+    name = getNumDashes((gNameLengthInPost - name.length)~/2, nameInside ) + getStrInColor(name, nameColor) + getNumDashes((gNameLengthInPost - name.length)~/2 , nameInside);
+    
+    int extraLen = name.length + 3;  // get this before name is mangled by color
+    //name = getStrInColor(name, nameColor);
+    // colorify the name
+    
+
     String strToPrint = "";
     //strToPrint += getDepthSpaces(depth);
 
@@ -316,7 +334,7 @@ class EventData {
       strToPrint += "\n";
     }
     strToPrint += getDepthSpaces(depth);
-    strToPrint += "└ ${name}: ";
+    strToPrint += " ${name}: ";
 
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
 
@@ -706,22 +724,29 @@ String getAuthorName(String pubkey, [int len = 3]) {
 }
 
 // returns full public key(s) for the given username( which can be first few letters of pubkey, or the user name)
-Set<String> getPublicKeyFromName(String userName) {
+Set<String> getPublicKeyFromName(String inquiredName) {
+  if( inquiredName.length < 2) {
+    return {};
+  }
   Set<String> pubkeys = {};
 
   //if(gDebug > 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
 
-  gKindONames.forEach((pk, userInfo) {
+  gKindONames.forEach((pubkey, userInfo) {
     // check both the user name, and the pubkey to search for the user
-    //print(userInfo.name);
-    if( userName == userInfo.name) {
-      pubkeys.add(pk);
+
+    // check username 
+    if( userInfo.name != null) {
+      int minNameLen = min( inquiredName.length, (userInfo.name?.length)??0);
+      if( inquiredName.toLowerCase() == userInfo.name?.substring(0, minNameLen).toLowerCase()) {
+        pubkeys.add(pubkey);
+      }
     }
 
-    if( userName.length <= pk.length) {
-      //print("$pk $userName" );
-      if( pk.substring(0, userName.length) == userName) {
-        pubkeys.add(pk);
+    // check public key
+    if( inquiredName.length <= pubkey.length) {
+      if( pubkey.substring(0, inquiredName.length) == inquiredName) {
+        pubkeys.add(pubkey);
       }
     }
   });

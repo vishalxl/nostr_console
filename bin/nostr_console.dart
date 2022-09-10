@@ -144,8 +144,8 @@ Future<void> main(List<String> arguments) async {
 
       if( argResults[colorArg] != null) {
         String colorGiven = argResults[colorArg].toString().toLowerCase();
-        if( gColorMap.containsKey(colorGiven)) {
-            String color = gColorMap[colorGiven]??"";
+        if( gColorMapForArguments.containsKey(colorGiven)) {
+            String color = gColorMapForArguments[colorGiven]??"";
             if( color == "") {
               print("Invalid color.");
             } else

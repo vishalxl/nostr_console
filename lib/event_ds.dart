@@ -12,7 +12,7 @@ import 'package:kepler/kepler.dart';
 
 int gDebug = 0;
 
-
+String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 
 // translate 
 GoogleTranslator? translator; // initialized in main when argument given
@@ -276,7 +276,6 @@ class EventData {
     int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
     void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
-    String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 
     String name = getAuthorName(pubkey);    
     String strDate = getPrintableDate(createdAt);
@@ -423,7 +422,11 @@ class EventData {
     const int nameWidthDepth = 16~/gSpacesPerDepth; // how wide name will be in depth spaces
     const int timeWidthDepth = 16~/gSpacesPerDepth;
     int nameWidth = gSpacesPerDepth * nameWidthDepth;
+    
+    // get name in color and pad it too
     String nameToPrint = name.padLeft(nameWidth).substring(0, nameWidth);
+    nameToPrint = getStrInColor(nameToPrint, getNameColor(name));
+
     String dateToPrint = strDate.padLeft(gSpacesPerDepth * timeWidthDepth).substring(0, gSpacesPerDepth * timeWidthDepth);
 
     strToPrint = "${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: ";

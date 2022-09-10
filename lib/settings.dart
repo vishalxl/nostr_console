@@ -107,10 +107,10 @@ const int  leftShiftThreadsBy   = 3;
 // Color related settings
 const String defaultTextColor = "green";
 const String greenColor       = "\x1B[32m"; // green
-const String yelloColor       = "\x1B[33m"; // yellow
+const String yellowColor       = "\x1B[33m"; // yellow
 const String magentaColor     = "\x1B[35m"; // magenta
 const String cyanColor        = "\x1b[36m"; // cyan
-const String whiteColor       = "\x1b[97m"; // white
+const String whiteColor       = "\x1b[37m"; // white
 const String blackColor       = "\x1b[30m"; // black
 const String redColor         = "\x1B[31m"; // red
 const String blueColor        = "\x1b[34m"; // blue
@@ -122,13 +122,14 @@ Map<String, String> gColorMapForArguments = { "green": greenColor,
                                   "red"  : redColor, 
                                   "blue" : blueColor};
 
+const String brightBlackColor       = "\x1b[90m"; // bright black
 const String brightRedColor         = "\x1B[91m"; // bright red
 const String brightGreenColor       = "\x1B[92m"; // bright green
 const String brightYellowColor      = "\x1B[93m"; // bright yellow
 const String brightBlueColor        = "\x1B[94m"; // bright blue
 const String brightCyanColor        = "\x1B[96m"; // bright cyan
 const String brightMagentaColor     = "\x1B[95m"; // bright magenta
-
+const String brightWhiteColor       = "\x1b[97m"; // white
 
 // 33 yellow, 31 red, 34 blue, 35 magenta. Add 60 for bright versions. 
 String gCommentColor = greenColor;
@@ -136,17 +137,20 @@ String gNotificationColor = cyanColor; // cyan
 String gWarningColor = redColor; // red
 const String gColorEndMarker = "\x1B[0m";
 
-List<String> nameColorPalette = [brightGreenColor, brightCyanColor, brightYellowColor, brightMagentaColor, brightBlueColor, brightRedColor, 
-                                                   yelloColor,        magentaColor,             redColor ];
+// blue is too bright
+List<String> nameColorPalette = [brightGreenColor, brightCyanColor, brightYellowColor, brightMagentaColor, 
+                                 brightBlueColor, brightRedColor, brightBlackColor, brightWhiteColor,
+                                 yellowColor,        magentaColor,             redColor ];
 
 
 String getNameColor( String name) {
   if( name.length == 0)
     return nameColorPalette[0];
 
-  int offset = name.substring(0, 1).codeUnits[0] % nameColorPalette.length;
+  int offset = name.substring(0, 1).toLowerCase().codeUnits[0] % nameColorPalette.length;
   return nameColorPalette[offset];
 }
+
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument
@@ -170,7 +174,7 @@ const int gMaxDifficultyAllowed = 24;
 int gDifficulty = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// channel related settings
-const int gNumChannelMessagesToShow = 25;
+const int gNumChannelMessagesToShow = 30;
 const int gMaxChannelPagesDisplayed = 50;
 
 

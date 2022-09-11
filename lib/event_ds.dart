@@ -370,7 +370,7 @@ class EventData {
       temp = temp + "$idDateLikes";
     }
     //temp = temp + "       |$idDateLikes";
-    String contentShifted = makeParagraphAtDepth( temp, gSpacesPerDepth * depth + effectiveNameFieldLen);
+    String contentShifted = makeParagraphAtDepth( temp,  gSpacesPerDepth * depth + effectiveNameFieldLen);
 
     strToPrint += getStrInColor(contentShifted + "\n", commentColor);
     stdout.write(strToPrint);
@@ -378,8 +378,6 @@ class EventData {
 
   String getAsLine({int len = 20}) {
     String contentToPrint = evaluatedContent.isEmpty? content: evaluatedContent;
-    //print("$contentToPrint|");
-    //print("len = ${contentToPrint.length}");
     if( len == 0 || len > contentToPrint.length) {
       len = contentToPrint.length;
     }
@@ -391,7 +389,6 @@ class EventData {
 
     int strWidth = 40;
     String paddedStrToPrint = strToPrint.padLeft(strWidth);
-    //print("\n$paddedStrToPrint");
     paddedStrToPrint = paddedStrToPrint.substring(0, strWidth);
 
     if( isNotification) {
@@ -809,51 +806,80 @@ String getNumDashes(int num, [String dashType = "-"]) {
   return s;
 }
 
+String makeParagraphAtDepth3(String s, int depthInSpaces) {
+  String newString = "";
+  String spacesString = getNumSpaces(depthInSpaces + gNumLeftMarginSpaces);
+  int lenPerLine = gTextWidth - depthInSpaces;
+
+  List<String> lines = s.split("\n");
+
+  lines.forEach((line) { 
+    newString += line.replaceAll("\n", "\n" + spacesString   ); 
+  });
+
+  return newString;
+}
+
 // make a paragraph of s that starts at numSpaces ( from screen left), and does not extend beyond gTextWidth+gNumLeftMarginSpaces. break it, or add 
 // a newline if it goes beyond gTextWidth + gNumLeftMarginSpaces
-String makeParagraphAtDepth(String s, int numSpaces) {
+String makeParagraphAtDepth(String s, int depthInSpaces) {
   String newString = "";
-  int    numCharsInCurLine = 0;
-  String spacesString = getNumSpaces(numSpaces + gNumLeftMarginSpaces);
+  String spacesString = getNumSpaces(depthInSpaces + gNumLeftMarginSpaces);
 
-  for(int i = 0; i < s.length; i++) {
-    if( s[i] == '\n') {
-      newString += "\n";
-      newString += spacesString;
-      numCharsInCurLine = 0;
-    } else {
-      if( numCharsInCurLine >= (gTextWidth - numSpaces)) {
-        if( i > 1 &&  !isWordSeparater(s[i])) {
-          // go back in output string and readjust it if needed
-          const int lookForSpace = 6;
-          bool foundSpace = false;
-          for(int j = 0; j < min(newString.length, lookForSpace); j++) {
-            if( newString[newString.length-1-j] == " ") {
-              foundSpace = true;
-              String charsInNextLine = "";
-              charsInNextLine = newString.substring(newString.length-j, newString.length);
-              String temp = newString.substring(0, newString.length-j) + "\n" + spacesString + charsInNextLine;
-              newString = temp;
-              numCharsInCurLine = charsInNextLine.length;
-              break;
-            }
-          }
-          if(!foundSpace) {
-            newString += "\n";
-            newString += spacesString;
-            numCharsInCurLine = 0;
-          }
-        } else {
-          newString += "\n";
-          newString += spacesString;
-          numCharsInCurLine = 0;
-        }
-      }
-      newString += s[i];
-    }
-    numCharsInCurLine++;
+  int lenPerLine = gTextWidth - depthInSpaces;
+  for(int startIndex = 0; startIndex < s.length; ) {
+    List listCulledLine = getLineWithMaxLen(s, startIndex, lenPerLine, spacesString);
+
+    String line = listCulledLine[0];
+    int lenReturned = listCulledLine[1] as int;
+    //print("returned len = $lenReturned");
+
+    if( line.length == 0 || lenReturned == 0) break;
+    newString += line;
+    startIndex += lenReturned;
   }
+
   return newString;
+}
+
+// returns from string[startIndex:] the first len number of chars. no newline is added. 
+List getLineWithMaxLen(String s, int startIndex, int len, String spacesString) {
+  //print("====================in getLineWithMaxlen. strlen = ${s.length} startIndex = $startIndex len = $len ");
+
+  if( startIndex >= s.length)
+    return ["", 0];
+
+  String line = "";
+
+  // if length required is greater than the length of string remaing, return whatever remains
+  //if( len > (s.length - startIndex)) 
+  //  return [s.substring(startIndex), s.length - startIndex];
+
+  int numCharsInLine = 0;
+
+  int i = startIndex;
+  for(; i < startIndex + len && i < s.length; i++) {
+    line += s[i];
+    numCharsInLine ++;
+
+    if( s[i] == "\n") {
+      //print("    found newline. also inserting spacesString");
+      i++;
+      numCharsInLine = 0;
+      line += spacesString;
+      break;
+    }
+  }
+
+  if( numCharsInLine > len || (numCharsInLine == len && s.length > startIndex + numCharsInLine)) {
+    //print("    line longer than $len at $numCharsInLine. also inserting spacesString");
+    line += "\n";
+    line += spacesString;
+  }
+
+  //print("    returning with inserted: ${i - startIndex}");
+  //print("    returning: |$line|");
+  return  [line, i - startIndex];
 }
 
 bool nonEnglish(String str) {

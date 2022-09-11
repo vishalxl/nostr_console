@@ -151,6 +151,11 @@ a & b are orange
 List<String> nameColorPalette = [brightGreenColor, brightCyanColor, brightYellowColor, brightMagentaColor, 
                                  brightBlueColor, brightRedColor, brightBlackColor, brightWhiteColor,
                                  yellowColor,        magentaColor,             redColor ];
+
+List<String> nameColorPalette = [brightMagentaColor, brightBlueColor, brightCyanColor, brightGreenColor, 
+                                brightYellowColor,   brightRedColor,  yellowColor,   redColor        ];
+
+
 */
 
 Map<String, String> pubkeyColor = { '0': brightMagentaColor, '1': brightMagentaColor,
@@ -163,13 +168,10 @@ Map<String, String> pubkeyColor = { '0': brightMagentaColor, '1': brightMagentaC
                                     'e': redColor,        'f':  redColor 
                                    };
 
-List<String> nameColorPalette = [brightMagentaColor, brightBlueColor, brightCyanColor, brightGreenColor, 
-                                brightYellowColor,   brightRedColor,  yellowColor,   redColor        ];
-
 
 String getNameColor( String pubkey) {
   if( pubkey.length == 0)
-    return nameColorPalette[0];
+    return brightMagentaColor;
 
   String firstChar = pubkey.substring(0, 1).toLowerCase();
   return pubkeyColor[firstChar]??brightMagentaColor;

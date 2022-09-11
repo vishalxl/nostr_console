@@ -1,4 +1,5 @@
 import 'package:nostr_console/event_ds.dart';
+import 'package:nostr_console/settings.dart';
 import 'package:test/test.dart';
 import 'package:nostr_console/tree_ds.dart';
 
@@ -55,5 +56,91 @@ void main() {
     node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorShowAllTrees); // will test for ~1000 days
   });
 
+  test('make paragraph', () {
+    gTextWidth = 120;
+    //print(gNumLeftMarginSpaces);
+    //print(gTextWidth);
+
+    String paragraph =  """
+1 Testing paragraph with multiple lines. Testing paragraph with multiple lines. Testing paragraph with multiple lines. Testing paragraph with multiple lines. 
+2 Testing paragraph with multiple lines. Testing paragraph with multiple lines. Testing paragraph with multiple lines. 
+3 Testing paragraph with multiple lines. 
+
+5 Testing paragraph with multiple lines. Testing paragraph with multiple lines. Testing paragraph with multiple lines. 
+6 Testing paragraph with multiple lines. 
+7 Testing paragraph with multiple lines. Testing paragraph with multiple lines.  89 words
+8 Testing paragraph with multiple lines. Testing paragraph with multiple lines.   90 words
+9 Testing paragraph with multiple lines. Testing paragraph with multiple lines.    91 words
+10 Testing paragraph with multiple lines. Testing paragraph with multiple lines.    92 words
+
+
+11 Testing paragraph with multiple lines. Testing paragraph with multiple lines. 89 words
+
+
+
+12 Testing paragraph with multiple lines. Testing paragraph with multiple lines.  90 words
+
+
+
+13 Testing paragraph with multiple lines. Testing paragraph with multiple lines.   91 words
+
+
+
+14 Testing paragraph with multiple lines. Testing paragraph with multiple lines.    92 words
+
+
+
+
+a
+""";
+
+
+String expectedResult = 
+"""
+1 Testing paragraph with multiple lines. Testing paragraph with multiple lines. Testing pa
+                              ragraph with multiple lines. Testing paragraph with multiple lines.
+                              2 Testing paragraph with multiple lines. Testing paragraph with multiple lines. Testing pa
+                              ragraph with multiple lines.
+                              3 Testing paragraph with multiple lines.
+
+                              5 Testing paragraph with multiple lines. Testing paragraph with multiple lines. Testing pa
+                              ragraph with multiple lines.
+                              6 Testing paragraph with multiple lines.
+                              7 Testing paragraph with multiple lines. Testing paragraph with multiple lines.  89 words
+                              8 Testing paragraph with multiple lines. Testing paragraph with multiple lines.   90 words
+
+                              9 Testing paragraph with multiple lines. Testing paragraph with multiple lines.    91 word
+                              s
+                              10 Testing paragraph with multiple lines. Testing paragraph with multiple lines.    92 wor
+                              ds
+
+
+                              11 Testing paragraph with multiple lines. Testing paragraph with multiple lines. 89 words
+
+
+
+                              12 Testing paragraph with multiple lines. Testing paragraph with multiple lines.  90 words
+
+
+
+
+                              13 Testing paragraph with multiple lines. Testing paragraph with multiple lines.   91 word
+                              s
+
+
+
+                              14 Testing paragraph with multiple lines. Testing paragraph with multiple lines.    92 wor
+                              ds
+
+
+
+
+                              a""";
+                                  
+    String res = makeParagraphAtDepth(paragraph, 30);
+    print(res);
+
+    return paragraph == expectedResult;;
+  });
 
 }

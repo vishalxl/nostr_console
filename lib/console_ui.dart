@@ -517,17 +517,13 @@ Future<void> channelMenuUI(Store node) async {
       justShowedChannels = true;
     }
 
-    int option = showMenu([ 'Show all public channels',          // 1 
-                            'Enter a public channel',        // 2
-                            'Go back to main menu'],         // 3
+    int option = showMenu([ 'Enter a public channel',          // 1 
+                            'Show all public channels',        // 2
+                            'Go back to main menu'],           // 3
                           "Public Channels Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
       case 1:
-        node.printAllChannelsInfo(1000, selectorShowAllRooms);
-        justShowedChannels = true;
-        break;
-      case 2:
 
         justShowedChannels = false;
         bool showChannelOption = true;
@@ -577,6 +573,11 @@ Future<void> channelMenuUI(Store node) async {
 
           await processNotifications(node);
         }
+        break;
+
+      case 2:
+        node.printAllChannelsInfo(1000, selectorShowAllRooms);
+        justShowedChannels = true;
         break;
 
       case 3:

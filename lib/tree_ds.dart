@@ -1052,11 +1052,11 @@ class Store {
         continue;
       }
 
-      for( int i = 0; i < gapBetweenTopTrees - 1; i++ )  { 
+      for( int i = 0; i < gapBetweenTopTrees; i++ )  { 
         stdout.write("\n"); 
       }
 
-      printTopPost(topPosts[i], depth + 1, newerThan);
+      numPrinted += printTopPost(topPosts[i], depth + 1, newerThan);
     }
 
     if( numPrinted > 0)
@@ -1717,7 +1717,7 @@ Store getTree(Set<Event> events) {
     if( gDebug > 0) log.info("kind 3 finished.");
 
     // remove bot events
-    events.removeWhere( (event) => gBots.contains(event.eventData.pubkey));
+    //events.removeWhere( (event) => gBots.contains(event.eventData.pubkey));
 
     // remove duplicate events
     Set ids = {};

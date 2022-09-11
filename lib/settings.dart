@@ -87,7 +87,7 @@ const String gDummyAccountPubkey = "Non";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color 
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable
-const int  gDefaultTextWidth    = 120; // default text width
+const int  gDefaultTextWidth    = 96; // default text width
 int        gTextWidth           = gDefaultTextWidth; // is changed by --width option
 const int  gSpacesPerDepth      = 4;     // constant
 int        gNumLeftMarginSpaces = 0;// this number is modified in main 

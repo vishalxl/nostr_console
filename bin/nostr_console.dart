@@ -257,7 +257,7 @@ Future<void> main(List<String> arguments) async {
 
         initialEvents.forEach((element) { element.eventData.kind == 1? numUserPosts++: numUserPosts;});
         numUserPosts -= numFilePosts;
-        stdout.write("...done.\n");//received $numUserPosts new posts made by the user\n");
+        stdout.write("...done\n");//received $numUserPosts new posts made by the user\n");
         if( gDebug > 0) log.info("Received user events.");
 
         initialEvents.forEach((e) => processKind3Event(e)); // first process the kind 3 event

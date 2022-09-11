@@ -340,39 +340,19 @@ class EventData {
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
 
     String idDateLikes = "    |id: ${maxN(id)} , $strDate ${getReactionStr(depth)}" ;
-    //print("$typicalxLen ${idDateLikes.length}");
 
     idDateLikes = idDateLikes.padRight(typicalxLen);
     String temp = tempEvaluatedContent==""?tempContent: tempEvaluatedContent;
 
     // comment extends from gNumLeftMarginSpaces + extraLen  TO  +gTextWidth
-
-
-    // if left_stuff + extraLen + comment len  + idStrLike < gTextWidth
-    // then pad idStrLike with  gTextWidth - ( left_stuff + extraLen + comment len )
     if( (gSpacesPerDepth * depth + effectiveNameFieldLen + temp.length + idDateLikes.length ) > gTextWidth) {
-
-      // number of lines taken by comment =  (comment.length + (extraLen))/ ( gTextWidth)  + 1 
-      /*int printedTextWidth = (  gTextWidth  -  ( gSpacesPerDepth * depth + extraLen));
-      int totalCommentWidth = temp.length + idDateLikes.length + 5;
-
-      int nCommentLines =  (totalCommentWidth )~/ printedTextWidth  + 1;
-      print(nCommentLines);
-
-      int lastLineLen = totalCommentWidth -  printedTextWidth * (nCommentLines - 1);
-
-      int padLeftBy = (gTextWidth - (gSpacesPerDepth * depth + extraLen)) - ( lastLineLen ) ;
-      print("comment len = ${temp.length}  iDateLikes len = ${idDateLikes.length}  dividor = ${ printedTextWidth} padLeftBy = $padLeftBy");
-      idDateLikes = idDateLikes.padLeft( padLeftBy);*/
       temp = temp + "$idDateLikes";
     }
     else {
-    
-
       idDateLikes = idDateLikes.padLeft((gTextWidth ) - (gSpacesPerDepth * depth + effectiveNameFieldLen + temp.length));
       temp = temp + "$idDateLikes";
     }
-    //temp = temp + "       |$idDateLikes";
+
     String contentShifted = makeParagraphAtDepth( temp,  gSpacesPerDepth * depth + effectiveNameFieldLen);
 
     strToPrint += getStrInColor(contentShifted + "\n", commentColor);
@@ -826,10 +806,13 @@ String makeParagraphAtDepth3(String s, int depthInSpaces) {
 // make a paragraph of s that starts at numSpaces ( from screen left), and does not extend beyond gTextWidth+gNumLeftMarginSpaces. break it, or add 
 // a newline if it goes beyond gTextWidth + gNumLeftMarginSpaces
 String makeParagraphAtDepth(String s, int depthInSpaces) {
+  
   String newString = "";
   String spacesString = getNumSpaces(depthInSpaces + gNumLeftMarginSpaces);
 
+
   int lenPerLine = gTextWidth - depthInSpaces;
+  //print("In makeParagraphAtDepth: gNumLeftMarginSpaces = $gNumLeftMarginSpaces depthInSPaces = $depthInSpaces LenPerLine = $lenPerLine gTextWidth = $gTextWidth ");
   for(int startIndex = 0; startIndex < s.length; ) {
     List listCulledLine = getLineWithMaxLen(s, startIndex, lenPerLine, spacesString);
 
@@ -838,15 +821,18 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
     //print("returned len = $lenReturned");
 
     if( line.length == 0 || lenReturned == 0) break;
+
+  
     newString += line;
     startIndex += lenReturned;
   }
 
+  //print("Returning newString with len = ${newString.length}");
   return newString;
 }
 
 // returns from string[startIndex:] the first len number of chars. no newline is added. 
-List getLineWithMaxLen(String s, int startIndex, int len, String spacesString) {
+List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesString) {
   //print("====================in getLineWithMaxlen. strlen = ${s.length} startIndex = $startIndex len = $len ");
 
   if( startIndex >= s.length)
@@ -854,6 +840,7 @@ List getLineWithMaxLen(String s, int startIndex, int len, String spacesString) {
 
   String line = "";
 
+  int firstLineLen = -1;
   // if length required is greater than the length of string remaing, return whatever remains
   //if( len > (s.length - startIndex)) 
   //  return [s.substring(startIndex), s.length - startIndex];
@@ -861,7 +848,7 @@ List getLineWithMaxLen(String s, int startIndex, int len, String spacesString) {
   int numCharsInLine = 0;
 
   int i = startIndex;
-  for(; i < startIndex + len && i < s.length; i++) {
+  for(; i < startIndex + lenPerLine && i < s.length; i++) {
     line += s[i];
     numCharsInLine ++;
 
@@ -874,14 +861,53 @@ List getLineWithMaxLen(String s, int startIndex, int len, String spacesString) {
     }
   }
 
-  if( numCharsInLine > len || (numCharsInLine == len && s.length > startIndex + numCharsInLine)) {
-    //print("    line longer than $len at $numCharsInLine. also inserting spacesString");
-    line += "\n";
-    line += spacesString;
+
+  //print(" ${numCharsInLine > lenPerLine}  ||  ${( (numCharsInLine == lenPerLine) && (s.length > startIndex + numCharsInLine))}");
+  if( numCharsInLine > lenPerLine || ( (numCharsInLine == lenPerLine) && (s.length > startIndex + numCharsInLine) )) {
+    bool lineBroken = false;
+
+    //print("    line longer than $lenPerLine at $numCharsInLine.");
+    //print("    first check if it needs to be broken.");
+
+
+    //print("line.length = ${line.length}  lenPerLine = $lenPerLine");
+    // break line at end if its cutting words; like is broken only if the returned line is the longest it can be, and
+    // if its length is greater than the gMaxLenBrokenWord constant
+    if( line.length >= lenPerLine &&  line.length > gMaxLenUnbrokenWord  ) {
+      //print("   line ending seems to be cutting words");
+      int i = line.length - 1;
+
+      // find a whitespace character
+      for( ; i > 0 && !isWordSeparater(line[i]); i--);
+      // for ended 
+
+      //print("    for ended with i = $i");
+      if( line.length - i  < gMaxLenUnbrokenWord) {
+
+        // break the line here if its not a word separator
+        if( isWordSeparater(line[i])) {
+          //print("    line[i] = ${line[i]} is not a word separator");
+          firstLineLen = i;
+          line = line.substring(0, i) + "\n" + spacesString + line.substring(i + 1, line.length);
+          lineBroken = true;
+          //print("    line does get broken");
+        }
+      }
+    }
+
+
+    if( !lineBroken ) {
+      if( s.length > i ) {
+        line += "\n";
+        line += spacesString;
+      }
+    }
   }
 
   //print("    returning with inserted: ${i - startIndex}");
   //print("    returning: |$line|");
+  //print("    Returning line with len = ${line.length} first line len = ${firstLineLen}");
+
   return  [line, i - startIndex];
 }
 

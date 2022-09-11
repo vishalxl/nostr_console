@@ -192,17 +192,19 @@ void reAdjustAlignment() {
       }
     }
 
-    int depth = 0;
+    Store.reCalculateMarkerStr();
+
+/*    int depth = 0;
     Store.startMarkerStr = getDepthSpaces(depth);
     Store.startMarkerStr += ("▄────────────\n");  // bottom half ▄
 
 
-    int endMarkerDepth = depth + 1 + gTextWidth~/ gSpacesPerDepth - 1;
+    int endMarkerDepth = depth + 2 + gTextWidth~/ gSpacesPerDepth - 1;
     Store.endMarkerStr = getDepthSpaces(endMarkerDepth);
     Store.endMarkerStr += "█\n";
     Store.endMarkerStr +=  "────────────▀".padLeft((endMarkerDepth) * gSpacesPerDepth + gNumLeftMarginSpaces + 1) ;
     Store.endMarkerStr += "\n";
-
+*/
 }
 
 

@@ -177,7 +177,7 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
   return false;
 }
 
-void readjustAlignment() {
+void reAdjustAlignment() {
     // align the text again in case the window size has been changed
     if( gAlignment == "center") {
       try {
@@ -191,6 +191,18 @@ void readjustAlignment() {
         gNumLeftMarginSpaces = 0;
       }
     }
+
+    int depth = 0;
+    Store.startMarkerStr = getDepthSpaces(depth);
+    Store.startMarkerStr += ("▄────────────\n");  // bottom half ▄
+
+
+    int endMarkerDepth = depth + 1 + gTextWidth~/ gSpacesPerDepth - 1;
+    Store.endMarkerStr = getDepthSpaces(endMarkerDepth);
+    Store.endMarkerStr += "█\n";
+    Store.endMarkerStr +=  "────────────▀".padLeft((endMarkerDepth) * gSpacesPerDepth + gNumLeftMarginSpaces + 1) ;
+    Store.endMarkerStr += "\n";
+
 }
 
 
@@ -264,7 +276,7 @@ int showMenu(List<String> menuOptions, String menuName) {
         int? valueOption = int.tryParse(userOption);
         if( valueOption != null) {
           if( valueOption >= 1 && valueOption <= menuOptions.length) {
-            readjustAlignment(); // in case user has changed alignment
+            reAdjustAlignment(); // in case user has changed alignment
             return valueOption;
           }
         }
@@ -528,7 +540,7 @@ Future<void> channelMenuUI(Store node) async {
         }
         int pageNum = 1;
         while(showChannelOption) {
-          readjustAlignment();
+          reAdjustAlignment();
           String fullChannelId = node.showChannel(channelId, pageNum);
           if( fullChannelId == "") {
             //print("Could not find the given channel.");

@@ -92,7 +92,7 @@ int        gTextWidth           = gDefaultTextWidth; // is changed by --width op
 const int  gSpacesPerDepth      = 4;     // constant
 int        gNumLeftMarginSpaces = 0;// this number is modified in main 
 String     gAlignment           = "center";   // is modified in main if --align argument is given
-const int  gapBetweenTopTrees   = 1;
+const int  gapBetweenTopTrees   = 2;
 const int gNameLengthInPost     = 12;
 
 // after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy

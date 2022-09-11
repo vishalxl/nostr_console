@@ -264,7 +264,7 @@ class Tree {
       if( depth > maxDepthAllowed) {
         depth = maxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
-        stdout.write("    ┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘");        
+        stdout.write("    ┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘\n");        
         leftShifted = true;
       }
 
@@ -496,12 +496,39 @@ class Store {
   List<Channel>   channels = [];
   List<DirectMessageRoom> directRooms = [];
 
+  static String startMarkerStr = "" ;
+  static String endMarkerStr = "";
+
   Store(this.topPosts, this.allChildEventsMap, this.eventsWithoutParent, this.channels, this.directRooms) {
     allChildEventsMap.forEach((eventId, tree) {
       if( tree.store == null) {
         tree.setStore(this);
       }
+
+    int depth = 0;
+    startMarkerStr = getDepthSpaces(depth);
+    startMarkerStr += ("▄────────────\n");  // bottom half ▄
+
+
+    int endMarkerDepth = depth + 1 + gTextWidth~/ gSpacesPerDepth - 1;
+    Store.endMarkerStr = getDepthSpaces(endMarkerDepth);
+    Store.endMarkerStr += "█\n";
+    Store.endMarkerStr +=  "────────────▀".padLeft((endMarkerDepth) * gSpacesPerDepth + gNumLeftMarginSpaces + 1) ;
+    Store.endMarkerStr += "\n";
+
+
     });
+
+    int depth = 0;
+    Store.startMarkerStr = getDepthSpaces(depth);
+    Store.startMarkerStr += ("▄────────────\n");  // bottom half ▄
+
+
+    int endMarkerDepth = depth + 1 + gTextWidth~/ gSpacesPerDepth - 1;
+    Store.endMarkerStr = getDepthSpaces(endMarkerDepth);
+    Store.endMarkerStr += "█\n";
+    Store.endMarkerStr +=  "────────────▀".padLeft((endMarkerDepth) * gSpacesPerDepth + gNumLeftMarginSpaces + 1) ;
+    Store.endMarkerStr += "\n";
   }
 
   static const Set<int>   typesInEventMap = {0, 1, 3, 4, 5, 7, 40, 42}; // 0 meta, 1 post, 3 follows list, 7 reactions
@@ -972,11 +999,21 @@ class Store {
     Set ids = {};
     topNotificationTree.retainWhere((t) => ids.add(t.event.eventData.id));
     
+
+
     topNotificationTree.forEach( (t) { 
-      t.printTree(0, DateTime(0), true); 
+      Store.printTopPost(t, 0, DateTime(0));
+      //t.printTree(0, DateTime(0), true); 
       print("\n");
     });
     print("\n");
+  }
+
+  static int printTopPost(Tree topTree, int depth, DateTime newerThan) {
+    stdout.write(Store.startMarkerStr);
+    int numPrinted = topTree.printTree(depth, newerThan, true);
+    stdout.write(endMarkerStr);
+    return numPrinted;
   }
 
    /***********************************************************************************************************************************/
@@ -987,6 +1024,19 @@ class Store {
     int numPrinted = 0;
 
     topPosts.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
+
+
+    // https://gist.github.com/dsample/79a97f38bf956f37a0f99ace9df367b9
+    // bottom half ▄
+
+    // |                             |         |                           |                          | 
+    // screen start S0               S1        Sd                           S2                          S3
+    //                  
+    // gNumLeftMarginSpaces = S1 
+    // gTextWidth = S2 - S1 
+    // comment starts at Sd , then depth = Sd - S1 / gSpacesPerDepth
+    // Depth is in gSpacesPerDepth 
+
 
     for( int i = 0; i < topPosts.length; i++) {
 
@@ -1001,16 +1051,12 @@ class Store {
       if( dTime.compareTo(newerThan) < 0) {
         continue;
       }
-      stdout.write("\n");  
-      for( int i = 0; i < gapBetweenTopTrees; i++ )  { 
+
+      for( int i = 0; i < gapBetweenTopTrees - 1; i++ )  { 
         stdout.write("\n"); 
       }
 
-      String topPostLine = getDepthSpaces(depth);
-      topPostLine += ("   █┐\n");
-      stdout.write(topPostLine);
-
-      numPrinted += topPosts[i].printTree(depth+1, newerThan, true);
+      printTopPost(topPosts[i], depth + 1, newerThan);
     }
 
     if( numPrinted > 0)

@@ -329,11 +329,14 @@ class EventData {
 
     String strToPrint = "";
     if(!topPost) {
-      strToPrint += "\n";
+      //strToPrint += "\n";
+      strToPrint += getDepthSpaces(depth);
+    } else {
+      strToPrint += getDepthSpaces(depth-1);
+      strToPrint += "█".padRight(gSpacesPerDepth);
     }
-    strToPrint += getDepthSpaces(depth);
-    strToPrint += " ${name}: ";
 
+    strToPrint += " ${name}: ";
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
 
     String idDateLikes = "    |id: ${maxN(id)} , $strDate ${getReactionStr(depth)}" ;

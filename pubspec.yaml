@@ -4,7 +4,7 @@ version: 0.0.7-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
 
-# latest build  
+# latest build; another 
 
 environment:
   sdk: '>=2.17.3 <3.0.0'

@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:io';
 import 'dart:convert';
+import 'package:nostr_console/console_ui.dart';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
@@ -977,6 +978,7 @@ class Store {
     topNotificationTree.retainWhere((t) => ids.add(t.event.eventData.id));
     
 
+    Store.reCalculateMarkerStr();
 
     topNotificationTree.forEach( (t) { 
       Store.printTopPost(t, 0, DateTime(0));
@@ -1031,7 +1033,7 @@ class Store {
         stdout.write("\n"); 
       }
 
-      numPrinted += printTopPost(topPosts[i], depth + 1, newerThan);
+      numPrinted += printTopPost(topPosts[i], depth, newerThan);
     }
 
     if( numPrinted > 0)

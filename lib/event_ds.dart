@@ -317,8 +317,8 @@ class EventData {
     if(!topPost) {
       strToPrint += getDepthSpaces(depth);
     } else {
-      strToPrint += getDepthSpaces(depth-1);
-      strToPrint += "█".padRight(gSpacesPerDepth);
+      strToPrint += getDepthSpaces(depth);
+      strToPrint += "█";
     }
 
     strToPrint += " ${name}: ";

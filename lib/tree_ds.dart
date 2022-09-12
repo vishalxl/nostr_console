@@ -245,6 +245,8 @@ class Tree {
   int printTree(int depth, DateTime newerThan, bool topPost) {
     int numPrinted = 0;
 
+    if( !topPost)
+      print("");
     event.printEvent(depth, topPost);
     numPrinted++;
 
@@ -507,7 +509,7 @@ class Store {
     Store.startMarkerStr += ("▄────────────\n");  // bottom half ▄
 
 
-    int endMarkerDepth = depth + 2 + gTextWidth~/ gSpacesPerDepth - 1;
+    int endMarkerDepth = depth + 1 + gTextWidth~/ gSpacesPerDepth - 1;
     Store.endMarkerStr = getDepthSpaces(endMarkerDepth);
     Store.endMarkerStr += "█\n";
     Store.endMarkerStr +=  "────────────▀".padLeft((endMarkerDepth) * gSpacesPerDepth + gNumLeftMarginSpaces + 1) ;
@@ -1040,7 +1042,7 @@ class Store {
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
    */
-  int printAllChannelsInfo(int numToPrint, fRoomSelector selector) {
+  int printChannelsOverview(int numToPrint, fRoomSelector selector) {
 
     int numRoomsSelected = 0;
     for( int j = 0; j < channels.length; j++) {

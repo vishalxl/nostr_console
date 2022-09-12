@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:logging/logging.dart';
+
 
 
 final log = Logger('ExampleLogger');
@@ -89,7 +91,7 @@ const String gDummyAccountPubkey = "Non";
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable
 const int  gDefaultTextWidth    = 96; // default text width
 int        gTextWidth           = gDefaultTextWidth; // is changed by --width option
-const int  gSpacesPerDepth      = 4;     // constant
+const int  gSpacesPerDepth      = 6;     // constant
 int        gNumLeftMarginSpaces = 0;// this number is modified in main 
 String     gAlignment           = "center";   // is modified in main if --align argument is given
 const int  gapBetweenTopTrees   = 1;
@@ -334,8 +336,14 @@ String intro =
   ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚══════╝╚══════╝
 
 
-""";                         
+""";           
 
-print("\n$intro\n");
+List<String> lines = intro.split("\n");
+
+//print(gCommentColor);
+lines.forEach((line) {print(line.length > stdout.terminalColumns ? line.substring(0, stdout.terminalColumns) : line );});
+//print(gColorEndMarker);
+
+//print("\n$intro\n");
 
 }

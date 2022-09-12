@@ -491,7 +491,7 @@ Future<void> channelMenuUI(Store node) async {
 
     //await processNotifications(node); // this takes 300 ms
     if( !justShowedChannels) {
-      node.printAllChannelsInfo(20, selectorShowAllRooms);
+      node.printChannelsOverview(20, selectorShowAllRooms);
       justShowedChannels = true;
     }
 
@@ -554,7 +554,7 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 2:
-        node.printAllChannelsInfo(1000, selectorShowAllRooms);
+        node.printChannelsOverview(1000, selectorShowAllRooms);
         justShowedChannels = true;
         break;
 
@@ -667,7 +667,7 @@ Future<void> mainMenuUi(Store node) async {
     if( numDirectRoomsPrinted > 0)
        print("\n");
 
-    int numChannelsPrinted = node.printAllChannelsInfo(20, showNotifications);
+    int numChannelsPrinted = node.printChannelsOverview(20, showNotifications);
     
     if( numChannelsPrinted > 0)
       print("\n");

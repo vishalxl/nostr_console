@@ -42,7 +42,6 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
 
   // generate POW if required
-
   String vanityTag = strTags;
   if (replyKind == "1" && gDifficulty > 0) {
     if( gDebug > 0) log.info("Starting pow");
@@ -68,7 +67,6 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$vanityTag],"content":"$content","sig":"$sig"}]';
-  //relays.sendRequest(defaultServerUrl, toSendMessage);
   sendRequest( gListRelayUrls1, toSendMessage);
 }
 
@@ -83,8 +81,6 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend)
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
-  //relays.sendRequest(defaultServerUrl, toSendMessage);
-  
   sendRequest( gListRelayUrls1, toSendMessage);
 }
 
@@ -92,12 +88,6 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend)
 Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend) async {
   String otherPubkey02 = "02" + otherPubkey;
   String encryptedMessageToSend =        myEncrypt(userPrivateKey, otherPubkey02, messageToSend);
-
-/*  int ivIndex = encryptedMessageToSend.indexOf("?iv=");
-  var iv = encryptedMessageToSend.substring( ivIndex + 4, encryptedMessageToSend.length);
-  var enc_str = encryptedMessageToSend.substring(0, ivIndex);
-  String decrypted = myPrivateDecrypt(userPrivateKey, otherPubkey02, enc_str, iv);
-*/
 
   String replyKind = "4";
   String strTags = '["p","$otherPubkey"]';
@@ -193,20 +183,7 @@ void reAdjustAlignment() {
     }
 
     Store.reCalculateMarkerStr();
-
-/*    int depth = 0;
-    Store.startMarkerStr = getDepthSpaces(depth);
-    Store.startMarkerStr += ("▄────────────\n");  // bottom half ▄
-
-
-    int endMarkerDepth = depth + 2 + gTextWidth~/ gSpacesPerDepth - 1;
-    Store.endMarkerStr = getDepthSpaces(endMarkerDepth);
-    Store.endMarkerStr += "█\n";
-    Store.endMarkerStr +=  "────────────▀".padLeft((endMarkerDepth) * gSpacesPerDepth + gNumLeftMarginSpaces + 1) ;
-    Store.endMarkerStr += "\n";
-*/
 }
-
 
 void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike(profilePubkey);
@@ -294,7 +271,6 @@ int showMenu(List<String> menuOptions, String menuName) {
 }
 
 Future<void> otherMenuUi(Store node) async {
-  //gDebug = 1;
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
     int option = showMenu([ 'Show user profile',             // 1
@@ -599,12 +575,8 @@ Future<void> PrivateMenuUI(Store node) async {
 
     await processNotifications(node); // this takes 300 ms
 
-//    bool fromClient (Tree t) => t.fromClientSelector(clientName);
-//    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
-
     bool showAllRooms (ScrollableMessages room) => selectorShowAllRooms(room);
     node.printDirectRoomInfo(showAllRooms);
-
 
     int option = showMenu([ 
                             'Reply or Send a direct message',
@@ -613,10 +585,7 @@ Future<void> PrivateMenuUI(Store node) async {
                           "Private Message Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
-//      case 1:
-        //print("total direct rooms = ${node.directRooms.length}");
-//        break;
-      
+
       case 1:
         // in case the program was invoked with --pubkey, then user can't send messages
         if( userPrivateKey == "") {

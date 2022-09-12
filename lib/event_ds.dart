@@ -252,10 +252,8 @@ class EventData {
           return null;
       }
     } 
-    //print("going to decrypt eventid : $id to be decrypted content: $enc_str");
-    //print("original message: $content");
+
     var decrypted = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
-    //print("decrypted: $evaluatedContent\n---------------");
     return decrypted;
   }
 
@@ -307,26 +305,16 @@ class EventData {
       commentColor = gCommentColor;
     }
 
-    //name = "$name";
-    //name = name.padLeft(gNameLengthInPost);
     int tempEffectiveLen = name.length < gNameLengthInPost? name.length: gNameLengthInPost;
     name = name.substring(0,tempEffectiveLen);
 
-    String nameInside = " ";
-
-
     int effectiveNameFieldLen = gNameLengthInPost + 3;  // get this before name is mangled by color
     String nameColor = getNameColor(pubkey);
-
-    // odd len names need an extra dash
-    // if( name.length %2 == 1 )   name = name + nameInside;
-    //name = getNumDashes((gNameLengthInPost - name.length)~/2, nameInside ) + getStrInColor(name, nameColor) + getNumDashes((gNameLengthInPost - name.length)~/2 , nameInside);
 
     name = name.padLeft(gNameLengthInPost);
     name = name.substring(0, gNameLengthInPost);
     name = getStrInColor(name, nameColor);
     
-
     String strToPrint = "";
     if(!topPost) {
       //strToPrint += "\n";
@@ -414,10 +402,8 @@ class EventData {
     int contentDepth = depth + 2 + timeWidthDepth + nameWidthDepth;
     String contentShifted = makeParagraphAtDepth(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
     
-    //strToPrint += contentShifted;
     if( isNotification) {
       strToPrint = "$gNotificationColor${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: $gNotificationColor" +  contentShifted + gColorEndMarker;
-      //strToPrint = "$gNotificationColor$strToPrint$gColorEndMarker";
       isNotification = false;
     } else {
       strToPrint = "${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: " +  contentShifted;
@@ -459,7 +445,6 @@ class EventData {
       newLikes.clear();
       reactorNames += "";
     }
-    
     return reactorNames;
   }
 
@@ -468,7 +453,6 @@ class EventData {
     if( id == "non") {
       return '';
     }
-
     String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
     DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
     if( createdAt == 0) {
@@ -519,7 +503,6 @@ class Event {
 
   void printEvent(int depth, bool topPost) {
     eventData.printEventData(depth, topPost);
-    //print("\n$seenOnRelays");
     //stdout.write("\n$originalJson --------------------------------\n\n");
   }
 
@@ -575,7 +558,6 @@ List<String> getpTags(Set<Event> events, int numMostFrequent) {
   listHistogram.sort(HistogramEntry.histogramSorter);
   List<String> ptags = [];
   for( int i = 0; i < listHistogram.length && i < numMostFrequent; i++ ) {
-    //print ( "${listHistogram[i].str} ${listHistogram[i].count} ");
     ptags.add(listHistogram[i].str);
   }
 
@@ -611,7 +593,6 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
         //if( gDebug > 0) print(  contacts[i].toString()  );
         if( contacts[i].id == contactPubkey) {
           relay = contacts[i].relay;
-          //if(gDebug > 0) print("In getRelayOfUser: found relay $relay for contact $contactPubkey" );
           return relay;
         }
       }
@@ -715,12 +696,8 @@ Set<String> getPublicKeyFromName(String inquiredName) {
     return {};
   }
   Set<String> pubkeys = {};
-
-  //if(gDebug > 0) print("In getPublicKeyFromName: doing lookup for $userName len of gKindONames= ${gKindONames.length}");
-
   gKindONames.forEach((pubkey, userInfo) {
     // check both the user name, and the pubkey to search for the user
-
     // check username 
     if( userInfo.name != null) {
       int minNameLen = min( inquiredName.length, (userInfo.name?.length)??0);
@@ -772,7 +749,6 @@ String getDepthSpaces(int d) {
   return str;
 }
 
-
 String getNumSpaces(int num) {
   String s = "";
   for( int i = 0; i < num; i++) {
@@ -787,20 +763,6 @@ String getNumDashes(int num, [String dashType = "-"]) {
     s += dashType;
   }
   return s;
-}
-
-String makeParagraphAtDepth3(String s, int depthInSpaces) {
-  String newString = "";
-  String spacesString = getNumSpaces(depthInSpaces + gNumLeftMarginSpaces);
-  int lenPerLine = gTextWidth - depthInSpaces;
-
-  List<String> lines = s.split("\n");
-
-  lines.forEach((line) { 
-    newString += line.replaceAll("\n", "\n" + spacesString   ); 
-  });
-
-  return newString;
 }
 
 // make a paragraph of s that starts at numSpaces ( from screen left), and does not extend beyond gTextWidth+gNumLeftMarginSpaces. break it, or add 
@@ -818,22 +780,18 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
 
     String line = listCulledLine[0];
     int lenReturned = listCulledLine[1] as int;
-    //print("returned len = $lenReturned");
 
     if( line.length == 0 || lenReturned == 0) break;
 
-  
     newString += line;
     startIndex += lenReturned;
   }
 
-  //print("Returning newString with len = ${newString.length}");
   return newString;
 }
 
 // returns from string[startIndex:] the first len number of chars. no newline is added. 
 List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesString) {
-  //print("====================in getLineWithMaxlen. strlen = ${s.length} startIndex = $startIndex len = $len ");
 
   if( startIndex >= s.length)
     return ["", 0];
@@ -842,9 +800,6 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
 
   int firstLineLen = -1;
   // if length required is greater than the length of string remaing, return whatever remains
-  //if( len > (s.length - startIndex)) 
-  //  return [s.substring(startIndex), s.length - startIndex];
-
   int numCharsInLine = 0;
 
   int i = startIndex;
@@ -853,7 +808,6 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
     numCharsInLine ++;
 
     if( s[i] == "\n") {
-      //print("    found newline. also inserting spacesString");
       i++;
       numCharsInLine = 0;
       line += spacesString;
@@ -866,11 +820,6 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
   if( numCharsInLine > lenPerLine || ( (numCharsInLine == lenPerLine) && (s.length > startIndex + numCharsInLine) )) {
     bool lineBroken = false;
 
-    //print("    line longer than $lenPerLine at $numCharsInLine.");
-    //print("    first check if it needs to be broken.");
-
-
-    //print("line.length = ${line.length}  lenPerLine = $lenPerLine");
     // break line at end if its cutting words; like is broken only if the returned line is the longest it can be, and
     // if its length is greater than the gMaxLenBrokenWord constant
     if( line.length >= lenPerLine &&  line.length > gMaxLenUnbrokenWord  ) {
@@ -881,16 +830,13 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
       for( ; i > 0 && !isWordSeparater(line[i]); i--);
       // for ended 
 
-      //print("    for ended with i = $i");
       if( line.length - i  < gMaxLenUnbrokenWord) {
 
         // break the line here if its not a word separator
         if( isWordSeparater(line[i])) {
-          //print("    line[i] = ${line[i]} is not a word separator");
           firstLineLen = i;
           line = line.substring(0, i) + "\n" + spacesString + line.substring(i + 1, line.length);
           lineBroken = true;
-          //print("    line does get broken");
         }
       }
     }
@@ -903,10 +849,6 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
       }
     }
   }
-
-  //print("    returning with inserted: ${i - startIndex}");
-  //print("    returning: |$line|");
-  //print("    Returning line with len = ${line.length} first line len = ${firstLineLen}");
 
   return  [line, i - startIndex];
 }
@@ -1123,7 +1065,6 @@ try {
   assert(offset == cipherText.length);
   return  finalPlainText.sublist(0, offset);
 } catch(e) {
-    //print("cannot open file $gEventsFilename");
     if( gDebug >= 0) print("Decryption error =  $e");
     return Uint8List(0);
 }
@@ -1133,11 +1074,9 @@ try {
 String myEncrypt( String privateString, 
                          String publicString, 
                          String plainText) {
-  //Uint8List encdData = convert.base64.decode(b64encoded);
   Uint8List uintInputText = convert.Utf8Encoder().convert(plainText);
   final encryptedString = myEncryptRaw(privateString, publicString, uintInputText);
   return encryptedString;
-  //return convert.Utf8Decoder().convert(rawData.toList());
 }
 
 String myEncryptRaw( String privateString, 
@@ -1152,7 +1091,6 @@ String myEncryptRaw( String privateString,
   fr.seed(KeyParameter(
       Uint8List.fromList(List.generate(32, (_) => _sGen.nextInt(255)))));
   final iv = fr.nextBytes(16); //Uint8List.fromList(secretIV[1]);
-  //print("iv = $iv");
    
   CipherParameters params = new PaddedBlockCipherParameters(
       new ParametersWithIV(new KeyParameter(key), iv), null);
@@ -1167,9 +1105,7 @@ String myEncryptRaw( String privateString,
   final Uint8List  outputEncodedText = Uint8List(uintInputText.length + 16); // allocate space
 
   var offset = 0;
-  //print("    uintInputText len = ${uintInputText.length} ");
   while (offset < uintInputText.length - 16) {
-    //print("       in while offset: $offset");
     offset += cipherImpl.processBlock(uintInputText, offset, outputEncodedText, offset);
   }
 
@@ -1177,11 +1113,9 @@ String myEncryptRaw( String privateString,
   offset += cipherImpl.doFinal(uintInputText, offset, outputEncodedText, offset);
   assert(offset == uintInputText.length);
   final Uint8List finalEncodedText = outputEncodedText.sublist(0, offset);
-  //print("    final offset after doFinal in encrypting: $offset finalEncodedText.lenth = ${finalEncodedText.length}");
 
   String stringIv = convert.base64.encode(iv);;
   String outputPlainText = convert.base64.encode(finalEncodedText);
-  //print("    outputPlainText = $outputPlainText len = ${outputPlainText.length}");
   outputPlainText = outputPlainText + "?iv=" + stringIv;
   return  outputPlainText;
 }

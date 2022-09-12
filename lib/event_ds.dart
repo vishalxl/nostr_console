@@ -115,8 +115,7 @@ class EventData {
       if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5 || eKind == 4) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
-          //stdout.write(tag);
-          //print(tag.runtimeType);
+
           if( tag.isEmpty) {
             continue;
           }
@@ -141,7 +140,6 @@ class EventData {
       print("\n----------------------------------------Creating EventData with content: ${json['content']}");
       print("In Event fromJson: got message: $gCheckEventId");
     }
-
 
     return EventData(json['id'] as String,      json['pubkey'] as String, 
                      json['created_at'] as int, json['kind'] as int,
@@ -317,7 +315,6 @@ class EventData {
     
     String strToPrint = "";
     if(!topPost) {
-      //strToPrint += "\n";
       strToPrint += getDepthSpaces(depth);
     } else {
       strToPrint += getDepthSpaces(depth-1);
@@ -446,19 +443,6 @@ class EventData {
       reactorNames += "";
     }
     return reactorNames;
-  }
-
-  @override
-  String toString() {
-    if( id == "non") {
-      return '';
-    }
-    String max3(String v) => v.length > 3? v.substring(0,3) : v.substring(0, v.length);
-    DateTime dTime = DateTime.fromMillisecondsSinceEpoch(createdAt *1000);
-    if( createdAt == 0) {
-      print("createdAt == 0 for event $content");
-    }
-    return '\n-------+-------------\nAuthor : ${max3(pubkey)}\nMessage: $content\n\nid     : ${max3(id)}     Time: $dTime     Kind: $kind';
   }
 }
 
@@ -590,7 +574,6 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
     List<Contact>? contacts = gContactLists[userPubkey];
     if( contacts != null) {
       for( int i = 0; i < contacts.length; i++) {
-        //if( gDebug > 0) print(  contacts[i].toString()  );
         if( contacts[i].id == contactPubkey) {
           relay = contacts[i].relay;
           return relay;

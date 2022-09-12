@@ -13,7 +13,6 @@ class Relay {
   Relay(this.url, this.socket, this.users, this.numReceived, this.numRequestsSent);
 
   void printInfo()   { 
-    //print("In Relay: printInfo"); 
     print("$url ${getNumSpaces(45 - url.length)}   $numReceived                   ${users.length}");
   }
 }
@@ -176,7 +175,6 @@ class Relays {
 
                 String id = json[2]['id'] as String;
                 if( uniqueIdsRecieved.contains(id)) { // rEvents is often cleared, but uniqueIdsRecieved contains everything received til now
-                  //if( gDebug > 0) log.info("In listener: event already present.");
                   return;
                 } 
 
@@ -192,7 +190,6 @@ class Relays {
                   if( gDebug > 1) log.info("In relay listener for relay url $relay: after adding element, rEvents Size = ${rEvents.length}  numReceived = ${newRelay.numReceived} for subscription $receivedSubscription");
                   if( gDebug > 1) print("\n"); 
                 } else {
-                  //if( gDebug > 0) log.info("In listener: event was already in rEvents");
                 }
               } on FormatException {
                 print( 'exception in fromJson for event');

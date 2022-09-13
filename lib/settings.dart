@@ -340,8 +340,15 @@ String intro =
 
 List<String> lines = intro.split("\n");
 
+var terminalColumns = gDefaultTextWidth;
+
+if( stdout.hasTerminal )
+  terminalColumns = stdout.terminalColumns;
+
+
 //print(gCommentColor);
-lines.forEach((line) {print(line.length > stdout.terminalColumns ? line.substring(0, stdout.terminalColumns) : line );});
+
+lines.forEach((line) {print(line.length > terminalColumns ? line.substring(0, terminalColumns) : line );});
 //print(gColorEndMarker);
 
 //print("\n$intro\n");

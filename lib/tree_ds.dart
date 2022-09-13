@@ -1502,7 +1502,7 @@ class Store {
               deletedEvent.eventData.content = gDeletedEventMessage;
               deletedEvent.eventData.evaluatedContent = "";
               EventData ed = deletedEvent.eventData;
-              deletedEvent.originalJson = '["EVENT","none",{"id":${ed.id},"pubkey":${ed.pubkey},"createdAt":${ed.createdAt},"kind":1,"tags":[],"sig":"invalid","comment":"deleted"}]';
+              deletedEvent.originalJson = '["EVENT","deleted",{"id":"${ed.id}","pubkey":"${ed.pubkey}","createdAt":${ed.createdAt},"kind":1,"tags":[],"sig":"invalid","comment":"deleted"}]';
               deletedEventIds.add( deletedEvent.eventData.id);
             }          
           }

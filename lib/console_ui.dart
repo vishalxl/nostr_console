@@ -173,10 +173,15 @@ void reAdjustAlignment() {
     // align the text again in case the window size has been changed
     if( gAlignment == "center") {
       try {
-        if( gTextWidth > stdout.terminalColumns) {
-          gTextWidth = stdout.terminalColumns - 5;
+        var terminalColumns = gDefaultTextWidth;
+
+        if( stdout.hasTerminal )
+          terminalColumns = stdout.terminalColumns;
+
+        if(  gTextWidth > terminalColumns) {
+          gTextWidth = terminalColumns - 5;
         }          
-        gNumLeftMarginSpaces = (stdout.terminalColumns - gTextWidth )~/2;
+        gNumLeftMarginSpaces = (terminalColumns - gTextWidth )~/2;
       } on StdoutException catch (e) {
         print("Terminal information not available");
         if( gDebug>0)  print("${e.message}");

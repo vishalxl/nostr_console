@@ -480,6 +480,7 @@ class Event {
     } on Exception catch(e) {
       if( gDebug> 0) {
         print("Could not create event. returning dummy event. $e");
+        print("problem str: $d\n");
       }
       return Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]", fromFile);
     }

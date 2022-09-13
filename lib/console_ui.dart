@@ -674,10 +674,9 @@ Future<void> mainMenuUi(Store node) async {
     if( numDirectRoomsPrinted > 0)
        print("\n");
 
-    int numChannelsPrinted = node.printChannelsOverview(20, showNotifications);
+    //int numChannelsPrinted = node.printChannelsOverview(20, showNotifications);
     
-    if( numChannelsPrinted > 0)
-      print("\n");
+    //if( numChannelsPrinted > 0) print("\n");
 
     bool userContinue = true;
     while(userContinue) {
@@ -687,7 +686,7 @@ Future<void> mainMenuUi(Store node) async {
       // the main menu
       int option = showMenu(['Display feed',     // 1 
                              'Post/Reply/Like',  // 2
-                             'Public Channels',  // 3
+                          //   'Public Channels',  // 3
                              'Private Messages', // 4
                              'Other Options',    // 5
                              'Quit'],            // 6
@@ -731,19 +730,19 @@ Future<void> mainMenuUi(Store node) async {
           await sendReplyPostLike(node, replyToId, replyKind, content);
           break;
 
-        case 3:
+        case 9:
           await channelMenuUI(node);
           break;
 
-        case 4:
+        case 3:
           await PrivateMenuUI(node);
           break;
 
-        case 5:
+        case 4:
           await otherMenuUi(node);
           break;
 
-        case 6:
+        case 5:
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);

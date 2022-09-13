@@ -11,7 +11,7 @@ Future<void> processNotifications(Store node)  async {
 
   // need a bit of wait to give other events to execute, so do a delay, which allows
   // relays to recieve and handle new events
-  const int waitMilliSeconds = 250;
+  const int waitMilliSeconds = 400;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
     Set<String> newEventIdsSet = node.processIncomingEvent(getRecievedEvents());
@@ -23,7 +23,7 @@ Future<void> processNotifications(Store node)  async {
   });
 
   Future<void> foo() async {
-    await Future.delayed(Duration(milliseconds: waitMilliSeconds + 200));
+    await Future.delayed(Duration(milliseconds: waitMilliSeconds));
     return;
   }
   await foo();

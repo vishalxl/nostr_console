@@ -309,6 +309,7 @@ class EventData {
     int effectiveNameFieldLen = gNameLengthInPost + 3;  // get this before name is mangled by color
     String nameColor = getNameColor(pubkey);
 
+    // pad name to left 
     name = name.padLeft(gNameLengthInPost);
     name = name.substring(0, gNameLengthInPost);
     name = getStrInColor(name, nameColor);
@@ -316,12 +317,13 @@ class EventData {
     String strToPrint = "";
     if(!topPost) {
       strToPrint += getDepthSpaces(depth);
+      strToPrint += " "; // in place of block for top posts
     } else {
       strToPrint += getDepthSpaces(depth);
       strToPrint += "█";
     }
 
-    strToPrint += " ${name}: ";
+    strToPrint += "${name}: ";
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
 
     String idDateLikes = "    |id: ${maxN(id)} , $strDate ${getReactionStr(depth)}" ;

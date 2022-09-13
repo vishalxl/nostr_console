@@ -356,7 +356,7 @@ void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, int nu
   }
 }
 
-//
+// send request for specific events whose id's are passed as list eventIds
 void sendEventsRequest(List<String> serverUrls, List<String> eventIds) {
   if( eventIds.length == 0) 
     return;
@@ -374,13 +374,6 @@ void sendEventsRequest(List<String> serverUrls, List<String> eventIds) {
   for(int i = 0; i < serverUrls.length; i++) {
     relays.sendRequest(serverUrls[i], getEventRequest);
   }
-
-/*    Future<void> foo() async {
-      await Future.delayed(Duration(milliseconds: 500));
-      return;
-    }
-*/
-
 }
 
 void sendRequest(List<String> serverUrls, request) {

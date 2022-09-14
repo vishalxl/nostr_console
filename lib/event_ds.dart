@@ -418,17 +418,6 @@ class EventData {
     if( tempEvaluatedContent=="") 
       tempEvaluatedContent = tempContent;
 
-    Event? replyToEvent = getReplyToEvent();
-
-    if( replyToEvent != null) {
-      //print("in getStrForChannel: got replyTo id = ${replyToEvent.eventData.id}");
-      if( replyToEvent.eventData.kind == 1 || replyToEvent.eventData.kind == 42) { // make sure its a kind 1 or 40 message
-        if( replyToEvent.eventData.id != id) { // basic self test
-          tempEvaluatedContent += '\n        In reply to:"${replyToEvent.eventData.content}"';
-        }
-      }
-    }
-
     const int nameWidthDepth = 16~/gSpacesPerDepth; // how wide name will be in depth spaces
     const int timeWidthDepth = 16~/gSpacesPerDepth;
     int nameWidth = gSpacesPerDepth * nameWidthDepth;
@@ -438,12 +427,30 @@ class EventData {
     nameToPrint = getStrInColor(nameToPrint, getNameColor(pubkey));
 
     String dateToPrint = strDate.padLeft(gSpacesPerDepth * timeWidthDepth).substring(0, gSpacesPerDepth * timeWidthDepth);
-
     
     // depth above + ( depth numberof spaces = 1) + (depth of time = 2) + (depth of name = 3)
-    int contentDepth = depth + 2 + timeWidthDepth + nameWidthDepth;
-    String contentShifted = makeParagraphAtDepth(tempEvaluatedContent, gSpacesPerDepth * contentDepth);
-    
+    int contentDepth = depth + 1 + timeWidthDepth + nameWidthDepth;
+    int magicNumberDepth6 = 2; // magic number for gSpacesPerDepth == 6
+    int finalContentDepthInSpaces = gSpacesPerDepth * contentDepth + magicNumberDepth6;
+    int contentPlacementColumn = finalContentDepthInSpaces + gNumLeftMarginSpaces;
+
+    String contentShifted = makeParagraphAtDepth(tempEvaluatedContent, finalContentDepthInSpaces);
+
+    Event? replyToEvent = getReplyToEvent();
+    String strReplyTo = "";
+    if( replyToEvent != null) {
+      //print("in getStrForChannel: got replyTo id = ${replyToEvent.eventData.id}");
+      if( replyToEvent.eventData.kind == 1 || replyToEvent.eventData.kind == 42) { // make sure its a kind 1 or 40 message
+        if( replyToEvent.eventData.id != id) { // basic self test
+          strReplyTo = 'In reply to:"${replyToEvent.eventData.content}"';
+          strReplyTo = makeParagraphAtDepth(strReplyTo, finalContentDepthInSpaces + 6); // one extra for content
+          
+          // add reply to string to end of the content. How it will show:
+          contentShifted += ( "\n" + getNumSpaces( contentPlacementColumn + gSpacesPerDepth) +  strReplyTo); 
+        }
+      }
+    }
+   
     if( isNotification) {
       strToPrint = "$gNotificationColor${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: $gNotificationColor" +  contentShifted + gColorEndMarker;
       isNotification = false;
@@ -452,7 +459,6 @@ class EventData {
     }
     return strToPrint;
   }
-
 
   // looks up global map of reactions, if this event has any reactions, and then prints the reactions
   // in appropriate color( in case one is a notification, which is stored in member variable)

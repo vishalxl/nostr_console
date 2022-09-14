@@ -255,12 +255,20 @@ class EventData {
     return decrypted;
   }
 
-  // only applicable for kind 42 event
+  // only applicable for kind 42 event; returns the channel 40 id of which the event is part of
   String getChannelIdForMessage() {
     if( kind != 42) {
       return "";
     }
-    return getParent();
+
+    // get first e tag, which should be the channel of which this is part of
+    for( int i = 0; i < tags.length; i++) {
+      List tag = tags[i];
+      if( tag[0] == 'e') {
+        return tag[1];
+      }
+    }
+    return '';
   }
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class

@@ -686,7 +686,7 @@ Future<void> mainMenuUi(Store node) async {
       // the main menu
       int option = showMenu(['Display feed',     // 1 
                              'Post/Reply/Like',  // 2
-                          //   'Public Channels',  // 3
+                             'Public Channels',  // 3
                              'Private Messages', // 4
                              'Other Options',    // 5
                              'Quit'],            // 6
@@ -730,19 +730,19 @@ Future<void> mainMenuUi(Store node) async {
           await sendReplyPostLike(node, replyToId, replyKind, content);
           break;
 
-        case 9:
+        case 3:
           await channelMenuUI(node);
           break;
 
-        case 3:
+        case 4:
           await PrivateMenuUI(node);
           break;
 
-        case 4:
+        case 5:
           await otherMenuUi(node);
           break;
 
-        case 5:
+        case 6:
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);

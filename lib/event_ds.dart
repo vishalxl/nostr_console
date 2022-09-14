@@ -316,6 +316,7 @@ class EventData {
     
     String strToPrint = "";
     if(!topPost) {
+      strToPrint += "\n";
       strToPrint += getDepthSpaces(depth);
       strToPrint += " "; // in place of block for top posts
     } else {

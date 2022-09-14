@@ -246,8 +246,6 @@ class Tree {
   int printTree(int depth, DateTime newerThan, bool topPost) {
     int numPrinted = 0;
 
-    if( !topPost)
-      print("");
     event.printEvent(depth, topPost);
     numPrinted++;
 

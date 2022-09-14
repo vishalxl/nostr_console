@@ -100,9 +100,9 @@ const int gNameLengthInPost     = 12;
 // after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
 const int  gMinimumDepthAllowed = 2;
 const int  gMaximumDepthAllowed = 12;
-const int  gDefaultMaxDepth     = 6;
+const int  gDefaultMaxDepth     = 5;
 int        maxDepthAllowed      = gDefaultMaxDepth;
-const int  leftShiftThreadsBy   = 4;
+const int  leftShiftThreadsBy   = 3;
 
 int gMaxLenUnbrokenWord = 8; // lines are broken if space is at end of line for this number of places
 

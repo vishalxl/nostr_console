@@ -326,24 +326,43 @@ class EventData {
 
     strToPrint += "${name}: ";
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
-
     String idDateLikes = "    |id: ${maxN(id)} , $strDate ${getReactionStr(depth)}" ;
-
     idDateLikes = idDateLikes.padRight(typicalxLen);
+
     String temp = tempEvaluatedContent==""?tempContent: tempEvaluatedContent;
-
-    // comment extends from gNumLeftMarginSpaces + extraLen  TO  +gTextWidth
-    if( (gSpacesPerDepth * depth + effectiveNameFieldLen + temp.length + idDateLikes.length ) > gTextWidth) {
-      temp = temp + "$idDateLikes";
-    }
-    else {
-      idDateLikes = idDateLikes.padLeft((gTextWidth ) - (gSpacesPerDepth * depth + effectiveNameFieldLen + temp.length));
-      temp = temp + "$idDateLikes";
-    }
-
     String contentShifted = makeParagraphAtDepth( temp,  gSpacesPerDepth * depth + effectiveNameFieldLen);
 
-    strToPrint += getStrInColor(contentShifted + "\n", commentColor);
+    int maxLineLen =  gTextWidth - gSpacesPerDepth * depth -  effectiveNameFieldLen ;
+    int lastLineLen = contentShifted.length;
+    int i = 0;
+
+    contentShifted = contentShifted.trim();
+
+    // find the effective length of the last line of the content
+    for(i = contentShifted.length - 1; i >= 0; i-- ) {
+      if( contentShifted[i] == "\n") {
+        break;
+      }
+    }
+
+    if( i >= 0 && contentShifted[i] == "\n") {
+      lastLineLen = contentShifted.length - i;
+    }
+
+    // effective len of last line is used to calcluate where the idDateLikes str is affixed at the end 
+    int effectiveLastLineLen = lastLineLen - gSpacesPerDepth * depth - effectiveNameFieldLen - gNumLeftMarginSpaces;
+    if( contentShifted.length <= maxLineLen )
+      effectiveLastLineLen = contentShifted.length;
+
+    // now actually find where the likesDates string goes
+    if( (gSpacesPerDepth * depth + effectiveNameFieldLen + effectiveLastLineLen + idDateLikes.length ) <= gTextWidth) {
+      idDateLikes =  idDateLikes.padLeft((gTextWidth ) - (gSpacesPerDepth * depth + effectiveNameFieldLen + effectiveLastLineLen));
+    } else {
+      idDateLikes =   "\n" + idDateLikes.padLeft(gNumLeftMarginSpaces + gTextWidth);
+    }
+
+    // print content and the dateslikes string
+    strToPrint += getStrInColor(contentShifted + idDateLikes + "\n", commentColor);
     stdout.write(strToPrint);
   }
 

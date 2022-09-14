@@ -243,18 +243,22 @@ Future<void> main(List<String> arguments) async {
         return;
       } 
 
+      // the default in case no arguments are given is:
+      // get a user's events with all default users events
+      // get mentions for user
+      // get all kind 0, 3, 40, 42 events
+      
+      // then get the events of user-id's mentioned in p-tags of received events and the contact list
+      // then display them all
+
       gDefaultFollows.add(userPublicKey);
       getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(gDaysToGetEventsFor));
       getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor)); // from relay group 2
-      getKindEvents([0,3, 40, 42], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor* 10));
+      getKindEvents([0, 3, 40, 42], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor* 10));
 
       // TODO  get all 40 events, and then get all #e for them ( responses to them)
     
-      // the default in case no arguments are given is:
-      // get a user's events, and get all kind 0, 3 events
-      // then get the events of user-id's mentioned in p-tags of received events and the contact list
-      // then display them all
       stdout.write('Waiting for user posts to come in.....');
       Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
 

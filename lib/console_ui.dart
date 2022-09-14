@@ -301,7 +301,7 @@ Future<void> otherMenuUi(Store node) async {
         if( userName != "") {
           Set<String> pubkey = getPublicKeyFromName(userName); 
           print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
-          pubkey.forEach( (x) => print(" $x"));
+          pubkey.forEach( (x) => print(" $x ( ${gKindONames[x]?.name} )"));
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
               print("Got multiple users with the same name. Try again, and try to type a more unique name or id-prefix");

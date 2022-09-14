@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:math';
 import 'package:intl/intl.dart';
+import 'package:nostr_console/tree_ds.dart';
 import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_console/settings.dart';
@@ -414,6 +415,20 @@ class EventData {
       tempEvaluatedContent = tempContent = content; // content would be changed so show that 
     }
 
+    if( tempEvaluatedContent=="") 
+      tempEvaluatedContent = tempContent;
+
+    Event? replyToEvent = getReplyToEvent();
+
+    if( replyToEvent != null) {
+      //print("in getStrForChannel: got replyTo id = ${replyToEvent.eventData.id}");
+      if( replyToEvent.eventData.kind == 1 || replyToEvent.eventData.kind == 42) { // make sure its a kind 1 or 40 message
+        if( replyToEvent.eventData.id != id) { // basic self test
+          tempEvaluatedContent += '\n        In reply to:"${replyToEvent.eventData.content}"';
+        }
+      }
+    }
+
     const int nameWidthDepth = 16~/gSpacesPerDepth; // how wide name will be in depth spaces
     const int timeWidthDepth = 16~/gSpacesPerDepth;
     int nameWidth = gSpacesPerDepth * nameWidthDepth;
@@ -427,7 +442,7 @@ class EventData {
     
     // depth above + ( depth numberof spaces = 1) + (depth of time = 2) + (depth of name = 3)
     int contentDepth = depth + 2 + timeWidthDepth + nameWidthDepth;
-    String contentShifted = makeParagraphAtDepth(tempEvaluatedContent==""?tempContent: tempEvaluatedContent, gSpacesPerDepth * contentDepth);
+    String contentShifted = makeParagraphAtDepth(tempEvaluatedContent, gSpacesPerDepth * contentDepth);
     
     if( isNotification) {
       strToPrint = "$gNotificationColor${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: $gNotificationColor" +  contentShifted + gColorEndMarker;
@@ -474,6 +489,23 @@ class EventData {
     }
     return reactorNames;
   }
+
+  // returns the last e tag as reply to event
+  Event? getReplyToEvent() {
+    for(int i = tags.length - 1; i >= 0; i--) {
+      List tag = tags[i];
+      if( tag[0] == 'e') {
+        String replyToEventId = tag[1];
+        Event? eventInReplyTo = (gStore?.allChildEventsMap[replyToEventId]?.event)??null;
+        if( eventInReplyTo != null) {
+          if ( [1,42].contains( eventInReplyTo.eventData.kind)) {
+            return eventInReplyTo;
+          }
+        }
+      }
+    }
+    return null;
+  } // end getReplyToEvent() 
 }
 
 // This is mostly a placeholder for EventData. TODO combine both?

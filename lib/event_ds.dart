@@ -833,6 +833,8 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
     String line = listCulledLine[0];
     int lenReturned = listCulledLine[1] as int;
 
+    //print("In makeParagraphAtDepth: line len = ${line.length}  lenReturned = $lenReturned");
+
     if( line.length == 0 || lenReturned == 0) break;
 
     newString += line;
@@ -886,8 +888,12 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
 
         // break the line here if its not a word separator
         if( isWordSeparater(line[i])) {
+          //print("    isWordSeparater i = $i line[i] = ${line[i]}");
           firstLineLen = i;
-          line = line.substring(0, i) + "\n" + spacesString + line.substring(i + 1, line.length);
+          int newLineStart = i + 1;
+          if( line[i] != ' ')
+            newLineStart = i;
+          line = line.substring(0, i) + "\n" + spacesString + line.substring(newLineStart, line.length);
           lineBroken = true;
         }
       }

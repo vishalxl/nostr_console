@@ -148,7 +148,7 @@ String expectedResult =
     stdout.write("\n");
     stdout.write(getNumDashes(30));
     //stdout.write(getNumSpaces(30)); */
-    stdout.write(res); 
+    //stdout.write(res); 
 
     //return res == expectedResult;;
     expect( res, expectedResult);
@@ -193,6 +193,28 @@ String expectedResult =
 */
     expect( res, expectedResult);
   });
+
+
+
+
+  test('break_url_dash ', () {
+    gTextWidth = 92;
+
+    //print("\n\nbreak_url_dash test");
+
+    String paragraph =  """
+https://github.com/vishalxl/nostr_console/releases/tag/v0.0.7-beta""";
+
+
+String expectedResult = 
+"""https://github.com/vishalxl/nostr_console/releases/tag/v0.0.7
+                              -beta""";
+                                  
+    String res = makeParagraphAtDepth(paragraph, 30);
+    //print(res);
+    expect( res, expectedResult);
+  });
+
 
   return ;
 } // end main

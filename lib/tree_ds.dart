@@ -854,7 +854,7 @@ class Store {
           case 42:
             newTree.event.eventData.isNotification = true; // highlight it too in next printing
             // add 42 chat message event id to its chat room
-            String channelId = newTree.event.eventData.getParent();
+            String channelId = newTree.event.eventData.getChannelIdForMessage();
             if( channelId != "") {
               Channel? channel = getChannel(channels, channelId);
               if( channel != null) {

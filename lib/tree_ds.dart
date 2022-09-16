@@ -668,20 +668,36 @@ class Store {
         return;
       }
 
+      if( tree.event.eventData.id == gCheckEventId) {
+        print("In fromEvent: got evnet id $gCheckEventId");
+      }
+
       if(tree.event.eventData.eTags.isNotEmpty ) {
         // is not a parent, find its parent and then add this element to that parent Tree
-        String parentId = tree.event.eventData.getParent();
+        String parentId = tree.event.eventData.getParent(tempChildEventsMap);
+
         if( tree.event.eventData.id == gCheckEventId) {
-          if(gDebug >= 0) print("In Tree FromEvents: got id: $gCheckEventId");
+          if(gDebug >= 0) print("In Tree FromEvents: e tag not empty. its parent id = $parentId  for id: $gCheckEventId");
         }
 
         if(tempChildEventsMap.containsKey( parentId)) {
-          if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) { // since parent can only be a kind 1 event
+        if( tree.event.eventData.id == gCheckEventId) {
+          if(gDebug >= 0) print("In Tree FromEvents: found its parent $parentId : for id: $gCheckEventId");
+        }
+
+        if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) { // since parent can only be a kind 1 event
             if( gDebug > 1) log.info("In Tree.fromEvents: Not adding: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.event.eventData.kind}");
             return;
           }
+          
+  
           tempChildEventsMap[parentId]?.children.add(tree); 
         } else {
+
+          if( tree.event.eventData.id == gCheckEventId) {
+            if(gDebug >= 0) print("In Tree FromEvents: parent not found : for id: $gCheckEventId");
+          }
+
            // in case where the parent of the new event is not in the pool of all events, 
            // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
@@ -815,7 +831,7 @@ class Store {
                 topPosts.add(newTree);
             } else {
                 // if it has a parent , then add the newTree as the parent's child
-                String parentId = newTree.event.eventData.getParent();
+                String parentId = newTree.event.eventData.getParent(allChildEventsMap);
                 if( allChildEventsMap.containsKey(parentId)) {
                   allChildEventsMap[parentId]?.children.add(newTree);
                 } else {
@@ -1388,7 +1404,7 @@ class Store {
   // for any tree node, returns its top most parent
   Tree getTopTree(Tree tree) {
     while( true) {
-      Tree? parent =  allChildEventsMap[ tree.event.eventData.getParent()];
+      Tree? parent =  allChildEventsMap[ tree.event.eventData.getParent(allChildEventsMap)];
       if( parent != null) {
         tree = parent;
       } else {

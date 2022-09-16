@@ -6,7 +6,7 @@ import 'package:logging/logging.dart';
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = ""; 
+String gCheckEventId = "zzzz"; 
 
 const int gDefaultNumWaitSeconds = 2000; // is used in main()
 

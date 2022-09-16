@@ -65,9 +65,17 @@ class EventData {
   bool               isHidden; // hidden by sending a reaction kind 7 event to this event, by the logged in user
   bool               isDeleted; // deleted by kind 5 event
   
-  String getParent() {
+  String getParent(Map<String, Tree> allEventsMap) {
     if( eTags.isNotEmpty) {
-      return eTags[eTags.length - 1];
+      for( int i = eTags.length - 1; i >= 0; i--) {
+        String eventId = eTags[i];
+        if( allEventsMap[eventId]?.event.eventData.kind == 1) {
+          String? parentId = allEventsMap[eventId]?.event.eventData.id;
+          if( parentId != null) {
+            return parentId;
+          }
+        }
+      }
     }
     return "";
   }
@@ -496,7 +504,7 @@ class EventData {
     return reactorNames;
   }
 
-  // returns the last e tag as reply to event
+  // returns the last e tag as reply to event for kind 42 events
   Event? getReplyToEvent() {
     for(int i = tags.length - 1; i >= 0; i--) {
       List tag = tags[i];

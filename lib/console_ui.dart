@@ -195,7 +195,7 @@ void reAdjustAlignment() {
 void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike(profilePubkey);
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
-  
+
   // get the latest kind 3 event for the user, which lists his 'follows' list
   Event? profileContactEvent = getContactEvent(profilePubkey);
 

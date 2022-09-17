@@ -1,6 +1,16 @@
 # nostr_console
 Nostr console client using Dart
 
+
+# todo
+
+* initial creation of private/pub key ( and loading happens in background)
+* clear screen between menus
+* new menu system with three top apps: social network, public channels, and DM's
+* allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
+* create channel 
+
+
 # Use
 
 Easiest way to run nostr_console: Go to releases and get an executable for your platform.

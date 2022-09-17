@@ -19,6 +19,8 @@ bool selectorShowAllRooms(ScrollableMessages room) {
   return true;
 }
 
+bool showAllRooms (ScrollableMessages room) => selectorShowAllRooms(room);
+
 int getLatestMessageTime(List<String> _messageIds) {
   if( _messageIds.length <= 0 || gStore == null) {
     return 0;
@@ -1179,12 +1181,16 @@ class Store {
         numNotificationRooms++;
     }
 
-    if( numNotificationRooms == 0) {
+    // even if num rooms is zero, we will show the heading when its show all rooms
+    if( numNotificationRooms == 0 && roomSelector != showAllRooms) { 
       return 0;
     }
 
     int numRoomsActuallyPrinted = 0;
-    print("\n\nDirect messages inbox:");
+    print("");
+    print("Direct messages inbox:");
+    print("\n");
+    
     printUnderlined(" From                                    Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {
       if( !roomSelector(directRooms[j]))

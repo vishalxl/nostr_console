@@ -585,7 +585,6 @@ Future<void> PrivateMenuUI(Store node) async {
 
     await processNotifications(node); // this takes 300 ms
 
-    bool showAllRooms (ScrollableMessages room) => selectorShowAllRooms(room);
     node.printDirectRoomInfo(showAllRooms);
 
     int option = showMenu([ 

@@ -192,21 +192,21 @@ class Relays {
                 } else {
                 }
               } on FormatException {
-                print( 'exception in fromJson for event');
+                if( gDebug > 0) print( 'in Relay::sendRequset. FormatException in sendRequest for event');
                 return;
               } catch(err) {
-                print('exception generic $err for relay $relay');
+                if( gDebug > 0) print('in Relay::sendRequset. exception = "$err" ;  for relay $relay');
                 return;
               }                
             },
             onError: (err) { print("\n${gWarningColor}Warning: In SendRequest creating connection to $relay. Kindly check your internet connection. Or maybe only this relay is down.>"); print(gColorEndMarker); },
-            onDone:  () { if( gDebug != 0) print('Info: In onDone'); }
+            onDone:  () { if( gDebug > 0) print('Info: In onDone'); }
           );
       } on WebSocketException {
         print('WebSocketException exception for relay $relay');
         return;
       } catch(err) {
-        print('exception generic $err for relay $relay');
+        if( gDebug > 0) print('exception generic $err for relay $relay');
         return;
       }
     }

@@ -280,6 +280,9 @@ int showMenu(List<String> menuOptions, String menuName) {
 Future<void> otherMenuUi(Store node) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
+
+    await processNotifications(node); // this takes 300 ms
+
     int option = showMenu([ 'Show user profile',             // 1
                             'Search by client name',         // 2
                             'Search word(s) or event id',    // 3
@@ -659,20 +662,25 @@ Future<void> PrivateMenuUI(Store node) async {
   return;
 }
 
+void showInitialNotifications(Store node) {
+
+  bool hasNotifications (Tree t) => t.treeSelectorNotifications();
+  node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
+  print("\n");
+
+  bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
+  int numDirectRoomsPrinted = node.printDirectRoomInfo(showNotifications);
+  
+  if( numDirectRoomsPrinted > 0)
+      print("\n");
+}
+
 Future<void> mainMenuUi(Store node) async {
     // at the very beginning, show the tree with re reply and likes, and then show the options menu
     
     //Show only notifications
 
-    bool hasNotifications (Tree t) => t.treeSelectorNotifications();
-    node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
-    print("\n");
-
-    bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
-    int numDirectRoomsPrinted = node.printDirectRoomInfo(showNotifications);
-    
-    if( numDirectRoomsPrinted > 0)
-       print("\n");
+    showInitialNotifications(node);
 
     //int numChannelsPrinted = node.printChannelsOverview(20, showNotifications);
     

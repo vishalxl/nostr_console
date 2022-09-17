@@ -548,13 +548,13 @@ class Store {
           dynamic json = jsonDecode(ce.eventData.content);
           Channel? channel = getChannel(rooms, chatRoomId);
           if( channel != null) {
-            if( channel.chatRoomName == "") {
+            if( channel.chatRoomName == "" && json.containsKey('name')) {
               channel.chatRoomName = json['name'];
             }
           } else {
             String roomName = "", roomAbout = "";
             if(  json.containsKey('name') ) {
-              roomName = json['name'];
+              roomName = json['name']??"";
             }
             
             if( json.containsKey('about')) {

@@ -882,7 +882,7 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
   if( numCharsInLine > lenPerLine || ( (numCharsInLine == lenPerLine) && (s.length > startIndex + numCharsInLine) )) {
     bool lineBroken = false;
 
-    // break line at end if its cutting words; like is broken only if the returned line is the longest it can be, and
+    // line is broken only if the returned line is the longest it can be, and
     // if its length is greater than the gMaxLenBrokenWord constant
     if( line.length >= lenPerLine &&  line.length > gMaxLenUnbrokenWord  ) {
       //print("   line ending seems to be cutting words");

@@ -47,8 +47,8 @@ void main() {
     Set<Event> listEvents = {exampleEvent1, exampleEvent2, exampleEvent3};
 
     Store node = Store.fromEvents(listEvents);
-    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorShowAllTrees);
-    print("=========================");
+    //node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorShowAllTrees);
+    //print("=========================");
   });
 
   test('createNodeTree_unordered1', () {
@@ -218,3 +218,5 @@ String expectedResult =
 
   return ;
 } // end main
+
+

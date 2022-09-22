@@ -683,52 +683,54 @@ class Store {
         }
 
         if(tempChildEventsMap.containsKey( parentId)) {
-        if( tree.event.eventData.id == gCheckEventId) {
-          if(gDebug >= 0) print("In Tree FromEvents: found its parent $parentId : for id: $gCheckEventId");
-        }
+          // if parent is in store
+          if( tree.event.eventData.id == gCheckEventId) {
+            if(gDebug >= 0) print("In Tree FromEvents: found its parent $parentId : for id: $gCheckEventId");
+          }
 
-        if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) { // since parent can only be a kind 1 event
+          if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) { // since parent can only be a kind 1 event
             if( gDebug > 1) log.info("In Tree.fromEvents: Not adding: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.event.eventData.kind}");
             return;
           }
-          
-  
+            
+    
           tempChildEventsMap[parentId]?.children.add(tree); 
         } else {
-
+          // in case the parent is not in store
           if( tree.event.eventData.id == gCheckEventId) {
             if(gDebug >= 0) print("In Tree FromEvents: parent not found : for id: $gCheckEventId");
           }
 
-           // in case where the parent of the new event is not in the pool of all events, 
-           // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-           Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
+          // in case where the parent of the new event is not in the pool of all events, 
+          // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
+          Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
 
-           Tree dummyTopNode = Tree.withoutStore(dummy, []);
-           dummyTopNode.children.add(tree);
-           tempWithoutParent.add(tree.event.eventData.id); 
+          Tree dummyTopNode = Tree.withoutStore(dummy, []);
+          dummyTopNode.children.add(tree);
+          tempWithoutParent.add(tree.event.eventData.id); 
 
-           if( parentId.length == 64)
+          if( parentId.length == 64) {
             dummyEventIds.add(parentId);
-           else {
-              if( gDebug > 0) {
-                print("got invalid parentId in fromEvents: $parentId");
-                print("tags: ${tree.event.eventData.tags}");
-              }
-           }
-          
-           // add the dummy evnets to top level trees, so that their real children get printed too with them
-           // so no post is missed by reader
-           topLevelTrees.add(dummyTopNode);
+          }
+          else {
+            if( gDebug > 0) {
+              print("got invalid parentId in fromEvents: $parentId");
+              print("tags: ${tree.event.eventData.tags}");
+            }
+          }
+            
+          // add the dummy evnets to top level trees, so that their real children get printed too with them
+          // so no post is missed by reader
+          topLevelTrees.add(dummyTopNode);
         }
       }
     }); // going over tempChildEventsMap and adding children to their parent's .children list
 
     // add parent trees as top level child trees of this tree
     for( var tree in tempChildEventsMap.values) {
-        if( tree.event.eventData.kind == 1 &&  tree.event.eventData.eTags.isEmpty) {  // only posts which are parents
-            topLevelTrees.add(tree);
-        }
+      if( tree.event.eventData.kind == 1 &&  tree.event.eventData.eTags.isEmpty) {  // only posts which are parents
+        topLevelTrees.add(tree);
+      }
     }
 
     if(gDebug != 0) print("In Tree FromEvents: number of events in map which are not kind 1 = ${numEventsNotPosts}");

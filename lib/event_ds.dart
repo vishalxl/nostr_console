@@ -426,7 +426,7 @@ class EventData {
       tempEvaluatedContent = tempContent;
 
     const int nameWidthDepth = 16~/gSpacesPerDepth; // how wide name will be in depth spaces
-    const int timeWidthDepth = 16~/gSpacesPerDepth;
+    const int timeWidthDepth = 18~/gSpacesPerDepth;
     int nameWidth = gSpacesPerDepth * nameWidthDepth;
     
     // get name in color and pad it too

@@ -238,6 +238,7 @@ Future<void> main(List<String> arguments) async {
             
             clearEvents();
             if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
+            gStore = node;
             mainMenuUi(node);            
         });
         return;

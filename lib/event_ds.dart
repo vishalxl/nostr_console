@@ -65,6 +65,7 @@ class EventData {
   bool               isHidden; // hidden by sending a reaction kind 7 event to this event, by the logged in user
   bool               isDeleted; // deleted by kind 5 event
   
+  // returns the immediate kind 1 parent
   String getParent(Map<String, Tree> allEventsMap) {
     if( eTags.isNotEmpty) {
       for( int i = eTags.length - 1; i >= 0; i--) {
@@ -74,6 +75,10 @@ class EventData {
           if( parentId != null) {
             return parentId;
           }
+        } else {
+          // if first e tag ( from end, which is the immediate parent) does not exist in the store, then return empty. 
+          // This has the drawback that the child comment would get a dummy parent, and would get out of the thread TODO fix that later
+          return "";
         }
       }
     }

@@ -564,6 +564,7 @@ class Store {
             }
             List<String> emptyMessageList = [];
             Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList);
+            //print("created room with id $chatRoomId");
             rooms.add( room);
           }
         } on Exception catch(e) {
@@ -869,6 +870,11 @@ class Store {
             temp.add(newTree.event.eventData.id);
             directRooms.add(DirectMessageRoom(directRoomId, temp)); // TODO sort it 
 
+            break;
+
+          case 40:
+            //print("calling handleChannelEvents for kind 40");
+            handleChannelEvents(channels, allChildEventsMap, newTree.event);
             break;
 
           case 42:

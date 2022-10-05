@@ -103,8 +103,8 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
   sendRequest( gListRelayUrls1, eventStrToSend);
 }
 
-// sends event e; used to send kind 3 event
-Future<void> sendEvent(Store node, Event e) async {
+// sends event e; used to send kind 3 event; can send other kinds too like channel create kind 40
+Future<String> sendEvent(Store node, Event e) async {
   String strTags = "";
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   String content = addEscapeChars( e.eventData.content);
@@ -127,16 +127,23 @@ Future<void> sendEvent(Store node, Event e) async {
     }
     
     // strTags += '["client","nostr_console"]';
+  } else {
+    strTags += '["client","nostr_console"]';
   }
-
-  // TODO send event for kinds other than 3 ( which can only have p tags)
 
   String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
   String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
-  //print("in send event: calling sendrequiest");
+  //print("in send event: calling sendrequest for string \n $toSendMessage");
   sendRequest(gListRelayUrls1, toSendMessage);
+
+  Future<void> foo() async {
+    await Future.delayed(Duration(milliseconds: 500));
+    return;
+  }
+  await foo();
+  return id;
 }
 
 bool sendDeleteEvent(Store node, String eventIdToDelete) {
@@ -493,6 +500,33 @@ Future<void> otherMenuUi(Store node) async {
   return;
 }
 
+// returns a string entered by the user
+String getStringFromUser(String prompt, [String defaultValue=""] ) {
+  String str = "";
+  
+  stdout.write(prompt);
+  str = (stdin.readLineSync())??"";
+
+  if( str.length == 0)
+    str = defaultValue;
+  return str;
+}
+
+// sends event creating a new public channel
+Future<void> createPublicChannel(Store node) async {
+  String channelName = getStringFromUser("Enter channel name: ");
+  String channelAbout = getStringFromUser("Enter description for channel: ");
+  String channelPic = getStringFromUser("Enter display picture if any: ", "https://placekitten.com/200/200");
+  String content = "{\"name\": \"$channelName\", \"about\": \"$channelAbout\", \"picture\": \"$channelPic\"}";
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+
+  EventData eventData = EventData('id', userPublicKey, createdAt, 40, content, [], [], [], [], {}, );
+  Event channelCreateEvent = Event("EVENT", "id", eventData, [], "");
+  String newChannelId = await sendEvent(node, channelCreateEvent); // takes 400 ms
+  print("Created new channel with id: $newChannelId");
+  await processNotifications(node); // this takes 300 ms
+}
+
 Future<void> channelMenuUI(Store node) async {
   bool continueChatMenu = true;
   
@@ -505,9 +539,10 @@ Future<void> channelMenuUI(Store node) async {
       justShowedChannels = true;
     }
 
-    int option = showMenu([ 'Enter a public channel',          // 1 
+    int option = showMenu([ 'Enter a public channel',          // 1
                             'Show all public channels',        // 2
-                            'Go back to main menu'],           // 3
+                            'Create channel',                  // 3
+                            'Go back to main menu'],           // 4
                           "Public Channels Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
@@ -569,6 +604,10 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 3:
+        await createPublicChannel(node);
+        break;
+
+      case 4:
         continueChatMenu = false;
         break;
 
@@ -648,8 +687,8 @@ Future<void> PrivateMenuUI(Store node) async {
         break;
 
       case 2:
-
-
+        print("\nTODO");
+        break;
       case 3:
         continueChatMenu = false;
         break;
@@ -675,15 +714,9 @@ void showInitialNotifications(Store node) {
 }
 
 Future<void> mainMenuUi(Store node) async {
-    // at the very beginning, show the tree with re reply and likes, and then show the options menu
-    
+   
     //Show only notifications
-
     showInitialNotifications(node);
-
-    //int numChannelsPrinted = node.printChannelsOverview(20, showNotifications);
-    
-    //if( numChannelsPrinted > 0) print("\n");
 
     bool userContinue = true;
     while(userContinue) {

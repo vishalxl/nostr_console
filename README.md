@@ -9,7 +9,6 @@ Nostr console client using Dart
 * clear screen between menus
 * new menu system with three top apps: social network, public channels, and DM's
 * allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
-* create channel 
 
 
 # Use

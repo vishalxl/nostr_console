@@ -6,27 +6,33 @@ import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:bip340/bip340.dart';
 
-Future<void> processNotifications(Store node)  async {
+Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = true])  async {
   reAdjustAlignment();
 
   // need a bit of wait to give other events to execute, so do a delay, which allows
   // relays to recieve and handle new events
-  const int waitMilliSeconds = 400;
+  const int waitMilliSeconds = 200;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
     Set<String> newEventIdsSet = node.processIncomingEvent(getRecievedEvents());
+    clearEvents();
+
     String nameToDisplay = userPrivateKey.length == 64? 
                               "$gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
                               "${gWarningColor}You are not signed in$gColorEndMarker but are using public key $userPublicKey";
-    node.printNotifications(newEventIdsSet, nameToDisplay);
-    clearEvents();
+    
+    if( printNotifications) {
+      node.printNotifications(newEventIdsSet, nameToDisplay);
+    }
   });
 
+  
   Future<void> foo() async {
     await Future.delayed(Duration(milliseconds: waitMilliSeconds));
     return;
   }
   await foo();
+  
 }
 
 /* @function sendReplyPostLike Used to send Reply, Post and Like ( event 1 for reply and post, and event 7 for like/reaction)
@@ -288,7 +294,7 @@ Future<void> otherMenuUi(Store node) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
 
-    await processNotifications(node); // this takes 300 ms
+    await processAnyIncomingEvents(node); // this takes 300 ms
 
     int option = showMenu([ 'Show user profile',             // 1
                             'Search by client name',         // 2
@@ -524,7 +530,7 @@ Future<void> createPublicChannel(Store node) async {
   Event channelCreateEvent = Event("EVENT", "id", eventData, [], "");
   String newChannelId = await sendEvent(node, channelCreateEvent); // takes 400 ms
   print("Created new channel with id: $newChannelId");
-  await processNotifications(node); // this takes 300 ms
+  await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
 }
 
 Future<void> channelMenuUI(Store node) async {
@@ -586,6 +592,7 @@ Future<void> channelMenuUI(Store node) async {
                 } else {
                   // send message to the given room
                   await sendChatMessage(node, fullChannelId, messageToSend);
+                  await processAnyIncomingEvents(node, false); // get latest message
                   pageNum = 1; // reset it 
                 }
               }
@@ -594,7 +601,7 @@ Future<void> channelMenuUI(Store node) async {
             print("Refreshing...");
           }
 
-          await processNotifications(node);
+          await processAnyIncomingEvents(node);
         }
         break;
 
@@ -622,7 +629,7 @@ Future<void> PrivateMenuUI(Store node) async {
   bool continueChatMenu = true;
   while(continueChatMenu) {
 
-    await processNotifications(node); // this takes 300 ms
+    await processAnyIncomingEvents(node); // this takes 300 ms
 
     node.printDirectRoomInfo(showAllRooms);
 
@@ -675,6 +682,7 @@ Future<void> PrivateMenuUI(Store node) async {
                   }
                   // send message to the given room
                   await sendDirectMessage(node, fullChannelId, messageToSend);
+                  await processAnyIncomingEvents(node, false); // get latest message
                   print("in privateMenuUI: sent message");
                   pageNum = 1; // reset it 
               }
@@ -682,7 +690,7 @@ Future<void> PrivateMenuUI(Store node) async {
           } else {
             print("Refreshing...");
           }
-          await processNotifications(node);
+          await processAnyIncomingEvents(node);
         }
         break;
 
@@ -721,7 +729,7 @@ Future<void> mainMenuUi(Store node) async {
     bool userContinue = true;
     while(userContinue) {
 
-      await processNotifications(node); // this takes 300 ms
+      await processAnyIncomingEvents(node); // this takes 300 ms
 
       // the main menu
       int option = showMenu(['Display feed',     // 1 

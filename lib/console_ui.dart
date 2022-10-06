@@ -592,7 +592,6 @@ Future<void> channelMenuUI(Store node) async {
                 } else {
                   // send message to the given room
                   await sendChatMessage(node, fullChannelId, messageToSend);
-                  await processAnyIncomingEvents(node, false); // get latest message
                   pageNum = 1; // reset it 
                 }
               }
@@ -601,7 +600,7 @@ Future<void> channelMenuUI(Store node) async {
             print("Refreshing...");
           }
 
-          await processAnyIncomingEvents(node);
+          await processAnyIncomingEvents(node, false);
         }
         break;
 

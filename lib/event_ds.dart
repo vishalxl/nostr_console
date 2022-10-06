@@ -208,7 +208,11 @@ class EventData {
           if( translator != null) {
             try {
             translator?.translate(content, to: 'en')
-                      .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} 
+                       .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} )
+                       .onError((error, stackTrace)  { 
+                            if( gDebug > 0) print("Translate error = $error\n for  content = $content\n");
+                            return {} ;
+                          }
                         );
             } on Exception catch(err) {
               if( gDebug >= 0) print("Info: Error in trying to use google translate: $err");

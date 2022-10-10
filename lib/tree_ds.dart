@@ -1525,7 +1525,7 @@ class Store {
           // look up that event and ensure its kind 1 etc, and then mark it deleted.
           Event? deletedEvent = tempChildEventsMap[deletedEventId]?.event;
           if( deletedEvent != null) {
-            if( deletedEvent.eventData.kind == 1 && deletedEvent.eventData.pubkey == deleterEvent.eventData.pubkey) {
+            if( (deletedEvent.eventData.kind == 1 || deletedEvent.eventData.kind == 42) && deletedEvent.eventData.pubkey == deleterEvent.eventData.pubkey) {
               deletedEvent.eventData.isDeleted = true;
               deletedEvent.eventData.content = gDeletedEventMessage;
               deletedEvent.eventData.evaluatedContent = "";

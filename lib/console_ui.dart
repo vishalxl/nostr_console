@@ -170,7 +170,7 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
         String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$content","sig":"$sig"}]';
         sendRequest( gListRelayUrls1, toSendMessage);
         print("sent event delete request with id = $id");
-        print(toSendMessage);
+        //print(toSendMessage);
       } else {
         print("${gWarningColor}The given id was not found and/or is not a valid id, or is not your event. Not deleted.$gColorEndMarker"); 
       }
@@ -467,6 +467,7 @@ Future<void> otherMenuUi(Store node) async {
           String toDeleteId = eventIdToDelete.first;
           print("Going to send a delete event for the following event with id ${toDeleteId}");
           sendDeleteEvent(node, eventIdToDelete.first);
+          await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
         } else {
           print("Invalid Event Id(s) entered = {$eventIdToDelete}");
         }

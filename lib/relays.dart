@@ -298,15 +298,16 @@ String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int n
 void getContactFeed(List<String> relayUrls, Set<String> setContacts, int numEventsToGet, int sinceWhen) {
   
   List<String> contacts = setContacts.toList();
-
+  //print("in getContactFeed: numEventsToGet = $numEventsToGet numContacts = ${setContacts.length} num contacts list = ${contacts.length}");
   for( int i = 0; i < contacts.length; i += gMaxAuthorsInOneRequest) {
 
     // for last iteration change upper limit
     int upperLimit = (i + gMaxAuthorsInOneRequest) > contacts.length? 
                           (contacts.length - i): gMaxAuthorsInOneRequest;
     
+    //print("upperLimit = $upperLimit i = $i");
     List<String> groupContacts = [];
-    for( int j = 0; j < i + upperLimit; j++) {
+    for( int j = 0; j < upperLimit; j++) {
       groupContacts.add(contacts[i + j]);
     }
 

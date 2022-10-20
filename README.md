@@ -1,6 +1,7 @@
 # nostr_console
 Nostr console client using Dart
 
+Note: This is an experimental project. Code design etc is almost terrible, and the beharior is not perfect. Use it to just look around what possible in #nostr. 
 
 # todo
 

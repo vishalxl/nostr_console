@@ -1,7 +1,7 @@
 # nostr_console
 Nostr console client using Dart
 
-Note: This is an experimental project. Code design etc is almost terrible, and the beharior is not perfect. Use it to just look around what possible in #nostr. 
+Note: This is an experimental project. Code design etc is almost terrible, and the behavior is not perfect. Use it to just look around what's possible in #nostr, where this app currently implements a twitter like social network, encrypted direct messages, and public channels. 
 
 # todo
 

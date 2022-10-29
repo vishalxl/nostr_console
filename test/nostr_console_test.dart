@@ -234,6 +234,9 @@ String expectedResult =
       //await node.printDirectRoomInfo(showAllRooms);
       expect(7, node.getNumDirectRooms());
       expect(78, node.getNumChannels());
+
+      expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'));
+
   });
 
   return ;

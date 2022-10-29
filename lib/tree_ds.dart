@@ -84,6 +84,30 @@ class ScrollableMessages {
   List<String> messageIds;
 
   ScrollableMessages(this.topHeader, this.messageIds);
+
+  void addMessageToRoom(String messageId, Map<String, Tree> tempChildEventsMap) {
+    int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
+
+    if(gDebug> 0) print("Room has ${messageIds.length} messages already. adding new one to it. ");
+
+    for(int i = 0; i < messageIds.length; i++) {
+      int eventTime = (tempChildEventsMap[messageIds[i]]?.event.eventData.createdAt??0);
+      if( newEventTime < eventTime) {
+        // shift current i and rest one to the right, and put event Time here
+        if(gDebug> 0) print("In addMessageToRoom: inserted in middle to room ");
+        messageIds.insert(i, messageId);
+        return;
+      }
+    }
+    if(gDebug> 0) print("In addMessageToRoom: added to room ");
+
+    // insert at end
+    messageIds.add(messageId);
+    return;
+  }
+
+
+
   void printOnePage(Map<String, Tree> tempChildEventsMap, [int page = 1])  {
     if( page < 1) {
       if( gDebug > 0) log.info("In ScrollableMessages::printOnepage  got page = $page");
@@ -149,27 +173,6 @@ class Channel extends ScrollableMessages {
             super (  internalChatRoomName.isEmpty? channelId: internalChatRoomName + "( " + channelId + " )" , 
                      messageIds);
 
-  void addMessageToChannel(String messageId, Map<String, Tree> tempChildEventsMap) {
-    int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
-
-    if(gDebug> 0) print("channel has ${messageIds.length} messages already. adding new one to it. ");
-
-    for(int i = 0; i < messageIds.length; i++) {
-      int eventTime = (tempChildEventsMap[messageIds[i]]?.event.eventData.createdAt??0);
-      if( newEventTime < eventTime) {
-        // shift current i and rest one to the right, and put event Time here
-        if(gDebug> 0) print("In addMessageToChannel: inserted in middle to channel $channelId ");
-        messageIds.insert(i, messageId);
-        return;
-      }
-    }
-    if(gDebug> 0) print("In addMessageToChannel: added to channel $channelId ");
-
-    // insert at end
-    messageIds.add(messageId);
-    return;
-  }
-
 
   String get chatRoomName {
     return internalChatRoomName;
@@ -187,30 +190,6 @@ class DirectMessageRoom extends ScrollableMessages{
   DirectMessageRoom(this.otherPubkey, List<String> messageIds):
             super ( "${getAuthorName(otherPubkey)} ($otherPubkey)", messageIds) {
             }
-
-void addMessageToDirectRoom(String messageId, Map<String, Tree> tempChildEventsMap) {
-  int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
-
-    DirectMessageRoom room = this;
-      
-    if(gDebug> 0) print("direct room has ${room.messageIds.length} messages already. adding new one to it. ");
-
-    for(int i = 0; i < room.messageIds.length; i++) {
-      int eventTime = (tempChildEventsMap[room.messageIds[i]]?.event.eventData.createdAt??0);
-      if( newEventTime < eventTime) {
-        // shift current i and rest one to the right, and put event Time here
-        if(gDebug> 0) print("In addMessageToChannel: inserted in middle to channel ${room.otherPubkey} ");
-        room.messageIds.insert(i, messageId);
-        return;
-      }
-    }
-    if(gDebug> 0) print("In addMessageToChannel: added to channel ${room.otherPubkey} ");
-
-    // insert at end
-    room.messageIds.add(messageId);
-    return;
-
-  }
 
 
   bool isPrivateMessageRoom() {
@@ -534,7 +513,7 @@ class Store {
             if( gDebug > 0) print("chat room already exists = $channelId adding event to it" );
             if( gCheckEventId == ce.eventData.id) print("Adding new message $eId to a chat room $channelId. ");
    
-            channel.addMessageToChannel(eId, tempChildEventsMap);
+            channel.addMessageToRoom(eId, tempChildEventsMap);
     
           } else {
             Channel newChannel = Channel(channelId, "", "", "", [eId]);
@@ -603,7 +582,7 @@ class Store {
 
           if( alreadyExists) {
             if( gDebug > 0) print("Adding new message ${ce.eventData.id} to a direct room $directRoomId sender pubkey = ${ce.eventData.pubkey}. ");
-            directRooms[i].addMessageToDirectRoom( eId, tempChildEventsMap);
+            directRooms[i].addMessageToRoom( eId, tempChildEventsMap);
           } else {
             List<String> temp = [];
             temp.add(eId);
@@ -860,7 +839,7 @@ class Store {
               DirectMessageRoom? room = getDirectRoom(directRooms, directRoomId);
               if( room != null) {
                 if( gDebug > 0) print("added event to direct room $directRoomId in insert event");
-                room.addMessageToDirectRoom(newTree.event.eventData.id, allChildEventsMap);
+                room.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap);
                 newTree.event.eventData.isNotification = true; // highlight it too in next printing
                 break;
               }
@@ -885,12 +864,12 @@ class Store {
               Channel? channel = getChannel(channels, channelId);
               if( channel != null) {
                 if( gDebug > 0) print("added event to chat room in insert event");
-                channel.addMessageToChannel(newTree.event.eventData.id, allChildEventsMap); // adds in order
+                channel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap); // adds in order
                 break;
               } else {
                 
                 Channel newChannel = Channel(channelId, "", "", "", []);
-                newChannel.addMessageToChannel(newTree.event.eventData.id, allChildEventsMap);
+                newChannel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap);
                 channels.add(newChannel);
               }
             } 
@@ -1067,6 +1046,15 @@ class Store {
  
   int getNumChannels() {
     return channels.length;
+  }
+
+  int getNumMessagesInChannel(String channelId) {
+    for( int i = 0; i < channels.length; i++) {
+      if( channels[i].channelId == channelId) {
+        return channels[i].messageIds.length;
+      }
+    }
+    return 0;
   }
 
   /**

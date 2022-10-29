@@ -671,7 +671,7 @@ Future<void> createEncryptedChannel(Store node) async {
 
 
   String newPriKey = getRandomPrivKey();
-  print("Created and going to use new random privake key: $newPriKey");
+  //print("Created and going to use new random privake key: $newPriKey");
   String channelPriKey = newPriKey, channelPubKey = getPublicKey(newPriKey);
 
   // now send password as direct message to yourself and to all the people you tagged
@@ -693,8 +693,8 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
   EventData eventData = EventData('id', userPublicKey, createdAt, 141, content, [], [], [], [], {}, );
   Event encryptedChannelCreateEvent = Event("EVENT", "id", eventData, [], "");
   String newEncryptedChannelId = await sendEventWithTags(node, encryptedChannelCreateEvent, tags); // takes 400 ms
-  print("updated encrypted channel $channelId with new 141 event with id: $newEncryptedChannelId");
-  print("tags: $tags");
+  //print("updated encrypted channel $channelId with new 141 event with id: $newEncryptedChannelId");
+  //print("tags: $tags");
 
   List<String> keys = getEncryptedChannelKeys(node, channelId);
   if( keys.length == 2) {
@@ -710,7 +710,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
     
     await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
   } else {
-    print("warning: could not find keys for the channel");
+    print("warning: could not find keys for the channel. Could not update.");
   }
 }
 

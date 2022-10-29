@@ -50,15 +50,6 @@ Channel? getChannel(List<Channel> channels, String channelId) {
   return null;
 }
 
-Channel? getEncryptedChannel(List<Channel> encryptedChannels, String channelId) {
-  for( int i = 0; i < encryptedChannels.length; i++) {
-    if( encryptedChannels[i].channelId == channelId) {
-      return encryptedChannels[i];
-    }
-  }
-  return null;
-}
-
 
 DirectMessageRoom? getDirectRoom(List<DirectMessageRoom> rooms, String otherPubkey) {
   for( int i = 0; i < rooms.length; i++) {
@@ -603,7 +594,7 @@ class Store {
         if( gCheckEventId == ce.eventData.id)          print("In handleEncryptedChannelEvents: processing $gCheckEventId ");
         String channelId = ce.eventData.getChannelIdForMessage();
         if( channelId != "") { // sometimes people may forget to give e tags or give wrong tags like #e
-          Channel? channel = getEncryptedChannel(encryptedChannels, channelId);
+          Channel? channel = getChannel(encryptedChannels, channelId);
 
           if( channel != null) {
             if( gDebug > 0) print("encrypted chat room already exists = $channelId adding event to it" );
@@ -627,7 +618,7 @@ class Store {
         String chatRoomId = ce.eventData.getChannelIdForMessage();
         try {
           dynamic json = jsonDecode(ce.eventData.content);
-          Channel? channel = getEncryptedChannel(encryptedChannels, chatRoomId);
+          Channel? channel = getChannel(encryptedChannels, chatRoomId);
           if( channel != null) {
             //print("got 141, and channel structure already exists");
             // as channel entry already exists, then update its participants info, and name info
@@ -667,7 +658,7 @@ class Store {
         String chatRoomId = eId;
         try {
           dynamic json = jsonDecode(ce.eventData.content);
-          Channel? channel = getEncryptedChannel(encryptedChannels, chatRoomId);
+          Channel? channel = getChannel(encryptedChannels, chatRoomId);
           if( channel != null) {
             //print("got 140, but channel structure already exists");
             // if channel entry already exists, then update its participants info, and name info
@@ -1039,7 +1030,7 @@ class Store {
           case 140:
           case 141:
             //print("calling handleEncryptedChannelEvents for kind ${newTree.event.eventData.kind} from processIncoming");
-            handleEncryptedChannelEvents(channels, allChildEventsMap, newTree.event);
+            handleEncryptedChannelEvents(encryptedChannels, allChildEventsMap, newTree.event);
             break;
 
           case 142:

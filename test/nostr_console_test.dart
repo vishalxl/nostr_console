@@ -10,7 +10,7 @@ EventData exampleEdataChild = EventData("id2", "pubkey", 1111111, 1, "content ch
 Event exampleEvent = Event('event', 'id3', exampleEdata, ['relay name'], "[json]");
 Event exampleEventChild = Event('event', 'id4', exampleEdataChild, ['relay name'], "[json]");
 
-Store exampleStore = Store([], {}, [], [], []);
+Store exampleStore = Store([], {}, [], [], [], []);
 Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 
 //bool skipTest = true;
@@ -227,15 +227,17 @@ String expectedResult =
       // count events
       initialEvents.forEach((element) { element.eventData.kind == 1? numFilePosts++: numFilePosts;});
       //print("read $numFilePosts posts from file $gEventsFilename");
-      expect(numFilePosts, 3481);
+      expect(numFilePosts, 3481, reason:'Verify right number of kind 1 posts');
+      
 
       Store node = await getTree(initialEvents);
       
       //await node.printDirectRoomInfo(showAllRooms);
-      expect(7, node.getNumDirectRooms());
-      expect(78, node.getNumChannels());
+      expect(7, node.getNumDirectRooms(), reason:'verify correct number of direct chat rooms created');
+      expect(78, node.getNumChannels(), reason: 'verify correct number of public channels created');
 
-      expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'));
+      expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'), 
+              reason:'verify a public channel has correct number of messages');
 
   });
 

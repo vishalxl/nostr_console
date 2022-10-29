@@ -79,8 +79,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
 }
 
 // is same as above. remove it TODO
-Future<void> sendChatMessage(Store node, String channelId, String messageToSend) async {
-  String replyKind = "42";
+Future<void> sendChatMessage(Store node, String channelId, String messageToSend, String replyKind) async {
 
   String strTags = node.getTagStr(channelId, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -110,6 +109,7 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
 }
 
 // sends event e; used to send kind 3 event; can send other kinds too like channel create kind 40
+// does not honor tags mentioned in the Event, excpet if its kind 3, when it uses contact list to create tags
 Future<String> sendEvent(Store node, Event e) async {
   String strTags = "";
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -151,6 +151,27 @@ Future<String> sendEvent(Store node, Event e) async {
   await foo();
   return id;
 }
+
+Future<String> sendEventWithTags(Store node, Event e, String tags) async {
+  String strTags = tags;
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+  String content = addEscapeChars( e.eventData.content);
+
+  String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
+  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+
+  String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
+  //print("in send event: calling sendrequest for string \n $toSendMessage");
+  sendRequest(gListRelayUrls1, toSendMessage);
+
+  Future<void> foo() async {
+    await Future.delayed(Duration(milliseconds: 500));
+    return;
+  }
+  await foo();
+  return id;
+}
+
 
 bool sendDeleteEvent(Store node, String eventIdToDelete) {
   if( node.allChildEventsMap.containsKey(eventIdToDelete)) {
@@ -542,7 +563,7 @@ Future<void> channelMenuUI(Store node) async {
 
     //await processNotifications(node); // this takes 300 ms
     if( !justShowedChannels) {
-      node.printChannelsOverview(20, selectorShowAllRooms);
+      node.printChannelsOverview(node.channels, 20, selectorShowAllRooms);
       justShowedChannels = true;
     }
 
@@ -567,7 +588,7 @@ Future<void> channelMenuUI(Store node) async {
         int pageNum = 1;
         while(showChannelOption) {
           reAdjustAlignment();
-          String fullChannelId = node.showChannel(channelId, pageNum);
+          String fullChannelId = node.showChannel(node.channels, channelId, pageNum);
           if( fullChannelId == "") {
             //print("Could not find the given channel.");
             showChannelOption = false;
@@ -592,7 +613,7 @@ Future<void> channelMenuUI(Store node) async {
                     
                 } else {
                   // send message to the given room
-                  await sendChatMessage(node, fullChannelId, messageToSend);
+                  await sendChatMessage(node, fullChannelId, messageToSend, "42");
                   pageNum = 1; // reset it 
                 }
               }
@@ -606,7 +627,7 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 2:
-        node.printChannelsOverview(1000, selectorShowAllRooms);
+        node.printChannelsOverview(node.channels, 1000, selectorShowAllRooms);
         justShowedChannels = true;
         break;
 
@@ -624,6 +645,248 @@ Future<void> channelMenuUI(Store node) async {
   }
   return;
 }
+
+// sends event creating a new public channel
+Future<void> createEncryptedChannel(Store node) async {
+  String channelName = getStringFromUser("Enter encrypted channel name: ");
+  String channelAbout = getStringFromUser("Enter description for the new encrypted channel: ");
+  String channelPic = getStringFromUser("Enter display picture if any: ", "https://placekitten.com/200/200");
+  String content = "{\"name\": \"$channelName\", \"about\": \"$channelAbout\", \"picture\": \"$channelPic\"}";
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+
+  List<String> participants = [userPublicKey];
+  String pTags = '';
+  for( int i = 0; i < participants.length; i++) {
+    if( i > 0) {
+      pTags += ",";
+    }
+
+    pTags += '["p","${participants[i]}"]';
+  }
+
+  EventData eventData = EventData('id', userPublicKey, createdAt, 140, content, [], [], [], [], {}, );
+  Event encryptedChannelCreateEvent = Event("EVENT", "id", eventData, [], "");
+  String newEncryptedChannelId = await sendEventWithTags(node, encryptedChannelCreateEvent, pTags); // takes 400 ms
+  print("Created new encrypted channel with id: $newEncryptedChannelId");
+
+
+  String newPriKey = getRandomPrivKey();
+  print("Created and going to use new random privake key: $newPriKey");
+  String channelPriKey = newPriKey, channelPubKey = getPublicKey(newPriKey);
+
+  // now send password as direct message to yourself and to all the people you tagged
+  String messageToSend = "App Encrypted Channels: inviting you to encrypted channel $newEncryptedChannelId encrypted using private public keys $channelPriKey $channelPubKey";
+  for( int i = 0; i < participants.length; i++) {
+    // send message to all ( including self which is in that list)
+    await sendDirectMessage(node, participants[i], messageToSend);
+  }
+
+  await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
+}
+
+// sends event creating a new public channel
+Future<void> updateEncryptedChannel(Store node, String channelId, 
+                                    String channelName, String channelAbout, String channelPic, String content, String tags, 
+                                    Set<String> participants, Set<String> newParticipants) async {
+
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+  EventData eventData = EventData('id', userPublicKey, createdAt, 141, content, [], [], [], [], {}, );
+  Event encryptedChannelCreateEvent = Event("EVENT", "id", eventData, [], "");
+  String newEncryptedChannelId = await sendEventWithTags(node, encryptedChannelCreateEvent, tags); // takes 400 ms
+  print("updated encrypted channel $channelId with new 141 event with id: $newEncryptedChannelId");
+  print("tags: $tags");
+
+  List<String> keys = getEncryptedChannelKeys(node, channelId);
+  if( keys.length == 2) {
+    String channelPriKey = keys[0], channelPubKey = keys[1];
+
+    // now send password as direct message to yourself and to all the people you tagged
+    String messageToSend = "App Encrypted Channels: inviting you to encrypted channel $channelId encrypted using private public keys $channelPriKey $channelPubKey";
+    
+    // send message to all new participants
+    newParticipants.forEach((participant) async {
+      await sendDirectMessage(node, participant, messageToSend);
+    });
+    
+    await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
+  } else {
+    print("warning: could not find keys for the channel");
+  }
+}
+
+
+String encryptChannelMessage(Store node, String channelId, String messageToSend) {
+  String encryptedMessage = '';
+
+  List<String> keys = getEncryptedChannelKeys(node, channelId);
+  if( keys.length != 2) {
+    return '';
+  }
+
+  String priKey = keys[0], pubKey = keys[1];
+  encryptedMessage = myEncrypt(priKey, "02" + pubKey, messageToSend);
+
+  //print("encrypted message");
+  return encryptedMessage;
+}
+
+Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String messageToSend) async {
+    // first check user is creator of channel
+    Event? channelEvent = node.allChildEventsMap[fullChannelId]?.event;
+    if( channelEvent != null) {
+      if( channelEvent.eventData.pubkey == userPublicKey) {
+
+        Channel? channel = node.getChannelFromId(node.encryptedChannels, fullChannelId);
+        if( channel != null ) {
+
+          Set<String> newParticipants = {};
+          Set<String> participants = channel.participants;
+          int numOldUsers = participants.length;
+
+          // now send invite 
+          List<String> toAdd = [];
+          List<String> newPubKeys = messageToSend.split(' ');
+          newPubKeys = newPubKeys.sublist(1);
+
+          for(int i = 0; i < newPubKeys.length; i++) {
+            if( newPubKeys[i].length != 64) {
+              print("Invalid pubkey. The given pubkey should be 64 byte long.");
+              continue;
+            }
+            toAdd.add(newPubKeys[i]);
+            newParticipants.add(newPubKeys[i]);
+            participants.add(newPubKeys[i]);
+          }
+          
+          String channelName = node.getChannelNameFromId(node.encryptedChannels, fullChannelId);
+          String channelAbout = "";
+          String channelPic = "https://placekitten.com/200/200";
+          String content = channelEvent.eventData.content;
+
+          String tags = '["e","$fullChannelId"]';
+          participants.forEach((participant) { 
+            tags += ',["p","${participant}"]';
+          });
+
+          int numNewUsers = participants.length;
+
+          if( numNewUsers > numOldUsers) {
+            print("sending kind 141 invites to: $participants");
+            await updateEncryptedChannel(node, fullChannelId, channelName, channelAbout, channelPic, content, tags, participants, newParticipants);
+          } else {
+            print("no new users added. ");
+          }
+        }
+      }
+    }
+}
+
+Future<void> encryptedChannelMenuUI(Store node) async {
+ 
+
+  bool continueChatMenu = true;
+  
+  bool justShowedChannels = false;
+  while(continueChatMenu) {
+
+    //await processNotifications(node); // this takes 300 ms
+    if( !justShowedChannels) {
+      node.printChannelsOverview(node.encryptedChannels, 20, selectorShowAllRooms);
+      justShowedChannels = true;
+    }
+
+    int option = showMenu([ 'Enter a encrypted channel',          // 1
+                            'Show all encrypted channels',        // 2
+                            'Create encrypted channel',                  // 3
+                            'Go back to main menu'],           // 4
+                          "Encrypted Channels Menu"); // name of menu
+    print('You picked: $option');
+    switch(option) {
+      case 1:
+
+        justShowedChannels = false;
+        bool showChannelOption = true;
+        stdout.write("\nType channel id or name, or their 1st few letters; or type 'x' to go to menu: ");
+        String? $tempUserInput = stdin.readLineSync();
+        String channelId = $tempUserInput??"";
+
+        if( channelId == "x") {
+          showChannelOption = false; 
+        }
+        int pageNum = 1;
+        while(showChannelOption) {
+          reAdjustAlignment();
+          String fullChannelId = node.showChannel(node.encryptedChannels, channelId, pageNum);
+          if( fullChannelId == "") {
+            //print("Could not find the given channel.");
+            showChannelOption = false;
+            break;
+          }
+
+          stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
+          $tempUserInput = stdin.readLineSync(encoding: utf8);
+          String messageToSend = $tempUserInput??"";
+
+          if( messageToSend != "") {
+            if( messageToSend == 'x') {
+              showChannelOption = false;
+            } else {
+              if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
+                pageNum = (int.tryParse(messageToSend))??1;
+              } else {
+
+                // in case the program was invoked with --pubkey, then user can't send messages
+                if( userPrivateKey == "") {
+                    print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+                } else {
+                  if( messageToSend.startsWith('/add ')) {
+                    await addUsersToEncryptedChannel(node, fullChannelId, messageToSend);
+                    break;
+                  }
+
+                  if( messageToSend.startsWith('/remove ')) {
+                    break;
+                  }
+
+                  // send message to the given room
+                  String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
+                  if( encryptedMessageToSend != "") {
+                    await sendChatMessage(node, fullChannelId, encryptedMessageToSend, "142");
+                    pageNum = 1; // reset it 
+                  } else {
+                    printInColor("\nCould not encrypt and send message. Do confirm that you have access to this encrypted channel\n", redColor);
+                  }
+                }
+              }
+            }
+          } else {
+            print("Refreshing...");
+          }
+
+          await processAnyIncomingEvents(node, false);
+        }
+        break;
+
+      case 2:
+        node.printChannelsOverview(node.encryptedChannels, 1000, selectorShowAllRooms);
+        justShowedChannels = true;
+        break;
+
+      case 3:
+        await createEncryptedChannel(node);
+        break;
+
+      case 4:
+        continueChatMenu = false;
+        break;
+
+      default:
+        break;
+    }
+  }
+  return;
+}
+
 
 Future<void> PrivateMenuUI(Store node) async {
   bool continueChatMenu = true;
@@ -735,9 +998,10 @@ Future<void> mainMenuUi(Store node) async {
       int option = showMenu(['Display feed',     // 1 
                              'Post/Reply/Like',  // 2
                              'Public Channels',  // 3
-                             'Private Messages', // 4
-                             'Other Options',    // 5
-                             'Quit'],            // 6
+                             'Encrypted Channels',// 4
+                             'Private Messages', // 5
+                             'Other Options',    // 6
+                             'Quit'],            // 7
                              "Main Menu");
       print('You picked: $option');
       switch(option) {
@@ -783,14 +1047,18 @@ Future<void> mainMenuUi(Store node) async {
           break;
 
         case 4:
-          await PrivateMenuUI(node);
+          await encryptedChannelMenuUI(node);
           break;
 
         case 5:
-          await otherMenuUi(node);
+          await PrivateMenuUI(node);
           break;
 
         case 6:
+          await otherMenuUi(node);
+          break;
+
+        case 7:
         default:
           userContinue = false;
           String authorName = getAuthorName(userPublicKey);

@@ -14,6 +14,8 @@ import 'package:kepler/kepler.dart';
 int gDebug = 0;
 
 String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
+void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
+
 
 // translate 
 GoogleTranslator? translator; // initialized in main when argument given
@@ -126,7 +128,7 @@ class EventData {
       }
     } else {
       int eKind = json['kind'];
-      if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5 || eKind == 4) {
+      if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5 || eKind == 4 || eKind == 140 || eKind == 141 || eKind == 142) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
 
@@ -164,6 +166,10 @@ class EventData {
   }
 
   String expandMentions(String content) {
+    if( id == gCheckEventId) {
+      printInColor("in expandMentions: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
+    }
+
     if( tags.isEmpty) {
       return content;
     }
@@ -190,10 +196,18 @@ class EventData {
   }
 
   // is called only once for each event received ( or read from file)
-  void translateAndExpandMentions() {
+  void translateAndExpandMentions(Store? node) {
+    if( id == gCheckEventId) {
+      printInColor("in translateAndExpandMensitons: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
+    }
+
     if (content == "" ||  evaluatedContent != "") {
+      if( id == gCheckEventId) {
+        printInColor("in translateAndExpandMensitons: returning \n", redColor);
+      }
       return;
     }
+
 
     switch(kind) {
     case 1:
@@ -223,7 +237,6 @@ class EventData {
     break;
 
     case 4: 
-
       if( userPrivateKey == ""){ // cant process if private key not given
         break;
       }
@@ -231,16 +244,30 @@ class EventData {
       if(!isValidDirectMessage(this)) {
         break;
       }
-      String? decrypted = decryptContent();
+
+      if( id == gCheckEventId) {
+        printInColor("in translateAndExpandMensitons: gonna decrypt \n", redColor);
+      }
+
+      String? decrypted = decryptDirectMessage();
       if( decrypted != null) {
         evaluatedContent = decrypted;
         evaluatedContent = expandMentions(evaluatedContent);
       }
       break;
+
+    case 142:
+      String? decrypted = decryptEncryptedChannelMessage(node);
+      if( decrypted != null) {
+        evaluatedContent = decrypted;
+        evaluatedContent = expandMentions(evaluatedContent);
+      }
+      break;
+
     } // end switch
   } // end translateAndExpandMentions
 
-  String? decryptContent() {
+  String? decryptDirectMessage() {
     int ivIndex = content.indexOf("?iv=");
     var iv = content.substring( ivIndex + 4, content.length);
     var enc_str = content.substring(0, ivIndex);
@@ -258,7 +285,7 @@ class EventData {
       }); 
       // if there are more than one p tags, we don't know who its for
       if( numPtags != 1) {
-        if( gDebug >= 0) print(" in translateAndExpand: got event $id with number of p tags != one : $numPtags . not decrypting");
+        if( gDebug >= 0) printInColor(" in translateAndExpand: got event $id with number of p tags != one : $numPtags . not decrypting", redColor);
           return null;
       }
     } 
@@ -267,12 +294,58 @@ class EventData {
     return decrypted;
   }
 
-  // only applicable for kind 42 event; returns the channel 40 id of which the event is part of
-  String getChannelIdForMessage() {
-    if( kind != 42) {
+  Channel? getChannelForMessage(List<Channel>? listChannel, String messageId) {
+    if( listChannel == null) {
+      return null;
+    }
+     for(int i = 0; i < listChannel.length; i++) {
+      if( listChannel[i].messageIds.contains(messageId)) {
+        return listChannel[i];
+      }
+     }
+     return null;
+  }
+  
+
+  String? decryptEncryptedChannelMessage(Store? node) {
+    Channel? channel = getChannelForMessage( (node?.encryptedChannels)??null, id);
+    if( channel == null) {
+      print("could not find channel");
+      return null;
+    }
+
+    if(!channel.participants.contains(userPublicKey)) {
+      return null;
+    }
+
+    //print("In decryptEncryptedChannelMessage: for event of kind 142 with event id = $id");
+    int ivIndex = content.indexOf("?iv=");
+    var iv = content.substring( ivIndex + 4, content.length);
+    var enc_str = content.substring(0, ivIndex);
+        
+    String channelId = getChannelIdForMessage();
+    //print("In decryptEncryptedChannelMessage: got channel id $channelId");
+    List<String> keys = [];
+    keys = getEncryptedChannelKeys(node, channelId);
+
+    if( keys.length != 2) {
+      printInColor("Could not get keys for event id: $id and channelId: $channelId", redColor);
       return "";
     }
 
+    String priKey = keys[0];
+    String pubKey = "02" + keys[1];
+
+    var decrypted = myPrivateDecrypt( priKey, pubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+    return decrypted;
+  }
+
+  // only applicable for kind 42/142 event; returns the channel 40/140 id of which the event is part of
+  String getChannelIdForMessage() {
+    if( kind != 42 && kind != 142 && kind!=141) {
+      return "";
+    }
+    //print("in getChannelIdForMessage tag length = ${tags.length}");
     // get first e tag, which should be the channel of which this is part of
     for( int i = 0; i < tags.length; i++) {
       List tag = tags[i];
@@ -291,7 +364,6 @@ class EventData {
 
     int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
-    void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
 
     String name = getAuthorName(pubkey);    
     String strDate = getPrintableDate(createdAt);
@@ -1067,6 +1139,16 @@ bool isValidDirectMessage(EventData directMessageData) {
   return validUserMessage;
 }
 
+String getRandomPrivKey() {
+  FortunaRandom fr = FortunaRandom();
+  final _sGen = Random.secure();;
+  fr.seed(KeyParameter(
+      Uint8List.fromList(List.generate(32, (_) => _sGen.nextInt(255)))));
+
+  BigInt randomNumber = fr.nextBigInteger(256);
+  String strKey = randomNumber.toRadixString(16);
+  return strKey;
+}
    
 // pointy castle source https://github.com/PointyCastle/pointycastle/blob/master/tutorials/aes-cbc.md
 // https://github.com/bcgit/pc-dart/blob/master/tutorials/aes-cbc.md
@@ -1216,4 +1298,53 @@ bool isValidPubkey(String pubkey) {
   }
 
   return false;
+}
+
+
+List<String> getEncryptedChannelKeys(Store? node, String channelId) {
+  if( node == null) {
+    //print("node is null");
+    return [];
+  }
+  Event? e = node.allChildEventsMap[channelId]?.event;
+  if( e != null) {
+    //print("\n----------------\nIn getEncryptedChannelKeys for encrypted channel $channelId");
+    String creatorPubKey = e.eventData.pubkey;
+    for( int i = 0; i < node.directRooms.length; i++) {
+      DirectMessageRoom room = node.directRooms[i];
+      if( room.otherPubkey == creatorPubKey) {
+        //print("got other pubkey $creatorPubKey");
+        for( int j = 0; j < room.messageIds.length; j++) {
+          String messageId = room.messageIds[j];
+          if( channelId == "14eda528a651fa55ac706280711d616f57ab449a9bc4a97efcd1e236e53a1044" ) {
+            //printInColor( "j = $j messageId = ${messageId}\n", redColor);
+          }
+
+          Event? messageEvent = node.allChildEventsMap[messageId]?.event;
+          if( messageEvent != null) {
+            //print("got a message which is: ${messageEvent.eventData.evaluatedContent}");
+            //print(messageEvent.eventData.getStrForChannel(0));
+            String evaluatedContent = messageEvent.eventData.evaluatedContent;
+            if( evaluatedContent.startsWith("App Encrypted Channels:")) {
+              //print("got App");
+              if( channelId == "14eda528a651fa55ac706280711d616f57ab449a9bc4a97efcd1e236e53a1044" ) {
+                //print("evaluatedContent = $evaluatedContent");
+                //print("num messages: ${room.messageIds.length}");
+              }
+
+              if( evaluatedContent.contains(channelId)) {
+                //print("    success: got password in pvt message: $evaluatedContent");
+                String priKey = evaluatedContent.substring(159, 159 + 64);
+                String pubKey = evaluatedContent.substring(224, 224 + 64);
+                return [priKey, pubKey];
+              }
+            }
+          } else {
+            print("could not get message event");
+          }
+        }
+      }
+    }
+  }
+  return [];
 }

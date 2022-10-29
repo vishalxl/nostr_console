@@ -44,7 +44,7 @@ jobs:
       # package:test for this step to succeed. Note that Flutter projects will
       # want to change this to 'flutter test'.
       - name: Run tests
-        run: dart test
+        run: dart test -r expanded
         
       - name: compile exe
         run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_elf64

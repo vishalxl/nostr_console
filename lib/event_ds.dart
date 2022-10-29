@@ -76,9 +76,9 @@ class EventData {
             return parentId;
           }
         } else {
-          // if first e tag ( from end, which is the immediate parent) does not exist in the store, then return empty. 
-          // This has the drawback that the child comment would get a dummy parent, and would get out of the thread TODO fix that later
-          return "";
+          // if first e tag ( from end, which is the immediate parent) does not exist in the store, then return that eventID still. 
+          // Child comment would get a dummy parent, and called could then fetch that event
+          return eventId;
         }
       }
     }
@@ -785,7 +785,7 @@ int getSecondsDaysAgo( int N) {
   return  DateTime.now().subtract(Duration(days: N)).millisecondsSinceEpoch ~/ 1000;
 }
 
-void printUnderlined(String x) =>  { print("$x\n${getNumDashes(x.length)}")}; 
+void printUnderlined(String x) =>  { stdout.write("$x\n${getNumDashes(x.length)}\n")}; 
 
 void printDepth(int d) {
   for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {

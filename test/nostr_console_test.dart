@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:test/test.dart';
@@ -18,9 +17,9 @@ Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 
 void main() {
 
-  /*
+  
   test('PrintEmptyEvent', () {
-    expect(EventData("non","",1,1,"", [], [], [], [[]], {}).toString(), "");
+    //expect(EventData("non","",1,1,"", [], [], [], [[]], {}).toString(), "");
   });
 
   test('printEventNode', () {
@@ -36,7 +35,7 @@ void main() {
     store.printTree(0, DateTime.now().subtract(Duration(days:1)), selectorShowAllTrees);
   });
 
-  */
+  
 
   test('createNodeTree_ordered', () {
     
@@ -215,6 +214,27 @@ String expectedResult =
     expect( res, expectedResult);
   });
 
+
+  test('event_file_read', () async {
+      Set<Event> initialEvents = {}; // collect all events here and then create tree out of them
+
+
+      String input_filename = 'test_event_file.csv';
+      //print("input file name = $input_filename");
+      initialEvents = await readEventsFromFile(input_filename);
+
+      int numFilePosts = 0;
+      // count events
+      initialEvents.forEach((element) { element.eventData.kind == 1? numFilePosts++: numFilePosts;});
+      //print("read $numFilePosts posts from file $gEventsFilename");
+      expect(numFilePosts, 3481);
+
+      Store node = await getTree(initialEvents);
+      
+      //await node.printDirectRoomInfo(showAllRooms);
+      expect(7, node.getNumDirectRooms());
+      expect(78, node.getNumChannels());
+  });
 
   return ;
 } // end main

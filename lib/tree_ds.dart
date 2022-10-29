@@ -648,7 +648,7 @@ class Store {
     List<String> tempWithoutParent = [];
     List<Channel> channels = [];
     List<DirectMessageRoom> tempDirectRooms = [];
-    List<String> dummyEventIds = [];
+    Set<String> dummyEventIds = {};
 
     int numEventsNotPosts = 0; // just for debugging info
     int numKind40Events   = 0;
@@ -715,8 +715,8 @@ class Store {
           }
           else {
             if( gDebug > 0) {
-              print("got invalid parentId in fromEvents: $parentId");
-              print("tags: ${tree.event.eventData.tags}");
+              print("--------\ngot invalid parentId in fromEvents: $parentId");
+              print("original json of event:\n${tree.event.originalJson}");
             }
           }
             
@@ -755,7 +755,7 @@ class Store {
 
     Set<String> newEventIdsSet = {};
 
-    List<String> dummyEventIds = [];
+    Set<String> dummyEventIds = {};
 
     // add the event to the main event store thats allChildEventsMap
     newEventsToProcess.forEach((newEvent) { 
@@ -1065,6 +1065,10 @@ class Store {
     return numPrinted;
   }
  
+  int getNumChannels() {
+    return channels.length;
+  }
+
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
    */
@@ -1177,6 +1181,10 @@ class Store {
     return "";
   }
 
+  int getNumDirectRooms() {
+    return directRooms.length;
+  }
+
   /**
    * @printDirectRoomInfo Print one line information about chat rooms
    */
@@ -1195,9 +1203,9 @@ class Store {
     }
 
     int numRoomsActuallyPrinted = 0;
-    print("");
-    print("Direct messages inbox:");
-    print("\n");
+    stdout.write("\n");
+    stdout.write("Direct messages inbox:\n");
+    stdout.write("\n\n");
     
     printUnderlined(" From                                    Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {
@@ -1222,7 +1230,7 @@ class Store {
           }
         }
       }
-      print("");
+      stdout.write("\n");
     }
 
     return numRoomsActuallyPrinted;
@@ -1405,10 +1413,10 @@ class Store {
         Tree topTree = getTopTree(t);
         rootEventId = topTree.event.eventData.id;
         if( rootEventId != latestEventId) { // if the reply is to a top/parent event, then only one e tag is sufficient
-          strTags +=  '["e","$rootEventId"],';
+          strTags +=  '["e","$rootEventId","","root"],';
         }
       }
-      strTags +=  '["e","$latestEventId","$relay"],';
+      strTags +=  '["e","$latestEventId","$relay","reply"],';
     }
 
     strTags += '["client","$clientName"]' ;

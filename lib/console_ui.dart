@@ -689,13 +689,6 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
                                     String channelName, String channelAbout, String channelPic, String content, String tags, 
                                     Set<String> participants, Set<String> newParticipants) async {
 
-  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
-  EventData eventData = EventData('id', userPublicKey, createdAt, 141, content, [], [], [], [], {}, );
-  Event encryptedChannelCreateEvent = Event("EVENT", "id", eventData, [], "");
-  String newEncryptedChannelId = await sendEventWithTags(node, encryptedChannelCreateEvent, tags); // takes 400 ms
-  //print("updated encrypted channel $channelId with new 141 event with id: $newEncryptedChannelId");
-  //print("tags: $tags");
-
   List<String> keys = getEncryptedChannelKeys(node.directRooms, node.allChildEventsMap, channelId);
   if( keys.length == 2) {
     String channelPriKey = keys[0], channelPubKey = keys[1];
@@ -707,7 +700,12 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
     newParticipants.forEach((participant) async {
       await sendDirectMessage(node, participant, messageToSend);
     });
-    
+
+    int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+    EventData eventData = EventData('id', userPublicKey, createdAt, 141, content, [], [], [], [], {}, );
+    Event encryptedChannelCreateEvent = Event("EVENT", "id", eventData, [], "");
+    String newEncryptedChannelId = await sendEventWithTags(node, encryptedChannelCreateEvent, tags); // takes 400 ms
+
     await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
   } else {
     print("warning: could not find keys for the channel. Could not update.");
@@ -788,8 +786,8 @@ Future<void> encryptedChannelMenuUI(Store node) async {
   
   bool justShowedChannels = false;
   while(continueChatMenu) {
+    await processAnyIncomingEvents(node); // this takes 300 ms
 
-    //await processNotifications(node); // this takes 300 ms
     if( !justShowedChannels) {
       node.printChannelsOverview(node.encryptedChannels, 20, selectorShowAllRooms);
       justShowedChannels = true;

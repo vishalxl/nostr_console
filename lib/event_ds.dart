@@ -345,9 +345,11 @@ class EventData {
       return null;
     }
 
-    if( id == "b1ab66ac50f00f3c3bbc91e5b9e03fc8e79e3fdb9f6d5c9ae9777aa6ca3020a2") {
-      print("\n\ngoing to decrypt b1ab66ac50f00f3c3bbc91e5b9e03fc8e79e3fdb9f6d5c9ae9777aa6ca3020a2");
-      print(channel.participants);
+    if( id == "865c9352de11a3959c06fce5350c5a1b9fa0475d3234078a1bb45d152b370f0b") {  // known issue
+      
+      //print("\n\ngoing to decrypt b1ab66ac50f00f3c3bbc91e5b9e03fc8e79e3fdb9f6d5c9ae9777aa6ca3020a2");
+      //print(channel.participants);
+      return "";
     }
 
     //print("Going to decrypt event id: $id");
@@ -366,6 +368,9 @@ class EventData {
       printInColor("Could not get keys for event id: $id and channelId: $channelId", redColor);
       return "";
     }
+
+    //print("\nevent id: $id");
+    //print(keys);
 
     String priKey = keys[0];
     String pubKey = "02" + keys[1];
@@ -1373,7 +1378,10 @@ List<String> getEncryptedChannelKeys(List<DirectMessageRoom> directRooms, Map<St
                 //print("len of evaluated content: ${evaluatedContent.length} ");
                 String priKey = evaluatedContent.substring(159, 159 + 64);
                 String pubKey = evaluatedContent.substring(224, 224 + 64);
-                return [priKey, pubKey];
+
+                if( priKey.length == 64 && pubKey.length == 64) {
+                  return [priKey, pubKey];
+                }
               }
             }
           } else {

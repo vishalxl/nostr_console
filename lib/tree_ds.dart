@@ -169,10 +169,11 @@ class Channel extends ScrollableMessages {
   String       internalChatRoomName; 
   String       about;
   String       picture;
+  int          lastUpdated; // used for encryptedChannels
 
   Set<String> participants; // pubkey of all participants - only for encrypted channels
 
-  Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds, this.participants) : 
+  Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds, this.participants, this.lastUpdated) : 
             super (  internalChatRoomName.isEmpty? channelId: internalChatRoomName + "( " + channelId + " )" , 
                      messageIds);
 
@@ -544,7 +545,7 @@ class Store {
             channel.addMessageToRoom(eId, tempChildEventsMap);
     
           } else {
-            Channel newChannel = Channel(channelId, "", "", "", [eId], {});
+            Channel newChannel = Channel(channelId, "", "", "", [eId], {}, 0);
             rooms.add( newChannel);
           }
         }
@@ -570,7 +571,7 @@ class Store {
               roomAbout = json['about'];
             }
             List<String> emptyMessageList = [];
-            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, {});
+            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, {}, ce.eventData.createdAt);
             //print("created room with id $chatRoomId");
             rooms.add( room);
           }
@@ -603,7 +604,7 @@ class Store {
             channel.addMessageToRoom(eId, tempChildEventsMap);
     
           } else {
-            Channel newChannel = Channel(channelId, "", "", "", [eId], {});
+            Channel newChannel = Channel(channelId, "", "", "", [eId], {}, 0);
             encryptedChannels.add( newChannel);
           }
         }
@@ -614,10 +615,13 @@ class Store {
         Set<String> participants = {};
         ce.eventData.pTags.forEach((element) { participants.add(element);});
         
+        if( ce.eventData.id == "21779b82caf3628c83f382ad45a78ca0958e5edae7643d3fb222c03732c299d0") {
+          //printInColor("handling 141 : 21779b82caf3628c83f382ad45a78ca0958e5edae7643d3fb222c03732c299d0\n", redColor);
+        }
 
         String chatRoomId = ce.eventData.getChannelIdForMessage();
-        print("--------\nIn handleEncryptedChannelEvents: processing kind 141 id with ${ce.eventData.id} with participants = $participants");
-        print("for original channel id: $chatRoomId");
+        //print("--------\nIn handleEncryptedChannelEvents: processing kind 141 id with ${ce.eventData.id} with participants = $participants");
+        //print("for original channel id: $chatRoomId");
         try {
           dynamic json = jsonDecode(ce.eventData.content);
           Channel? channel = getChannel(encryptedChannels, chatRoomId);
@@ -626,20 +630,26 @@ class Store {
             // as channel entry already exists, then update its participants info, and name info
             if( channel.chatRoomName == "" && json.containsKey('name')) {
               channel.chatRoomName = json['name'];
-              print("renamed channel to ${channel.chatRoomName}");
+              //print("renamed channel to ${channel.chatRoomName}");
             }
-            channel.participants = participants;
+            if( ce.eventData.id == "21779b82caf3628c83f382ad45a78ca0958e5edae7643d3fb222c03732c299d0") {
+              //printInColor("original: ${channel.participants}\n new participants: $participants \n chatRoomId:${chatRoomId}", redColor);
+            }
 
-            for(int i = 0; i < channel.messageIds.length; i++) {
-              Event ?e = tempChildEventsMap[channel.messageIds[i]]?.event;
-              if( e != null) {
-                //print("num directRooms = ${directRooms.length}");
-                e.eventData.translateAndExpand14x(directRooms, encryptedChannels, tempChildEventsMap);
+            if( channel.lastUpdated < ce.eventData.createdAt) {
+              channel.participants = participants;
+              channel.lastUpdated  = ce.eventData.createdAt;
+              for(int i = 0; i < channel.messageIds.length; i++) {
+                Event ?e = tempChildEventsMap[channel.messageIds[i]]?.event;
+                if( e != null) {
+                  //print("num directRooms = ${directRooms.length}");
+                  e.eventData.translateAndExpand14x(directRooms, encryptedChannels, tempChildEventsMap);
+                }
               }
             }
 
           } else {
-            print("In handleEncryptedChannelEvents: got 141 when 140 is not yet found");
+            //print("In handleEncryptedChannelEvents: got 141 when 140 is not yet found");
             String roomName = "", roomAbout = "";
             if(  json.containsKey('name') ) {
               roomName = json['name']??"";
@@ -649,8 +659,8 @@ class Store {
               roomAbout = json['about'];
             }
             List<String> emptyMessageList = [];
-            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants);
-            print("created encrypted room with id $chatRoomId and name $roomName");
+            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants, ce.eventData.createdAt);
+            //print("created encrypted room with id $chatRoomId and name $roomName");
             encryptedChannels.add( room);
           }
         } on Exception catch(e) {
@@ -676,7 +686,10 @@ class Store {
               channel.chatRoomName = json['name'];
               //print("renamed channel to ${channel.chatRoomName}");
             }
-            channel.participants = participants;
+            if( channel.lastUpdated == 0) { // ==  0 only when it was created using a 142 msg. otherwise, don't update it if it was created using 141
+              channel.participants = participants;
+              channel.lastUpdated  = ce.eventData.createdAt;
+            }
 
           } else {
             String roomName = "", roomAbout = "";
@@ -688,7 +701,7 @@ class Store {
               roomAbout = json['about'];
             }
             List<String> emptyMessageList = [];
-            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants);
+            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants, ce.eventData.createdAt);
             //print("created encrypted room with id $chatRoomId and name $roomName");
             encryptedChannels.add( room);
           }
@@ -1041,7 +1054,7 @@ class Store {
                 break;
               } else {
                 
-                Channel newChannel = Channel(channelId, "", "", "", [], {});
+                Channel newChannel = Channel(channelId, "", "", "", [], {}, 0);
                 newChannel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap);
                 channels.add(newChannel);
               }
@@ -1069,7 +1082,7 @@ class Store {
               } else {
                 Set<String> participants = {};
                 newTree.event.eventData.pTags.forEach((element) {participants.add(element);});
-                Channel newChannel = Channel(channelId, "", "", "", [], participants);
+                Channel newChannel = Channel(channelId, "", "", "", [], participants, 0);
                 newChannel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap);
                 encryptedChannels.add(newChannel);
                 newTree.event.eventData.translateAndExpand14x(directRooms, encryptedChannels, allChildEventsMap);
@@ -1296,7 +1309,7 @@ class Store {
         }
       } 
     }
-    print(numRoomsSelected);
+    //print(numRoomsSelected);
 
     if( numRoomsSelected == 0) {
       return 0;
@@ -1319,6 +1332,7 @@ class Store {
     for(int j = 0; j < numToPrint; j++) {
 
       if( channelstoPrint[j].participants.length > 0 &&  !channelstoPrint[j].participants.contains(userPublicKey)) {
+        //print(channelstoPrint[j].participants);
         continue;
       }
 
@@ -1395,6 +1409,8 @@ class Store {
         if( room.participants.length > 0) {
           // enforce the participants-only rule
           if( !room.participants.contains(userPublicKey)) {
+            print("\nnot a user: ${room.participants}");
+            print("room name: ${room.chatRoomName}");
             return "";
           }
 

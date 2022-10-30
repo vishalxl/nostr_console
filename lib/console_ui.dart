@@ -672,7 +672,7 @@ Future<void> createEncryptedChannel(Store node) async {
 
   String newPriKey = getRandomPrivKey();
   //print("Created and going to use new random privake key: $newPriKey");
-  String channelPriKey = newPriKey, channelPubKey = getPublicKey(newPriKey);
+  String channelPriKey = newPriKey, channelPubKey = myGetPublicKey(newPriKey);
 
   // now send password as direct message to yourself and to all the people you tagged
   String messageToSend = "App Encrypted Channels: inviting you to encrypted channel $newEncryptedChannelId encrypted using private public keys $channelPriKey $channelPubKey";
@@ -696,7 +696,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
   //print("updated encrypted channel $channelId with new 141 event with id: $newEncryptedChannelId");
   //print("tags: $tags");
 
-  List<String> keys = getEncryptedChannelKeys(node, channelId);
+  List<String> keys = getEncryptedChannelKeys(node.directRooms, node.allChildEventsMap, channelId);
   if( keys.length == 2) {
     String channelPriKey = keys[0], channelPubKey = keys[1];
 
@@ -718,7 +718,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
 String encryptChannelMessage(Store node, String channelId, String messageToSend) {
   String encryptedMessage = '';
 
-  List<String> keys = getEncryptedChannelKeys(node, channelId);
+  List<String> keys = getEncryptedChannelKeys(node.directRooms, node.allChildEventsMap, channelId);
   if( keys.length != 2) {
     return '';
   }
@@ -810,6 +810,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
         String? $tempUserInput = stdin.readLineSync();
         String channelId = $tempUserInput??"";
 
+        
         if( channelId == "x") {
           showChannelOption = false; 
         }

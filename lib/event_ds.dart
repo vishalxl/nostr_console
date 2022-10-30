@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'dart:math';
+import 'package:bip340/bip340.dart';
 import 'package:intl/intl.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:translator/translator.dart';
@@ -196,7 +197,7 @@ class EventData {
   }
 
   // is called only once for each event received ( or read from file)
-  void translateAndExpandMentions(Store? node) {
+  void translateAndExpandMentions(List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
       printInColor("in translateAndExpandMensitons: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
     }
@@ -256,16 +257,38 @@ class EventData {
       }
       break;
 
+
+    } // end switch
+  } // end translateAndExpandMentions
+
+
+  // is called only once for each event received ( or read from file)
+  void translateAndExpand14x(List<DirectMessageRoom> directRooms, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap) {
+    if( id == gCheckEventId) {
+      printInColor("in translateAndExpandMensitons: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
+    }
+
+    if (content == "" ||  evaluatedContent != "") {
+      if( id == gCheckEventId) {
+        printInColor("in translateAndExpandMensitons: returning \n", redColor);
+      }
+      return;
+    }
+
+    switch(kind) {
     case 142:
-      String? decrypted = decryptEncryptedChannelMessage(node);
+      String? decrypted = decryptEncryptedChannelMessage(directRooms, encryptedChannels, tempChildEventsMap);
       if( decrypted != null) {
         evaluatedContent = decrypted;
         evaluatedContent = expandMentions(evaluatedContent);
       }
       break;
+    default:
+      break;
 
     } // end switch
-  } // end translateAndExpandMentions
+  } // end translateAndExpand14x
+
 
   String? decryptDirectMessage() {
     int ivIndex = content.indexOf("?iv=");
@@ -307,8 +330,8 @@ class EventData {
   }
   
 
-  String? decryptEncryptedChannelMessage(Store? node) {
-    Channel? channel = getChannelForMessage( (node?.encryptedChannels)??null, id);
+  String? decryptEncryptedChannelMessage(List<DirectMessageRoom> directRooms, List<Channel> encryptedChannels,Map<String, Tree> tempChildEventsMap) {
+    Channel? channel = getChannelForMessage( encryptedChannels, id);
     if( channel == null) {
       print("could not find channel");
       return null;
@@ -318,6 +341,17 @@ class EventData {
       return null;
     }
 
+    if(!channel.participants.contains(pubkey)) {
+      return null;
+    }
+
+    if( id == "b1ab66ac50f00f3c3bbc91e5b9e03fc8e79e3fdb9f6d5c9ae9777aa6ca3020a2") {
+      print("\n\ngoing to decrypt b1ab66ac50f00f3c3bbc91e5b9e03fc8e79e3fdb9f6d5c9ae9777aa6ca3020a2");
+      print(channel.participants);
+    }
+
+    //print("Going to decrypt event id: $id");
+
     //print("In decryptEncryptedChannelMessage: for event of kind 142 with event id = $id");
     int ivIndex = content.indexOf("?iv=");
     var iv = content.substring( ivIndex + 4, content.length);
@@ -326,7 +360,7 @@ class EventData {
     String channelId = getChannelIdForMessage();
     //print("In decryptEncryptedChannelMessage: got channel id $channelId");
     List<String> keys = [];
-    keys = getEncryptedChannelKeys(node, channelId);
+    keys = getEncryptedChannelKeys(directRooms, tempChildEventsMap, channelId);
 
     if( keys.length != 2) {
       printInColor("Could not get keys for event id: $id and channelId: $channelId", redColor);
@@ -1147,6 +1181,12 @@ String getRandomPrivKey() {
 
   BigInt randomNumber = fr.nextBigInteger(256);
   String strKey = randomNumber.toRadixString(16);
+  if( strKey.length < 64) {
+    int numZeros = 64 - strKey.length;
+    for(int i = 0; i < numZeros; i++) {
+      strKey = "0" + strKey;
+    }
+  }
   return strKey;
 }
    
@@ -1301,17 +1341,13 @@ bool isValidPubkey(String pubkey) {
 }
 
 
-List<String> getEncryptedChannelKeys(Store? node, String channelId) {
-  if( node == null) {
-    //print("node is null");
-    return [];
-  }
-  Event? e = node.allChildEventsMap[channelId]?.event;
+List<String> getEncryptedChannelKeys(List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap, String channelId) {
+  Event? e = tempChildEventsMap[channelId]?.event;
   if( e != null) {
     //print("\n----------------\nIn getEncryptedChannelKeys for encrypted channel $channelId");
     String creatorPubKey = e.eventData.pubkey;
-    for( int i = 0; i < node.directRooms.length; i++) {
-      DirectMessageRoom room = node.directRooms[i];
+    for( int i = 0; i < directRooms.length; i++) {
+      DirectMessageRoom room = directRooms[i];
       if( room.otherPubkey == creatorPubKey) {
         //print("got other pubkey $creatorPubKey");
         for( int j = 0; j < room.messageIds.length; j++) {
@@ -1320,7 +1356,7 @@ List<String> getEncryptedChannelKeys(Store? node, String channelId) {
             //printInColor( "j = $j messageId = ${messageId}\n", redColor);
           }
 
-          Event? messageEvent = node.allChildEventsMap[messageId]?.event;
+          Event? messageEvent = tempChildEventsMap[messageId]?.event;
           if( messageEvent != null) {
             //print("got a message which is: ${messageEvent.eventData.evaluatedContent}");
             //print(messageEvent.eventData.getStrForChannel(0));
@@ -1332,8 +1368,9 @@ List<String> getEncryptedChannelKeys(Store? node, String channelId) {
                 //print("num messages: ${room.messageIds.length}");
               }
 
-              if( evaluatedContent.contains(channelId)) {
-                //print("    success: got password in pvt message: $evaluatedContent");
+              if( evaluatedContent.contains(channelId) && evaluatedContent.length == 288) {
+                //print("in getEncryptedChannelKeys:    success: got password in pvt message: $evaluatedContent");
+                //print("len of evaluated content: ${evaluatedContent.length} ");
                 String priKey = evaluatedContent.substring(159, 159 + 64);
                 String pubKey = evaluatedContent.substring(224, 224 + 64);
                 return [priKey, pubKey];
@@ -1347,4 +1384,16 @@ List<String> getEncryptedChannelKeys(Store? node, String channelId) {
     }
   }
   return [];
+}
+
+String myGetPublicKey(String prikey) {
+  String pubkey = getPublicKey(prikey);
+
+  if( pubkey.length < 64) {
+    int numZeros = 64 - pubkey.length;
+    for(int i = 0; i < numZeros; i++) {
+      pubkey = "0" + pubkey;
+    }
+  }
+  return pubkey;
 }

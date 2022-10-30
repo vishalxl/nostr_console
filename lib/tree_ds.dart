@@ -584,7 +584,7 @@ class Store {
       } // end switch
   }
 
-  static void handleEncryptedChannelEvents( List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event ce) {
+  static void handleEncryptedChannelEvents( List<DirectMessageRoom> directRooms, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event ce) {
       String eId = ce.eventData.id;
       int    eKind = ce.eventData.kind;
 
@@ -613,9 +613,11 @@ class Store {
       {
         Set<String> participants = {};
         ce.eventData.pTags.forEach((element) { participants.add(element);});
-        //print("In handleEncryptedChannelEvents: processing kind 141 with participants = $participants");
+        
 
         String chatRoomId = ce.eventData.getChannelIdForMessage();
+        print("--------\nIn handleEncryptedChannelEvents: processing kind 141 id with ${ce.eventData.id} with participants = $participants");
+        print("for original channel id: $chatRoomId");
         try {
           dynamic json = jsonDecode(ce.eventData.content);
           Channel? channel = getChannel(encryptedChannels, chatRoomId);
@@ -628,8 +630,16 @@ class Store {
             }
             channel.participants = participants;
 
+            for(int i = 0; i < channel.messageIds.length; i++) {
+              Event ?e = tempChildEventsMap[channel.messageIds[i]]?.event;
+              if( e != null) {
+                //print("num directRooms = ${directRooms.length}");
+                e.eventData.translateAndExpand14x(directRooms, encryptedChannels, tempChildEventsMap);
+              }
+            }
+
           } else {
-            //print("In handleEncryptedChannelEvents: warning: should not happen. got 141 when 140 is not yet found");
+            print("In handleEncryptedChannelEvents: got 141 when 140 is not yet found");
             String roomName = "", roomAbout = "";
             if(  json.containsKey('name') ) {
               roomName = json['name']??"";
@@ -640,7 +650,7 @@ class Store {
             }
             List<String> emptyMessageList = [];
             Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants);
-            //print("created encrypted room with id $chatRoomId and name $roomName");
+            print("created encrypted room with id $chatRoomId and name $roomName");
             encryptedChannels.add( room);
           }
         } on Exception catch(e) {
@@ -734,6 +744,7 @@ class Store {
             directRooms.add( newDirectRoom);
             if( ce.eventData.id == gCheckEventId && gDebug >= 0) print("Adding new message ${ce.eventData.id} to NEW direct room $directRoomId.  sender pubkey = ${ce.eventData.pubkey}.");
           }
+          ce.eventData.translateAndExpandMentions(directRooms, tempChildEventsMap);
         } else {
           if( gDebug > 0) print("Could not get chat room id for event ${ce.eventData.id}  sender pubkey = ${ce.eventData.pubkey}.");
         }
@@ -781,14 +792,17 @@ class Store {
 
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
+
+      // these are handled in another iteration ( cause first private messages need to be populated)
+      if( eKind == 142 || eKind == 140 || eKind == 141) {
+        return;
+      }
+
+
       if( eKind == 42 || eKind == 40) {
         handleChannelEvents(channels, tempChildEventsMap, tree.event);
       }
 
-      if( eKind == 142 || eKind == 140 || eKind == 141) {
-        //print("In fromEvents: kind $eKind");
-        handleEncryptedChannelEvents(encryptedChannels, tempChildEventsMap, tree.event);
-      }
 
 
       if( eKind == 4) {
@@ -856,6 +870,13 @@ class Store {
         }
       }
     }); // going over tempChildEventsMap and adding children to their parent's .children list
+
+    tempChildEventsMap.forEach((newEventId, tree) {
+      int eKind = tree.event.eventData.kind;
+     if( eKind == 142 || eKind == 140 || eKind == 141) {
+        handleEncryptedChannelEvents(tempDirectRooms, encryptedChannels, tempChildEventsMap, tree.event);
+      }
+    });
 
     // add parent trees as top level child trees of this tree
     for( var tree in tempChildEventsMap.values) {
@@ -926,7 +947,7 @@ class Store {
 
       // expand mentions ( and translate if flag is set) and then add event to main event map
       if( newEvent.eventData.kind != 142) 
-        newEvent.eventData.translateAndExpandMentions(gStore); // this also handles dm decryption for kind 4 messages, for kind 1 will do translation/expansion; 
+        newEvent.eventData.translateAndExpandMentions(directRooms, allChildEventsMap); // this also handles dm decryption for kind 4 messages, for kind 1 will do translation/expansion; 
 
       // add them to the main store of the Tree object, but after checking that its not one of the dummy/missing events. 
       // In that case, replace the older dummy event, and only then add it to store-map
@@ -1030,7 +1051,7 @@ class Store {
           case 140:
           case 141:
             //print("calling handleEncryptedChannelEvents for kind ${newTree.event.eventData.kind} from processIncoming");
-            handleEncryptedChannelEvents(encryptedChannels, allChildEventsMap, newTree.event);
+            handleEncryptedChannelEvents(directRooms, encryptedChannels, allChildEventsMap, newTree.event);
             break;
 
           case 142:
@@ -1043,7 +1064,7 @@ class Store {
               if( channel != null) {
                 if( gDebug > 0) print("added event to encrypted chat room in insert event");
                 channel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap); // adds in order
-                newTree.event.eventData.translateAndExpandMentions(this);
+                newTree.event.eventData.translateAndExpand14x(directRooms, encryptedChannels, allChildEventsMap);
                 break;
               } else {
                 Set<String> participants = {};
@@ -1051,7 +1072,7 @@ class Store {
                 Channel newChannel = Channel(channelId, "", "", "", [], participants);
                 newChannel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap);
                 encryptedChannels.add(newChannel);
-                newTree.event.eventData.translateAndExpandMentions(this);
+                newTree.event.eventData.translateAndExpand14x(directRooms, encryptedChannels, allChildEventsMap);
               }
             }
             
@@ -1344,6 +1365,7 @@ class Store {
     if( channelId.length > 64 ) {
       return "";
     }
+
     
     // first check channelsId's, in case user has sent a channelId itself
     Set<String> fullChannelId = {};
@@ -1371,6 +1393,11 @@ class Store {
       if( room != null) {
 
         if( room.participants.length > 0) {
+          // enforce the participants-only rule
+          if( !room.participants.contains(userPublicKey)) {
+            return "";
+          }
+
           stdout.write("\n\nEncrypted channel participants list: ");
           
           room.participants.forEach((participant) {
@@ -1950,8 +1977,8 @@ Store getTree(Set<Event> events) {
     Store node = Store.fromEvents(events);
 
     // translate and expand mentions for all
-    events.where((element) => element.eventData.kind != 142).forEach( (event) =>   event.eventData.translateAndExpandMentions(node));;
-    events.where((element) => element.eventData.kind == 142).forEach( (event) =>   event.eventData.translateAndExpandMentions(node));;
+    events.where((element) => element.eventData.kind != 142).forEach( (event) =>   event.eventData.translateAndExpandMentions(node.directRooms, node.allChildEventsMap));;
+    events.where((element) => element.eventData.kind == 142).forEach( (event) =>   event.eventData.translateAndExpand14x(node.directRooms, node.encryptedChannels, node.allChildEventsMap));;
     if( gDebug > 0) log.info("expand mentions finished.");
 
     if(gDebug > 0) print("total number of posts/replies in main tree = ${node.count()}");

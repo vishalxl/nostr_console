@@ -1971,6 +1971,7 @@ Store getTree(Set<Event> events) {
 
     // remove bots from 42/142/4 messages
     events.removeWhere((event) =>  [42, 142, 4].contains(event.eventData.kind) && gBots.contains( event.eventData.pubkey) );
+    events.removeWhere((event) => event.eventData.kind == 42 && event.eventData.content.compareTo("nostrember is finished") == 0);
 
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)
     events.removeWhere( (event) => !Store.typesInEventMap.contains(event.eventData.kind));  

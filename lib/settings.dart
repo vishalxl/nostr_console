@@ -198,7 +198,8 @@ List<String> gBots = [  "3b57518d02e6acfd5eb7198530b2e351e5a52278fb2499d14b66db2
                         "e89538241bf737327f80a9e31bb5771ccbe8a4508c04f1d1c0ce7336706f1bee",  // Bitcoin news
                         "6a9eb714c2889aa32e449cfbb7854bc9780feed4ff3d887e03910dcb22aa560a",   // "bible bot"
 
-                        "3104f98515b3aa147d55d9c2951e0f953b829d8724381d8f0d824125d7727634"   // 42 spammer
+                        "3104f98515b3aa147d55d9c2951e0f953b829d8724381d8f0d824125d7727634",   // 42 spammer
+                        "6bc83d6a806b7a2c3e1fa07d3352402f7b6886b81a975090d6d89bb631c3dad9"
                       ];
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// difficulty related settings

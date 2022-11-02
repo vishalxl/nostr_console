@@ -281,9 +281,9 @@ void printProfile(Store node, String profilePubkey) {
 }
 
 int showMenu(List<String> menuOptions, String menuName) {
-  print("\n$menuName\n${getNumDashes(menuName.length)}");
-  print('Pick an option:');
   while(true) {
+    print("\n$menuName\n${getNumDashes(menuName.length)}");
+    print('Pick an option:');
     for(int i = 0; i < menuOptions.length;i++) {
       print("    ${i+1}. ${menuOptions[i]}");
     }
@@ -306,7 +306,7 @@ int showMenu(List<String> menuOptions, String menuName) {
         print(e);
       }    
     }
-    print("\nInvalid option. Kindly try again. The valid options are from 1 to ${menuOptions.length}\n");
+    printWarning("\nInvalid option. Kindly try again. The valid options are from 1 to ${menuOptions.length}");
 
   }
 }
@@ -341,11 +341,11 @@ Future<void> otherMenuUi(Store node) async {
           pubkey.forEach( (x) => print(" $x ( ${gKindONames[x]?.name} )"));
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
-              print("Got multiple users with the same name. Try again, and try to type a more unique name or id-prefix");
+              printWarning("Got multiple users with the same name. Try again, and/or type a more unique name or their full public keys.");
             }
           } else {
             if (pubkey.isEmpty ) {
-              print("Could not find the user with that id or username.");
+              printWarning("Could not find the user with that id or username.");
             } 
             else {
               printProfile(node, pubkey.first);
@@ -371,7 +371,7 @@ Future<void> otherMenuUi(Store node) async {
         if( words != "") {
           bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
-        } else print("Blank word entered. Try again.");
+        } else printWarning("Blank word entered. Try again.");
         break;
 
 
@@ -388,7 +388,7 @@ Future<void> otherMenuUi(Store node) async {
       case 5: // follow new contact
         // in case the program was invoked with --pubkey, then user can't send messages
         if( userPrivateKey == "") {
-            print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+            printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
             break;
         }
 
@@ -401,15 +401,15 @@ Future<void> otherMenuUi(Store node) async {
           print(pubkey);
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
-              print("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
+              printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
             }
           } else {
             if (pubkey.isEmpty && userName.length != 64) {
-                print("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
+                printWarning("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
             } 
             else {
               if( pubkey.isEmpty) {
-                print("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
+                printWarning("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
                 pubkey.add(userName);
               }
 
@@ -469,11 +469,11 @@ Future<void> otherMenuUi(Store node) async {
           gNumLastDays =  int.parse(newNumDays);
           print("Changed number of days printed to $gNumLastDays");
         } on FormatException catch (e) {
-          print("Invalid input. Kindly try again."); 
+          printWarning("Invalid input. Kindly try again."); 
           if( gDebug > 0) print(" ${e.message}"); 
           continue;
         } on Exception catch (e) {
-          print("Invalid input. Kindly try again."); 
+          printWarning("Invalid input. Kindly try again."); 
           if( gDebug > 0) print(" ${e}"); 
           continue;
         }    
@@ -490,7 +490,11 @@ Future<void> otherMenuUi(Store node) async {
           sendDeleteEvent(node, eventIdToDelete.first);
           await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
         } else {
-          print("Invalid Event Id(s) entered = {$eventIdToDelete}");
+          if( eventIdToDelete.length == 0) {
+            printWarning("Could not find the given event id. Kindly try again, by entering a 64 byte long hex event id, or by entering a unique prefix for the given event id.");
+          } else {
+            printWarning("Invalid Event Id(s). Kindly enter a more unique id.");
+          }
         }
 
         break;
@@ -609,7 +613,7 @@ Future<void> channelMenuUI(Store node) async {
 
                 // in case the program was invoked with --pubkey, then user can't send messages
                 if( userPrivateKey == "") {
-                    print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+                    printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
                     
                 } else {
                   // send message to the given room
@@ -708,7 +712,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
 
     await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
   } else {
-    print("warning: could not find keys for the channel. Could not update.");
+    printWarning("Could not find shared-secret keys for the channel. Could not update.");
   }
 }
 
@@ -748,7 +752,7 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String
 
           for(int i = 0; i < newPubKeys.length; i++) {
             if( newPubKeys[i].length != 64) {
-              print("Invalid pubkey. The given pubkey should be 64 byte long.");
+              printWarning("Invalid pubkey. The given pubkey should be 64 byte long.");
               continue;
             }
             toAdd.add(newPubKeys[i]);
@@ -772,7 +776,7 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String
             print("sending kind 141 invites to: $participants");
             await updateEncryptedChannel(node, fullChannelId, channelName, channelAbout, channelPic, content, tags, participants, newParticipants);
           } else {
-            print("no new users added. ");
+            printWarning("Note: No new users added. ");
           }
         }
       }
@@ -836,7 +840,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
                 // in case the program was invoked with --pubkey, then user can't send messages
                 if( userPrivateKey == "") {
-                    print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+                    printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
                 } else {
                   if( messageToSend.startsWith('/add ')) {
                     await addUsersToEncryptedChannel(node, fullChannelId, messageToSend);
@@ -853,7 +857,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                     await sendChatMessage(node, fullChannelId, encryptedMessageToSend, "142");
                     pageNum = 1; // reset it 
                   } else {
-                    printInColor("\nCould not encrypt and send message. Do confirm that you have access to this encrypted channel\n", redColor);
+                    printWarning("\nCould not encrypt and send message. Do confirm that you have access to this encrypted channel");
                   }
                 }
               }
@@ -922,7 +926,7 @@ Future<void> PrivateMenuUI(Store node) async {
         while(showChannelOption) {
           String fullChannelId = node.showDirectRoom(directRoomId, pageNum);
           if( fullChannelId == "") {
-            print("Could not find the given direct room.");
+            printWarning("Could not find the given direct room.");
             showChannelOption = false;
             break;
           }
@@ -940,12 +944,12 @@ Future<void> PrivateMenuUI(Store node) async {
               } else {
                   // in case the program was invoked with --pubkey, then user can't send messages
                   if( userPrivateKey == "") {
-                    print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+                    printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
                   }
                   // send message to the given room
                   await sendDirectMessage(node, fullChannelId, messageToSend);
                   await processAnyIncomingEvents(node, false); // get latest message
-                  print("in privateMenuUI: sent message");
+                  //print("in privateMenuUI: sent message");
                   pageNum = 1; // reset it 
               }
             }
@@ -1011,7 +1015,7 @@ Future<void> mainMenuUi(Store node) async {
         case 2:
           // in case the program was invoked with --pubkey, then user can't send messages
           if( userPrivateKey == "") {
-              print("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+              printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
               break;
           }
           stdout.write("Type comment to post/reply (type '+' to send a like): ");

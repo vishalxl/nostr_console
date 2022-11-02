@@ -637,6 +637,10 @@ class Store {
             }
 
             if( channel.lastUpdated < ce.eventData.createdAt) {
+              if( participants.contains(userPublicKey) && !channel.participants.contains(userPublicKey) ) {
+                //printInColor("\nReceived new invite to a new group with id: $chatRoomId\n", greenColor);
+              }
+
               channel.participants = participants;
               channel.lastUpdated  = ce.eventData.createdAt;
               for(int i = 0; i < channel.messageIds.length; i++) {
@@ -925,6 +929,11 @@ class Store {
     newEventsToProcess.forEach((newEvent) { 
       
       if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
+        return;
+      }
+
+      //ignore bots
+      if( [4, 42, 142].contains( newEvent.eventData.kind ) && gBots.contains(newEvent.eventData.pubkey)) {
         return;
       }
 
@@ -1959,6 +1968,9 @@ Store getTree(Set<Event> events) {
       List<DirectMessageRoom> temp =[];
       return Store([], {}, [], [], [], temp);
     }
+
+    // remove bots from 42/142/4 messages
+    events.removeWhere((event) =>  [42, 142, 4].contains(event.eventData.kind) && gBots.contains( event.eventData.pubkey) );
 
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)
     events.removeWhere( (event) => !Store.typesInEventMap.contains(event.eventData.kind));  

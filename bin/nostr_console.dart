@@ -247,15 +247,22 @@ Future<void> main(List<String> arguments) async {
       // the default in case no arguments are given is:
       // get a user's events with all default users events
       // get mentions for user
-      // get all kind 0, 3, 40, 42 events
+      // get all kind 0, 3, 4x, 14x events
       
       // then get the events of user-id's mentioned in p-tags of received events and the contact list
       // then display them all
 
-      getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
-      getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(gDaysToGetEventsFor));
-      getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor)); // from relay group 2
-      getKindEvents([0, 3, 40, 42, 140, 141, 142], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor* 10));
+      int daysToGetEventsFor = gDaysToGetEventsFor;
+
+      // if more than 1000 posts have already been read from the file, then don't get too many day's events. Only for last 3 days. 
+      if(numFilePosts > 1000) {
+        daysToGetEventsFor = 3;
+      }
+
+      getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor));
+      getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(daysToGetEventsFor));
+      getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor)); // from relay group 2
+      getKindEvents([0, 3, 40, 42, 140, 141, 142], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor* 100)); // get all type 3 etc
 
       // TODO  get all 40 events, and then get all #e for them ( responses to them)
     
@@ -283,11 +290,11 @@ Future<void> main(List<String> arguments) async {
             contacts.add(contact.id);
           });
         }
-        getContactFeed(gListRelayUrls1, contacts, gLimitPerSubscription, getSecondsDaysAgo(2 * gDaysToGetEventsFor));
+        getContactFeed(gListRelayUrls1, contacts, gLimitPerSubscription, getSecondsDaysAgo(2 * daysToGetEventsFor));
 
         // calculate top mentioned ptags, and then get the events for those users
         List<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
-        getMultiUserEvents(gListRelayUrls1, pTags, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+        getMultiUserEvents(gListRelayUrls1, pTags, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor));
         
         stdout.write('Waiting for feed to come in..............');
         Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {

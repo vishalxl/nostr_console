@@ -16,6 +16,7 @@ int gDebug = 0;
 
 String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
+void   printWarning(String s) => stdout.supportsAnsiEscapes ?stdout.write("$gWarningColor$s$gColorEndMarker\n"):stdout.write("$s\n");
 
 
 // translate 

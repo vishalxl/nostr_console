@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:logging/logging.dart';
 
-
+int gDebug = 0;
+int gSpecificDebug = 0;
 
 final log = Logger('ExampleLogger');
 
@@ -38,8 +39,8 @@ const String relayNostrInfo   = 'wss://relay.nostr.info';
 String defaultServerUrl       = "wss://relay.damus.io";
 
 List<String> gListRelayUrls1 = [ defaultServerUrl,
-                                relayNostrInfo
-                               // "wss://nostr-verified.wellorder.net"
+                                relayNostrInfo,
+                                "wss://nostr-verified.wellorder.net"
                               ];
 
 List<String> gListRelayUrls2 = [

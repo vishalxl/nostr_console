@@ -21,9 +21,16 @@ bool selectorShowAllRooms(ScrollableMessages room) {
 
 bool showAllRooms (ScrollableMessages room) => selectorShowAllRooms(room);
 
-int getLatestMessageTime(List<String> _messageIds) {
-  if( _messageIds.length <= 0 || gStore == null) {
+int getLatestMessageTime(ScrollableMessages channel) {
+
+  List<String> _messageIds = channel.messageIds;
+  if(gStore == null) {
     return 0;
+  }
+
+  if(_messageIds.length == 0) {
+    int createdAt = channel.createdAt;
+    return createdAt;
   }
 
   int latest = 0;
@@ -65,8 +72,8 @@ int scrollableCompareTo(ScrollableMessages a, ScrollableMessages b) {
   if( gStore == null)
     return 0;
 
-  int otherLatest = getLatestMessageTime(b.messageIds);
-  int thisLatest =  getLatestMessageTime(a.messageIds);
+  int otherLatest = getLatestMessageTime(b);
+  int thisLatest =  getLatestMessageTime(a);
 
   if( thisLatest < otherLatest) {
     return 1;
@@ -82,8 +89,9 @@ int scrollableCompareTo(ScrollableMessages a, ScrollableMessages b) {
 class ScrollableMessages {
   String       topHeader;
   List<String> messageIds;
+  int          createdAt;
 
-  ScrollableMessages(this.topHeader, this.messageIds);
+  ScrollableMessages(this.topHeader, this.messageIds, this.createdAt);
 
   void addMessageToRoom(String messageId, Map<String, Tree> tempChildEventsMap) {
     int newEventTime = (tempChildEventsMap[messageId]?.event.eventData.createdAt??0);
@@ -175,8 +183,12 @@ class Channel extends ScrollableMessages {
 
   Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds, this.participants, this.lastUpdated) : 
             super (  internalChatRoomName.isEmpty? channelId: internalChatRoomName + "( " + channelId + " )" , 
-                     messageIds);
+                     messageIds,
+                     lastUpdated);
 
+  String getChannelId() {
+    return channelId;
+  }
 
   String get chatRoomName {
     return internalChatRoomName;
@@ -214,10 +226,15 @@ class Channel extends ScrollableMessages {
 
 class DirectMessageRoom extends ScrollableMessages{
   String       otherPubkey; // id of user this DM is happening
+  int          createdAt;
 
-  DirectMessageRoom(this.otherPubkey, List<String> messageIds):
-            super ( "${getAuthorName(otherPubkey)} ($otherPubkey)", messageIds) {
+  DirectMessageRoom(this.otherPubkey, List<String> messageIds, this.createdAt):
+            super ( "${getAuthorName(otherPubkey)} ($otherPubkey)", messageIds, createdAt) {
             }
+
+  String getChannelId() {
+    return otherPubkey;
+  }
 
 
   bool isPrivateMessageRoom() {
@@ -757,7 +774,7 @@ class Store {
           } else {
             List<String> temp = [];
             temp.add(eId);
-            DirectMessageRoom newDirectRoom= DirectMessageRoom(directRoomId,  temp);
+            DirectMessageRoom newDirectRoom= DirectMessageRoom(directRoomId,  temp, ce.eventData.createdAt);
             directRooms.add( newDirectRoom);
             if( ce.eventData.id == gCheckEventId && gDebug >= 0) print("Adding new message ${ce.eventData.id} to NEW direct room $directRoomId.  sender pubkey = ${ce.eventData.pubkey}.");
           }
@@ -1042,7 +1059,7 @@ class Store {
 
             List<String> temp = [];
             temp.add(newTree.event.eventData.id);
-            directRooms.add(DirectMessageRoom(directRoomId, temp)); // TODO sort it 
+            directRooms.add(DirectMessageRoom(directRoomId, temp, newTree.event.eventData.createdAt)); // TODO sort it 
 
             break;
 
@@ -1528,23 +1545,26 @@ class Store {
    
     if( lookedUpName.length == 1) {
       DirectMessageRoom? room =  getDirectRoom(directRooms, lookedUpName.first);
-      if( room != null) {
+      if( room != null) {// room is already created, use it
         room.printDirectMessageRoom(this, page);
         return lookedUpName.first;
       } else {
-        if( isValidPubkey(lookedUpName.first)) {
+        if( isValidPubkey(lookedUpName.first)) { // in case the pubkey is valid and we have seen the pubkey in global author list, create new room
           print("Could not find a conversation or room with the given id. Creating one with ${lookedUpName.first}");
-          createDirectRoom( directRoomId);
+          DirectMessageRoom room = createDirectRoom( directRoomId);
+          room.printDirectMessageRoom(this, page);
           return directRoomId;
         }
       }
     } else {
-      if( lookedUpName.length > 0)
-      print("Got more than one public id for the name given, which are: ${lookedUpName.length}");
-      else {
+      if( lookedUpName.length > 0) {
+       print("Got more than one public id for the name given, which are: ${lookedUpName.length}");
+      }
+      else { // in case the given id is not present in our global list of usernames, create new room for them 
         if( isValidPubkey(directRoomId)) {
           print("Could not find a conversation or room with the given id. Creating one with $directRoomId");
-          createDirectRoom(directRoomId);
+          DirectMessageRoom room = createDirectRoom(directRoomId);
+          room.printDirectMessageRoom(this, page);
           return directRoomId;
         } 
       }
@@ -1553,8 +1573,11 @@ class Store {
     return "";
   }
 
-  void createDirectRoom(String directRoomId) {
-      directRooms.add(DirectMessageRoom(directRoomId, [])); 
+  DirectMessageRoom createDirectRoom(String directRoomId) {
+      int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+      DirectMessageRoom room = DirectMessageRoom(directRoomId, [], createdAt);
+      directRooms.add(room); 
+      return room;
   }
 
   // Write the tree's events to file as one event's json per line

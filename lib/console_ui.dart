@@ -637,6 +637,9 @@ Future<void> channelMenuUI(Store node) async {
 
       case 3:
         await createPublicChannel(node);
+        justShowedChannels = false;
+
+        // TODO put user in the newly created channel
         break;
 
       case 4:
@@ -785,7 +788,7 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String
 
 Future<void> encryptedChannelMenuUI(Store node) async {
  
-
+  gSpecificDebug = 1;
   bool continueChatMenu = true;
   
   bool justShowedChannels = false;
@@ -877,6 +880,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
       case 3:
         await createEncryptedChannel(node);
+        justShowedChannels = false;
         break;
 
       case 4:
@@ -895,7 +899,7 @@ Future<void> PrivateMenuUI(Store node) async {
   bool continueChatMenu = true;
   while(continueChatMenu) {
 
-    await processAnyIncomingEvents(node); // this takes 300 ms
+    await processAnyIncomingEvents(node, true); // this takes 300 ms
 
     node.printDirectRoomInfo(showAllRooms);
 
@@ -924,6 +928,8 @@ Future<void> PrivateMenuUI(Store node) async {
         }
         int pageNum = 1;
         while(showChannelOption) {
+
+
           String fullChannelId = node.showDirectRoom(directRoomId, pageNum);
           if( fullChannelId == "") {
             printWarning("Could not find the given direct room.");
@@ -956,7 +962,9 @@ Future<void> PrivateMenuUI(Store node) async {
           } else {
             print("Refreshing...");
           }
-          await processAnyIncomingEvents(node);
+
+          await processAnyIncomingEvents(node, false);
+
         }
         break;
 

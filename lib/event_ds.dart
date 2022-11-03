@@ -12,7 +12,6 @@ import 'dart:convert' as convert;
 import "package:pointycastle/export.dart";
 import 'package:kepler/kepler.dart';
 
-int gDebug = 0;
 
 String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);

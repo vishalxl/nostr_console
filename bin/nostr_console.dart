@@ -262,7 +262,8 @@ Future<void> main(List<String> arguments) async {
       getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor));
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(daysToGetEventsFor));
       getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor)); // from relay group 2
-      getKindEvents([0, 3, 40, 42, 140, 141, 142], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor* 100)); // get all type 3 etc
+      getKindEvents([0, 3], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor* 100)); // get all type 3 etc
+      getKindEvents([40, 42, 140, 141, 142], gListRelayUrls1, gLimitPerSubscription * 3, getSecondsDaysAgo(daysToGetEventsFor)); // get all type 3 etc
 
       // TODO  get all 40 events, and then get all #e for them ( responses to them)
     

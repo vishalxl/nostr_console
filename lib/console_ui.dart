@@ -847,11 +847,12 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                 } else {
                   if( messageToSend.startsWith('/add ')) {
                     await addUsersToEncryptedChannel(node, fullChannelId, messageToSend);
-                    break;
+                    continue;
                   }
 
                   if( messageToSend.startsWith('/remove ')) {
-                    break;
+                    // TODO finish
+                    continue;
                   }
 
                   // send message to the given room

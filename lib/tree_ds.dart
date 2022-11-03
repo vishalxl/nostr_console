@@ -1874,6 +1874,10 @@ class Store {
     List<String> validReactionList = ["+", "!"]; // TODO support opposite reactions 
     List<String> opppositeReactions = ['-', "~"];
 
+    if( event.eventData.content == "" ) { // cause damus sends blank reactions
+      event.eventData.content = "+";
+    }
+
     if( event.eventData.kind == 7 
       && event.eventData.eTags.isNotEmpty) {
 

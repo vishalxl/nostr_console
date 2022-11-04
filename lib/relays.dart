@@ -199,7 +199,7 @@ class Relays {
                 return;
               }                
             },
-            onError: (err) { print("\n${gWarningColor}Warning: In SendRequest creating connection to $relay. Kindly check your internet connection. Or maybe only this relay is down.>"); print(gColorEndMarker); },
+            onError: (err) { printWarning("\nWarning: Error in creating connection to $relay. Kindly check your internet connection. Or maybe only this relay is down."); },
             onDone:  () { if( gDebug > 0) print('Info: In onDone'); }
           );
       } on WebSocketException {

@@ -35,6 +35,13 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
   
 }
 
+String mySign(String privateKey, String msg) {
+  String randomSeed = getRandomPrivKey();
+  randomSeed = randomSeed.substring(0, 32);
+  return sign(privateKey, msg, randomSeed);
+}
+
+
 /* @function sendReplyPostLike Used to send Reply, Post and Like ( event 1 for reply and post, and event 7 for like/reaction)
  * If replyToId is blank, then it does not reference any e/p tags, and thus becomes a top post
  * otherwise e and p tags are found for the given event being replied to, if that event data is available
@@ -72,7 +79,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
     if( gDebug > 0) log.info("Ending pow numShaDone = $numShaDone id = $id");
   }
 
-  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+  String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$vanityTag],"content":"$content","sig":"$sig"}]';
   sendRequest( gListRelayUrls1, toSendMessage);
@@ -85,7 +92,7 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend,
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   
   String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
-  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+  String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
   sendRequest( gListRelayUrls1, toSendMessage);
@@ -102,7 +109,7 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
 
   String id = getShaId(userPublicKey, createdAt, replyKind, strTags, encryptedMessageToSend);
-  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+  String sig = mySign(userPrivateKey, id);
   String eventStrToSend = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$encryptedMessageToSend","sig":"$sig"}]';
  
   sendRequest( gListRelayUrls1, eventStrToSend);
@@ -138,7 +145,7 @@ Future<String> sendEvent(Store node, Event e) async {
   }
 
   String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
-  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+  String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
   //print("in send event: calling sendrequest for string \n $toSendMessage");
@@ -158,7 +165,7 @@ Future<String> sendEventWithTags(Store node, Event e, String tags) async {
   String content = addEscapeChars( e.eventData.content);
 
   String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
-  String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+  String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
   //print("in send event: calling sendrequest for string \n $toSendMessage");
@@ -187,7 +194,7 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
         int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
         String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
 
-        String sig = sign(userPrivateKey, id, "12345612345612345612345612345612");
+        String sig = mySign(userPrivateKey, id);
         String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$content","sig":"$sig"}]';
         sendRequest( gListRelayUrls1, toSendMessage);
         print("sent event delete request with id = $id");

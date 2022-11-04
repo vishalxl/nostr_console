@@ -1,8 +1,6 @@
 # nostr_console
 Nostr console client using Dart
 
-Note: This is an experimental project. Code design etc is almost terrible, and the behavior is not perfect. Use it to just look around what's possible in #nostr, where this app currently implements a twitter like social network, encrypted direct messages, and public channels. 
-
 # todo
 
 * initial creation of private/pub key ( and loading happens in background)
@@ -100,6 +98,7 @@ nostr_console.exe  --file=eventsFile.txt --prikey=K
 ![Showing Tree with re-shifting to left](https://pbs.twimg.com/media/FcdsoTeX0AApZ53?format=png&name=4096x4096); threads are re-alignment to left for easier reading.
 
 ![Public channels overview with menu](https://pbs.twimg.com/media/FcdsFm9XoAAk3m3?format=png&name=4096x4096)
+
 
 # Contact
 

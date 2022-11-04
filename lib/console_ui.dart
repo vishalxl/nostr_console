@@ -807,6 +807,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
       justShowedChannels = true;
     }
 
+    print("\nEncrypted Channel howto in short: Create a channel, and then enter the channel, and then add new participants by typing '/add <64 byte hex public key of new participant>' and then pressing enter. This will add them to the group.\n");
     int option = showMenu([ 'Enter a encrypted channel',          // 1
                             'Show all encrypted channels',        // 2
                             'Create encrypted channel',                  // 3

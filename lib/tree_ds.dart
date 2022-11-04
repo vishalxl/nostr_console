@@ -178,10 +178,12 @@ class Channel extends ScrollableMessages {
   String       about;
   String       picture;
   int          lastUpdated; // used for encryptedChannels
+  
 
   Set<String> participants; // pubkey of all participants - only for encrypted channels
+  String      creatorPubkey;      // creator of the channel, if event is known
 
-  Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds, this.participants, this.lastUpdated) : 
+  Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds, this.participants, this.lastUpdated, [this.creatorPubkey=""]) : 
             super (  internalChatRoomName.isEmpty? channelId: internalChatRoomName + "( " + channelId + " )" , 
                      messageIds,
                      lastUpdated);
@@ -701,7 +703,6 @@ class Store {
           dynamic json = jsonDecode(ce.eventData.content);
           Channel? channel = getChannel(encryptedChannels, chatRoomId);
           if( channel != null) {
-            //print("got 140, but channel structure already exists");
             // if channel entry already exists, then update its participants info, and name info
             if( channel.chatRoomName == "" && json.containsKey('name')) {
               channel.chatRoomName = json['name'];
@@ -711,6 +712,7 @@ class Store {
               channel.participants = participants;
               channel.lastUpdated  = ce.eventData.createdAt;
             }
+            channel.creatorPubkey = ce.eventData.pubkey;
 
           } else {
             String roomName = "", roomAbout = "";
@@ -722,7 +724,7 @@ class Store {
               roomAbout = json['about'];
             }
             List<String> emptyMessageList = [];
-            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants, ce.eventData.createdAt);
+            Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants, ce.eventData.createdAt, ce.eventData.pubkey);
             //print("created encrypted room with id $chatRoomId and name $roomName");
             encryptedChannels.add( room);
           }
@@ -1399,6 +1401,30 @@ class Store {
     room.printOnePage(allChildEventsMap, page);
   }
 
+  // prints some info about the encrypted channel
+  void printEncryptedChannelInfo(Channel room) {
+    // write owner
+    String creator = room.creatorPubkey;
+    print("\n\n");
+    stdout.write("Encrypted channel creator: ");
+    printInColor(getAuthorName(creator), gCommentColor);
+
+    // write participants 
+    stdout.write("\nChannel participants:      ");
+    
+    int i = 0;
+    room.participants.forEach((participant) {
+      
+      if( i != 0) {
+        stdout.write(', ');
+      }
+      String pName = getAuthorName(participant);
+      printInColor("$pName", gCommentColor);
+      i++;
+    });
+
+  }
+
   // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
   // looks for channelId in id first, then in names. 
   String showChannel(List<Channel> listChannels, String channelId, [int page = 1]) {
@@ -1440,12 +1466,9 @@ class Store {
             return "";
           }
 
-          stdout.write("\n\nEncrypted channel participants list: ");
-          
-          room.participants.forEach((participant) {
-            String pName = getAuthorName(participant);
-            stdout.write("$pName, ");
-          });
+
+          printEncryptedChannelInfo(room);
+
           
           stdout.write("\n\n");
         }

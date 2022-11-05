@@ -298,6 +298,10 @@ int showMenu(List<String> menuOptions, String menuName) {
     stdout.write("Type menu option/number: ");
     String? userOptionInput = stdin.readLineSync();
     String userOption = userOptionInput??"";
+    userOption = userOption.trim();
+    if( userOption == 'x') {
+      userOption = menuOptions.length.toString();
+    }
     if( int.tryParse(userOption) != null) {
       try{
         int? valueOption = int.tryParse(userOption);
@@ -332,8 +336,9 @@ Future<void> otherMenuUi(Store node) async {
                             'Change number of days printed', // 6
                             'Delete event',                  // 7
                             'Application stats',             // 8
-                            'Go back to main menu',          // 9
-                            'Help and About'],               // 10
+                            'Help and About',               // 9
+                            'Go back to main menu'],          // 10
+
 
                           "Other Menu");                     // menu name
     print('You picked: $option');
@@ -524,11 +529,11 @@ Future<void> otherMenuUi(Store node) async {
         break;
 
       case 9:
-        continueOtherMenu = false;
+        print(helpAndAbout);
         break;
 
       case 10:
-        print(helpAndAbout);
+        continueOtherMenu = false;
         break;
   
 

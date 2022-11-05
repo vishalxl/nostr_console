@@ -310,7 +310,6 @@ $gUsage
 KNOWN ISSUES
 ------------
 
-* Does not get all the events, or in other words, does not properly get all the events from their own relays, and thus misses some events. 
 * Does not work on Tor network
 
 ABOUT
@@ -349,12 +348,6 @@ var terminalColumns = gDefaultTextWidth;
 if( stdout.hasTerminal )
   terminalColumns = stdout.terminalColumns;
 
-
-//print(gCommentColor);
-
 lines.forEach((line) {print(line.length > terminalColumns ? line.substring(0, terminalColumns) : line );});
-//print(gColorEndMarker);
-
-//print("\n$intro\n");
 
 }

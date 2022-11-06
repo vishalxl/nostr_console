@@ -96,6 +96,13 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend,
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
   sendRequest( gListRelayUrls1, toSendMessage);
+
+  Future<void> foo() async {
+    await Future.delayed(Duration(milliseconds: 300));
+    return;
+  }
+  await foo();
+
 }
 
 // send DM
@@ -337,7 +344,7 @@ Future<void> otherMenuUi(Store node) async {
                             'Delete event',                  // 7
                             'Application stats',             // 8
                             'Help and About',               // 9
-                            'Go back to main menu'],          // 10
+                            'E(x)it to main menu'],          // 10
 
 
                           "Other Menu");                     // menu name
@@ -444,11 +451,12 @@ Future<void> otherMenuUi(Store node) async {
                   print('Sending new contact event');
                   Contact newContact = Contact(pk, defaultServerUrl);
                   newContactEvent.eventData.contactList.add(newContact);
+                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
                   sendEvent(node, newContactEvent);
                 } else {
                   print("The contact already exists in the contact list. Republishing the old contact list.");
-                  sendEvent(node, contactEvent);
                   getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+                  sendEvent(node, contactEvent);
                 }
               } else {
                   // TODO fix the send event functions by streamlining them
@@ -464,8 +472,8 @@ Future<void> otherMenuUi(Store node) async {
 
                   EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
                   Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
-                  sendEvent(node, newEvent);
                   getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+                  sendEvent(node, newEvent);
               }
             }
           }
@@ -586,7 +594,7 @@ Future<void> channelMenuUI(Store node) async {
     int option = showMenu([ 'Enter a public channel',          // 1
                             'Show all public channels',        // 2
                             'Create channel',                  // 3
-                            'Go back to main menu'],           // 4
+                            'E(x)it to main menu'],           // 4
                           "Public Channels Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
@@ -816,7 +824,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
     int option = showMenu([ 'Enter a encrypted channel',          // 1
                             'Show all encrypted channels',        // 2
                             'Create encrypted channel',                  // 3
-                            'Go back to main menu'],           // 4
+                            'E(x)it to main menu'],           // 4
                           "Encrypted Channels Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
@@ -919,8 +927,7 @@ Future<void> PrivateMenuUI(Store node) async {
 
     int option = showMenu([ 
                             'Reply or Send a direct message',
-                            'Create hub group chat',
-                            'Go back to main menu'],          // 3
+                            'E(x)it to main menu'],          // 3
                           "Private Message Menu"); // name of menu
     print('You picked: $option');
     switch(option) {
@@ -983,9 +990,6 @@ Future<void> PrivateMenuUI(Store node) async {
         break;
 
       case 2:
-        print("\nTODO");
-        break;
-      case 3:
         continueChatMenu = false;
         break;
 
@@ -1026,7 +1030,7 @@ Future<void> mainMenuUi(Store node) async {
                              'Encrypted Channels',// 4
                              'Private Messages', // 5
                              'Other Options',    // 6
-                             'Quit'],            // 7
+                             'E(x)it Application'],            // 7
                              "Main Menu");
       print('You picked: $option');
       switch(option) {

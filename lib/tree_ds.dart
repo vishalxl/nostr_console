@@ -1477,10 +1477,10 @@ class Store {
       return fullChannelId.first;
     } else {
       if( fullChannelId.length == 0) {
-        print("Could not find the channel.");
+        printWarning("Could not find the channel.");
       }
       else {
-        print("Found more than 1 channel: $fullChannelId");
+        printWarning("Found more than 1 channel: $fullChannelId");
       }
     }
 

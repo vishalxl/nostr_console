@@ -525,15 +525,17 @@ Future<void> otherMenuUi(Store node) async {
         print("\n");
         relays.printInfo();
         print("\n");
-        printUnderlined("Posts");
-        print("Total number of posts: ${node.count()}\n");
-        printUnderlined("User Info");
+        printUnderlined("Posts and User");
+        print("Total number of kind-1 posts:  ${node.count()}");
+        print("Total number of all events:    ${node.allChildEventsMap.length}");
+        print("Total number of user profiles: ${gKindONames.length}\n");
+        printUnderlined("Logged in user Info");
         if( userPrivateKey.length == 64) {
           print("You are signed in, and your public key is:       $userPublicKey");
         } else {
           print("You are not signed in, and are using public key: $userPublicKey");
         }
-        print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}");        
+        print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}\n");
         break;
 
       case 9:

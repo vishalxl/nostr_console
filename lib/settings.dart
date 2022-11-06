@@ -16,11 +16,12 @@ const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 bool         gDontWriteOldEvents    = true;
 const int gDontSaveBeforeDays       = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
+const int gDeletePostsOlderThanDays = 20;
 bool         gOverWriteFile         = false; // overwrite the file, and don't just append. Will write all events in memory. 
 
 const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
-const int gDaysToGetEventsFor       = 60; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gDaysToGetEventsFor       = 20; // when getting events, this is the since field (unless a fully formed request is given in command line)
 const int gLimitPerSubscription     = 6000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
@@ -40,6 +41,7 @@ String defaultServerUrl       = "wss://relay.damus.io";
 
 List<String> gListRelayUrls1 = [ defaultServerUrl,
                                 relayNostrInfo,
+                                "wss://nostr.oxtr.dev",
                                 "wss://nostr-verified.wellorder.net"
                               ];
 

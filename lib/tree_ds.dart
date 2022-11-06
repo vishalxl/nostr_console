@@ -591,7 +591,7 @@ class Store {
             }
             List<String> emptyMessageList = [];
             Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, {}, ce.eventData.createdAt);
-            //print("created room with id $chatRoomId");
+            //print("created room with id $chatRoomId name ${roomName}");
             rooms.add( room);
           }
         } on Exception catch(e) {
@@ -921,6 +921,8 @@ class Store {
       }
     }
 
+    //log.info("In fromEvents bfore calling SendEventsRequest for ${dummyEventIds.length} dummy evnets");
+
     if(gDebug != 0) print("In Tree FromEvents: number of events in map which are not kind 1 = ${numEventsNotPosts}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 40 = ${numKind40Events}");
     if(gDebug != 0) print("In Tree FromEvents: number of events in map of kind 42 = ${numKind42Events}");
@@ -928,6 +930,8 @@ class Store {
 
     // get dummy events
     sendEventsRequest(gListRelayUrls1, dummyEventIds);
+
+    //log.info("In fromEvents After calling SendEventsRequest for ${dummyEventIds.length} dummy evnets");
 
     // create a dummy top level tree and then create the main Tree object
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms);
@@ -2012,12 +2016,17 @@ int sortTreeNewestReply(Tree a, Tree b) {
  *             populate global names, process reactions, remove bots, translate, and then create main tree
  */
 Store getTree(Set<Event> events) {
+    //log.info("Entered getTree for ${events.length} events");
+
     if( events.isEmpty) {
       if(gDebug > 0) log.info("Warning: In printEventsAsTree: events length = 0");
 
       List<DirectMessageRoom> temp =[];
       return Store([], {}, [], [], [], temp);
     }
+
+    // remove posts older than 20 days or so
+    //events.removeWhere((event) => [1, 7, 42].contains(event.eventData.kind) && event.eventData.createdAt < getSecondsDaysAgo(gDeletePostsOlderThanDays));
 
     // remove bots from 42/142/4 messages
     events.removeWhere((event) =>  [42, 142, 4].contains(event.eventData.kind) && gBots.contains( event.eventData.pubkey) );
@@ -2026,34 +2035,26 @@ Store getTree(Set<Event> events) {
     // remove all events other than kind 0 (meta data), 1(posts replies likes), 3 (contact list), 7(reactions), 40 and 42 (chat rooms)
     events.removeWhere( (event) => !Store.typesInEventMap.contains(event.eventData.kind));  
 
+    // remove duplicate events
+    Set ids = {};
+    events.retainWhere((event) => ids.add(event.eventData.id));
+
     // process kind 0 events about metadata 
     int totalKind0Processed = 0, notProcessed = 0;
     events.forEach( (event) =>  processKind0Event(event)? totalKind0Processed++: notProcessed++);
     if( gDebug > 0) print("In getTree: totalKind0Processed = $totalKind0Processed  notProcessed = $notProcessed gKindONames.length = ${gKindONames.length}"); 
-
-
-    if( gDebug > 0) log.info("kind 0 finished.");
 
     // process kind 3 events which is contact list. Update global info about the user (with meta data) 
     int totalKind3Processed = 0, notProcessed3 = 0;
     events.forEach( (event) =>  processKind3Event(event)? totalKind3Processed++: notProcessed3++);
     if( gDebug > 0) print("In getTree: totalKind3Processed = $totalKind3Processed  notProcessed = $notProcessed3 gKindONames.length = ${gKindONames.length}"); 
 
-    if( gDebug > 0) log.info("kind 3 finished.");
-
-    // remove bot events
-    //events.removeWhere( (event) => gBots.contains(event.eventData.pubkey));
-
-    // remove duplicate events
-    Set ids = {};
-    events.retainWhere((event) => ids.add(event.eventData.id));
-
-
-    if( gDebug > 0) print("In getTree: after removing unwanted kind, number of events remaining: ${events.length}");
-
     if( gDebug > 0) log.info("Calling fromEvents for ${events.length} events.");
+
     // create tree from events
+    //log.info("Before calling fromEvents for ${events.length} events");
     Store node = Store.fromEvents(events);
+    //log.info("After calling fromEvents with ${node.allChildEventsMap.length} events in its internal store");
 
     // translate and expand mentions for all
     events.where((element) => element.eventData.kind != 142).forEach( (event) =>   event.eventData.translateAndExpandMentions(node.directRooms, node.allChildEventsMap));;

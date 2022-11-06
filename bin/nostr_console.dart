@@ -208,7 +208,9 @@ Future<void> main(List<String> arguments) async {
         stdout.write('Reading events from ${whetherDefault}file.......');
 
         // read file events and give the events to relays from where they're picked up later
+        //log.info("before reading events");
         initialEvents = await readEventsFromFile(gEventsFilename);
+        //log.info("after reading events");
 
         // count events
         initialEvents.forEach((element) { element.eventData.kind == 1? numFilePosts++: numFilePosts;});
@@ -262,8 +264,8 @@ Future<void> main(List<String> arguments) async {
       getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor));
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(daysToGetEventsFor));
       getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor)); // from relay group 2
-      getKindEvents([0, 3], gListRelayUrls1, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor* 100)); // get all type 3 etc
-      getKindEvents([40, 42, 140, 141, 142], gListRelayUrls1, gLimitPerSubscription * 3, getSecondsDaysAgo(daysToGetEventsFor)); // get all type 3 etc
+      getKindEvents([0, 3, 40, 41, 140, 141], gListRelayUrls1, 3 * gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor* 100)); // get all type 3 etc
+      getKindEvents([442, 142], gListRelayUrls1, gLimitPerSubscription * 3, getSecondsDaysAgo( daysToGetEventsFor)); // get all type 3 etc
 
       // TODO  get all 40 events, and then get all #e for them ( responses to them)
     

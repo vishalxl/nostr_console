@@ -1335,6 +1335,10 @@ class Store {
     channelstoPrint.sort(scrollableCompareTo);
     int numChannelsActuallyPrinted = 0;
 
+    if( channelstoPrint.length < numRoomsOverview) {
+      numRoomsOverview = channelstoPrint.length;
+    }
+
     print("\n\n");
     printUnderlined("      Channel Name                Num of Messages            Latest Message           ");
     for(int j = 0; j < numRoomsOverview; j++) {

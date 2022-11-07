@@ -4,11 +4,7 @@ version: 0.1.0-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
 # Release 0.1.0-beta - encrypted channels; fixes
-# improved fetching of events. and display for channels. 
-# damus reactions
-# random seed
-# printed info
-# added delay
+# crash channel overview
 
 environment:
   sdk: '>=2.17.3 <3.0.0'

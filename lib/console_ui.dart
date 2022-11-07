@@ -653,7 +653,7 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 2:
-        node.printChannelsOverview(node.channels, 1000, selectorShowAllRooms);
+        node.printChannelsOverview(node.channels, node.channels.length, selectorShowAllRooms);
         justShowedChannels = true;
         break;
 
@@ -898,7 +898,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
         break;
 
       case 2:
-        node.printChannelsOverview(node.encryptedChannels, 1000, selectorShowAllRooms);
+        node.printChannelsOverview(node.encryptedChannels, node.encryptedChannels.length, selectorShowAllRooms);
         justShowedChannels = true;
         break;
 

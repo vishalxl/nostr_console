@@ -1329,42 +1329,21 @@ class Store {
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom)
    */
-  int printChannelsOverview(List<Channel> channelstoPrint, int numToPrint, fRoomSelector selector) {
+  int printChannelsOverview(List<Channel> channelstoPrint, int numRoomsOverview, fRoomSelector selector) {
 
 
-    int numRoomsSelected = 0;
-    for( int j = 0; j < channelstoPrint.length; j++) {
-      //print(channelstoPrint[j].participants);
-      if( channelstoPrint[j].participants.length == 0 || (channelstoPrint[j].participants.length > 0 &&  channelstoPrint[j].participants.contains(userPublicKey))) {
-        if( selector(channelstoPrint[j]) ) {
-          numRoomsSelected++;
-        }
-      } 
-    }
-    //print(numRoomsSelected);
-
-    if( numRoomsSelected == 0) {
-      return 0;
-    }
-
-    // if selected rooms is less, then print only that
-    //if( numRoomsSelected < numToPrint)   numToPrint = numRoomsSelected;
-
-    int numChannelsActuallyPrinted = 0;
     channelstoPrint.sort(scrollableCompareTo);
-    print("");
-    if( numToPrint < channelstoPrint.length) {
-      print("Showing only $numToPrint/${channelstoPrint.length} total channels\n");
-    } else {
-      print("Showing all ${channelstoPrint.length} channels\n");
-      numToPrint = channelstoPrint.length;
-    }
+    int numChannelsActuallyPrinted = 0;
 
     printUnderlined("      Channel Name                Num of Messages            Latest Message           ");
-    for(int j = 0; j < numToPrint; j++) {
+    for(int j = 0; j < numRoomsOverview; j++) {
 
       if( channelstoPrint[j].participants.length > 0 &&  !channelstoPrint[j].participants.contains(userPublicKey)) {
         //print(channelstoPrint[j].participants);
+        continue;
+      }
+
+      if( !selector(channelstoPrint[j]) ) {
         continue;
       }
 
@@ -1378,7 +1357,7 @@ class Store {
 
       int numMessages = channelstoPrint[j].getNumValidMessages();
       stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
-      numChannelsActuallyPrinted ++;
+      numChannelsActuallyPrinted++;
       List<String> messageIds = channelstoPrint[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i--) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
@@ -1393,6 +1372,10 @@ class Store {
       }
       print("");
     }
+
+    print("");
+    print("Showing $numChannelsActuallyPrinted channels\n");
+
     return numChannelsActuallyPrinted;
   }
 

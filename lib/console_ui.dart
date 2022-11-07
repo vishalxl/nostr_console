@@ -120,6 +120,12 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
   String eventStrToSend = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$encryptedMessageToSend","sig":"$sig"}]';
  
   sendRequest( gListRelayUrls1, eventStrToSend);
+
+  Future<void> foo() async {
+    await Future.delayed(Duration(milliseconds: 300));
+    return;
+  }
+  await foo();
 }
 
 // sends event e; used to send kind 3 event; can send other kinds too like channel create kind 40
@@ -294,7 +300,12 @@ void printProfile(Store node, String profilePubkey) {
   print("");
 }
 
-int showMenu(List<String> menuOptions, String menuName) {
+int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
+
+  if(menuInfo.length > 0) {
+    print("\n$menuInfo\n");
+  }
+
   while(true) {
     print("\n$menuName\n${getNumDashes(menuName.length)}");
     print('Pick an option:');
@@ -329,7 +340,7 @@ int showMenu(List<String> menuOptions, String menuName) {
   }
 }
 
-Future<void> otherMenuUi(Store node) async {
+Future<void> otherOptionsMenuUi(Store node) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
 
@@ -347,7 +358,7 @@ Future<void> otherMenuUi(Store node) async {
                             'E(x)it to main menu'],          // 10
 
 
-                          "Other Menu");                     // menu name
+                          "Other Options Menu");                     // menu name
     print('You picked: $option');
     switch(option) {
       case 1:
@@ -589,15 +600,18 @@ Future<void> channelMenuUI(Store node) async {
 
     //await processNotifications(node); // this takes 300 ms
     if( !justShowedChannels) {
+      printInColor("                                     Public Channels ", gCommentColor);
       node.printChannelsOverview(node.channels, 20, selectorShowAllRooms);
       justShowedChannels = true;
     }
 
+    String menuInfo = "Public channel howto: To enter a channel, enter first few letters of its name or the channel identifier. When in a channel, press 'x' to exit.";
     int option = showMenu([ 'Enter a public channel',          // 1
                             'Show all public channels',        // 2
                             'Create channel',                  // 3
                             'E(x)it to main menu'],           // 4
-                          "Public Channels Menu"); // name of menu
+                          "Public Channels Menu", // name of menu
+                          menuInfo);
     print('You picked: $option');
     switch(option) {
       case 1:
@@ -653,6 +667,7 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 2:
+        printInColor("                                 All Public Channels ", gCommentColor);
         node.printChannelsOverview(node.channels, node.channels.length, selectorShowAllRooms);
         justShowedChannels = true;
         break;
@@ -815,19 +830,22 @@ Future<void> encryptedChannelMenuUI(Store node) async {
   
   bool justShowedChannels = false;
   while(continueChatMenu) {
-    await processAnyIncomingEvents(node); // this takes 300 ms
+    await processAnyIncomingEvents(node, false); // this takes 300 ms
 
     if( !justShowedChannels) {
+      printInColor("                                  Encrypted Channels ", gCommentColor);
       node.printChannelsOverview(node.encryptedChannels, 20, selectorShowAllRooms);
       justShowedChannels = true;
     }
 
-    print("\nEncrypted Channel howto in short: Create a channel, and then enter the channel, and then add new participants by typing '/add <64 byte hex public key of new participant>' and then pressing enter. This will add them to the group.\n");
-    int option = showMenu([ 'Enter a encrypted channel',          // 1
+    String menuInfo = "Encrypted Channel howto: Create a channel, and then enter the channel, and then add new participants by typing '/add <64 byte hex public key of new participant>' and then pressing enter. This will add them to the group. When you have been invited to a channel, it will be shown in list, and you can enter that channel by typing its first few letters of name or identifier.";
+
+    int option = showMenu([ 'Enter an encrypted channel',          // 1
                             'Show all encrypted channels',        // 2
                             'Create encrypted channel',                  // 3
                             'E(x)it to main menu'],           // 4
-                          "Encrypted Channels Menu"); // name of menu
+                          "Encrypted Channels Menu",  // name of menu
+                          menuInfo); 
     print('You picked: $option');
     switch(option) {
       case 1:
@@ -898,6 +916,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
         break;
 
       case 2:
+        printInColor("                              All Encrypted Channels ", gCommentColor);
         node.printChannelsOverview(node.encryptedChannels, node.encryptedChannels.length, selectorShowAllRooms);
         justShowedChannels = true;
         break;
@@ -922,15 +941,17 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 Future<void> PrivateMenuUI(Store node) async {
   bool continueChatMenu = true;
   while(continueChatMenu) {
-
     await processAnyIncomingEvents(node, true); // this takes 300 ms
 
+    printInColor("                                Direct Messages", gCommentColor);
     node.printDirectRoomInfo(showAllRooms);
 
+    String menuInfo = "Direct Message howto: To send a DM to someone for the first time, enter their 64 byte hex pubkey. To enter conversation seen in overview, enter the first few letters of the other person's name, or their pubkey";
     int option = showMenu([ 
                             'Reply or Send a direct message',
                             'E(x)it to main menu'],          // 3
-                          "Private Message Menu"); // name of menu
+                          "Direct Message Menu", // name of menu
+                          menuInfo); 
     print('You picked: $option');
     switch(option) {
 
@@ -1086,7 +1107,7 @@ Future<void> mainMenuUi(Store node) async {
           break;
 
         case 6:
-          await otherMenuUi(node);
+          await otherOptionsMenuUi(node);
           break;
 
         case 7:

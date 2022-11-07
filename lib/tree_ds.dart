@@ -1335,6 +1335,7 @@ class Store {
     channelstoPrint.sort(scrollableCompareTo);
     int numChannelsActuallyPrinted = 0;
 
+    print("\n\n");
     printUnderlined("      Channel Name                Num of Messages            Latest Message           ");
     for(int j = 0; j < numRoomsOverview; j++) {
 
@@ -1497,7 +1498,7 @@ class Store {
 
     int numRoomsActuallyPrinted = 0;
     stdout.write("\n");
-    stdout.write("Direct messages inbox:\n");
+    //stdout.write("Direct messages inbox:\n");
     stdout.write("\n\n");
     
     printUnderlined(" From                                    Num of Messages          Latest Message           ");

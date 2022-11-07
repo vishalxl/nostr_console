@@ -261,9 +261,9 @@ Future<void> main(List<String> arguments) async {
         daysToGetEventsFor = 3;
       }
 
-      getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor));
+      getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor * 100));
+      getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor * 20)); // from relay group 2
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 1000, getSecondsDaysAgo(daysToGetEventsFor));
-      getMentionEvents(gListRelayUrls2, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor)); // from relay group 2
       getKindEvents([0, 3, 40, 41, 140, 141], gListRelayUrls1, 3 * gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor* 100)); // get all type 3 etc
       getKindEvents([42, 142], gListRelayUrls1, gLimitPerSubscription * 3, getSecondsDaysAgo( daysToGetEventsFor)); // get all type 3 etc
 

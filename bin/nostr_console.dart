@@ -85,7 +85,7 @@ Future<void> main(List<String> arguments) async {
           print("Length of provided private key should be 64. Exiting.");
           return;
         }
-        userPublicKey = getPublicKey(userPrivateKey);
+        userPublicKey = myGetPublicKey(userPrivateKey); 
         print("Going to use the provided private key");
       }
 

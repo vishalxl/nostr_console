@@ -1148,7 +1148,7 @@ class Store {
   void printNotifications(Set<String> newEventIdsSet, String userName) {
     if( gDebug > 0) print("Info: in printNotifications: num new evetns = ${newEventIdsSet.length}");
 
-    String strToWrite = "Notifications: ";
+    String strToWrite = "";
     int countNotificationEvents = 0;
     for( var newEventId in newEventIdsSet) {
       int k = (allChildEventsMap[newEventId]?.event.eventData.kind??-1);
@@ -1167,16 +1167,16 @@ class Store {
     if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventIdsSet count17 = $countNotificationEvents");
     
     if( countNotificationEvents == 0) {
-      strToWrite += "No new replies/posts.\n";
-      stdout.write("${getNumDashes(strToWrite.length - 1)}\n$strToWrite");
-      stdout.write("Total posts  : ${count()}\n");
-      stdout.write("Signed in as : $userName\n\n");
+      //strToWrite += "No new replies/posts.\n";
+      //stdout.write("${getNumDashes(strToWrite.length - 1)}\n$strToWrite");
+      //stdout.write("Total posts  : ${count()}\n");
+      stdout.write("Signed in as : $userName\n");
       return;
     }
     // TODO call count() less
     strToWrite += "Number of new replies/posts = ${newEventIdsSet.length}\n";
     stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
-    stdout.write("Total posts  : ${count()}\n");
+    //stdout.write("Total posts  : ${count()}\n");
     stdout.write("Signed in as : $userName\n");
     stdout.write("\nHere are the threads with new replies or new likes: \n\n");
     
@@ -1238,7 +1238,7 @@ class Store {
       //t.printTree(0, DateTime(0), true); 
       print("\n");
     });
-    print("\n");
+    //print("\n");
   }
 
   static int printTopPost(Tree topTree, int depth, DateTime newerThan) {
@@ -1290,7 +1290,7 @@ class Store {
     }
 
     if( numPrinted > 0)
-      print("\n\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
+      print("\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
     return numPrinted;
   }
  

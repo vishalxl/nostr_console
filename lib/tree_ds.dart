@@ -151,7 +151,7 @@ class ScrollableMessages {
       printDepth(0);
       stdout.write("${gNotificationColor}Displayed page number ${page} (out of total $numPages pages, where 1st is the latest 'page').\n");
       printDepth(0);
-      stdout.write("To see older pages, enter numbers from 1-${numPages}.${gColorEndMarker}\n\n");
+      stdout.write("To see older pages, enter numbers from 1-${numPages}, in format '/N', a slash followed by the required page number.${gColorEndMarker}\n\n");
     }
   }
 
@@ -1758,7 +1758,7 @@ class Store {
       }
     }
 
-    print("In getTagStrForChannel: found latest id : $latestEventId");
+    //print("In getTagStrForChannel: found latest id : $latestEventId");
 
     // in case we are given valid length id, but we can't find the event in our internal db, then we just send the reply to given id
     if( latestEventId.isEmpty && replyToId.length == 64) {

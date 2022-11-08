@@ -115,6 +115,7 @@ Future<void> sendPublicChannelReply(Store node, Channel channel, String replyTo,
   String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
+  //printInColor(toSendMessage, gCommentColor);
   sendRequest( gListRelayUrls1, toSendMessage);
 
   Future<void> foo() async {
@@ -627,8 +628,9 @@ Future<void> channelMenuUI(Store node) async {
     }
 
     String menuInfo = """Public channel howto: To enter a channel, enter first few letters of its name or the channel identifier. 
-                      The first column is the id of the given post.
-                      To reply to a post type '/reply <first few letters of id of post to reply to> <your message>. When in a channel, press 'x' to exit. """;
+                      When inside a channel, the first column is the id of the given post. It can be used when you want to reply to a specific post.
+                      To reply to a specific post, type '/reply <first few letters of id of post to reply to> <your message>. 
+                      When in a channel, press 'x' to exit. """;
     int option = showMenu([ 'Enter a public channel',          // 1
                             'Show all public channels',        // 2
                             'Create channel',                  // 3
@@ -666,8 +668,10 @@ Future<void> channelMenuUI(Store node) async {
             if( messageToSend == 'x') {
               showChannelOption = false;
             } else {
-              if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
-                pageNum = (int.tryParse(messageToSend))??1;
+              int retval = 0;
+              if( (retval = messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed)) != 0 ) {
+                print('is channel page number: $retval');
+                pageNum = retval;
               } else {
 
                 // in case the program was invoked with --pubkey, then user can't send messages
@@ -675,16 +679,21 @@ Future<void> channelMenuUI(Store node) async {
                     printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
                     
                 } else {
-                if( messageToSend.substring(0, 6).compareTo("/reply") == 0) {
+
+                //print("message: |$messageToSend|");
+                if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
                   List<String> tokens = messageToSend.split(' ');
                   //print("tokens = $tokens");
                   if( tokens.length >= 3) {
                     String replyTo = tokens[1];
                     Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
-                    String actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length);
+                    String actualMessage = messageToSend.substring(7);
+
+                    if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
+                      actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
 
                     if( channel != null) {
-                      //print("sending reply");
+                      //print("sending reply |$actualMessage|");
                       await sendPublicChannelReply(node, channel, replyTo, actualMessage, "42");
                       pageNum = 1; // reset it 
                     }
@@ -692,6 +701,7 @@ Future<void> channelMenuUI(Store node) async {
 
                 } else {
                   // send message to the given room
+                  print("sending message |$messageToSend|");
                   await sendPublicChannelMessage(node, fullChannelId, messageToSend, "42");
                   pageNum = 1; // reset it 
 
@@ -921,8 +931,9 @@ Future<void> encryptedChannelMenuUI(Store node) async {
             if( messageToSend == 'x') {
               showChannelOption = false;
             } else {
-              if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
-                pageNum = (int.tryParse(messageToSend))??1;
+              int retval = 0;
+              if( (retval = messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) != 0) {
+                pageNum = retval;
               } else {
 
                 // in case the program was invoked with --pubkey, then user can't send messages
@@ -1032,8 +1043,9 @@ Future<void> PrivateMenuUI(Store node) async {
             if( messageToSend == 'x') {
               showChannelOption = false;
             } else {
-              if( messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed) ) {
-                pageNum = (int.tryParse(messageToSend))??1;
+              int retval = 0;
+              if( (retval = messageToSend.isChannelPageNumber(gMaxChannelPagesDisplayed)) != 0 ) {
+                pageNum = retval;
               } else {
                   // in case the program was invoked with --pubkey, then user can't send messages
                   if( userPrivateKey == "") {

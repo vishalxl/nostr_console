@@ -1063,14 +1063,21 @@ bool isWhitespace(String s) {
 extension StringX on String {
 
 
-  isChannelPageNumber(int max) {
+  int isChannelPageNumber(int max) {
   
-  int? n = int.tryParse(this);
-  if( n != null) {
-    if( n < max)
-      return true;
-  }
-  return false;
+    if(this.length < 2 || this[0] != '/') {
+      return 0;
+    } 
+
+    String rest = this.substring(1);
+
+    //print("rest = $rest");
+    int? n = int.tryParse(rest);
+    if( n != null) {
+      if( n < max)
+        return n;
+    }
+    return 0;
   }
 
   isEnglish( ) {

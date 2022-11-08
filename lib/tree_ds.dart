@@ -1701,7 +1701,7 @@ class Store {
       return "";
     }
 
-    // found the id of event we are replying to
+    // found the id of event we are replying to; now gets its top event to set as root, if there is one
     if( latestEventId.isNotEmpty) {
       String? pTagPubkey = allChildEventsMap[latestEventId]?.event.eventData.pubkey;
       if( pTagPubkey != null) {
@@ -1726,6 +1726,67 @@ class Store {
     strTags += '["client","$clientName"]' ;
     return strTags;
   }
+
+  /*
+   * @getTagsFromEvent Searches for all events, and creates a json of e-tag type which can be sent with event
+   *                   Also adds 'client' tag with application name.
+   * @parameter replyToId First few letters of an event id for which reply is being made
+   */
+  String getTagStrForChannel(Channel channel, String replyToId, String clientName, [bool addAllP = false]) {
+    String channelId = channel.channelId;
+
+    clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
+    if( replyToId.isEmpty) {
+      return '["client","$clientName"]';
+    }
+
+    String strTags = "";
+
+    // find the latest event with the given id; needs to be done because we allow user to refer to events with as few as 3 or so first letters
+    // and only the event that's latest is considered as the intended recipient ( this is not perfect, but easy UI)
+    int latestEventTime = 0;
+    String latestEventId = "";
+    for( int i = channel.messageIds.length - 1; i >= 0; i--) {
+      String eventId = channel.messageIds[i];
+
+      if( replyToId == eventId.substring(0, replyToId.length)) {
+        if( ( allChildEventsMap[eventId]?.event.eventData.createdAt ?? 0) > latestEventTime ) {
+          latestEventTime = allChildEventsMap[eventId]?.event.eventData.createdAt ?? 0;
+          latestEventId = eventId;
+          break;
+        }
+      }
+    }
+
+    print("In getTagStrForChannel: found latest id : $latestEventId");
+
+    // in case we are given valid length id, but we can't find the event in our internal db, then we just send the reply to given id
+    if( latestEventId.isEmpty && replyToId.length == 64) {
+      latestEventId = replyToId;  
+    }
+
+    if( latestEventId.isEmpty && replyToId.length != 64 && replyToId.length != 0) {
+      printWarning('Could not find the given id: $replyToId. Sending a regular message.');
+    }
+
+    strTags +=  '["e","$channelId"],';
+    // found the id of event we are replying to; now gets its top event to set as root, if there is one
+    if( latestEventId.isNotEmpty) {
+      String? pTagPubkey = allChildEventsMap[latestEventId]?.event.eventData.pubkey;
+      String relay = getRelayOfUser(userPublicKey, pTagPubkey??"");
+      relay = (relay == "")? defaultServerUrl: relay;
+      strTags +=  '["e","$latestEventId"],';
+
+      if( pTagPubkey != null) {
+        strTags += '["p","$pTagPubkey"],';
+      }
+    }
+
+    strTags += '["client","$clientName"]' ;
+    //printInColor(strTags, gCommentColor);
+    return strTags;
+  }
+
 
   // for any tree node, returns its top most parent
   Tree getTopTree(Tree tree) {

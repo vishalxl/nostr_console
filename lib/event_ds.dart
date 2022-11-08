@@ -573,11 +573,13 @@ class EventData {
       }
     }
    
+    String msgId = id.substring(0, 3).padLeft(gSpacesPerDepth~/2).padRight(gSpacesPerDepth) ;
+
     if( isNotification) {
-      strToPrint = "$gNotificationColor${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: $gNotificationColor" +  contentShifted + gColorEndMarker;
+      strToPrint = "$gNotificationColor${getDepthSpaces(depth-1)}$msgId  $dateToPrint    $nameToPrint: $gNotificationColor" +  contentShifted + gColorEndMarker;
       isNotification = false;
     } else {
-      strToPrint = "${getDepthSpaces(depth)}  $dateToPrint    $nameToPrint: " +  contentShifted;
+      strToPrint = "${getDepthSpaces(depth-1)}$msgId  $dateToPrint    $nameToPrint: " +  contentShifted;
     }
     return strToPrint;
   }

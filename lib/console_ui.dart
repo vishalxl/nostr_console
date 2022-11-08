@@ -85,8 +85,8 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   sendRequest( gListRelayUrls1, toSendMessage);
 }
 
-// is same as above. remove it TODO
-Future<void> sendChatMessage(Store node, String channelId, String messageToSend, String replyKind) async {
+// Sends a public channel message
+Future<void> sendPublicChannelMessage(Store node, String channelId, String messageToSend, String replyKind) async {
 
   String strTags = node.getTagStr(channelId, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -104,6 +104,27 @@ Future<void> sendChatMessage(Store node, String channelId, String messageToSend,
   await foo();
 
 }
+
+// Sends a public channel message
+Future<void> sendPublicChannelReply(Store node, Channel channel, String replyTo, String messageToSend, String replyKind) async {
+
+  String strTags = node.getTagStrForChannel(channel, replyTo, exename);
+  int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+  
+  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
+  String sig = mySign(userPrivateKey, id);
+
+  String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
+  sendRequest( gListRelayUrls1, toSendMessage);
+
+  Future<void> foo() async {
+    await Future.delayed(Duration(milliseconds: 300));
+    return;
+  }
+  await foo();
+
+}
+
 
 // send DM
 Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend) async {
@@ -605,7 +626,9 @@ Future<void> channelMenuUI(Store node) async {
       justShowedChannels = true;
     }
 
-    String menuInfo = "Public channel howto: To enter a channel, enter first few letters of its name or the channel identifier. When in a channel, press 'x' to exit.";
+    String menuInfo = """Public channel howto: To enter a channel, enter first few letters of its name or the channel identifier. 
+                      The first column is the id of the given post.
+                      To reply to a post type '/reply <first few letters of id of post to reply to> <your message>. When in a channel, press 'x' to exit. """;
     int option = showMenu([ 'Enter a public channel',          // 1
                             'Show all public channels',        // 2
                             'Create channel',                  // 3
@@ -652,9 +675,29 @@ Future<void> channelMenuUI(Store node) async {
                     printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
                     
                 } else {
+                if( messageToSend.substring(0, 6).compareTo("/reply") == 0) {
+                  List<String> tokens = messageToSend.split(' ');
+                  //print("tokens = $tokens");
+                  if( tokens.length >= 3) {
+                    String replyTo = tokens[1];
+                    Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
+                    String actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length);
+
+                    if( channel != null) {
+                      //print("sending reply");
+                      await sendPublicChannelReply(node, channel, replyTo, actualMessage, "42");
+                      pageNum = 1; // reset it 
+                    }
+                  }
+
+                } else {
                   // send message to the given room
-                  await sendChatMessage(node, fullChannelId, messageToSend, "42");
+                  await sendPublicChannelMessage(node, fullChannelId, messageToSend, "42");
                   pageNum = 1; // reset it 
+
+                }
+
+
                 }
               }
             }
@@ -899,7 +942,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                   // send message to the given room
                   String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
                   if( encryptedMessageToSend != "") {
-                    await sendChatMessage(node, fullChannelId, encryptedMessageToSend, "142");
+                    await sendPublicChannelMessage(node, fullChannelId, encryptedMessageToSend, "142");
                     pageNum = 1; // reset it 
                   } else {
                     printWarning("\nCould not encrypt and send message. Do confirm that you have access to this encrypted channel");

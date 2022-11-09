@@ -54,7 +54,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   }
 
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
-  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
+  String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, content);
 
   // generate POW if required
   String vanityTag = strTags;
@@ -70,7 +70,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
     int numShaDone = 0;
     for( numShaDone = 0; numShaDone < 100000000; numShaDone++) {
       vanityTag = strTags + ',["nonce","$numShaDone","$gDifficulty"]';
-      id = getShaId(userPublicKey, createdAt, replyKind, vanityTag, content);
+      id = getShaId(userPublicKey, createdAt.toString(), replyKind, vanityTag, content);
       if( id.substring(0, numBytes) == zeroString) {
         break;
       }
@@ -80,7 +80,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   }
 
   String sig = mySign(userPrivateKey, id);
-
+  
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$vanityTag],"content":"$content","sig":"$sig"}]';
   sendRequest( gListRelayUrls1, toSendMessage);
 }
@@ -91,7 +91,7 @@ Future<void> sendPublicChannelMessage(Store node, String channelId, String messa
   String strTags = node.getTagStr(channelId, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   
-  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
+  String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, messageToSend);
   String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
@@ -111,7 +111,7 @@ Future<void> sendPublicChannelReply(Store node, Channel channel, String replyTo,
   String strTags = node.getTagStrForChannel(channel, replyTo, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   
-  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, messageToSend);
+  String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, messageToSend);
   String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
@@ -137,7 +137,7 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
   strTags += gWhetherToSendClientTag?',["client","nostr_console"]':'';
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
 
-  String id = getShaId(userPublicKey, createdAt, replyKind, strTags, encryptedMessageToSend);
+  String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, encryptedMessageToSend);
   String sig = mySign(userPrivateKey, id);
   String eventStrToSend = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$encryptedMessageToSend","sig":"$sig"}]';
  
@@ -179,7 +179,7 @@ Future<String> sendEvent(Store node, Event e) async {
     strTags += '["client","nostr_console"]';
   }
 
-  String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
+  String id = getShaId(userPublicKey, createdAt.toString(), e.eventData.kind.toString(), strTags, content);
   String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
@@ -199,7 +199,7 @@ Future<String> sendEventWithTags(Store node, Event e, String tags) async {
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   String content = addEscapeChars( e.eventData.content);
 
-  String id = getShaId(userPublicKey, createdAt, e.eventData.kind.toString(), strTags, content);
+  String id = getShaId(userPublicKey, createdAt.toString(), e.eventData.kind.toString(), strTags, content);
   String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
@@ -227,7 +227,7 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
         strTags += gWhetherToSendClientTag?',["client","nostr_console"]':'';
 
         int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
-        String id = getShaId(userPublicKey, createdAt, replyKind, strTags, content);
+        String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, content);
 
         String sig = mySign(userPrivateKey, id);
         String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$content","sig":"$sig"}]';

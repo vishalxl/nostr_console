@@ -195,7 +195,8 @@ class Relays {
                 if( gDebug > 0) print( 'in Relay::sendRequset. FormatException in sendRequest for event');
                 return;
               } catch(err) {
-                if( gDebug > 0) print('in Relay::sendRequset. exception = "$err" ;  for relay $relay');
+                //dynamic json = jsonDecode(d);
+                if( gDebug > 0) print('---\nin Relay::sendRequset. exception = "$err" ;  for relay $relay d = \n${d}');
                 return;
               }                
             },
@@ -205,8 +206,12 @@ class Relays {
       } on WebSocketException {
         print('WebSocketException exception for relay $relay');
         return;
-      } catch(err) {
-        if( gDebug > 0) print('exception generic $err for relay $relay');
+      } on Exception catch(ex) {
+        printWarning("Invalid event\n");
+      }
+      
+      catch(err) {
+        if( gDebug >= 0) printWarning('exception generic $err for relay $relay\n');
         return;
       }
     }

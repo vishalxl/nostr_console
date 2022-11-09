@@ -12,11 +12,9 @@ import 'dart:convert' as convert;
 import "package:pointycastle/export.dart";
 import 'package:kepler/kepler.dart';
 
-
 String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
 void   printWarning(String s) => stdout.supportsAnsiEscapes ?stdout.write("$gWarningColor$s$gColorEndMarker\n"):stdout.write("$s\n");
-
 
 // translate 
 GoogleTranslator? translator; // initialized in main when argument given
@@ -49,6 +47,62 @@ Map< String, List<List<String>> > gReactions = {};
 // maps from pubkey of a user, to the latest contact list of that user, which is the latest kind 3 message
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
+
+// returns tags as string that can be used to calculate event has. called from EventData constructor
+String getStrTagsFromJson(dynamic json) {
+  String str = "";
+
+  int i = 0;
+  for( dynamic tag in json ) {
+    if( i != 0) {
+      str += ",";
+    }
+
+    str += "[";
+    int j = 0;
+    for(dynamic e in tag) {
+      if( j != 0) {
+        str += ",";
+      }
+      str += "\"${e.toString()}\"";
+      j++;
+    }
+    str += "]";
+    i++;
+  }
+  return str;
+}
+
+bool verifyEvent(dynamic json) {
+    String createdAt = json['created_at'].toString();
+
+    List<dynamic> listTags = json['tags'];
+    //print(listTags);
+    String strTags = json['tags'].toString();
+
+    strTags = getStrTagsFromJson(json['tags']);
+
+    //print("strTags = $strTags");
+
+    String id = json['id'];
+    String eventPubkey = json['pubkey'];
+    String strKind = json['kind'].toString();
+    String content = json['content'];
+
+    
+    String calculatedId = getShaId(eventPubkey, createdAt.toString(), strKind, strTags, content);
+    //print("\ncalculated id = $calculatedId actual id = $id");
+    bool verified = true;//verify( eventPubkey, calculatedId, sig);
+
+    if( !verified ) {
+      //printWarning("wrong sig event sig = $sig event id = $id calculated id = $calculatedId " );
+      //print("Event: kind = $strKind");
+      throw Exception();
+    } else {
+      //printInColor("verified correct sig", gCommentColor);
+    }
+    return true;
+}
 
 class EventData {
   String             id;
@@ -88,6 +142,7 @@ class EventData {
     return "";
   }
 
+
   EventData(this.id,          this.pubkey,   this.createdAt,  this.kind,  this.content,   
             this.eTags,   this.pTags,        this.contactList,this.tags,  this.newLikes,   
             {
@@ -104,6 +159,25 @@ class EventData {
 
     var jsonTags = json['tags'];      
     var numTags = jsonTags.length;
+
+
+    //print("\n----\nIn fromJson\n");
+    String sig = json['sig'];
+    if(sig.length == 128) {
+      //print("found sig == 128 bytes");
+      //if(json['id'] == "15dd45769dd0ccb9c4ca1c69fcd27011d53c4b95c8b7c786265bf7377bc7fdad") {
+      //  printInColor("found 15dd45769dd0ccb9c4ca1c69fcd27011d53c4b95c8b7c786265bf7377bc7fdad sig ${json['sig']}", gCommentColor);
+      //}
+
+      try {
+        //verifyEvent(json);
+
+      } on Exception catch(e) {
+        //printWarning("verify gave exception $e");
+        throw Exception("in Event constructor: sig verify gave exception");
+      }
+
+    }
 
     // NIP 02: if the event is a contact list type, then populate contactList
     if(json['kind'] == 3) {
@@ -657,24 +731,27 @@ class Event {
   factory Event.fromJson(String d, String relay, [bool fromFile = false]) {
     try {
       dynamic json = jsonDecode(d);
+
       if( json.length < 3) {
         String e = "";
         e = json.length > 1? json[0]: "";
-        if( gDebug> 0) {
-          print("Could not create event. returning dummy event. json.length = ${json.length} string d= $d $e");
+        if( gDebug > 0) {
+          print("Could not create event. json.length = ${json.length} string d= $d $e");
         }
-        return Event(e,"",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]", fromFile);
+        throw Exception("Event json has less than 3 elements");
       }
+
       EventData newEventData = EventData.fromJson(json[2]);
       if( !fromFile) 
         newEventData.isNotification = true;
       return Event(json[0] as String, json[1] as String, newEventData, [relay], d, fromFile );
     } on Exception catch(e) {
       if( gDebug> 0) {
-        print("Could not create event. returning dummy event. $e");
+        print("Could not create event. $e");
         print("problem str: $d\n");
       }
-      return Event("","",EventData("non","", 0, 0, "", [], [], [], [[]], {}), [relay], "[json]", fromFile);
+      //print("Caught an exception in Event.fromJson");
+      throw e;
     }
   }
 
@@ -1144,8 +1221,9 @@ String addEscapeChars(String str) {
   return str.replaceAll("\"", "\\\"");
 }
 
-String getShaId(String pubkey, int createdAt, String kind, String strTags, String content) {
+String getShaId(String pubkey, String createdAt, String kind, String strTags, String content) {
   String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
+  //print("in getShaId for buf: |$buf|");
   var bufInBytes = utf8.encode(buf);
   var value = sha256.convert(bufInBytes);
   return value.toString();

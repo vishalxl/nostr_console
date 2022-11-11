@@ -870,12 +870,17 @@ class Store {
           }
 
           if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) { // since parent can only be a kind 1 event
-            if( gDebug > 1) log.info("In Tree.fromEvents: Not adding: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.event.eventData.kind}");
-            return;
+            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "<Parent is not of Kind 1>", [], [], [], [[]], {}), [""], "[json]");
+
+            Tree dummyTopNode = Tree.withoutStore(dummy, []);
+            dummyTopNode.children.add(tree);
+            tempWithoutParent.add(tree.event.eventData.id); 
+            topLevelTrees.add(dummyTopNode);
+
+            if( gDebug > 0) log.info("In Tree.fromEvents: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.event.eventData.kind}");
+          } else {
+            tempChildEventsMap[parentId]?.children.add(tree); 
           }
-            
-    
-          tempChildEventsMap[parentId]?.children.add(tree); 
         } else {
           // in case the parent is not in store
           if( tree.event.eventData.id == gCheckEventId) {
@@ -889,6 +894,10 @@ class Store {
           Tree dummyTopNode = Tree.withoutStore(dummy, []);
           dummyTopNode.children.add(tree);
           tempWithoutParent.add(tree.event.eventData.id); 
+
+          if( tree.event.eventData.id == "585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a") {
+            //print("Creating dummy parent for 585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a parentId = $parentId");
+          }
 
           if( parentId.length == 64) {
             dummyEventIds.add(parentId);

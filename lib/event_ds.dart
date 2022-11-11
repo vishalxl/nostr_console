@@ -133,8 +133,60 @@ class EventData {
   // returns the immediate kind 1 parent
   String getParent(Map<String, Tree> allEventsMap) {
 
+
+
     if( eTags.isNotEmpty) {
 
+      int numRoot = 0, numReply = 0;
+
+      String rootId = "", replyId = "";
+      for( int i = eTags.length - 1; i >= 0; i--) {
+        String eventId = eTags[i][0];
+        //print(eTags);
+        if( eTags[i].length >= 3) {
+          if( eTags[i][2].toLowerCase() == "root") {
+            numRoot++;
+            rootId = eventId;
+          } else {
+            if( eTags[i][2].toLowerCase() == "reply") {
+              numReply++;
+              replyId = eventId;
+            }
+          }
+        }
+      }
+
+      if( id == "585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a") {
+        //print("in getparet for 585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a");
+        //print("numRoot = $numRoot numReply = $numReply");
+        //print("reply = $replyId root = $rootId");
+      }
+  
+      if( replyId.length > 0) {
+        if( numReply == 1) {
+          if( id == "585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a") {
+            //return rootId;
+          }
+          return replyId;
+        } else {
+          if( rootId.length > 0) {
+            return rootId;  
+          } else {
+            if( replyId.length > 0) {
+              return replyId;
+            }
+          }
+        }
+      } else {
+        if( rootId.length > 0) {
+          //printWarning("returning root id. no reply id found.");
+          return rootId;
+        }
+      }
+
+
+      // if reply/root tags don't work, then try to look for parent tag with the deprecated logic from NIP-10
+      if( gDebug > 0) log.info("using deprecated logic of nip10 for event id : $id");
       for( int i = eTags.length - 1; i >= 0; i--) {
         String eventId = eTags[i][0];
         if( allEventsMap[eventId]?.event.eventData.kind == 1) {

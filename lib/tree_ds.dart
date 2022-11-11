@@ -834,12 +834,9 @@ class Store {
         return;
       }
 
-
       if( eKind == 42 || eKind == 40) {
         handleChannelEvents(channels, tempChildEventsMap, tree.event);
       }
-
-
 
       if( eKind == 4) {
         handleDirectMessages(tempDirectRooms, tempChildEventsMap, tree.event);
@@ -869,38 +866,32 @@ class Store {
             if(gDebug >= 0) print("In Tree FromEvents: found its parent $parentId : for id: $gCheckEventId");
           }
 
-          if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) { // since parent can only be a kind 1 event
+          if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) {
             Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "<Parent is not of Kind 1>", [], [], [], [[]], {}), [""], "[json]");
 
             Tree dummyTopNode = Tree.withoutStore(dummy, []);
-            dummyTopNode.children.add(tree);
+            dummyTopNode.children.add(tree); 
             tempWithoutParent.add(tree.event.eventData.id); 
             topLevelTrees.add(dummyTopNode);
 
+            // dont add this dummy in dummyEventIds list ( cause that's used to fetch events not in store)
             if( gDebug > 0) log.info("In Tree.fromEvents: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.event.eventData.kind}");
           } else {
             tempChildEventsMap[parentId]?.children.add(tree); 
           }
         } else {
-          // in case the parent is not in store
-          if( tree.event.eventData.id == gCheckEventId) {
-            if(gDebug >= 0) print("In Tree FromEvents: parent not found : for id: $gCheckEventId");
-          }
-
           // in case where the parent of the new event is not in the pool of all events, 
           // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-          Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
-
-          Tree dummyTopNode = Tree.withoutStore(dummy, []);
-          dummyTopNode.children.add(tree);
-          tempWithoutParent.add(tree.event.eventData.id); 
-
-          if( tree.event.eventData.id == "585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a") {
-            //print("Creating dummy parent for 585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a parentId = $parentId");
-          }
 
           if( parentId.length == 64) {
+            // add the dummy evnets to top level trees, so that their real children get printed too with them so no post is missed by reader
+            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
+
+            Tree dummyTopNode = Tree.withoutStore(dummy, []);
+            dummyTopNode.children.add(tree);
+            tempWithoutParent.add(tree.event.eventData.id); 
             dummyEventIds.add(parentId);
+            topLevelTrees.add(dummyTopNode);
           }
           else {
             if( gDebug > 0) {
@@ -909,9 +900,6 @@ class Store {
             }
           }
             
-          // add the dummy evnets to top level trees, so that their real children get printed too with them
-          // so no post is missed by reader
-          topLevelTrees.add(dummyTopNode);
         }
       }
     }); // going over tempChildEventsMap and adding children to their parent's .children list
@@ -1006,30 +994,28 @@ class Store {
       // add them to the main store of the Tree object, but after checking that its not one of the dummy/missing events. 
       // In that case, replace the older dummy event, and only then add it to store-map
       // Dummy events are only added as top posts, so search there for them.
-      bool isDummyReplacement = false;
       for(int i = 0; i < topPosts.length; i++) {
         Tree tree = topPosts[i];
         if( tree.event.eventData.id == newEvent.eventData.id) {
           // its a replacement. 
           if( gDebug > 0) log.info("In processIncoming: Replaced old dummy event of id: ${newEvent.eventData.id}");
           tree.event = newEvent;
-          isDummyReplacement = true;
           tree = topPosts.removeAt(i);
           allChildEventsMap[tree.event.eventData.id] = tree;
-          break;
+          return;
         }
       }
 
-      if( !isDummyReplacement)
-        allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
+      allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
 
       // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
       if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
         newEventIdsSet.add(newEvent.eventData.id);
       }
+     
     });
     
-    // now go over the newly inserted event, and add its to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
+    // now go over the newly inserted event, and add it to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
     newEventIdsSet.forEach((newId) {
       Tree? newTree = allChildEventsMap[newId];
       if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above

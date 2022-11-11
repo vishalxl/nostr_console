@@ -155,18 +155,9 @@ class EventData {
           }
         }
       }
-
-      if( id == "585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a") {
-        //print("in getparet for 585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a");
-        //print("numRoot = $numRoot numReply = $numReply");
-        //print("reply = $replyId root = $rootId");
-      }
   
       if( replyId.length > 0) {
         if( numReply == 1) {
-          if( id == "585416e90613ff749d9c88bb7058a6099eec958d26dd7d1119e38d277d29118a") {
-            //return rootId;
-          }
           return replyId;
         } else {
           if( rootId.length > 0) {

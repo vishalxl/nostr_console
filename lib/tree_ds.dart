@@ -1161,7 +1161,7 @@ class Store {
     int countNotificationEvents = 0;
     for( var newEventId in newEventIdsSet) {
       int k = (allChildEventsMap[newEventId]?.event.eventData.kind??-1);
-      if( k == 7 || k == 1 || k == 42 || k == 40) {
+      if( k == 7 || k == 1 ) {
         countNotificationEvents++;
       }
 

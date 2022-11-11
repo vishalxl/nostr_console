@@ -150,7 +150,7 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
   await foo();
 }
 
-// sends event e; used to send kind 3 event; can send other kinds too like channel create kind 40
+// sends event e; used to send kind 3 event; can send other kinds too like channel create kind 40, or kind 0
 // does not honor tags mentioned in the Event, excpet if its kind 3, when it uses contact list to create tags
 Future<String> sendEvent(Store node, Event e) async {
   String strTags = "";
@@ -373,11 +373,12 @@ Future<void> otherOptionsMenuUi(Store node) async {
                             'Search word(s) or event id',    // 3
                             'Display contact list',          // 4 
                             'Follow new contact',            // 5
-                            'Change number of days printed', // 6
-                            'Delete event',                  // 7
-                            'Application stats',             // 8
-                            'Help and About',               // 9
-                            'E(x)it to main menu'],          // 10
+                            'Edit your profile',             // 6
+                            'Change number of days printed', // 7
+                            'Delete event',                  // 8
+                            'Application stats',             // 9
+                            'Help and About',               // 10
+                            'E(x)it to main menu'],          // 11
 
 
                           "Other Options Menu");                     // menu name
@@ -513,7 +514,27 @@ Future<void> otherOptionsMenuUi(Store node) async {
         }
         break;
 
-      case 6: // change number of days printed
+      case 6: //edit your profile
+        print("Your current name: ${getAuthorName(userPublicKey)}");
+        print("Your about me: ${gKindONames[userPublicKey]?.about}");
+        print("Your current profile picture: ${gKindONames[userPublicKey]?.picture}");
+
+        String userName = getStringFromUser("Enter your new display name: ");
+        String userAbout = getStringFromUser("Enter new 'about me' for yourself: ");
+        String userPic = getStringFromUser("Enter url to your new display picture: ", "https://placekitten.com/200/200");
+        String content = "{\"name\": \"$userName\", \"about\": \"$userAbout\", \"picture\": \"$userPic\"}";
+        int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
+
+        EventData eventData = EventData('id', userPublicKey, createdAt, 0, content, [], [], [], [], {}, );
+        Event userKind0Event = Event("EVENT", "id", eventData, [], "");
+        String userKind0EventId = await sendEvent(node, userKind0Event); // takes 400 ms
+        printInColor("Updated your profile.\n", gCommentColor);
+        await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
+
+
+        break;
+
+      case 7: // change number of days printed
         stdout.write("Enter number of days for which you want to see posts: ");
         String? $tempNumDays = stdin.readLineSync();
         String newNumDays = $tempNumDays??"";
@@ -531,7 +552,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
           continue;
         }    
         break;
-      case 7:
+      case 8:
         stdout.write("Enter event id to delete: ");
         String? $tempEventId = stdin.readLineSync();
         String userInputId = $tempEventId??"";
@@ -552,7 +573,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
         break;
 
-      case 8: // application info
+      case 9: // application info
         print("\n\n");
         printUnderlined("Application stats");
         print("\n");
@@ -571,11 +592,11 @@ Future<void> otherOptionsMenuUi(Store node) async {
         print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}\n");
         break;
 
-      case 9:
+      case 10:
         print(helpAndAbout);
         break;
 
-      case 10:
+      case 11:
         continueOtherMenu = false;
         break;
   

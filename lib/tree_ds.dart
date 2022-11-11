@@ -1200,7 +1200,7 @@ class Store {
             if(gDebug > 0) ("Got notification of type 7");
             String reactorId  = event.eventData.pubkey;
             int    lastEIndex = event.eventData.eTags.length - 1;
-            String reactedTo  = event.eventData.eTags[lastEIndex];
+            String reactedTo  = event.eventData.eTags[lastEIndex][0];
             Event? reactedToEvent = allChildEventsMap[reactedTo]?.event;
             if( reactedToEvent != null) {
               Tree? reactedToTree = allChildEventsMap[reactedTo];
@@ -1962,7 +1962,7 @@ class Store {
       String reactorId      = event.eventData.id;
       String comment    = event.eventData.content;
       int    lastEIndex = event.eventData.eTags.length - 1;
-      String reactedToId  = event.eventData.eTags[lastEIndex];
+      String reactedToId  = event.eventData.eTags[lastEIndex][0];
 
       if( gDebug > 0 && event.eventData.id == gCheckEventId)print("in processReaction: 1 got reaction $gCheckEventId");
 

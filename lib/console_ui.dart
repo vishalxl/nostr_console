@@ -498,7 +498,8 @@ Future<void> otherOptionsMenuUi(Store node) async {
                   
                   String newId = "", newPubkey = userPublicKey,  newContent = "";
                   int newKind = 3;
-                  List<String> newEtags = [], newPtags = [pk];
+                  List<List<String>> newEtags = [];
+                  List<String> newPtags = [pk];
                   List<List<String>> newTags = [[]];
                   Set<String> newNewLikes = {};
                   int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
@@ -517,7 +518,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
       case 6: //edit your profile
         print("Your current name: ${getAuthorName(userPublicKey)}");
         print("Your about me: ${gKindONames[userPublicKey]?.about}");
-        print("Your current profile picture: ${gKindONames[userPublicKey]?.picture}");
+        print("Your current profile picture: ${gKindONames[userPublicKey]?.picture}\n");
 
         String userName = getStringFromUser("Enter your new display name: ");
         String userAbout = getStringFromUser("Enter new 'about me' for yourself: ");
@@ -530,8 +531,6 @@ Future<void> otherOptionsMenuUi(Store node) async {
         String userKind0EventId = await sendEvent(node, userKind0Event); // takes 400 ms
         printInColor("Updated your profile.\n", gCommentColor);
         await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
-
-
         break;
 
       case 7: // change number of days printed

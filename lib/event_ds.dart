@@ -110,7 +110,7 @@ class EventData {
   int                createdAt;
   int                kind;
   String             content;
-  List<String>       eTags;// e tags
+  List<List<String>>       eTags;// e tags
   List<String>       pTags;// list of p tags for kind:1
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
@@ -121,12 +121,22 @@ class EventData {
 
   bool               isHidden; // hidden by sending a reaction kind 7 event to this event, by the logged in user
   bool               isDeleted; // deleted by kind 5 event
-  
+
+
+  EventData(this.id,          this.pubkey,   this.createdAt,  this.kind,  this.content,   
+            this.eTags,   this.pTags,        this.contactList,this.tags,  this.newLikes,   
+            {
+              this.isNotification = false, this.evaluatedContent = "", this.isHidden = false, this.isDeleted = false
+            });
+
+
   // returns the immediate kind 1 parent
   String getParent(Map<String, Tree> allEventsMap) {
+
     if( eTags.isNotEmpty) {
+
       for( int i = eTags.length - 1; i >= 0; i--) {
-        String eventId = eTags[i];
+        String eventId = eTags[i][0];
         if( allEventsMap[eventId]?.event.eventData.kind == 1) {
           String? parentId = allEventsMap[eventId]?.event.eventData.id;
           if( parentId != null) {
@@ -138,23 +148,18 @@ class EventData {
           return eventId;
         }
       }
+
     }
     return "";
   }
 
-
-  EventData(this.id,          this.pubkey,   this.createdAt,  this.kind,  this.content,   
-            this.eTags,   this.pTags,        this.contactList,this.tags,  this.newLikes,   
-            {
-              this.isNotification = false, this.evaluatedContent = "", this.isHidden = false, this.isDeleted = false
-            });
    
   factory EventData.fromJson(dynamic json) {
     
     List<Contact> contactList = [];
 
-    List<String>       eTagsRead = [];
-    List<String>       pTagsRead = [];
+    List<List<String>> eTagsRead = [];
+    List<String> pTagsRead = [];
     List<List<String>> tagsRead = [];
 
     var jsonTags = json['tags'];      
@@ -211,7 +216,11 @@ class EventData {
             continue;
           }
           if( tag[0] == "e") {
-            eTagsRead.add(tag[1]);
+            List<String> listTag = [];
+            for(int i = 1; i < tag.length; i ++) {
+              listTag.add(tag[i]);
+            }
+            eTagsRead.add(listTag);
           } else {
             if( tag[0] == "p") {
               pTagsRead.add(tag[1]);

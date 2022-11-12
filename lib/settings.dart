@@ -52,7 +52,7 @@ List<String> gListRelayUrls2 = [
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.0.7-beta";
+const String version = "0.1.2-beta";
 
 // well known disposable test private key
 const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
@@ -239,6 +239,8 @@ usage: $exename [OPTIONS]
       -s, --disable-file            When turned on, even the default filename is not read from.
       -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
                                     is accessed for any translation request only if this flag is present, and not otherwise.
+      -h, --help                    Print help/usage message and exit. 
+      -v, --version                 Print version and exit.
 
   UI Options                                
       -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
@@ -248,13 +250,12 @@ usage: $exename [OPTIONS]
       -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is $gMinimumDepthAllowed and
                                     maximum allowed is $gMaximumDepthAllowed.
       -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
-      -h, --help                    Print this usage message and exit.
 
   Advanced
       -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
                                     taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
                                     time. Minimum and default is 0, which means no difficulty.
-      -v, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
+      -e, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
                                     useful when the file has to be cleared of old unused events. A backup should be made just in case
                                     of original file before invoking.
 """;

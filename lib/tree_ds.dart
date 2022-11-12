@@ -1002,6 +1002,9 @@ class Store {
           tree.event = newEvent;
           tree = topPosts.removeAt(i);
           allChildEventsMap[tree.event.eventData.id] = tree;
+          if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
+            newEventIdsSet.add(newEvent.eventData.id);
+          }
           return;
         }
       }
@@ -1681,7 +1684,8 @@ class Store {
       if( k.length >= replyToId.length && k.substring(0, replyToId.length) == replyToId) {
         // ignore future events TODO
 
-        if( ( allChildEventsMap[k]?.event.eventData.createdAt ?? 0) > latestEventTime ) {
+        if(  [1, 40, 140].contains(allChildEventsMap[k]?.event.eventData.kind)   
+            && ( allChildEventsMap[k]?.event.eventData.createdAt ?? 0) > latestEventTime ) {
           latestEventTime = allChildEventsMap[k]?.event.eventData.createdAt ?? 0;
           latestEventId = k;
         }

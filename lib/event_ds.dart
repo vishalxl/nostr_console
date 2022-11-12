@@ -1527,9 +1527,6 @@ List<String> getEncryptedChannelKeys(List<DirectMessageRoom> directRooms, Map<St
         //print("got other pubkey $creatorPubKey");
         for( int j = 0; j < room.messageIds.length; j++) {
           String messageId = room.messageIds[j];
-          if( channelId == "14eda528a651fa55ac706280711d616f57ab449a9bc4a97efcd1e236e53a1044" ) {
-            //printInColor( "j = $j messageId = ${messageId}\n", redColor);
-          }
 
           Event? messageEvent = tempChildEventsMap[messageId]?.event;
           if( messageEvent != null) {
@@ -1538,11 +1535,6 @@ List<String> getEncryptedChannelKeys(List<DirectMessageRoom> directRooms, Map<St
             String evaluatedContent = messageEvent.eventData.evaluatedContent;
             if( evaluatedContent.startsWith("App Encrypted Channels:")) {
               //print("got App");
-              if( channelId == "14eda528a651fa55ac706280711d616f57ab449a9bc4a97efcd1e236e53a1044" ) {
-                //print("evaluatedContent = $evaluatedContent");
-                //print("num messages: ${room.messageIds.length}");
-              }
-
               if( evaluatedContent.contains(channelId) && evaluatedContent.length == 288) {
                 //print("in getEncryptedChannelKeys:    success: got password in pvt message: $evaluatedContent");
                 //print("len of evaluated content: ${evaluatedContent.length} ");

@@ -322,6 +322,48 @@ void printProfile(Store node, String profilePubkey) {
   print("");
 }
 
+void printMenu(List<String> menuOptions) {
+/*
+    for(int i = 0; i < menuOptions.length;i++) {
+      print("    ${i+1}. ${menuOptions[i]}");
+    }
+*/
+
+  int longestMenuOption = 0;
+  for(int i = 0; i < menuOptions.length;i++) {
+    //print("    ${i+1}. ${menuOptions[i]}");
+    if( longestMenuOption < menuOptions[i].length) {
+      longestMenuOption = menuOptions[i].length;
+    }
+  }
+
+  var terminalColumns = gDefaultTextWidth;
+
+  if( stdout.hasTerminal )
+    terminalColumns = stdout.terminalColumns;
+
+
+  if( longestMenuOption + 5> gMenuWidth )
+    gMenuWidth = longestMenuOption + 8;
+
+  //print("gMenuWidth = $gMenuWidth");
+  int rowLen = 0;
+  for(int i = 0; i < menuOptions.length;i++) {
+    String str = "${i+1}. ${menuOptions[i]}";
+    str = str.padRight(gMenuWidth);
+    stdout.write(str);
+    rowLen += gMenuWidth;
+
+    if( rowLen + gMenuWidth> terminalColumns ) {
+      stdout.write("\n" );
+      rowLen = 0;
+    }
+    
+  }
+  stdout.write("\n" );
+  
+}
+
 int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
 
   if(menuInfo.length > 0) {
@@ -331,9 +373,7 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
   while(true) {
     print("\n$menuName\n${getNumDashes(menuName.length)}");
     print('Pick an option:');
-    for(int i = 0; i < menuOptions.length;i++) {
-      print("    ${i+1}. ${menuOptions[i]}");
-    }
+    printMenu(menuOptions);
 
     stdout.write("Type menu option/number: ");
     String? userOptionInput = stdin.readLineSync();

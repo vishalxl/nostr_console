@@ -588,7 +588,7 @@ class EventData {
 
     String temp = tempEvaluatedContent==""?tempContent: tempEvaluatedContent;
     String contentShifted = makeParagraphAtDepth( temp,  gSpacesPerDepth * depth + effectiveNameFieldLen);
-
+    
     int maxLineLen =  gTextWidth - gSpacesPerDepth * depth -  effectiveNameFieldLen ;
     int lastLineLen = contentShifted.length;
     int i = 0;
@@ -1070,9 +1070,27 @@ String getNumDashes(int num, [String dashType = "-"]) {
   return s;
 }
 
+List<List<int>> getUrlRanges(String s) {
+  List<List<int>> urlRanges = [];
+  
+  String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/]*)";
+  
+  RegExp httpRegExp = RegExp(regexp1);
+  for( var match in httpRegExp.allMatches(s) ) {
+    List<int> entry = [match.start, match.end];
+    urlRanges.add(entry);
+  }
+
+  return urlRanges;
+}
+
 // make a paragraph of s that starts at numSpaces ( from screen left), and does not extend beyond gTextWidth+gNumLeftMarginSpaces. break it, or add 
 // a newline if it goes beyond gTextWidth + gNumLeftMarginSpaces
 String makeParagraphAtDepth(String s, int depthInSpaces) {
+
+  List<List<int>> urlRanges = getUrlRanges(s);
+  
+ 
   
   String newString = "";
   String spacesString = getNumSpaces(depthInSpaces + gNumLeftMarginSpaces);
@@ -1081,7 +1099,7 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
   int lenPerLine = gTextWidth - depthInSpaces;
   //print("In makeParagraphAtDepth: gNumLeftMarginSpaces = $gNumLeftMarginSpaces depthInSPaces = $depthInSpaces LenPerLine = $lenPerLine gTextWidth = $gTextWidth ");
   for(int startIndex = 0; startIndex < s.length; ) {
-    List listCulledLine = getLineWithMaxLen(s, startIndex, lenPerLine, spacesString);
+    List listCulledLine = getLineWithMaxLen(s, startIndex, lenPerLine, spacesString, urlRanges);
 
     String line = listCulledLine[0];
     int lenReturned = listCulledLine[1] as int;
@@ -1097,19 +1115,29 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
   return newString;
 }
 
+// returns true if n is in any of the ranges given in list
+int isInRange( int n, List<List<int>> ranges ) {
+  for( int i = 0; i < ranges.length; i++) {
+    if( n >= ranges[i][0] && n < ranges[i][1]) {
+      return ranges[i][1];
+    }
+  }
+  return 0;
+}
+
 // returns from string[startIndex:] the first len number of chars. no newline is added. 
-List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesString) {
+List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesString, List<List<int>> urlRanges) {
 
   if( startIndex >= s.length)
     return ["", 0];
 
-  String line = "";
-
-  int firstLineLen = -1;
+  String line = ""; // is returned
+  
   // if length required is greater than the length of string remaing, return whatever remains
   int numCharsInLine = 0;
 
   int i = startIndex;
+  // i indexes over the input line ( which is the whole comment)
   for(; i < startIndex + lenPerLine && i < s.length; i++) {
     line += s[i];
     numCharsInLine ++;
@@ -1122,45 +1150,48 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
     }
   }
 
+  int urlEnd = 0;
+  if( (urlEnd = isInRange(i, urlRanges)) != 0) {
 
-  //print(" ${numCharsInLine > lenPerLine}  ||  ${( (numCharsInLine == lenPerLine) && (s.length > startIndex + numCharsInLine))}");
-  if( numCharsInLine > lenPerLine || ( (numCharsInLine == lenPerLine) && (s.length > startIndex + numCharsInLine) )) {
-    bool lineBroken = false;
+    line = line + s.substring(i, urlEnd);
+    i = urlEnd;
 
-    // line is broken only if the returned line is the longest it can be, and
-    // if its length is greater than the gMaxLenBrokenWord constant
-    if( line.length >= lenPerLine &&  line.length > gMaxLenUnbrokenWord  ) {
-      //print("   line ending seems to be cutting words");
-      int i = line.length - 1;
+  } else {
 
-      // find a whitespace character
-      for( ; i > 0 && !isWordSeparater(line[i]); i--);
-      // for ended 
+    if( numCharsInLine > lenPerLine || ( (numCharsInLine == lenPerLine) && (s.length > startIndex + numCharsInLine) )) {
+      bool lineBroken = false;
 
-      if( line.length - i  < gMaxLenUnbrokenWord) {
+      // line is broken only if the returned line is the longest it can be, and
+      // if its length is greater than the gMaxLenBrokenWord constant
+      if( line.length >= lenPerLine &&  line.length > gMaxLenUnbrokenWord  ) {
+        int i = line.length - 1;
 
-        // break the line here if its not a word separator
-        if( isWordSeparater(line[i])) {
-          //print("    isWordSeparater i = $i line[i] = ${line[i]}");
-          firstLineLen = i;
-          int newLineStart = i + 1;
-          if( line[i] != ' ')
-            newLineStart = i;
-          line = line.substring(0, i) + "\n" + spacesString + line.substring(newLineStart, line.length);
-          lineBroken = true;
+        // find a whitespace character
+        for( ; i > 0 && !isWordSeparater(line[i]); i--);
+        // for ended 
+
+        if( line.length - i  < gMaxLenUnbrokenWord) {
+
+          // break the line here if its a word separator
+          if( isWordSeparater(line[i])) {
+            int newLineStart = i + 1;
+            if( line[i] != ' ')
+              newLineStart = i;
+            line = line.substring(0, i) + "\n" + spacesString + line.substring(newLineStart, line.length);
+            lineBroken = true;
+          }
+        }
+      
+      }
+
+      if( !lineBroken ) {
+        if( s.length > i ) {
+          line += "\n";
+          line += spacesString;
         }
       }
     }
-
-
-    if( !lineBroken ) {
-      if( s.length > i ) {
-        line += "\n";
-        line += spacesString;
-      }
-    }
   }
-
   return  [line, i - startIndex];
 }
 

@@ -45,6 +45,8 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       -s, --disable-file            When turned on, even the default file is not read from.
       -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
                                     is accessed for any translation request only if this flag is present, and not otherwise.
+      -h, --help                    Print help/usage message and exit. 
+      -v, --version                 Print version and exit.
 
   UI Options                                
       -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
@@ -54,13 +56,12 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is 2 and
                                     maximum allowed is 12. 
       -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
-      -h, --help                    Print this usage message and exit.
 
   Advanced
       -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
                                     taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
                                     time. Minimum and default is 0, which means no difficulty.
-      -v, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
+      -e, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
                                     useful when the file has to be cleared of old unused events. A backup should be made just in case
                                     of original file before invoking.
 

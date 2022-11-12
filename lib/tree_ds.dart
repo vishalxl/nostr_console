@@ -1288,7 +1288,7 @@ class Store {
     }
 
     if( numPrinted > 0)
-      print("\nTotal posts/replies printed: $numPrinted for last $gNumLastDays days");
+      print("\nTotal posts printed: $numPrinted for last $gNumLastDays days");
     return numPrinted;
   }
  

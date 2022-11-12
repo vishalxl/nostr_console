@@ -371,7 +371,9 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
   }
 
   while(true) {
-    print("\n$menuName\n${getNumDashes(menuName.length)}");
+    //print("\n$menuName\n${getNumDashes(menuName.length)}");
+    printInColor("                                     $menuName \n", yellowColor);
+
     print('Pick an option:');
     printMenu(menuOptions);
 

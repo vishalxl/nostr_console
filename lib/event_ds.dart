@@ -1073,7 +1073,7 @@ String getNumDashes(int num, [String dashType = "-"]) {
 List<List<int>> getUrlRanges(String s) {
   List<List<int>> urlRanges = [];
   
-  String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/]*)";
+  String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/_-]*)";
   
   RegExp httpRegExp = RegExp(regexp1);
   for( var match in httpRegExp.allMatches(s) ) {

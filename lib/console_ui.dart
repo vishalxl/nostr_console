@@ -967,12 +967,14 @@ Future<void> encryptedChannelMenuUI(Store node) async {
       justShowedChannels = true;
     }
 
-    String menuInfo = "Encrypted Channel howto: Create a channel, and then enter the channel, and then add new participants by typing '/add <64 byte hex public key of new participant>' and then pressing enter. This will add them to the group. When you have been invited to a channel, it will be shown in list, and you can enter that channel by typing its first few letters of name or identifier.";
+    String menuInfo = """Encrypted Channel howto: You can create a channel, and then enter the channel by entering the first few unique letters of its pubkey or name.
+                         In case you have been invited to a new channel, you can enter that channel the same way as above.
+                         Once in a room/channel, you can then add new participants by typing '/add <their 64 byte hex public key>' and pressing enter.""";
 
-    int option = showMenu([ 'Enter an encrypted channel',          // 1
+    int option = showMenu([ 'Enter an encrypted channel',         // 1
                             'Show all encrypted channels',        // 2
-                            'Create encrypted channel',                  // 3
-                            'E(x)it to main menu'],           // 4
+                            'Create encrypted channel',           // 3
+                            'E(x)it to main menu'],               // 4
                           "Encrypted Channels Menu",  // name of menu
                           menuInfo); 
     switch(option) {
@@ -1075,7 +1077,8 @@ Future<void> PrivateMenuUI(Store node) async {
     printInColor("                                Direct Messages", gCommentColor);
     node.printDirectRoomInfo(showAllRooms);
 
-    String menuInfo = "Direct Message howto: To send a DM to someone for the first time, enter their 64 byte hex pubkey. To enter conversation seen in overview, enter the first few letters of the other person's name, or their pubkey";
+    String menuInfo = """Direct Message howto: To send a Direct Message to someone for the first time, enter their 64 byte hex pubkey.
+                      To enter or continue a conversation seen in overview, enter the first few letters of the other person's name or of their pubkey""";
     int option = showMenu([ 
                             'Reply or Send a direct message',
                             'E(x)it to main menu'],          // 3

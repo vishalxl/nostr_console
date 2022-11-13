@@ -491,7 +491,7 @@ class EventData {
     keys = getEncryptedChannelKeys(directRooms, tempChildEventsMap, channelId);
 
     if( keys.length != 2) {
-      printInColor("Could not get keys for event id: $id and channelId: $channelId", redColor);
+      //print("Could not get keys for event id: $id and channelId: $channelId");
       return "";
     }
 

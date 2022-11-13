@@ -194,9 +194,7 @@ String expectedResult =
   });
 
 
-
-
-  test('break_url_dash ', () {
+  test('url_break1 ', () {
     gTextWidth = 92;
 
     //print("\n\nbreak_url_dash test");
@@ -206,8 +204,25 @@ https://github.com/vishalxl/nostr_console/releases/tag/v0.0.7-beta""";
 
 
 String expectedResult = 
-"""https://github.com/vishalxl/nostr_console/releases/tag/v0.0.7
-                              -beta""";
+"""https://github.com/vishalxl/nostr_console/releases/tag/v0.0.7-beta""";
+                                  
+    String res = makeParagraphAtDepth(paragraph, 30);
+    //print(res);
+    expect( res, expectedResult);
+  });
+
+
+  test('url_break2 ', () {
+    gTextWidth = 92;
+
+    //print("\n\nbreak_url_dash test");
+
+    String paragraph =  """
+https://news.bitcoin.com/former-us-treasury-secretary-larry-summers-compares-ftx-collapse-to-enron-fraud/""";
+
+
+String expectedResult = 
+"""https://news.bitcoin.com/former-us-treasury-secretary-larry-summers-compares-ftx-collapse-to-enron-fraud/""";
                                   
     String res = makeParagraphAtDepth(paragraph, 30);
     //print(res);

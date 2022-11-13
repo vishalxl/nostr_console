@@ -5,6 +5,7 @@ homepage: https://github.com/vishalxl/nostr_console
 
 # Release 0.1.2-beta - reply to feature in public channels
 # horizontal menu
+# fixed tests
 #build 
 
 environment:

@@ -16,6 +16,7 @@ const String lastdaysArg = "days";
 const String relayArg    = "relay";
 const String requestArg  = "request";
 const String helpArg     = "help";
+const String versionArg  = "version";
 const String alignArg    = "align"; // can only be "left"
 const String widthArg    = "width";
 const String maxDepthArg = "maxdepth";
@@ -29,9 +30,12 @@ const String overWriteFlag = "overwrite";
 void printUsage() {
   print(gUsage);
 }
+void printVersion() {
+  print("$version");
+}
+
 
 Future<void> main(List<String> arguments) async {
-    printIntro("Nostr");
     Logger.root.level = Level.ALL; // defaults to Level.INFO
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
@@ -39,13 +43,15 @@ Future<void> main(List<String> arguments) async {
       
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
-                              ..addFlag(helpArg, abbr:"h", defaultsTo: false)..addOption(alignArg, abbr:"a")
+                              ..addFlag(helpArg, abbr:"h", defaultsTo: false)
+                              ..addFlag(versionArg, abbr:"v", defaultsTo: false)
+                              ..addOption(alignArg, abbr:"a")
                               ..addOption(widthArg, abbr:"w")..addOption(maxDepthArg, abbr:"m")
                               ..addOption(eventFileArg, abbr:"f", defaultsTo: gDefaultEventsFilename)..addFlag(disableFileArg, abbr:"s", defaultsTo: false)
                               ..addFlag(translateArg, abbr: "t", defaultsTo: false)
                               ..addOption(colorArg, abbr:"c")
                               ..addOption(difficultyArg, abbr:"y")
-                              ..addFlag(overWriteFlag, abbr:"v", defaultsTo: false)
+                              ..addFlag(overWriteFlag, abbr:"e", defaultsTo: false)
                               ..addFlag("debug");
     try {
       ArgResults argResults = parser.parse(arguments);
@@ -53,6 +59,15 @@ Future<void> main(List<String> arguments) async {
         printUsage();
         return;
       }
+
+      if( argResults[versionArg]) {
+        printVersion();
+        return;
+      }
+
+      // start application
+      printIntro("Nostr");
+
 
       if( argResults["debug"]) {
         gDebug = 1;

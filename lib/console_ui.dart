@@ -364,6 +364,10 @@ void printMenu(List<String> menuOptions) {
   
 }
 
+void clearScreen() {
+  print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+}
+
 int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
 
   if(menuInfo.length > 0) {
@@ -390,6 +394,7 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
         if( valueOption != null) {
           if( valueOption >= 1 && valueOption <= menuOptions.length) {
             reAdjustAlignment(); // in case user has changed alignment
+            print('You picked: $valueOption');
             return valueOption;
           }
         }
@@ -424,7 +429,6 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
 
                           "Other Options Menu");                     // menu name
-    print('You picked: $option');
     switch(option) {
       case 1:
         stdout.write("Type username or first few letters of user's public key( or full public key): ");
@@ -493,7 +497,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
         if( userName != "") {
           Set<String> pubkey = getPublicKeyFromName(userName); 
           print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
-          print(pubkey);
+          pubkey.forEach( (x) => print(" $x ( ${gKindONames[x]?.name} )"));
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
               printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
@@ -699,7 +703,6 @@ Future<void> channelMenuUI(Store node) async {
                             'E(x)it to main menu'],           // 4
                           "Public Channels Menu", // name of menu
                           menuInfo);
-    print('You picked: $option');
     switch(option) {
       case 1:
 
@@ -713,14 +716,21 @@ Future<void> channelMenuUI(Store node) async {
           showChannelOption = false; 
         }
         int pageNum = 1;
+        bool firstIteration = true;
         while(showChannelOption) {
           reAdjustAlignment();
+          if( firstIteration) {
+            clearScreen();
+            firstIteration = false;
+          }
+
           String fullChannelId = node.showChannel(node.channels, channelId, pageNum);
           if( fullChannelId == "") {
             //print("Could not find the given channel.");
             showChannelOption = false;
             break;
           }
+
 
           stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
           $tempUserInput = stdin.readLineSync(encoding: utf8);
@@ -768,17 +778,17 @@ Future<void> channelMenuUI(Store node) async {
                   pageNum = 1; // reset it 
 
                 }
-
-
                 }
               }
             }
+
           } else {
             print("Refreshing...");
           }
-
+          clearScreen();
           await processAnyIncomingEvents(node, false);
-        }
+
+        } // end while showChannelOption
         break;
 
       case 2:
@@ -788,7 +798,10 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 3:
+        clearScreen();
+        print("Creating new channel. Kindly enter info about channel: \n");
         await createPublicChannel(node);
+        clearScreen();
         justShowedChannels = false;
 
         // TODO put user in the newly created channel
@@ -961,7 +974,6 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                             'E(x)it to main menu'],           // 4
                           "Encrypted Channels Menu",  // name of menu
                           menuInfo); 
-    print('You picked: $option');
     switch(option) {
       case 1:
 
@@ -1068,7 +1080,6 @@ Future<void> PrivateMenuUI(Store node) async {
                             'E(x)it to main menu'],          // 3
                           "Direct Message Menu", // name of menu
                           menuInfo); 
-    print('You picked: $option');
     switch(option) {
 
       case 1:
@@ -1172,7 +1183,7 @@ Future<void> mainMenuUi(Store node) async {
                              'Other Options',    // 6
                              'E(x)it Application'],            // 7
                              "Main Menu");
-      print('You picked: $option');
+      
       switch(option) {
         case 1:
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorShowAllTrees);
@@ -1212,19 +1223,27 @@ Future<void> mainMenuUi(Store node) async {
           break;
 
         case 3:
+          clearScreen();
           await channelMenuUI(node);
+          clearScreen();
           break;
 
         case 4:
+          clearScreen();
           await encryptedChannelMenuUI(node);
+          clearScreen();
           break;
 
         case 5:
+          clearScreen();
           await PrivateMenuUI(node);
+          clearScreen();
           break;
 
         case 6:
+          clearScreen();
           await otherOptionsMenuUi(node);
+          clearScreen();
           break;
 
         case 7:

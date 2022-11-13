@@ -793,6 +793,7 @@ Future<void> channelMenuUI(Store node) async {
         break;
 
       case 2:
+        clearScreen();
         printInColor("                                 All Public Channels ", gCommentColor);
         node.printChannelsOverview(node.channels, node.channels.length, selectorShowAllRooms);
         justShowedChannels = true;
@@ -840,7 +841,8 @@ Future<void> createEncryptedChannel(Store node) async {
   EventData eventData = EventData('id', userPublicKey, createdAt, 140, content, [], [], [], [], {}, );
   Event encryptedChannelCreateEvent = Event("EVENT", "id", eventData, [], "");
   String newEncryptedChannelId = await sendEventWithTags(node, encryptedChannelCreateEvent, pTags); // takes 400 ms
-  print("Created new encrypted channel with id: $newEncryptedChannelId");
+  clearScreen();
+  print("Created new encrypted channel with id: $newEncryptedChannelId\n");
 
 
   String newPriKey = getRandomPrivKey();
@@ -990,15 +992,24 @@ Future<void> encryptedChannelMenuUI(Store node) async {
         if( channelId == "x") {
           showChannelOption = false; 
         }
+        bool firstIteration = true;
         int pageNum = 1;
         while(showChannelOption) {
           reAdjustAlignment();
+
+          if( firstIteration) {
+            clearScreen();
+            firstIteration = false;
+          }
+
           String fullChannelId = node.showChannel(node.encryptedChannels, channelId, pageNum);
           if( fullChannelId == "") {
             //print("Could not find the given channel.");
             showChannelOption = false;
             break;
           }
+
+
 
           stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
           $tempUserInput = stdin.readLineSync(encoding: utf8);
@@ -1041,18 +1052,21 @@ Future<void> encryptedChannelMenuUI(Store node) async {
           } else {
             print("Refreshing...");
           }
-
+          clearScreen();
           await processAnyIncomingEvents(node, false);
-        }
+        } // end while showChennelOption ( showing each page)
         break;
 
       case 2:
+        clearScreen();
         printInColor("                              All Encrypted Channels ", gCommentColor);
         node.printChannelsOverview(node.encryptedChannels, node.encryptedChannels.length, selectorShowAllRooms);
         justShowedChannels = true;
         break;
 
       case 3:
+        clearScreen();
+        print("Creating new encrypted channel. Kindly enter info about channel: \n");
         await createEncryptedChannel(node);
         justShowedChannels = false;
         break;
@@ -1170,11 +1184,13 @@ void showInitialNotifications(Store node) {
 
 Future<void> mainMenuUi(Store node) async {
    
+    clearScreen();
+
     //Show only notifications
     showInitialNotifications(node);
 
-    bool userContinue = true;
-    while(userContinue) {
+    bool mainMenuContinue = true;
+    while(mainMenuContinue) {
 
       await processAnyIncomingEvents(node); // this takes 300 ms
 
@@ -1252,7 +1268,7 @@ Future<void> mainMenuUi(Store node) async {
 
         case 7:
         default:
-          userContinue = false;
+          mainMenuContinue = false;
           String authorName = getAuthorName(userPublicKey);
           print("\nFinished Nostr session for user with name and public key: ${authorName} ($userPublicKey)");
           if( gEventsFilename != "") {

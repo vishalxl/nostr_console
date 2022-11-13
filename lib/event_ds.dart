@@ -626,18 +626,18 @@ class EventData {
   String getAsLine({int len = 20}) {
     String contentToPrint = evaluatedContent.isEmpty? content: evaluatedContent;
     if( len == 0 || len > contentToPrint.length) {
-      len = contentToPrint.length;
+      //len = contentToPrint.length;
     }
     
-    contentToPrint = contentToPrint.padLeft(len);
     contentToPrint = contentToPrint.replaceAll("\n", " ");
     contentToPrint = contentToPrint.replaceAll("\r", " ");
-    String strToPrint = '${contentToPrint.substring(0, len)}... - ${getAuthorName(pubkey)}';
+    contentToPrint = contentToPrint.replaceAll("\t", "  ");
+    contentToPrint = contentToPrint.padRight(len).substring(0, len);
+    //contentToPrint = contentToPrint.padRight(len);
+    String strToPrint = '$contentToPrint   - ${getAuthorName(pubkey).padLeft(12)}';
 
-    int strWidth = 40;
-    String paddedStrToPrint = strToPrint.padLeft(strWidth);
-    paddedStrToPrint = paddedStrToPrint.substring(0, strWidth);
-
+    String paddedStrToPrint = strToPrint;
+    
     if( isNotification) {
       paddedStrToPrint = "$gNotificationColor$paddedStrToPrint$gColorEndMarker";
       isNotification = false;

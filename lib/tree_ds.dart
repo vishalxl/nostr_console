@@ -1504,7 +1504,7 @@ class Store {
     //stdout.write("Direct messages inbox:\n");
     stdout.write("\n\n");
     
-    printUnderlined(" From                                    Num of Messages          Latest Message           ");
+    printUnderlined(" From                                Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {
       if( !roomSelector(directRooms[j]))
         continue;

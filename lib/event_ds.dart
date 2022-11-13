@@ -1043,7 +1043,6 @@ void printCenteredHeadline(displayName) {
 
   String str = getNumSpaces(startText) + getNumDashes(numDashes) + displayName + getNumDashes(numDashes);
   print(str);
-   
 }
 
 String getDepthSpaces(int d) {

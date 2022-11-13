@@ -365,7 +365,7 @@ void printMenu(List<String> menuOptions) {
 }
 
 void clearScreen() {
-  print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+  print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 }
 
 int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
@@ -714,6 +714,7 @@ Future<void> channelMenuUI(Store node) async {
 
         if( channelId == "x") {
           showChannelOption = false; 
+          clearScreen();
         }
         int pageNum = 1;
         bool firstIteration = true;

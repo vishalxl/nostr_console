@@ -122,7 +122,8 @@ class ScrollableMessages {
       page = 1;
     }
 
-    printCenteredHeadline(topHeader);
+    printCenteredHeadline(" $topHeader ");
+    print(""); // print new line after channel name info
 
     int i = 0, startFrom = 0, endAt = messageIds.length;
     int numPages = 1;
@@ -184,7 +185,7 @@ class Channel extends ScrollableMessages {
   String      creatorPubkey;      // creator of the channel, if event is known
 
   Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds, this.participants, this.lastUpdated, [this.creatorPubkey=""]) : 
-            super (  internalChatRoomName.isEmpty? channelId: internalChatRoomName + "( " + channelId + " )" , 
+            super (  internalChatRoomName.isEmpty? channelId: "Channel Name: $internalChatRoomName (id: $channelId)" , 
                      messageIds,
                      lastUpdated);
 
@@ -198,7 +199,7 @@ class Channel extends ScrollableMessages {
 
   void set chatRoomName(String newName){
     internalChatRoomName = newName;
-    super.topHeader = newName + " (${channelId.substring(0,6)})";
+    super.topHeader = "Channel Name: $newName (Id: $channelId)";
   }
 
   // takes special consideration of kind 142 messages that may be added to chanenl but aren't actually valid cause they aren't encrypted

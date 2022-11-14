@@ -323,15 +323,9 @@ void printProfile(Store node, String profilePubkey) {
 }
 
 void printMenu(List<String> menuOptions) {
-/*
-    for(int i = 0; i < menuOptions.length;i++) {
-      print("    ${i+1}. ${menuOptions[i]}");
-    }
-*/
 
   int longestMenuOption = 0;
   for(int i = 0; i < menuOptions.length;i++) {
-    //print("    ${i+1}. ${menuOptions[i]}");
     if( longestMenuOption < menuOptions[i].length) {
       longestMenuOption = menuOptions[i].length;
     }
@@ -345,6 +339,10 @@ void printMenu(List<String> menuOptions) {
 
   if( longestMenuOption + 5> gMenuWidth )
     gMenuWidth = longestMenuOption + 8;
+
+  if( terminalColumns~/gMenuWidth > 4) {
+    terminalColumns = gMenuWidth * 4;
+  }
 
   //print("gMenuWidth = $gMenuWidth");
   int rowLen = 0;

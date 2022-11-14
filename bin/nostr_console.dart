@@ -37,8 +37,11 @@ void printVersion() {
 
 Future<void> main(List<String> arguments) async {
     Logger.root.level = Level.ALL; // defaults to Level.INFO
+    DateTime appStartTime = DateTime.now();
+    print("app start time: $appStartTime");
     Logger.root.onRecord.listen((record) {
-      print('${record.level.name}: ${record.time}: ${record.message}');
+      //print(record.time.runtimeType);
+      print('${record.level.name}: ${record.time.difference(appStartTime)}: ${record.message}');
     });
       
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
@@ -274,6 +277,7 @@ Future<void> main(List<String> arguments) async {
       // if more than 1000 posts have already been read from the file, then don't get too many day's events. Only for last 3 days. 
       if(numFilePosts > 1000) {
         daysToGetEventsFor = 3;
+        gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/3;
       }
 
       getUserEvents(gListRelayUrls1, userPublicKey, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor * 100));
@@ -285,7 +289,7 @@ Future<void> main(List<String> arguments) async {
       // TODO  get all 40 events, and then get all #e for them ( responses to them)
     
       stdout.write('Waiting for user posts to come in.....');
-      Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds), () {
+      Future.delayed( Duration(milliseconds: gDefaultNumWaitSeconds), () {
 
         initialEvents.addAll(getRecievedEvents());
         clearEvents();
@@ -311,11 +315,14 @@ Future<void> main(List<String> arguments) async {
         getContactFeed(gListRelayUrls1, contacts, gLimitPerSubscription, getSecondsDaysAgo(2 * daysToGetEventsFor));
 
         // calculate top mentioned ptags, and then get the events for those users
+        //log.info('calling getpTags');
         List<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
+        //log.info('after getpTags\n');
         getMultiUserEvents(gListRelayUrls1, pTags, gLimitPerSubscription, getSecondsDaysAgo(daysToGetEventsFor));
         
+        
         stdout.write('Waiting for feed to come in..............');
-        Future.delayed(const Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
+        Future.delayed(Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
 
             initialEvents.addAll(getRecievedEvents());
             clearEvents();
@@ -324,7 +331,10 @@ Future<void> main(List<String> arguments) async {
             if( gDebug > 0) log.info("Received ptag events events.");
 
             // Creat tree from all events read form file
+            //log.info("going to call getTree.");
             Store node = getTree(initialEvents);
+            //node.printEventInfo();
+            //log.info("after getTree returned.");
             gStore = node;
             
             clearEvents();

@@ -9,19 +9,19 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = "fg ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09"; 
 
-const int gDefaultNumWaitSeconds = 2000; // is used in main()
+int gDefaultNumWaitSeconds = 3000; // is used in main()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// file related settings 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 bool         gDontWriteOldEvents    = true;
-const int gDontSaveBeforeDays       = 100; // dont save events older than this many days if gDontWriteOldEvents flag is true
+const int gDontSaveBeforeDays       = 20; // dont save events older than this many days if gDontWriteOldEvents flag is true
 const int gDeletePostsOlderThanDays = 20;
 bool         gOverWriteFile         = false; // overwrite the file, and don't just append. Will write all events in memory. 
 
 const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
-const int gDaysToGetEventsFor       = 20; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gDaysToGetEventsFor       = 10; // when getting events, this is the since field (unless a fully formed request is given in command line)
 const int gLimitPerSubscription     = 6000;
 
  // don't show notifications for events that are older than 5 days and come when program is running

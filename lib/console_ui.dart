@@ -622,9 +622,12 @@ Future<void> otherOptionsMenuUi(Store node) async {
         print("\n");
         relays.printInfo();
         print("\n");
-        printUnderlined("Posts and User");
-        print("Total number of kind-1 posts:  ${node.count()}");
-        print("Total number of all events:    ${node.allChildEventsMap.length}");
+        printUnderlined("Event and User Info");
+        //print("Total number of kind-1 posts:  ${node.count()}");
+
+        print("\nEvent distribution by event kind:\n");
+        node.printEventInfo();
+        print("\nTotal number of all events:    ${node.allChildEventsMap.length}");
         print("Total number of user profiles: ${gKindONames.length}\n");
         printUnderlined("Logged in user Info");
         if( userPrivateKey.length == 64) {
@@ -1183,7 +1186,7 @@ void showInitialNotifications(Store node) {
 Future<void> mainMenuUi(Store node) async {
    
     clearScreen();
-
+    //log.info("in main menu");
     //Show only notifications
     showInitialNotifications(node);
 

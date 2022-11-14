@@ -905,6 +905,8 @@ class Store {
       }
     }); // going over tempChildEventsMap and adding children to their parent's .children list
 
+    //log.info("in middle of fromJson");
+
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
      if( eKind == 142 || eKind == 140 || eKind == 141) {
@@ -988,7 +990,7 @@ class Store {
         return;
       }
 
-      // expand mentions ( and translate if flag is set) and then add event to main event map
+      // expand mentions ( and translate if flag is set) and then add event to main event map; 142 events are expanded later
       if( newEvent.eventData.kind != 142) 
         newEvent.eventData.translateAndExpandMentions(directRooms, allChildEventsMap); // this also handles dm decryption for kind 4 messages, for kind 1 will do translation/expansion; 
 
@@ -1623,10 +1625,14 @@ class Store {
           }
         }
 
-        // only write if its not too old
+        // only write if its not too old ( except in case of user logged in)
         if( gDontWriteOldEvents) {
-          if( tree.event.eventData.createdAt <  getSecondsDaysAgo(gDontSaveBeforeDays)) {
-            continue;
+          if(  tree.event.eventData.createdAt <  getSecondsDaysAgo(gDontSaveBeforeDays) ) {
+            if( tree.event.eventData.pubkey != userPublicKey ) {
+              if( !(tree.event.eventData.kind == 4 && isValidDirectMessage(tree.event.eventData)))
+                continue;
+            
+            }
           }
         }
 
@@ -2030,6 +2036,34 @@ class Store {
     return;
   }
 
+  void printEventInfo() {
+    Map<int, int> eventCounterMap = {} ;
+
+    List<int> kindCounted = [0, 1, 3, 4, 5, 6, 7, 40, 41, 42, 140, 141, 142];
+    for( var k in kindCounted ) {
+      eventCounterMap[k] = 0;
+    }
+
+    for(var t in allChildEventsMap.values) {
+      EventData e = t.event.eventData;
+      eventCounterMap[e.kind] = eventCounterMap[e.kind]??0 + 1;
+      if( eventCounterMap.containsKey(e.kind)) {
+        //print("added one more for ${e.kind}");
+        eventCounterMap[e.kind] = eventCounterMap[e.kind]! + 1;
+        //print("eventCounterMap[e.kind] = ${eventCounterMap[e.kind]}");
+      } else {
+        //print("added first for ${e.kind}");
+        eventCounterMap[e.kind] = 0;
+      }
+
+    }
+
+    printUnderlined("kind       count");
+    for( var k in kindCounted) {
+      print("${k.toString().padRight(5)}      ${eventCounterMap[k]}");
+    }
+  }
+
 } //================================================================================================================================ end Store
 
 int ascendingTimeTree(Tree a, Tree b) {
@@ -2105,7 +2139,7 @@ Store getTree(Set<Event> events) {
     Store node = Store.fromEvents(events);
     //log.info("After calling fromEvents with ${node.allChildEventsMap.length} events in its internal store");
 
-    // translate and expand mentions for all
+    // translate and expand mentions for all ( both take 0.5 sec for 20k events)
     events.where((element) => element.eventData.kind != 142).forEach( (event) =>   event.eventData.translateAndExpandMentions(node.directRooms, node.allChildEventsMap));;
     events.where((element) => element.eventData.kind == 142).forEach( (event) =>   event.eventData.translateAndExpand14x(node.directRooms, node.encryptedChannels, node.allChildEventsMap));;
     if( gDebug > 0) log.info("expand mentions finished.");

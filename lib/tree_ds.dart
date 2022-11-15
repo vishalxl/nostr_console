@@ -1956,7 +1956,7 @@ class Store {
     List<String> validReactionList = ["+", "!"]; // TODO support opposite reactions 
     List<String> opppositeReactions = ['-', "~"];
 
-    if( event.eventData.content == "" ) { // cause damus sends blank reactions
+    if( event.eventData.content == "" || event.eventData.content == "❤️" ) { // cause damus sends blank reactions, and some send heart emojis
       event.eventData.content = "+";
     }
 

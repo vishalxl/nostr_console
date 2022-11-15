@@ -1170,7 +1170,7 @@ class Store {
       //strToWrite += "No new replies/posts.\n";
       //stdout.write("${getNumDashes(strToWrite.length - 1)}\n$strToWrite");
       //stdout.write("Total posts  : ${count()}\n");
-      stdout.write("Signed in as : $userName\n");
+      
       return;
     }
     // TODO call count() less

@@ -378,12 +378,16 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
 
   while(true) {
     //print("\n$menuName\n${getNumDashes(menuName.length)}");
-    printInColor("                                     $menuName \n", yellowColor);
+    printInColor("                                     $menuName", yellowColor);
+    print("\n");
 
-    print('Pick an option:');
     printMenu(menuOptions);
+    String nameToDisplay = userPrivateKey.length == 64? 
+                              "$gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
+                              "${gWarningColor}You are not signed in$gColorEndMarker but are using public key $userPublicKey";
 
-    stdout.write("Type menu option/number: ");
+    stdout.write("Signed in as $nameToDisplay. ");
+    stdout.write("Type option number: ");
     String? userOptionInput = stdin.readLineSync();
     String userOption = userOptionInput??"";
     userOption = userOption.trim();

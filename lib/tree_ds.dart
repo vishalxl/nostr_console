@@ -1015,9 +1015,8 @@ class Store {
       allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
 
       // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
-      if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
-        newEventIdsSet.add(newEvent.eventData.id);
-      }
+      newEventIdsSet.add(newEvent.eventData.id);
+     
      
     });
     
@@ -1630,7 +1629,8 @@ class Store {
           if(  tree.event.eventData.createdAt <  getSecondsDaysAgo(gDontSaveBeforeDays) ) {
             if( tree.event.eventData.pubkey != userPublicKey ) {
               if( !(tree.event.eventData.kind == 4 && isValidDirectMessage(tree.event.eventData)))
-                continue;
+                if( !tree.event.eventData.pTags.contains(userPublicKey))
+                  continue;
             
             }
           }

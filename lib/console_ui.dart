@@ -292,10 +292,14 @@ void printProfile(Store node, String profilePubkey) {
     String about = gKindONames[profilePubkey]?.about??"";
     String picture = gKindONames[profilePubkey]?.picture??"";
     int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
+    bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
+    String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
 
     print("About       : $about");
     print("Picture     : $picture");
-    print("Last Updated: ${getPrintableDate(dateLastUpdated)}\n"); 
+    print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
+    print("Last Updated: ${getPrintableDate(dateLastUpdated)}\n");
+    
 
     if( profilePubkey != userPublicKey) {
       if( profileContactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
@@ -435,7 +439,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
         if( userName != "") {
           Set<String> pubkey = getPublicKeyFromName(userName); 
           print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
-          pubkey.forEach( (x) => print(" $x ( ${gKindONames[x]?.name} )"));
+          pubkey.forEach( (x) => print(" $x : ${getNip05Name(x)} "));
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
               printWarning("Got multiple users with the same name. Try again, and/or type a more unique name or their full public keys.");
@@ -495,7 +499,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
         if( userName != "") {
           Set<String> pubkey = getPublicKeyFromName(userName); 
           print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
-          pubkey.forEach( (x) => print(" $x ( ${gKindONames[x]?.name} )"));
+          pubkey.forEach( (x) => print(" $x : ${getNip05Name(x)} "));
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
               printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");

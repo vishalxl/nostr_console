@@ -11,6 +11,8 @@ import "dart:typed_data";
 import 'dart:convert' as convert;
 import "package:pointycastle/export.dart";
 import 'package:kepler/kepler.dart';
+import 'package:http/http.dart' as http;
+
 
 String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
@@ -29,7 +31,9 @@ class UserNameInfo {
   String? name, about, picture;
   int? createdAtKind3;
   Event ?latestContactEvent;
-  UserNameInfo(this.createdAt, this.name, this.about, this.picture, this.latestContactEvent, [this.createdAtKind3 = null]);
+  bool nip05Verified;
+  String nip05Id;
+  UserNameInfo(this.createdAt, this.name, this.about, this.picture, this.latestContactEvent, [this.createdAtKind3 = null, this.nip05Verified = false, this.nip05Id = ""]);
 }
 
 /* 
@@ -907,6 +911,13 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
   return relay;
 }
 
+Future<http.Response> fetchNip05Info(String nip05Url) {
+  //print("in fetch nip: url = $nip05Url");
+  var retval = http.get(Uri.parse(nip05Url));
+  
+  return retval;
+}
+
 // If given event is kind 0 event, then populates gKindONames with that info
 // returns true if entry was created or modified, false otherwise
 bool processKind0Event(Event e) {
@@ -922,12 +933,14 @@ bool processKind0Event(Event e) {
   String name = "";
   String about = "";
   String picture = "";
+  String nip05 = "";
 
   try {
     dynamic json = jsonDecode(content);
     name = json["name"];
     about = json["about"];    
     picture = json["picture"];    
+    nip05 = json['nip05'];
   } catch(ex) {
     //if( gDebug != 0) print("Warning: In processKind0Event: caught exception for content: ${e.eventData.content}");
     if( name.isEmpty) {
@@ -952,6 +965,54 @@ bool processKind0Event(Event e) {
   if(gDebug > 0) { 
     print("At end of processKind0Events: for name = $name ${newEntry? "added entry": ( entryModified?"modified entry": "No change done")} ");
   }
+
+  bool nipVerified = false;
+
+  bool localDebug = false; //e.eventData.pubkey == "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437"? true: false;
+
+  if( newEntry || entryModified) {
+    if(nip05.length > 0) {
+      //print("---");
+      List<String> urlSplit = nip05.split("@");
+      //print(nip05);
+      if( urlSplit.length == 2) {
+        
+        String urlNip05 = urlSplit[1] + "/.well-known/nostr.json?name=" + urlSplit[0];
+        if( !urlNip05.startsWith("http")) {
+          urlNip05 = "http://"+ urlNip05;
+        }
+        //print("got $urlNip05 for $name");
+        fetchNip05Info(urlNip05)
+          .then((httpResponse) { 
+            if( localDebug) print("-----\nnip future for $urlNip05 returned body ${httpResponse.body}");
+
+            var namesInResponse;        
+            try {
+              dynamic json = jsonDecode(httpResponse.body);
+              namesInResponse = json["names"];
+              if( namesInResponse.length > 0) {
+                //print(names.runtimeType);
+                for(var name in namesInResponse.keys) {
+                  //print('in name for loop');
+                  if( localDebug) print("$name = ${namesInResponse[name]}");
+                  if( namesInResponse[name] == e.eventData.pubkey) {
+                    nipVerified = true;
+                    gKindONames[e.eventData.pubkey]?.nip05Verified = true;
+                    gKindONames[e.eventData.pubkey]?.nip05Id = nip05;
+                    return;
+                  }
+                }
+              } else {
+                //print("names = 0");
+              }
+            } catch(ex) {
+            }
+          }) 
+          .catchError((e){if( gDebug > 0) print('in fetch nip caught error $e for url $urlNip05');});
+      }
+    }
+  }
+
   return newEntry || entryModified;
 }
 
@@ -984,14 +1045,31 @@ bool processKind3Event(Event newContactEvent) {
   return newEntry || entryModified;
 }
 
+String getNip05Name( String pubkey) {
+  String nip05name = "";
+  if( gKindONames[pubkey]?.name == null || gKindONames[pubkey]?.name?.length == 0) {
+    nip05name = "";
+  }
+  else {
+    String name = gKindONames[pubkey]?.name??"";
+    if( gKindONames[pubkey]?.nip05Verified??false) {
+      nip05name = "$name (nip05: ${gKindONames[pubkey]?.nip05Id??""})";
+    } else {
+      nip05name = name;
+    }
+  }
+  return nip05name;
+}
+
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
 String getAuthorName(String pubkey, [int len = 3]) {
   String max3(String v) => v.length > len? v.substring(0,len) : v.substring(0, v.length);
   String name = "";
   if( gKindONames[pubkey]?.name == null || gKindONames[pubkey]?.name?.length == 0)
      name = max3(pubkey);
-  else 
+  else {
     name = (gKindONames[pubkey]?.name)??max3(pubkey);
+  }
   return name;
 }
 

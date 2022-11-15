@@ -40,7 +40,6 @@ Future<void> main(List<String> arguments) async {
     DateTime appStartTime = DateTime.now();
     print("app start time: $appStartTime");
     Logger.root.onRecord.listen((record) {
-      //print(record.time.runtimeType);
       print('${record.level.name}: ${record.time.difference(appStartTime)}: ${record.message}');
     });
       

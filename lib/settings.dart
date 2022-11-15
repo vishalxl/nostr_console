@@ -279,12 +279,7 @@ HOW TO USE
   with this prefix as its id, and send a reply/like to it. It is possible that some other event has the same 3 letter prefix, and is printed
   later than your own event, in which case a different event will get a reply/like. But the odds of that happening are very low if the event
   you are replying to is not too old. 
-
-  To ensure that you reply to the exact right event id, invoke the program with --prefix N, where N is a large number. Then the program will
-  display the first N letters of each event, and you can reply to a longer ID. N can be as large as 64. 
-
-* 
-
+  
 
 EXAMPLES
 --------
@@ -299,7 +294,7 @@ To get the latest messages for user with private key K ( that is also used to si
 
 To get the latest messages for user with private key K for last 4 days ( default is 1) from relay R:
 
-\$ nostr_console.exe  --prikey=K --relay=R --days=4 
+\$ nostr_console.exe  --prikey=K --days=4 
 
 To write events to a file ( and later read from it too), for any given private key K:
 

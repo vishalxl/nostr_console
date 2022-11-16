@@ -144,9 +144,8 @@ class EventData {
       int numRoot = 0, numReply = 0;
 
       String rootId = "", replyId = "";
-      for( int i = eTags.length - 1; i >= 0; i--) {
+      for( int i = 0; i < eTags.length; i++) {
         String eventId = eTags[i][0];
-        //print(eTags);
         if( eTags[i].length >= 3) {
           if( eTags[i][2].toLowerCase() == "root") {
             numRoot++;
@@ -164,11 +163,12 @@ class EventData {
         if( numReply == 1) {
           return replyId;
         } else {
-          if( rootId.length > 0) {
-            return rootId;  
+          // if there are multiply reply's we can't tell which is which, so we return the one at top
+          if( replyId.length > 0) { 
+            return replyId;  
           } else {
-            if( replyId.length > 0) {
-              return replyId;
+            if( rootId.length > 0) {
+              return rootId;
             }
           }
         }

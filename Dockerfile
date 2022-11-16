@@ -9,9 +9,9 @@ WORKDIR /app
 COPY pubspec.* ./
 RUN dart pub get
 
-#COPY . .
+COPY . .
 RUN dart pub get --offline
-#RUN dart compile exe bin/nostr_console.dart -o bin/nostr_console
+RUN dart compile exe bin/nostr_console.dart -o bin/nostr_console
 
 FROM scratch
 COPY --from=build /runtime/ /
@@ -32,13 +32,15 @@ RUN npm install node-pty dotenv
 RUN git config --global core.autocrlf input 
 
 
-RUN git clone https://github.com/cmdruid/nostr-terminal.git  
+RUN git clone https://github.com/vishalxl/nostr-terminal.git  
 
-#COPY --from=build /app/bin/nostr_console /nostr-terminal/
-
+COPY --from=build /app/bin/nostr_console /nostr-terminal/
+RUN echo "/nostr-terminal/nostr_console  --width=120 --align=left" >> /nostr-terminal/console.sh 
+RUN PATH=$PATH:/nostr-terminal/
 #RUN chmod 755 /nostr-terminal/nostr_console 
 WORKDIR /nostr-terminal/nostr-terminal
 RUN npm install 
-ENTRYPOINT ["yarn"]
+#ENTRYPOINT ["/nostr-terminal/nostr_console"]
+ENTRYPOINT [ "yarn" ]
 
 #CMD [ "yarn" ]

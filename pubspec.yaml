@@ -4,8 +4,7 @@ version: 0.1.3-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
 # Release 0.1.3-beta 
-
-# limited menu columns to 4 
+# nip05 build 
 
 environment:
   sdk: '>=2.17.3 <3.0.0'

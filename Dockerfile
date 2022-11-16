@@ -9,17 +9,36 @@ WORKDIR /app
 COPY pubspec.* ./
 RUN dart pub get
 
-# Copy app source code and AOT compile it.
-COPY . .
-# Ensure packages are still up-to-date if anything has changed
+#COPY . .
 RUN dart pub get --offline
-RUN dart compile exe bin/nostr_console.dart -o bin/nostr_console
+#RUN dart compile exe bin/nostr_console.dart -o bin/nostr_console
 
-# Build minimal serving image from AOT-compiled `/server` and required system
-# libraries and configuration files stored in `/runtime/` from the build stage.
 FROM scratch
 COPY --from=build /runtime/ /
 COPY --from=build /app/bin/nostr_console /app/bin/
 
 
-CMD ["/app/bin/nostr_console"]
+# build nostr-terminal and invoke it
+FROM node:16
+
+WORKDIR /nostr-terminal
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" |  tee /etc/apt/sources.list.d/yarn.list
+
+RUN  apt update -y &&  apt install -y yarn
+RUN npm install node-pty dotenv
+
+# https://stackoverflow.com/questions/38905135/why-wont-my-docker-entrypoint-sh-execute
+RUN git config --global core.autocrlf input 
+
+
+RUN git clone https://github.com/cmdruid/nostr-terminal.git  
+
+#COPY --from=build /app/bin/nostr_console /nostr-terminal/
+
+#RUN chmod 755 /nostr-terminal/nostr_console 
+WORKDIR /nostr-terminal/nostr-terminal
+RUN npm install 
+ENTRYPOINT ["yarn"]
+
+#CMD [ "yarn" ]

@@ -937,15 +937,14 @@ bool processKind0Event(Event e) {
 
   try {
     dynamic json = jsonDecode(content);
-    name = json["name"];
-    about = json["about"];    
-    picture = json["picture"];    
-    nip05 = json['nip05'];
+    name = json["name"]??"";
+    about = json["about"]??"";    
+    picture = json["picture"]??"";    
+    nip05 = json['nip05']??"";
+    //String twitterId = json['twitter']??"";
+    //String githubId = json['github']??"";
   } catch(ex) {
-    //if( gDebug != 0) print("Warning: In processKind0Event: caught exception for content: ${e.eventData.content}");
-    if( name.isEmpty) {
-      //return false;
-    }
+    if( gDebug > 0) print("Error in processKind0Event: $ex for pubkey: ${e.eventData.pubkey}");
   }
 
   bool newEntry = false, entryModified = false;
@@ -992,11 +991,16 @@ bool processKind0Event(Event e) {
               namesInResponse = json["names"];
               if( namesInResponse.length > 0) {
                 //print(names.runtimeType);
-                for(var name in namesInResponse.keys) {
+                for(var returntedName in namesInResponse.keys) {
                   //print('in name for loop');
-                  if( localDebug) print("$name = ${namesInResponse[name]}");
-                  if( namesInResponse[name] == e.eventData.pubkey) {
+                  //if( true) print("  urlSplit[0] = ${urlSplit[0]}  $returntedName = ${namesInResponse[returntedName]}");
+                  
+                  if( returntedName == urlSplit[0]  && namesInResponse[returntedName] == e.eventData.pubkey) {
                     nipVerified = true;
+                    if( !gKindONames.containsKey(e.eventData.pubkey)) {
+                      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, e);
+                    }
+
                     gKindONames[e.eventData.pubkey]?.nip05Verified = true;
                     gKindONames[e.eventData.pubkey]?.nip05Id = nip05;
                     return;

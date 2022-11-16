@@ -366,6 +366,31 @@ void printMenu(List<String> menuOptions) {
   
 }
 
+void printVerifiedAccounts(Store node) {
+
+  List<dynamic> listVerified = []; // num follows, pubkey, name, nip05id
+
+  print("Username                   Num Followers             pubkey                                                                    Nip Id");
+  gKindONames.forEach((key, value) {
+    String pubkey = key;
+    if( value.nip05Verified) {
+      //print("${getAuthorName(pubkey).padRight(20)}  ${pubkey}   ${value.nip05Id}");
+      List<String> followers = node.getFollowers(pubkey);
+      listVerified.add([followers.length, pubkey, getAuthorName(pubkey), value.nip05Id]);
+    }
+    
+  });
+
+  listVerified.sort((a, b) => a[0] > b[0]? -1: (a[0] == b[0]? 0: 1));
+
+  for(var verifiedEntry in listVerified) {
+    print("${verifiedEntry[2].padRight(20)}  ${verifiedEntry[0]}  ${verifiedEntry[1]}   ${verifiedEntry[3]}");
+  }
+
+  for( var uni in gKindONames.values) {
+  }
+}
+
 void clearScreen() {
   print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 }
@@ -644,6 +669,8 @@ Future<void> otherOptionsMenuUi(Store node) async {
           print("You are not signed in, and are using public key: $userPublicKey");
         }
         print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}\n");
+
+        //printVerifiedAccounts(node);
         break;
 
       case 10:

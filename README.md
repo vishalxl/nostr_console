@@ -106,11 +106,18 @@ nostr_console.exe  --file=eventsFile.txt --prikey=K
  
  # Screenshots
 
-![Social network](https://pbs.twimg.com/media/FcdrdCVX0AE77RC?format=png&name=4096x4096) late mid sept 2022.
+![](https://pbs.twimg.com/media/FcdrdCVX0AE77RC?format=png&name=4096x4096) 
+Social network, mid sept 2022.
 
-![Showing Tree with re-shifting to left](https://pbs.twimg.com/media/FcdsoTeX0AApZ53?format=png&name=4096x4096); threads are re-alignment to left for easier reading.
+![](https://pbs.twimg.com/media/FcdsoTeX0AApZ53?format=png&name=4096x4096)
+Showing Tree with re-shifting to left threads are re-alignment to left for easier reading.
 
-![Public channels overview with menu](https://pbs.twimg.com/media/FcdsFm9XoAAk3m3?format=png&name=4096x4096)
+![](https://pbs.twimg.com/media/FcdsFm9XoAAk3m3?format=png&name=4096x4096)
+Public channels overview with menu
+
+
+<img width="1280" alt="How public channels look like as of mid nov 2022" src="https://user-images.githubusercontent.com/64505169/202233571-38ca5263-e1cb-49c6-ad3b-fc51bf0a484c.png">
+How public channels look like as of mid nov 2022
 
 
 # Contact

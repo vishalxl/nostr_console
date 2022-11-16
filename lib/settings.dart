@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'package:logging/logging.dart';
 
+// name of executable
+const String exename = "nostr_console";
+const String version = "0.1.4-beta";
+
 int gDebug = 0;
 int gSpecificDebug = 0;
 
@@ -49,10 +53,6 @@ List<String> gListRelayUrls2 = [
                               "wss://nostr-relay.wlvs.space",
                               "wss://nostr.ono.re"
                               ];
-
-// name of executable
-const String exename = "nostr_console";
-const String version = "0.1.3-beta";
 
 // well known disposable test private key
 const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";

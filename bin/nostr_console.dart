@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:bip340/bip340.dart';
 import 'package:translator/translator.dart';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';

@@ -102,7 +102,7 @@ nostr_console.exe  --file=eventsFile.txt --prikey=K
 
 [Nostr Telegram Channel](https://t.me/nostr_protocol) or at Nostr Pulic Channel 52cab2e3e504ad6447d284b85b5cc601ca0613b151641e77facfec851c2ca816
 
-# Donation or tipping
+# For tips
 
-Donation or tipping can be done to my lightning address vishalxl@coinos.io
+Buy me a beer through my lightning address vishalxl@coinos.io
 

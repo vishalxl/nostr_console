@@ -1423,7 +1423,9 @@ bool isValidDirectMessage(EventData directMessageData) {
   });
 
   if( directMessageData.pubkey == userPublicKey && allPtags.length == 1) {
-    validUserMessage = true; // case where this user is sender
+    if( allPtags[0].substring(0, 32) != "0".padLeft(32, '0')) { // check that the message hasn't been sent to an invalid pubkey
+      validUserMessage = true; // case where this user is sender
+    }
   } else {
     if ( directMessageData.pubkey != userPublicKey) {
       if( allPtags.length == 1 && allPtags[0] == userPublicKey) {
@@ -1526,7 +1528,7 @@ try {
 String myEncrypt( String privateString, 
                          String publicString, 
                          String plainText) {
-  print("private = ${privateString.length} public = ${publicString.length}");
+  //print("private = ${privateString.length} public = ${publicString.length}");
   Uint8List uintInputText = convert.Utf8Encoder().convert(plainText);
   final encryptedString = myEncryptRaw(privateString, publicString, uintInputText);
   return encryptedString;

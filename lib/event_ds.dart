@@ -422,29 +422,34 @@ class EventData {
 
   String? decryptDirectMessage() {
     int ivIndex = content.indexOf("?iv=");
-    var iv = content.substring( ivIndex + 4, content.length);
-    var enc_str = content.substring(0, ivIndex);
+    if( ivIndex > 0) {
+      var iv = content.substring( ivIndex + 4, content.length);
+      var enc_str = content.substring(0, ivIndex);
 
-    String userKey = userPrivateKey ;
-    String otherUserPubKey = "02" + pubkey;
-    if( pubkey == userPublicKey) { // if user themselve is the sender change public key used to decrypt
-      userKey =  userPrivateKey;
-      int numPtags = 0;
-      tags.forEach((tag) {
-        if(tag[0] == "p" ) {
-          otherUserPubKey = "02" + tag[1];
-          numPtags++;
+      String userKey = userPrivateKey ;
+      String otherUserPubKey = "02" + pubkey;
+      if( pubkey == userPublicKey) { // if user themselve is the sender change public key used to decrypt
+        userKey =  userPrivateKey;
+        int numPtags = 0;
+        tags.forEach((tag) {
+          if(tag[0] == "p" ) {
+            otherUserPubKey = "02" + tag[1];
+            numPtags++;
+          }
+        }); 
+        // if there are more than one p tags, we don't know who its for
+        if( numPtags != 1) {
+          if( gDebug >= 0) printInColor(" in translateAndExpand: got event $id with number of p tags != one : $numPtags . not decrypting", redColor);
+            return null;
         }
-      }); 
-      // if there are more than one p tags, we don't know who its for
-      if( numPtags != 1) {
-        if( gDebug >= 0) printInColor(" in translateAndExpand: got event $id with number of p tags != one : $numPtags . not decrypting", redColor);
-          return null;
-      }
-    } 
+      } 
 
-    var decrypted = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
-    return decrypted;
+      var decrypted = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+      return decrypted;
+    } else {
+      if(gDebug > 0) print("Invalid content for dm, could not get ivIndex: $content");
+      return null;
+    }
   }
 
   Channel? getChannelForMessage(List<Channel>? listChannel, String messageId) {
@@ -1079,7 +1084,7 @@ String getAuthorName(String pubkey, [int len = 3]) {
 
 // returns full public key(s) for the given username( which can be first few letters of pubkey, or the user name)
 Set<String> getPublicKeyFromName(String inquiredName) {
-  if( inquiredName.length < 2) {
+  if( inquiredName.length < 1) {
     return {};
   }
   Set<String> pubkeys = {};
@@ -1094,7 +1099,7 @@ Set<String> getPublicKeyFromName(String inquiredName) {
     }
 
     // check public key
-    if( inquiredName.length <= pubkey.length) {
+    if( inquiredName.length >= 2 &&  inquiredName.length <= pubkey.length) {
       if( pubkey.substring(0, inquiredName.length) == inquiredName) {
         pubkeys.add(pubkey);
       }
@@ -1521,6 +1526,7 @@ try {
 String myEncrypt( String privateString, 
                          String publicString, 
                          String plainText) {
+  print("private = ${privateString.length} public = ${publicString.length}");
   Uint8List uintInputText = convert.Utf8Encoder().convert(plainText);
   final encryptedString = myEncryptRaw(privateString, publicString, uintInputText);
   return encryptedString;

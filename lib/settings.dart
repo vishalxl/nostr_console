@@ -167,9 +167,9 @@ List<String> nameColorPalette = [brightMagentaColor, brightBlueColor, brightCyan
 
 */
 
-Map<String, String> pubkeyColor = { '0': brightMagentaColor, '1': brightMagentaColor,
-                                    '2': brightBlueColor, '3': brightBlueColor,  
-                                    '4': brightCyanColor, '5': brightCyanColor, 
+Map<String, String> pubkeyColor = { '0': magentaColor, '1': brightMagentaColor,
+                                    '2': blueColor, '3': brightBlueColor,  
+                                    '4': cyanColor, '5': brightCyanColor, 
                                     '6': brightGreenColor, '7': brightGreenColor, 
                                     '8': brightYellowColor,'9': brightYellowColor,  
                                     'a': brightRedColor,  'b':  brightRedColor, 

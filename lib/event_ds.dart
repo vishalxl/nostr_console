@@ -1529,8 +1529,10 @@ String myEncrypt( String privateString,
                          String publicString, 
                          String plainText) {
   //print("private = ${privateString.length} public = ${publicString.length}");
+  //print("private = ${privateString} public = ${publicString}");
   Uint8List uintInputText = convert.Utf8Encoder().convert(plainText);
   final encryptedString = myEncryptRaw(privateString, publicString, uintInputText);
+  //print("encryptedString = $encryptedString");
   return encryptedString;
 }
 

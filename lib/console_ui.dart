@@ -140,7 +140,7 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
   String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, encryptedMessageToSend);
   String sig = mySign(userPrivateKey, id);
   String eventStrToSend = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$encryptedMessageToSend","sig":"$sig"}]';
- 
+  //print("calling send for str : $eventStrToSend");
   sendRequest( gListRelayUrls1, eventStrToSend);
 
   Future<void> foo() async {
@@ -562,11 +562,11 @@ Future<void> otherOptionsMenuUi(Store node) async {
                   print('Sending new contact event');
                   Contact newContact = Contact(pk, defaultServerUrl);
                   newContactEvent.eventData.contactList.add(newContact);
-                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
                   sendEvent(node, newContactEvent);
                 } else {
                   print("The contact already exists in the contact list. Republishing the old contact list.");
-                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
                   sendEvent(node, contactEvent);
                 }
               } else {
@@ -584,7 +584,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
                   EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
                   Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
-                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gDaysToGetEventsFor));
+                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
                   sendEvent(node, newEvent);
               }
             }

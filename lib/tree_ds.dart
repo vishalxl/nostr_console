@@ -1630,7 +1630,8 @@ class Store {
             if( tree.event.eventData.pubkey != userPublicKey ) {
               if( !(tree.event.eventData.kind == 4 && isValidDirectMessage(tree.event.eventData)))
                 if( !tree.event.eventData.pTags.contains(userPublicKey))
-                  continue;
+                  if( ![0, 3, 40, 41, 140, 141].contains(tree.event.eventData.kind))
+                    continue;
             
             }
           }

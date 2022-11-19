@@ -13,7 +13,7 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = "fg ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09"; 
 
-int gDefaultNumWaitSeconds = 3000; // is used in main()
+int gDefaultNumWaitSeconds = 6000; // is used in main()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// file related settings 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
@@ -25,8 +25,8 @@ bool         gOverWriteFile         = false; // overwrite the file, and don't ju
 
 const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
-const int gDaysToGetEventsFor       = 10; // when getting events, this is the since field (unless a fully formed request is given in command line)
-const int gLimitPerSubscription     = 6000;
+const int gLimitFollowPosts       = 20; // when getting events, this is the since field (unless a fully formed request is given in command line)
+const int gLimitPerSubscription     = 10000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
@@ -45,8 +45,7 @@ String defaultServerUrl       = "wss://relay.damus.io";
 
 List<String> gListRelayUrls1 = [ defaultServerUrl,
                                 relayNostrInfo,
-                                "wss://nostr.oxtr.dev",
-                                "wss://nostr-verified.wellorder.net"
+                                "wss://nostr.oxtr.dev"
                               ];
 
 List<String> gListRelayUrls2 = [

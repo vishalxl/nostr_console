@@ -47,6 +47,7 @@ String mySign(String privateKey, String msg) {
  * otherwise e and p tags are found for the given event being replied to, if that event data is available
  */
 Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, String content) async {
+  content = addEscapeChars(content);
   String strTags = node.getTagStr(replyToId, exename, true);
   if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
     print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$gColorEndMarker"); 
@@ -87,6 +88,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
 
 // Sends a public channel message
 Future<void> sendPublicChannelMessage(Store node, String channelId, String messageToSend, String replyKind) async {
+  messageToSend = addEscapeChars(messageToSend);
 
   String strTags = node.getTagStr(channelId, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -95,6 +97,7 @@ Future<void> sendPublicChannelMessage(Store node, String channelId, String messa
   String sig = mySign(userPrivateKey, id);
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
+  //printInColor(toSendMessage, gCommentColor);
   sendRequest( gListRelayUrls1, toSendMessage);
 
   Future<void> foo() async {
@@ -107,6 +110,8 @@ Future<void> sendPublicChannelMessage(Store node, String channelId, String messa
 
 // Sends a public channel message
 Future<void> sendPublicChannelReply(Store node, Channel channel, String replyTo, String messageToSend, String replyKind) async {
+
+  messageToSend = addEscapeChars(messageToSend);
 
   String strTags = node.getTagStrForChannel(channel, replyTo, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -126,9 +131,9 @@ Future<void> sendPublicChannelReply(Store node, Channel channel, String replyTo,
 
 }
 
-
 // send DM
 Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend) async {
+  //messageToSend = addEscapeChars(messageToSend); since this get encrypted , it does not need escaping
   String otherPubkey02 = "02" + otherPubkey;
   String encryptedMessageToSend =        myEncrypt(userPrivateKey, otherPubkey02, messageToSend);
 
@@ -810,7 +815,7 @@ Future<void> channelMenuUI(Store node) async {
 
                 } else {
                   // send message to the given room
-                  print("sending message |$messageToSend|");
+                  //print("sending message |$messageToSend|");
                   await sendPublicChannelMessage(node, fullChannelId, messageToSend, "42");
                   pageNum = 1; // reset it 
 
@@ -992,7 +997,6 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String
 
 Future<void> encryptedChannelMenuUI(Store node) async {
  
-  gSpecificDebug = 1;
   bool continueChatMenu = true;
   
   bool justShowedChannels = false;
@@ -1258,7 +1262,6 @@ Future<void> mainMenuUi(Store node) async {
             break;
           }
 
-          content = addEscapeChars(content);
           stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";

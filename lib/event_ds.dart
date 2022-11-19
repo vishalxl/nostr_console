@@ -64,11 +64,11 @@ String getStrTagsFromJson(dynamic json) {
 
     str += "[";
     int j = 0;
-    for(dynamic e in tag) {
+    for(dynamic element in tag) {
       if( j != 0) {
         str += ",";
       }
-      str += "\"${e.toString()}\"";
+      str += "\"${element.toString()}\"";
       j++;
     }
     str += "]";
@@ -78,13 +78,13 @@ String getStrTagsFromJson(dynamic json) {
 }
 
 bool verifyEvent(dynamic json) {
+    return true;
+
+    gSpecificDebug = 0;
+    if(gSpecificDebug > 0) print("----\nIn verify event:");
     String createdAt = json['created_at'].toString();
 
-    List<dynamic> listTags = json['tags'];
-    //print(listTags);
-    String strTags = json['tags'].toString();
-
-    strTags = getStrTagsFromJson(json['tags']);
+    String strTags = getStrTagsFromJson(json['tags']);
 
     //print("strTags = $strTags");
 
@@ -92,19 +92,25 @@ bool verifyEvent(dynamic json) {
     String eventPubkey = json['pubkey'];
     String strKind = json['kind'].toString();
     String content = json['content'];
+    content = unEscapeChars( content);
+    String eventSig = json['sig'];
 
     
-    String calculatedId = getShaId(eventPubkey, createdAt.toString(), strKind, strTags, content);
-    //print("\ncalculated id = $calculatedId actual id = $id");
-    bool verified = true;//verify( eventPubkey, calculatedId, sig);
+    if( false) {
+      String calculatedId = getShaId(eventPubkey, createdAt.toString(), strKind, strTags, content);
+      bool verified = true;//verify( eventPubkey, calculatedId, eventSig);
 
-    if( !verified ) {
-      //printWarning("wrong sig event sig = $sig event id = $id calculated id = $calculatedId " );
-      //print("Event: kind = $strKind");
-      throw Exception();
-    } else {
-      //printInColor("verified correct sig", gCommentColor);
+      if( !verified && !eventPubkey.startsWith("00")) {
+        if(gSpecificDebug > 0) printWarning("\nwrong sig event\nevent sig     = $eventSig\nevent id      = $id\ncalculated id = $calculatedId " );
+        if(gSpecificDebug > 0) print("Event: kind = $strKind\n");
+        //getShaId(eventPubkey, createdAt.toString(), strKind, strTags, content);
+        //print("$json");
+        //throw Exception();
+      } else {
+        if(gSpecificDebug > 0) printInColor("\nverified correct sig for event id $id\n", gCommentColor);
+      }
     }
+
     return true;
 }
 
@@ -222,7 +228,7 @@ class EventData {
       //}
 
       try {
-        //verifyEvent(json);
+        verifyEvent(json);
 
       } on Exception catch(e) {
         //printWarning("verify gave exception $e");
@@ -1387,12 +1393,22 @@ class Contact {
 }
 
 String addEscapeChars(String str) {
-  return str.replaceAll("\"", "\\\"");
+  String temp = str.replaceAll("\"", "\\\"");
+  return temp.replaceAll("\n", "\\n");
 }
+
+String unEscapeChars(String str) {
+  //print("in unEscape: |$str|");
+  String temp = str.replaceAll("\"", "\\\"");
+  temp = temp.replaceAll("\n", "\\n");
+  //print("returning |$temp|\n");
+  return temp;
+}
+
 
 String getShaId(String pubkey, String createdAt, String kind, String strTags, String content) {
   String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
-  //print("in getShaId for buf: |$buf|");
+  if(gSpecificDebug > 0) print("in getShaId for buf: |$buf|");
   var bufInBytes = utf8.encode(buf);
   var value = sha256.convert(bufInBytes);
   return value.toString();

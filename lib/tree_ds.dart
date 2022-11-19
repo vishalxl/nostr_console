@@ -1,7 +1,5 @@
-import 'dart:collection';
 import 'dart:io';
 import 'dart:convert';
-import 'package:nostr_console/console_ui.dart';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
@@ -1679,7 +1677,9 @@ class Store {
   String getTagStr(String replyToId, String clientName, [bool addAllP = false]) {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
     if( replyToId.isEmpty) {
-      return '["client","$clientName"]';
+      if( gWhetherToSendClientTag)
+        return '["client","$clientName"]';
+      return "[]";
     }
 
     String strTags = "";
@@ -1727,10 +1727,12 @@ class Store {
           strTags +=  '["e","$rootEventId","","root"],';
         }
       }
-      strTags +=  '["e","$latestEventId","$relay","reply"],';
+      strTags +=  '["e","$latestEventId","$relay","reply"]';
     }
 
-    strTags += '["client","$clientName"]' ;
+    if( gWhetherToSendClientTag)
+      strTags += ',["client","$clientName"]' ;
+    
     return strTags;
   }
 

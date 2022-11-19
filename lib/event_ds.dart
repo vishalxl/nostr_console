@@ -1394,12 +1394,14 @@ class Contact {
 
 String addEscapeChars(String str) {
   String temp = str.replaceAll("\"", "\\\"");
+  temp = temp.replaceAll("\\", "\\\\");
   return temp.replaceAll("\n", "\\n");
 }
 
 String unEscapeChars(String str) {
   //print("in unEscape: |$str|");
   String temp = str.replaceAll("\"", "\\\"");
+  temp = temp.replaceAll("\\\\", "\\");
   temp = temp.replaceAll("\n", "\\n");
   //print("returning |$temp|\n");
   return temp;

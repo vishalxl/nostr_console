@@ -44,12 +44,13 @@ const String relayNostrInfo   = 'wss://relay.nostr.info';
 String defaultServerUrl       = "wss://relay.damus.io";
 
 List<String> gListRelayUrls1 = [ defaultServerUrl,
-                                relayNostrInfo,
-                                "wss://nostr.oxtr.dev"
+                                //relayNostrInfo,
+                                "wss://nostr-relay.wlvs.space"
                               ];
 
 List<String> gListRelayUrls2 = [
-                              "wss://nostr-relay.wlvs.space",
+                              
+                              "wss://nostr.oxtr.dev",
                               "wss://nostr.ono.re"
                               ];
 

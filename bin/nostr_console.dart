@@ -112,10 +112,21 @@ Future<void> main(List<String> arguments) async {
         print("You can create your own private key from ${gWarningColor}astral.ninja, branle.netlify.app$gColorEndMarker, or other such tools.\n");
       }
 
+      // handle relay related argument
       if( argResults[relayArg] != null) {
-        defaultServerUrl =  argResults[relayArg];
-        print("Going to use relay: $defaultServerUrl");
+        String newRelay = argResults[relayArg];
+        if( newRelay.startsWith("wss://")) {
+          if( !gListRelayUrls1.contains(newRelay)) {
+            print("Also going to use new relay: $newRelay apart from the relays $gListRelayUrls1");
+            gListRelayUrls1.add( newRelay);
+          } else {
+            print("The given relay $newRelay is already present in the default relays for the app, which are $gListRelayUrls1");
+          }
+        } else {
+          print("The provided relay does not start with wss:// so not going to use it.");
+        }
       }
+
       if( argResults[lastdaysArg] != null) {
         gNumLastDays =  int.parse(argResults[lastdaysArg]);
         print("Going to show posts for last $gNumLastDays days");
@@ -285,10 +296,14 @@ Future<void> main(List<String> arguments) async {
         gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/4;
       }
 
+      // get event for user
       getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
       getMentionEvents(gListRelayUrls2, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents)); // from relay group 2
 
+      // get other user events
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, limitPerSubscription, getSecondsDaysAgo(limitFollowPosts));
+
+      // get group and meta info events
       getKindEvents([0, 3, 40, 41, 140, 141], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitMetaInfoEvents)); // get all type 3 etc
       getKindEvents([42, 142], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( limitFollowPosts)); // get all type 3 etc
 

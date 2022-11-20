@@ -599,13 +599,17 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
       case 6: //edit your profile
         print("Your current name: ${getAuthorName(userPublicKey)}");
-        print("Your about me: ${gKindONames[userPublicKey]?.about}");
+        print("Your 'about me': ${gKindONames[userPublicKey]?.about}");
         print("Your current profile picture: ${gKindONames[userPublicKey]?.picture}\n");
+        print("Your current NIP 05 id: ${gKindONames[userPublicKey]?.nip05Id}");
 
-        String userName = getStringFromUser("Enter your new display name: ");
-        String userAbout = getStringFromUser("Enter new 'about me' for yourself: ");
-        String userPic = getStringFromUser("Enter url to your new display picture: ", "https://placekitten.com/200/200");
-        String content = "{\"name\": \"$userName\", \"about\": \"$userAbout\", \"picture\": \"$userPic\"}";
+        print("Enter new data. Leave blank to use the old value:");
+        String userName = getStringFromUser("Enter your new display name: ", getAuthorName(userPublicKey));
+        String userAbout = getStringFromUser("Enter new 'about me' for yourself: ", gKindONames[userPublicKey]?.about??"");
+        String userPic = getStringFromUser("Enter url to your new display picture: ", gKindONames[userPublicKey]?.picture??"https://placekitten.com/200/200");
+        String nip05id = getStringFromUser("Enter your nip 05 id. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.nip05Id??"");
+
+        String content = "{\"name\": \"$userName\", \"about\": \"$userAbout\", \"picture\": \"$userPic\"${ nip05id.length >0 ? ", \"nip05\": \"$nip05id\"":""}}";
         int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
 
         EventData eventData = EventData('id', userPublicKey, createdAt, 0, content, [], [], [], [], {}, );
@@ -675,7 +679,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
         }
         print("Your name as seen in metadata event is:          ${getAuthorName(userPublicKey)}\n");
 
-        //printVerifiedAccounts(node);
+        printVerifiedAccounts(node);
         break;
 
       case 10:

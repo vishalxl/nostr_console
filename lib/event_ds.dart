@@ -994,7 +994,7 @@ bool processKind0Event(Event e) {
         //print("got $urlNip05 for $name");
         fetchNip05Info(urlNip05)
           .then((httpResponse) { 
-            if( localDebug) print("-----\nnip future for $urlNip05 returned body ${httpResponse.body}");
+            if( localDebug ) print("-----\nnip future for $urlNip05 returned body ${httpResponse.body}");
 
             var namesInResponse;        
             try {
@@ -1393,15 +1393,16 @@ class Contact {
 }
 
 String addEscapeChars(String str) {
-  String temp = str.replaceAll("\"", "\\\"");
-  temp = temp.replaceAll("\\", "\\\\");
+  String temp = "";
+  //temp = temp.replaceAll("\\", "\\\\");
+  temp = str.replaceAll("\"", "\\\"");
   return temp.replaceAll("\n", "\\n");
 }
 
 String unEscapeChars(String str) {
   //print("in unEscape: |$str|");
   String temp = str.replaceAll("\"", "\\\"");
-  temp = temp.replaceAll("\\\\", "\\");
+  //temp = temp.replaceAll("\\\\", "\\");
   temp = temp.replaceAll("\n", "\\n");
   //print("returning |$temp|\n");
   return temp;

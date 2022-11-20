@@ -961,14 +961,13 @@ bool processKind0Event(Event e) {
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(e.eventData.pubkey)) {    
     gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, null);
-
     newEntry = true;;
   } else {
     int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
     if( oldTime < e.eventData.createdAt) {
       Event? oldContactEvent = gKindONames[e.eventData.pubkey]?.latestContactEvent;
       gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, oldContactEvent);
-      entryModified = true;;
+      entryModified = true;
     }
   }
 
@@ -976,22 +975,18 @@ bool processKind0Event(Event e) {
     print("At end of processKind0Events: for name = $name ${newEntry? "added entry": ( entryModified?"modified entry": "No change done")} ");
   }
 
-  bool nipVerified = false;
-
   bool localDebug = false; //e.eventData.pubkey == "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437"? true: false;
 
   if( newEntry || entryModified) {
     if(nip05.length > 0) {
-      //print("---");
       List<String> urlSplit = nip05.split("@");
-      //print(nip05);
       if( urlSplit.length == 2) {
         
         String urlNip05 = urlSplit[1] + "/.well-known/nostr.json?name=" + urlSplit[0];
         if( !urlNip05.startsWith("http")) {
           urlNip05 = "http://"+ urlNip05;
         }
-        //print("got $urlNip05 for $name");
+
         fetchNip05Info(urlNip05)
           .then((httpResponse) { 
             if( localDebug ) print("-----\nnip future for $urlNip05 returned body ${httpResponse.body}");
@@ -1001,19 +996,22 @@ bool processKind0Event(Event e) {
               dynamic json = jsonDecode(httpResponse.body);
               namesInResponse = json["names"];
               if( namesInResponse.length > 0) {
-                //print(names.runtimeType);
                 for(var returntedName in namesInResponse.keys) {
-                  //print('in name for loop');
-                  //if( true) print("  urlSplit[0] = ${urlSplit[0]}  $returntedName = ${namesInResponse[returntedName]}");
                   
                   if( returntedName == urlSplit[0]  && namesInResponse[returntedName] == e.eventData.pubkey) {
-                    nipVerified = true;
+                    int oldTime = 0;
                     if( !gKindONames.containsKey(e.eventData.pubkey)) {
+                      //printWarning("in response handing. creating user info");
                       gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, e);
+                    } else {
+                      oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
+                      //print("in response handing. user info exists with old time = $oldTime and this event time = ${e.eventData.createdAt}");
                     }
 
-                    gKindONames[e.eventData.pubkey]?.nip05Verified = true;
-                    gKindONames[e.eventData.pubkey]?.nip05Id = nip05;
+                    if( oldTime <= e.eventData.createdAt ) {
+                      gKindONames[e.eventData.pubkey]?.nip05Verified = true;
+                      gKindONames[e.eventData.pubkey]?.nip05Id = nip05;
+                    }
                     return;
                   }
                 }

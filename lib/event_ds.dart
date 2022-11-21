@@ -304,7 +304,7 @@ class EventData {
 
   String expandMentions(String content) {
     if( id == gCheckEventId) {
-      printInColor("in expandMentions: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
+      printInColor("in expandMentions: decoding $gCheckEventId\n", redColor);
     }
 
     if( tags.isEmpty) {
@@ -335,7 +335,7 @@ class EventData {
   // is called only once for each event received ( or read from file)
   void translateAndExpandMentions(List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
-      printInColor("in translateAndExpandMensitons: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
+      printInColor("in translateAndExpandMensitons: decoding $gCheckEventId\n", redColor);
     }
 
     if (content == "" ||  evaluatedContent != "") {

@@ -852,6 +852,7 @@ class Store {
       }
 
       if(tree.event.eventData.eTags.isNotEmpty ) {
+
         // is not a parent, find its parent and then add this element to that parent Tree
         String parentId = tree.event.eventData.getParent(tempChildEventsMap);
 
@@ -874,9 +875,12 @@ class Store {
             topLevelTrees.add(dummyTopNode);
 
             // dont add this dummy in dummyEventIds list ( cause that's used to fetch events not in store)
-            if( gDebug > 0) log.info("In Tree.fromEvents: got a kind 1 event whose parent is not a type 1 post: $newEventId . parent kind: ${tempChildEventsMap[parentId]?.event.eventData.kind}");
           } else {
-            tempChildEventsMap[parentId]?.children.add(tree); 
+            tempChildEventsMap[parentId]?.children.add(tree);
+
+            if( !gKindONames.containsKey(tree.event.eventData.pubkey)) {
+              gKindONames[tree.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null );
+            }
           }
         } else {
           // in case where the parent of the new event is not in the pool of all events, 
@@ -929,7 +933,7 @@ class Store {
     // get dummy events
     sendEventsRequest(gListRelayUrls1, dummyEventIds);
 
-    //log.info("In fromEvents After calling SendEventsRequest for ${dummyEventIds.length} dummy evnets");
+    //log.info("In fromEvents After calling SendEventsRequest for ${dummyEventIds.length} dummy evnets ids: $dummyEventIds");
 
     // create a dummy top level tree and then create the main Tree object
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms);

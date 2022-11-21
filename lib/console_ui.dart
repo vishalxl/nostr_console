@@ -303,7 +303,7 @@ void printProfile(Store node, String profilePubkey) {
     print("About       : $about");
     print("Picture     : $picture");
     print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
-    print("Last Updated: ${getPrintableDate(dateLastUpdated)}\n");
+    print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
     
 
     if( profilePubkey != userPublicKey) {

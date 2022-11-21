@@ -985,13 +985,12 @@ bool processKind0Event(Event e) {
 
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(e.eventData.pubkey)) {    
-    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, null);
+    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, e);
     newEntry = true;;
   } else {
     int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
     if( oldTime < e.eventData.createdAt) {
-      Event? oldContactEvent = gKindONames[e.eventData.pubkey]?.latestContactEvent;
-      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, oldContactEvent);
+      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, e);
       entryModified = true;
     }
   }
@@ -1188,7 +1187,7 @@ String getNumDashes(int num, [String dashType = "-"]) {
 List<List<int>> getUrlRanges(String s) {
   List<List<int>> urlRanges = [];
   
-  String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/_-]*)";
+  String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/_\\-\\#]*)";
   
   RegExp httpRegExp = RegExp(regexp1);
   for( var match in httpRegExp.allMatches(s) ) {
@@ -1205,11 +1204,8 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
 
   List<List<int>> urlRanges = getUrlRanges(s);
   
- 
-  
   String newString = "";
   String spacesString = getNumSpaces(depthInSpaces + gNumLeftMarginSpaces);
-
 
   int lenPerLine = gTextWidth - depthInSpaces;
   //print("In makeParagraphAtDepth: gNumLeftMarginSpaces = $gNumLeftMarginSpaces depthInSPaces = $depthInSpaces LenPerLine = $lenPerLine gTextWidth = $gTextWidth ");

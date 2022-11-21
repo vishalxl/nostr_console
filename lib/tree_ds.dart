@@ -877,10 +877,6 @@ class Store {
             // dont add this dummy in dummyEventIds list ( cause that's used to fetch events not in store)
           } else {
             tempChildEventsMap[parentId]?.children.add(tree);
-
-            if( !gKindONames.containsKey(tree.event.eventData.pubkey)) {
-              gKindONames[tree.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null );
-            }
           }
         } else {
           // in case where the parent of the new event is not in the pool of all events, 
@@ -907,7 +903,12 @@ class Store {
       }
     }); // going over tempChildEventsMap and adding children to their parent's .children list
 
-    //log.info("in middle of fromJson");
+    // for pubkeys that don't have any kind 0 events ( but have other evnets), add then to global kind0 store so they can still be accessed
+    tempChildEventsMap.forEach((key, value) {
+        if( !gKindONames.containsKey(value.event.eventData.pubkey)) {
+          gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null );
+        }
+    });
 
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;

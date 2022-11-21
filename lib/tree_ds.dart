@@ -851,10 +851,11 @@ class Store {
         print("In fromEvent: got evnet id $gCheckEventId");
       }
 
-      if(tree.event.eventData.eTags.isNotEmpty ) {
 
-        // is not a parent, find its parent and then add this element to that parent Tree
-        String parentId = tree.event.eventData.getParent(tempChildEventsMap);
+      // find its parent and then add this element to that parent Tree
+      String parentId = tree.event.eventData.getParent(tempChildEventsMap);
+
+      if( parentId != "") {
 
         if( tree.event.eventData.id == gCheckEventId) {
           if(gDebug >= 0) print("In Tree FromEvents: e tag not empty. its parent id = $parentId  for id: $gCheckEventId");
@@ -900,6 +901,9 @@ class Store {
           }
             
         }
+      } else {
+        // is not a parent, has no parent tag. then make it its own top tree, which will be done later in this function
+
       }
     }); // going over tempChildEventsMap and adding children to their parent's .children list
 
@@ -919,7 +923,7 @@ class Store {
 
     // add parent trees as top level child trees of this tree
     for( var tree in tempChildEventsMap.values) {
-      if( tree.event.eventData.kind == 1 &&  tree.event.eventData.eTags.isEmpty) {  // only posts which are parents
+      if( tree.event.eventData.kind == 1 &&  tree.event.eventData.getParent(tempChildEventsMap) == "") {  // only posts which are parents
         topLevelTrees.add(tree);
       }
     }
@@ -1031,12 +1035,12 @@ class Store {
         switch(newTree.event.eventData.kind) {
           case 1:
             // only kind 1 events are added to the overall tree structure
-            if( newTree.event.eventData.eTags.isEmpty) {
-                // if its a new parent event, then add it to the main top parents ( this.children)
+            String parentId = newTree.event.eventData.getParent(allChildEventsMap);
+            if( parentId == "") {
+                // if its a new parent event, then add it to the main top parents 
                 topPosts.add(newTree);
             } else {
                 // if it has a parent , then add the newTree as the parent's child
-                String parentId = newTree.event.eventData.getParent(allChildEventsMap);
                 if( allChildEventsMap.containsKey(parentId)) {
                   allChildEventsMap[parentId]?.children.add(newTree);
                 } else {
@@ -1746,7 +1750,21 @@ class Store {
    *                   Also adds 'client' tag with application name.
    * @parameter replyToId First few letters of an event id for which reply is being made
    */
-  String getTagStrForChannel(Channel channel, String replyToId, String clientName, [bool addAllP = false]) {
+  String getTagStrForChannel(Channel channel, String clientName, [bool addAllP = false]) {
+    String channelId = channel.channelId;
+    clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
+    String strTags = "";
+    strTags +=  '["e","$channelId"],';
+    strTags += '["client","$clientName"]' ;
+    return strTags;
+  }
+
+  /*
+   * @getTagsFromEvent Searches for all events, and creates a json of e-tag type which can be sent with event
+   *                   Also adds 'client' tag with application name.
+   * @parameter replyToId First few letters of an event id for which reply is being made
+   */
+  String getTagStrForChannelReply(Channel channel, String replyToId, String clientName, [bool addAllP = false]) {
     String channelId = channel.channelId;
 
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 

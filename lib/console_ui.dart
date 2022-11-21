@@ -87,10 +87,10 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
 }
 
 // Sends a public channel message
-Future<void> sendPublicChannelMessage(Store node, String channelId, String messageToSend, String replyKind) async {
+Future<void> sendChannelMessage(Store node, Channel channel, String messageToSend, String replyKind) async {
   messageToSend = addEscapeChars(messageToSend);
 
-  String strTags = node.getTagStr(channelId, exename);
+  String strTags = node.getTagStrForChannel(channel, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   
   String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, messageToSend);
@@ -109,11 +109,11 @@ Future<void> sendPublicChannelMessage(Store node, String channelId, String messa
 }
 
 // Sends a public channel message
-Future<void> sendPublicChannelReply(Store node, Channel channel, String replyTo, String messageToSend, String replyKind) async {
+Future<void> sendChannelReply(Store node, Channel channel, String replyTo, String messageToSend, String replyKind) async {
 
   messageToSend = addEscapeChars(messageToSend);
 
-  String strTags = node.getTagStrForChannel(channel, replyTo, exename);
+  String strTags = node.getTagStrForChannelReply(channel, replyTo, exename);
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   
   String id = getShaId(userPublicKey, createdAt.toString(), replyKind, strTags, messageToSend);
@@ -812,7 +812,7 @@ Future<void> channelMenuUI(Store node) async {
 
                     if( channel != null) {
                       //print("sending reply |$actualMessage|");
-                      await sendPublicChannelReply(node, channel, replyTo, actualMessage, "42");
+                      await sendChannelReply(node, channel, replyTo, actualMessage, "42");
                       pageNum = 1; // reset it 
                     }
                   }
@@ -820,8 +820,12 @@ Future<void> channelMenuUI(Store node) async {
                 } else {
                   // send message to the given room
                   //print("sending message |$messageToSend|");
-                  await sendPublicChannelMessage(node, fullChannelId, messageToSend, "42");
-                  pageNum = 1; // reset it 
+                  Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
+                  if( channel != null) {
+                    await sendChannelMessage(node, channel,  messageToSend, "42");
+                    pageNum = 1; // reset it 
+                  }
+                  
 
                 }
                 }
@@ -1079,17 +1083,40 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
                   if( messageToSend.startsWith('/remove ')) {
                     // TODO finish
-                    continue;
+                    //continue;
                   }
 
                   // send message to the given room
-                  String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
-                  if( encryptedMessageToSend != "") {
-                    await sendPublicChannelMessage(node, fullChannelId, encryptedMessageToSend, "142");
-                    pageNum = 1; // reset it 
+                  Channel? channel = node.getChannelFromId(node.encryptedChannels, fullChannelId);
+                  if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
+                    List<String> tokens = messageToSend.split(' ');
+                    if( tokens.length >= 3) {
+                      String replyTo = tokens[1];
+                      String actualMessage = messageToSend.substring(7);
+
+                      if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
+                        actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
+
+                      if( channel != null) {
+                        String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, actualMessage);
+                        if( encryptChannelMessage != "") {
+                          await sendChannelReply(node, channel, replyTo, encryptedMessageToSend, "142");
+                          pageNum = 1; // reset it 
+                        }
+                      }
+                    }
                   } else {
-                    printWarning("\nCould not encrypt and send message. Do confirm that you have access to this encrypted channel");
+                    if( channel != null) {
+                      String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
+                      if( encryptChannelMessage != "") {
+                        await sendChannelMessage(node, channel, encryptedMessageToSend, "142");
+                        pageNum = 1; // reset it 
+                      }
+                    } else {
+                      printWarning("\nCould not get send message because could not get channel id.");
+                    }
                   }
+
                 }
               }
             }

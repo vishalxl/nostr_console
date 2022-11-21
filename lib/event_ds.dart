@@ -24,6 +24,8 @@ GoogleTranslator? translator; // initialized in main when argument given
 const int gNumTranslateDays = 2;// translate for this number of days
 bool gTranslate = false; // translate flag
 
+List<String> nip08PlaceHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]", "#[8]", "#[9]" ];
+
 // Structure to store kind 0 event meta data, and kind 3 meta data for each user. Will have info from latest
 // kind 0 event and/or kind 3 event, both with their own time stamps.
 class UserNameInfo {
@@ -143,8 +145,6 @@ class EventData {
   // returns the immediate kind 1 parent
   String getParent(Map<String, Tree> allEventsMap) {
 
-
-
     if( eTags.isNotEmpty) {
 
       int numRoot = 0, numReply = 0;
@@ -188,17 +188,26 @@ class EventData {
 
       // if reply/root tags don't work, then try to look for parent tag with the deprecated logic from NIP-10
       if( gDebug > 0) log.info("using deprecated logic of nip10 for event id : $id");
-      for( int i = eTags.length - 1; i >= 0; i--) {
-        String eventId = eTags[i][0];
-        if( allEventsMap[eventId]?.event.eventData.kind == 1) {
-          String? parentId = allEventsMap[eventId]?.event.eventData.id;
-          if( parentId != null) {
-            return parentId;
+      for( int i = tags.length - 1; i >= 0; i--) {
+        if( tags[i][0] == "e") {
+          String eventId = tags[i][1];
+      
+          // ignore this e tag if its mentioned in the body of the event
+          String placeholder = nip08PlaceHolders[i];
+          if( content.contains(placeholder)) {
+            continue;
           }
-        } else {
-          // if first e tag ( from end, which is the immediate parent) does not exist in the store, then return that eventID still. 
-          // Child comment would get a dummy parent, and called could then fetch that event
-          return eventId;
+
+          if( allEventsMap[eventId]?.event.eventData.kind == 1) {
+            String? parentId = allEventsMap[eventId]?.event.eventData.id;
+            if( parentId != null) {
+              return parentId;
+            }
+          } else {
+            // if first e tag ( from end, which is the immediate parent) does not exist in the store, then return that eventID still. 
+            // Child comment would get a dummy parent, and called could then fetch that event
+            return eventId;
+          }
         }
       }
 
@@ -302,7 +311,7 @@ class EventData {
                      {});
   }
 
-  String expandMentions(String content) {
+  String expandMentions(String content, Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
       printInColor("in expandMentions: decoding $gCheckEventId\n", redColor);
     }
@@ -318,14 +327,25 @@ class EventData {
     }
 
     // replace the patterns
-    List<String> placeHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]" ];
-    for(int i = 0; i < placeHolders.length && i < tags.length; i++) {
+    
+    for(int i = 0; i < nip08PlaceHolders.length && i < tags.length; i++) {
       int     index = -1;
-      Pattern p     = placeHolders[i];
+      Pattern p     = nip08PlaceHolders[i];
       if( (index = content.indexOf(p)) != -1 ) {
+        String mentionedId = tags[i][1];
         if( tags[i].length >= 2) {
-          String author = getAuthorName(tags[i][1]);
-          content = "${content.substring(0, index)}@$author${content.substring(index + 4)}";
+          if( gKindONames.containsKey(mentionedId)) {
+            String author = getAuthorName(mentionedId);
+            content = "${content.substring(0, index)}@$author${content.substring(index + 4)}";
+          } else {
+            EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData??null;
+            if( eventData != null) {
+              String quotedAuthor = getAuthorName(eventData.pubkey);
+              String prefixId = mentionedId.substring(0, 3);
+              String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"${eventData.evaluatedContent}\">";
+              content = "${content.substring(0, index)}$quote${content.substring(index + 4)}";
+            }
+          }
         }
       }
     }
@@ -349,7 +369,7 @@ class EventData {
     switch(kind) {
     case 1:
     case 42:
-      evaluatedContent = expandMentions(content);
+      evaluatedContent = expandMentions(content, tempChildEventsMap);
       if( translator != null && gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
 
@@ -389,7 +409,7 @@ class EventData {
       String? decrypted = decryptDirectMessage();
       if( decrypted != null) {
         evaluatedContent = decrypted;
-        evaluatedContent = expandMentions(evaluatedContent);
+        evaluatedContent = expandMentions(evaluatedContent, tempChildEventsMap);
       }
       break;
 
@@ -416,7 +436,7 @@ class EventData {
       String? decrypted = decryptEncryptedChannelMessage(directRooms, encryptedChannels, tempChildEventsMap);
       if( decrypted != null) {
         evaluatedContent = decrypted;
-        evaluatedContent = expandMentions(evaluatedContent);
+        evaluatedContent = expandMentions(evaluatedContent, tempChildEventsMap);
       }
       break;
     default:
@@ -497,6 +517,9 @@ class EventData {
 
     //print("In decryptEncryptedChannelMessage: for event of kind 142 with event id = $id");
     int ivIndex = content.indexOf("?iv=");
+    if( ivIndex == -1) {
+      return "";
+    }
     var iv = content.substring( ivIndex + 4, content.length);
     var enc_str = content.substring(0, ivIndex);
         
@@ -703,15 +726,17 @@ class EventData {
     String strReplyTo = "";
     if( replyToEvent != null) {
       //print("in getStrForChannel: got replyTo id = ${replyToEvent.eventData.id}");
-      if( replyToEvent.eventData.kind == 1 || replyToEvent.eventData.kind == 42) { // make sure its a kind 1 or 40 message
+      if( replyToEvent.eventData.kind == 1 || replyToEvent.eventData.kind == 42 || replyToEvent.eventData.kind == 142) { // make sure its a kind 1 or 40 message
         if( replyToEvent.eventData.id != id) { // basic self test
-          strReplyTo = 'In reply to:"${replyToEvent.eventData.content}"';
+          strReplyTo = 'In reply to:"${replyToEvent.eventData.evaluatedContent}"';
           strReplyTo = makeParagraphAtDepth(strReplyTo, finalContentDepthInSpaces + 6); // one extra for content
           
           // add reply to string to end of the content. How it will show:
           contentShifted += ( "\n" + getNumSpaces( contentPlacementColumn + gSpacesPerDepth) +  strReplyTo); 
         }
       }
+    } else {
+      //printWarning("no reply to event for event id $id");
     }
    
     String msgId = id.substring(0, 3).padLeft(gSpacesPerDepth~/2).padRight(gSpacesPerDepth) ;
@@ -761,7 +786,7 @@ class EventData {
     return reactorNames;
   }
 
-  // returns the last e tag as reply to event for kind 42 events
+  // returns the last e tag as reply to event for kind 42 and 142 events
   Event? getReplyToEvent() {
     for(int i = tags.length - 1; i >= 0; i--) {
       List tag = tags[i];
@@ -769,7 +794,7 @@ class EventData {
         String replyToEventId = tag[1];
         Event? eventInReplyTo = (gStore?.allChildEventsMap[replyToEventId]?.event)??null;
         if( eventInReplyTo != null) {
-          if ( [1,42].contains( eventInReplyTo.eventData.kind)) {
+          if ( [1,42,142].contains( eventInReplyTo.eventData.kind)) {
             return eventInReplyTo;
           }
         }

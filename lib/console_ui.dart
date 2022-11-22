@@ -374,7 +374,7 @@ void printMenu(List<String> menuOptions) {
 void printVerifiedAccounts(Store node) {
 
   List<dynamic> listVerified = []; // num follows, pubkey, name, nip05id
-
+  print("A list of all NIP05 verified accounts is as follows: ");
   print("Username                   Num Followers             pubkey                                                                    Nip Id");
   gKindONames.forEach((key, value) {
     String pubkey = key;
@@ -383,7 +383,7 @@ void printVerifiedAccounts(Store node) {
       List<String> followers = node.getFollowers(pubkey);
       listVerified.add([followers.length, pubkey, getAuthorName(pubkey), value.nip05Id]);
     }
-    
+
   });
 
   listVerified.sort((a, b) => a[0] > b[0]? -1: (a[0] == b[0]? 0: 1));
@@ -446,14 +446,18 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
 }
 
 void printPubkeys(Set<String> pubkey) {
-  if( pubkey.length == 1) {
-    print("There is 1 public key for the given name, which is: ");
+  if( pubkey.length == 0) {
+    print("There is no pubkey for that given name.");
+    return;
   } else {
-    print("There are ${pubkey.length} public keys for the given name, which are: ");
-    
+    if( pubkey.length == 1) {
+      print("There is 1 public key for the given name, which is: ");
+    } else {
+      print("There are ${pubkey.length} public keys for the given name, which are: ");
+    }
   }
-  print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}");
-  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x), 20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}"));
+  print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}   ${myPadRight("Nip05", 30)}");
+  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x), 20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}"));
   print("");
 }
 

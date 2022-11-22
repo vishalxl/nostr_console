@@ -215,18 +215,21 @@ String expectedResult =
   test('url_break2 ', () {
     gTextWidth = 92;
 
-    //print("\n\nbreak_url_dash test");
+    print("123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|");
+    List<String> urls = ["https://news.bitcoin.com/former-us-treasury-secretary-larry-summers-compares-ftx-collapse-to-enron-fraud/",
+                         "https://chromium.googlesource.com/chromium/src/net/+/259a070267d5966ba5ce4bbeb0a9c17b854f8000",
+                         "                                          https://i.imgflip.com/71o242.jpg",
+                         " https://twitter.com/diegokolling/status/1594706072622845955?t=LB5Pn51bhj3BhIoke26kGQ&s=19", 
+                         "11                    https://github.com/nostr-protocol/nips/blob/master/16.md#ephemeral-events",
+                         "https://res.cloudinary.com/eskema/image/upload/v1669030722/306072883_413474904244526_502927779121754777_n.jpg_l6je2d.jpg"];
 
-    String paragraph =  """
-https://news.bitcoin.com/former-us-treasury-secretary-larry-summers-compares-ftx-collapse-to-enron-fraud/""";
-
-
-String expectedResult = 
-"""https://news.bitcoin.com/former-us-treasury-secretary-larry-summers-compares-ftx-collapse-to-enron-fraud/""";
-                                  
-    String res = makeParagraphAtDepth(paragraph, 30);
-    //print(res);
-    expect( res, expectedResult);
+    urls.forEach((url) { 
+      String res = makeParagraphAtDepth(url, 30);
+      print(url);
+      print(res);
+      print("");
+      expect( res, url);
+    });
   });
 
 

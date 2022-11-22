@@ -54,6 +54,17 @@ Map< String, List<List<String>> > gReactions = {};
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
 
+String myPadRight(String str, int width) {
+  String newStr = "";
+
+  if( str.length < width) {
+    newStr = str.padRight(width);
+  } else {
+    newStr = str.substring(0, width);
+  }
+  return newStr;
+}
+
 // returns tags as string that can be used to calculate event has. called from EventData constructor
 String getStrTagsFromJson(dynamic json) {
   String str = "";

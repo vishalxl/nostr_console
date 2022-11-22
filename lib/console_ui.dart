@@ -445,6 +445,18 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
   }
 }
 
+void printPubkeys(Set<String> pubkey) {
+  if( pubkey.length == 1) {
+    print("There is 1 public key for the given name, which is: ");
+  } else {
+    print("There are ${pubkey.length} public keys for the given name, which are: ");
+    
+  }
+  print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}");
+  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x), 20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}"));
+  print("");
+}
+
 Future<void> otherOptionsMenuUi(Store node) async {
   bool continueOtherMenu = true;
   while(continueOtherMenu) {
@@ -472,8 +484,9 @@ Future<void> otherOptionsMenuUi(Store node) async {
         String userName = $tempUserName??"";
         if( userName != "") {
           Set<String> pubkey = getPublicKeyFromName(userName); 
-          print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
-          pubkey.forEach( (x) => print(" $x : ${getNip05Name(x)} "));
+
+          printPubkeys(pubkey);
+
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
               printWarning("Got multiple users with the same name. Try again, and/or type a more unique name or their full public keys.");
@@ -532,8 +545,9 @@ Future<void> otherOptionsMenuUi(Store node) async {
         String userName = $tempUserName??"";
         if( userName != "") {
           Set<String> pubkey = getPublicKeyFromName(userName); 
-          print("There are ${ pubkey.length} public keys for the given name, which are/is: ");
-          pubkey.forEach( (x) => print(" $x : ${getNip05Name(x)} "));
+          
+          printPubkeys(pubkey);
+          
           if( pubkey.length > 1) {
             if( pubkey.length > 1) {
               printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");

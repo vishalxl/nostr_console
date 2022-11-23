@@ -293,7 +293,7 @@ Future<void> main(List<String> arguments) async {
         limitSelfEvents = 5;
         limitMetaInfoEvents = 3;
         limitFollowPosts = 3;
-        gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/4;
+        gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/8;
       }
 
       // get event for user

@@ -13,7 +13,7 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = "  e74e93fbc77af5275f29db688931f725813ab1385f16233bfa609078a8779dfa"; 
 
-int gDefaultNumWaitSeconds = 6000; // is used in main()
+int gDefaultNumWaitSeconds = 8000; // is used in main()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// file related settings 
 const String gDefaultEventsFilename = "all_nostr_events.txt";

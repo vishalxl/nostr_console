@@ -374,8 +374,13 @@ void printMenu(List<String> menuOptions) {
 void printVerifiedAccounts(Store node) {
 
   List<dynamic> listVerified = []; // num follows, pubkey, name, nip05id
-  print("A list of all NIP05 verified accounts is as follows: ");
-  print("Username                   Num Followers             pubkey                                                                    Nip Id");
+
+  printUnderlined("NIP 05 Verifid Users");
+  print("")  ;
+  //print("A list of all NIP05 verified accounts is as follows: \n");
+  print("Username                    Num Followers       pubkey                                                             Nip Id\n");
+
+
   gKindONames.forEach((key, value) {
     String pubkey = key;
     if( value.nip05Verified) {
@@ -387,13 +392,10 @@ void printVerifiedAccounts(Store node) {
   });
 
   listVerified.sort((a, b) => a[0] > b[0]? -1: (a[0] == b[0]? 0: 1));
-
   for(var verifiedEntry in listVerified) {
-    print("${verifiedEntry[2].padRight(20)}  ${verifiedEntry[0]}  ${verifiedEntry[1]}   ${verifiedEntry[3]}");
+    print("${verifiedEntry[2].padRight(30)}  ${verifiedEntry[0].toString().padRight(4)}            ${verifiedEntry[1]}   ${verifiedEntry[3]}");
   }
-
-  for( var uni in gKindONames.values) {
-  }
+  print("\nHow to use: To get best results, print the main feed a couple of times right after starting; and then check NIP verified list. This gives application time to do the verification from user's given servers.\n\n");
 }
 
 void clearScreen() {
@@ -1330,6 +1332,7 @@ Future<void> mainMenuUi(Store node) async {
           }
 
           await sendReplyPostLike(node, replyToId, replyKind, content);
+          await processAnyIncomingEvents(node, false);
           break;
 
         case 3:

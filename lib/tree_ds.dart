@@ -841,6 +841,23 @@ class Store {
         handleDirectMessages(tempDirectRooms, tempChildEventsMap, tree.event);
       }
 
+      // if reacted to event is not in store, then add it to dummy list so it can be fetched
+      try {
+        if( tree.event.eventData.eTags.length > 0) {
+          if (tree.event.eventData.eTags.last.length > 0) {
+            String reactedToId  = tree.event.eventData.eTags.last[0];
+            // only if the reaction was made recently in last 3 days
+            // TODO while storing need to store these newly fetched events too; otherwise these are fetched everytime
+            if( false && !tempChildEventsMap.containsKey(reactedToId) && tree.event.eventData.createdAt > getSecondsDaysAgo(3)) {
+              print("liked event not found in store.");
+              dummyEventIds.add(reactedToId);
+            }
+          }
+        }
+      }  catch(e) {
+        print(e);
+      }
+
       // only posts, of kind 1, are added to the main tree structure
       if( eKind != 1) {
         numEventsNotPosts++;

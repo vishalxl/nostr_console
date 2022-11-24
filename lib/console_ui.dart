@@ -1184,28 +1184,35 @@ Future<void> socialMenuUi(Store node) async {
           break;
 
         case 3:
-        
+          clearScreen();
           String temp = userPublicKey;
           bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes(temp);
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userNotifications);
           break;
 
         case 4:
+          clearScreen();
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_selfPosts);
           break;
         case 5:
+          clearScreen();
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userRepliesLikes);
           break;
         case 6:
+          clearScreen();
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_followsPosts);
           break;
         case 7: // search word or event id
+          clearScreen();
           stdout.write("Enter word(s) to search: ");
           String? $tempWords = stdin.readLineSync();
           String words = $tempWords??"";
           if( words != "") {
             bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
-            node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
+            int numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
+            if( numPrinted == 0) {
+              print("Word(s) not found in last $gNumLastDays days. Try increasing the number of days printed, from social network options to search further back into history.\n");
+            }
           } else printWarning("Blank word entered. Try again.");
           break;
 
@@ -1221,12 +1228,14 @@ Future<void> socialMenuUi(Store node) async {
           break;
   */
         case 8: // follow new contact
+
           // in case the program was invoked with --pubkey, then user can't send messages
           if( userPrivateKey == "") {
               printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
               break;
           }
 
+          clearScreen();
           stdout.write("Enter username or first few letters of user's public key( or full public key): ");
           String? $tempUserName = stdin.readLineSync();
           String userName = $tempUserName??"";
@@ -1299,6 +1308,7 @@ Future<void> socialMenuUi(Store node) async {
           break;
 
         case 9: // change number of days printed
+          clearScreen();
           stdout.write("Enter number of days for which you want to see posts: ");
           String? $tempNumDays = stdin.readLineSync();
           String newNumDays = $tempNumDays??"";
@@ -1318,7 +1328,8 @@ Future<void> socialMenuUi(Store node) async {
           break;
 
         case 10:
-          stdout.write("Type username or first few letters of user's public key( or full public key): ");
+          clearScreen();
+          stdout.write("Printing profile of a user; type username or first few letters of user's public key( or full public key): ");
           String? $tempUserName = stdin.readLineSync();
           String userName = $tempUserName??"";
           if( userName != "") {

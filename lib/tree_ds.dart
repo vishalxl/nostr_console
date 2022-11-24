@@ -1439,8 +1439,10 @@ class Store {
       numPrinted += printTopPost(topPosts[i], depth, newerThan);
     }
 
-    if( numPrinted > 0)
-      print("\nTotal posts printed: $numPrinted for last $gNumLastDays days");
+    if( numPrinted > 0) {
+      print("\nTotal posts printed: $numPrinted for last $gNumLastDays days\n.");
+    }
+
     return numPrinted;
   }
  

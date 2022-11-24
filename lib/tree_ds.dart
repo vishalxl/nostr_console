@@ -1440,7 +1440,7 @@ class Store {
     }
 
     if( numPrinted > 0) {
-      print("\nTotal posts printed: $numPrinted for last $gNumLastDays days\n.");
+      print("\nTotal posts printed: $numPrinted for last $gNumLastDays days.\n");
     }
 
     return numPrinted;

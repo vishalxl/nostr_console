@@ -9,9 +9,135 @@ typedef fRoomSelector = bool Function(ScrollableMessages room);
 
 Store? gStore = null;
 
-bool selectorShowAllTrees(Tree t) {
+// only show in which user is involved
+bool selectorTrees_selfPosts(Tree t) {
+
+  if( userPublicKey == t.event.eventData.pubkey) {
+    return true;
+  }
+
+  return false;
+}
+
+/*
+// returns true of the user has received a like or response to this post
+bool userHasNotification(String pubkey, Event e) {
+  if( e.eventData.pubkey == pubkey && gReactions.containsKey(e.eventData.id) ) {
+    List<List<String>>? temp = gReactions[e.eventData.id];
+    if( temp != null) {
+      if( temp.length > 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// only show in which user is involved
+bool selectorTrees_userNotifications(Tree t) {
+
+  if( userHasNotification(userPublicKey, t.event)) {
+    return true;
+  }
+
+  for( Tree child in t.children) {
+    if( selectorTrees_userNotifications(child)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+*/
+
+bool userInvolved(String pubkey, Event e) {
+  if( e.eventData.pubkey == pubkey) {
+    return true;
+  }
+
+  if( gReactions.containsKey(e.eventData.id)) {
+    List<List<String>>? reactors = gReactions[e.eventData.id]??null;
+    if( reactors != null) {
+      for( var reactor in reactors) {
+        //String reactorEventId = reactor[0];
+        String reactorPubkey = reactor[0];
+        if( reactorPubkey == pubkey) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+bool selectorTrees_all(Tree t) {
   return true;
 }
+
+// only show in which user is involved
+bool selectorTrees_userRepliesLikes(Tree t) {
+
+  if( userInvolved(userPublicKey, t.event)) {
+    return true;
+  }
+
+  for( Tree child in t.children) {
+    if( selectorTrees_userRepliesLikes(child)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool followsInvolved(Event e, Event? contactEvent) {
+
+  if( contactEvent == null) {
+    return false;
+  }
+
+  // if its an event by any of the contact
+  if(contactEvent.eventData.contactList.any((contact) => e.eventData.pubkey == contact.id )) {
+    return true;
+  }
+
+
+  // check if any of the contact liked it
+  if( gReactions.containsKey(e.eventData.id)) {
+    List<List<String>>? reactors = gReactions[e.eventData.id]??null;
+    if( reactors != null) {
+      for( var reactor in reactors) {
+        //String reactorEventId = reactor[0];
+        String reactorPubkey = reactor[0];
+        if(contactEvent.eventData.contactList.any((contact) => reactorPubkey == contact.id )) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+
+// only show in which user is involved
+bool selectorTrees_followsPosts(Tree t) {
+  Event? contactEvent = gKindONames[userPublicKey]?.latestContactEvent;
+
+  if( followsInvolved(t.event, contactEvent)) {
+    return true;
+  }
+
+  for( Tree child in t.children) {
+    if( selectorTrees_followsPosts(child)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 
 bool selectorShowAllRooms(ScrollableMessages room) {
   return true;

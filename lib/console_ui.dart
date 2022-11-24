@@ -375,16 +375,14 @@ void printVerifiedAccounts(Store node) {
 
   List<dynamic> listVerified = []; // num follows, pubkey, name, nip05id
 
-  printUnderlined("NIP 05 Verifid Users");
+  printUnderlined("NIP 05 Verified Users");
   print("")  ;
-  //print("A list of all NIP05 verified accounts is as follows: \n");
   print("Username                    Num Followers       pubkey                                                             Nip Id\n");
 
 
   gKindONames.forEach((key, value) {
     String pubkey = key;
     if( value.nip05Verified) {
-      //print("${getAuthorName(pubkey).padRight(20)}  ${pubkey}   ${value.nip05Id}");
       List<String> followers = node.getFollowers(pubkey);
       listVerified.add([followers.length, pubkey, getAuthorName(pubkey), value.nip05Id]);
     }
@@ -469,46 +467,19 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
     await processAnyIncomingEvents(node); // this takes 300 ms
 
-    int option = showMenu([ 'Show user profile',             // 1
-                            'Search by client name',         // 2
-                            'Search word(s) or event id',    // 3
-                            'Display contact list',          // 4 
-                            'Follow new contact',            // 5
-                            'Edit your profile',             // 6
-                            'Change number of days printed', // 7
-                            'Delete event',                  // 8
-                            'Application stats',             // 9
-                            'Help and About',               // 10
-                            'E(x)it to main menu'],          // 11
+    int option = showMenu([ 
+                            'Search by client name',         // 1
+                            'Edit your profile',             // 2
+                            'Delete event',                  // 3
+                            'Application stats',             // 4
+                            'Help and About',               // 5
+                            'E(x)it to main menu'],          // 6
 
 
                           "Other Options Menu");                     // menu name
     switch(option) {
+
       case 1:
-        stdout.write("Type username or first few letters of user's public key( or full public key): ");
-        String? $tempUserName = stdin.readLineSync();
-        String userName = $tempUserName??"";
-        if( userName != "") {
-          Set<String> pubkey = getPublicKeyFromName(userName); 
-
-          printPubkeys(pubkey);
-
-          if( pubkey.length > 1) {
-            if( pubkey.length > 1) {
-              printWarning("Got multiple users with the same name. Try again, and/or type a more unique name or their full public keys.");
-            }
-          } else {
-            if (pubkey.isEmpty ) {
-              printWarning("Could not find the user with that id or username.");
-            } 
-            else {
-              printProfile(node, pubkey.first);
-            }
-          }
-        }
-        break;
-
-      case 2:
         stdout.write("Enter nostr client name whose events you want to see: ");
         String? $tempWords = stdin.readLineSync();
         String clientName = $tempWords??"";
@@ -518,106 +489,8 @@ Future<void> otherOptionsMenuUi(Store node) async {
         }
         break;
 
-      case 3: // search word or event id
-        stdout.write("Enter word(s) to search: ");
-        String? $tempWords = stdin.readLineSync();
-        String words = $tempWords??"";
-        if( words != "") {
-          bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
-        } else printWarning("Blank word entered. Try again.");
-        break;
 
-
-      case 4: // display contact list
-        String authorName = getAuthorName(userPublicKey);
-        List<Contact>? contactList = gKindONames[userPublicKey]?.latestContactEvent?.eventData.contactList;
-        if( contactList != null) {
-          print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
-          contactList.forEach((Contact contact) => stdout.write("${getAuthorName(contact.id)}, "));
-          print("");
-        }
-        break;
-
-      case 5: // follow new contact
-        // in case the program was invoked with --pubkey, then user can't send messages
-        if( userPrivateKey == "") {
-            printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
-            break;
-        }
-
-        stdout.write("Enter username or first few letters of user's public key( or full public key): ");
-        String? $tempUserName = stdin.readLineSync();
-        String userName = $tempUserName??"";
-        if( userName != "") {
-          Set<String> pubkey = getPublicKeyFromName(userName); 
-          
-          printPubkeys(pubkey);
-          
-          if( pubkey.length > 1) {
-            if( pubkey.length > 1) {
-              printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
-            }
-          } else {
-            if (pubkey.isEmpty && userName.length != 64) {
-                printWarning("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
-            } 
-            else {
-              if( pubkey.isEmpty) {
-                printWarning("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
-                pubkey.add(userName);
-              }
-
-              String pk = pubkey.first;
-
-              // get this users latest contact list event ( kind 3 event)
-              Event? contactEvent = getContactEvent(userPublicKey);
-              
-              if( contactEvent != null) {
-                Event newContactEvent = contactEvent;
-
-                bool alreadyContact = false;
-                for(int i = 0; i < newContactEvent.eventData.contactList.length; i++) {
-                  if( newContactEvent.eventData.contactList[i].id == pubkey.first) {
-                    alreadyContact = true;
-                    break;
-                  }
-                }
-                if( !alreadyContact) {
-                  print('Sending new contact event');
-                  Contact newContact = Contact(pk, defaultServerUrl);
-                  newContactEvent.eventData.contactList.add(newContact);
-                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
-                  sendEvent(node, newContactEvent);
-                } else {
-                  print("The contact already exists in the contact list. Republishing the old contact list.");
-                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
-                  sendEvent(node, contactEvent);
-                }
-              } else {
-                  // TODO fix the send event functions by streamlining them
-                  print('Sending first contact event');
-                  
-                  String newId = "", newPubkey = userPublicKey,  newContent = "";
-                  int newKind = 3;
-                  List<List<String>> newEtags = [];
-                  List<String> newPtags = [pk];
-                  List<List<String>> newTags = [[]];
-                  Set<String> newNewLikes = {};
-                  int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
-                  List<Contact> newContactList = [ Contact(pk, defaultServerUrl) ];
-
-                  EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
-                  Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
-                  getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
-                  sendEvent(node, newEvent);
-              }
-            }
-          }
-        }
-        break;
-
-      case 6: //edit your profile
+      case 2: //edit your profile
         print("Your current name: ${getAuthorName(userPublicKey)}");
         print("Your 'about me': ${gKindONames[userPublicKey]?.about}");
         print("Your current profile picture: ${gKindONames[userPublicKey]?.picture}\n");
@@ -639,25 +512,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
         await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
         break;
 
-      case 7: // change number of days printed
-        stdout.write("Enter number of days for which you want to see posts: ");
-        String? $tempNumDays = stdin.readLineSync();
-        String newNumDays = $tempNumDays??"";
-
-        try {
-          gNumLastDays =  int.parse(newNumDays);
-          print("Changed number of days printed to $gNumLastDays");
-        } on FormatException catch (e) {
-          printWarning("Invalid input. Kindly try again."); 
-          if( gDebug > 0) print(" ${e.message}"); 
-          continue;
-        } on Exception catch (e) {
-          printWarning("Invalid input. Kindly try again."); 
-          if( gDebug > 0) print(" ${e}"); 
-          continue;
-        }    
-        break;
-      case 8:
+      case 3:
         stdout.write("Enter event id to delete: ");
         String? $tempEventId = stdin.readLineSync();
         String userInputId = $tempEventId??"";
@@ -678,7 +533,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
         break;
 
-      case 9: // application info
+      case 4: // application info
         print("\n\n");
         printUnderlined("Application stats");
         print("\n");
@@ -702,14 +557,14 @@ Future<void> otherOptionsMenuUi(Store node) async {
         printVerifiedAccounts(node);
         break;
 
-      case 10:
+      case 5:
         print(helpAndAbout);
         break;
 
-      case 11:
+      case 6:
         continueOtherMenu = false;
-        break;
   
+        break;
 
       default:
         break;
@@ -1262,6 +1117,240 @@ Future<void> PrivateMenuUI(Store node) async {
   return;
 }
 
+Future<void> socialMenuUi(Store node) async {
+   
+    clearScreen();
+
+    //Show only notifications
+    showInitialNotifications(node);
+
+    bool socialMenuContinue = true;
+    while(socialMenuContinue) {
+
+      await processAnyIncomingEvents(node); // this takes 300 ms
+
+      // the main menu
+      int option = showMenu([
+                             'All Posts',         // 1
+                             'Post/Reply/Like',   // 2
+                             'Your notifications',// 3
+                             'Your Posts',        // 4 
+                             'Your Replies/Likes',//5
+                             'Friends Posts/Replies/Likes',   // 6
+                             'Search word(s) or event id',    // 7
+                             'Follow new contact',            // 8
+                             'Change number of days printed', // 9
+                             'Show user profile',             // 10
+                             'E(x)it to main menu'], // 11
+                             "Social Network Menu");
+      
+      switch(option) {
+        case 1:
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_all);
+          break;
+
+        case 2:
+          // in case the program was invoked with --pubkey, then user can't send messages
+          if( userPrivateKey == "") {
+              printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
+              break;
+          }
+          stdout.write("Type comment to post/reply (type '+' to send a like): ");
+          String? $contentVar = stdin.readLineSync();
+          String content = $contentVar??"";
+          if( content == "") {
+            clearScreen();  
+            break;
+          }
+
+          stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
+          String? $replyToVar = stdin.readLineSync();
+          String replyToId = $replyToVar??"";
+          if( replyToId == "x") {
+            print("Cancelling post/reply.");
+            break;
+          }
+          String replyKind = "1";
+          if( content == "+") {
+            print("Sending a like to given post.");
+            replyKind = "7";
+          } else if( content == "!") {
+            print("Hiding the given post.");
+            replyKind = "7";
+          }
+
+          await sendReplyPostLike(node, replyToId, replyKind, content);
+          await processAnyIncomingEvents(node, false);
+          break;
+
+        case 3:
+        
+          String temp = userPublicKey;
+          bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes(temp);
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userNotifications);
+          break;
+
+        case 4:
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_selfPosts);
+          break;
+        case 5:
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userRepliesLikes);
+          break;
+        case 6:
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_followsPosts);
+          break;
+        case 7: // search word or event id
+          stdout.write("Enter word(s) to search: ");
+          String? $tempWords = stdin.readLineSync();
+          String words = $tempWords??"";
+          if( words != "") {
+            bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
+            node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
+          } else printWarning("Blank word entered. Try again.");
+          break;
+
+  /*
+        case 700: // display contact list
+          String authorName = getAuthorName(userPublicKey);
+          List<Contact>? contactList = gKindONames[userPublicKey]?.latestContactEvent?.eventData.contactList;
+          if( contactList != null) {
+            print("\nHere is the contact list for user $userPublicKey ($authorName), which has ${contactList.length} profiles in it:\n");
+            contactList.forEach((Contact contact) => stdout.write("${getAuthorName(contact.id)}, "));
+            print("");
+          }
+          break;
+  */
+        case 8: // follow new contact
+          // in case the program was invoked with --pubkey, then user can't send messages
+          if( userPrivateKey == "") {
+              printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
+              break;
+          }
+
+          stdout.write("Enter username or first few letters of user's public key( or full public key): ");
+          String? $tempUserName = stdin.readLineSync();
+          String userName = $tempUserName??"";
+          if( userName != "") {
+            Set<String> pubkey = getPublicKeyFromName(userName); 
+            
+            printPubkeys(pubkey);
+            
+            if( pubkey.length > 1) {
+              if( pubkey.length > 1) {
+                printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
+              }
+            } else {
+              if (pubkey.isEmpty && userName.length != 64) {
+                  printWarning("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
+              } 
+              else {
+                if( pubkey.isEmpty) {
+                  printWarning("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
+                  pubkey.add(userName);
+                }
+
+                String pk = pubkey.first;
+
+                // get this users latest contact list event ( kind 3 event)
+                Event? contactEvent = getContactEvent(userPublicKey);
+                
+                if( contactEvent != null) {
+                  Event newContactEvent = contactEvent;
+
+                  bool alreadyContact = false;
+                  for(int i = 0; i < newContactEvent.eventData.contactList.length; i++) {
+                    if( newContactEvent.eventData.contactList[i].id == pubkey.first) {
+                      alreadyContact = true;
+                      break;
+                    }
+                  }
+                  if( !alreadyContact) {
+                    print('Sending new contact event');
+                    Contact newContact = Contact(pk, defaultServerUrl);
+                    newContactEvent.eventData.contactList.add(newContact);
+                    getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                    sendEvent(node, newContactEvent);
+                  } else {
+                    print("The contact already exists in the contact list. Republishing the old contact list.");
+                    getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                    sendEvent(node, contactEvent);
+                  }
+                } else {
+                    // TODO fix the send event functions by streamlining them
+                    print('Sending first contact event');
+                    
+                    String newId = "", newPubkey = userPublicKey,  newContent = "";
+                    int newKind = 3;
+                    List<List<String>> newEtags = [];
+                    List<String> newPtags = [pk];
+                    List<List<String>> newTags = [[]];
+                    Set<String> newNewLikes = {};
+                    int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
+                    List<Contact> newContactList = [ Contact(pk, defaultServerUrl) ];
+
+                    EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
+                    Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
+                    getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                    sendEvent(node, newEvent);
+                }
+              }
+            }
+          }
+          break;
+
+        case 9: // change number of days printed
+          stdout.write("Enter number of days for which you want to see posts: ");
+          String? $tempNumDays = stdin.readLineSync();
+          String newNumDays = $tempNumDays??"";
+
+          try {
+            gNumLastDays =  int.parse(newNumDays);
+            print("Changed number of days printed to $gNumLastDays");
+          } on FormatException catch (e) {
+            printWarning("Invalid input. Kindly try again."); 
+            if( gDebug > 0) print(" ${e.message}"); 
+            continue;
+          } on Exception catch (e) {
+            printWarning("Invalid input. Kindly try again."); 
+            if( gDebug > 0) print(" ${e}"); 
+            continue;
+          }    
+          break;
+
+        case 10:
+          stdout.write("Type username or first few letters of user's public key( or full public key): ");
+          String? $tempUserName = stdin.readLineSync();
+          String userName = $tempUserName??"";
+          if( userName != "") {
+            Set<String> pubkey = getPublicKeyFromName(userName); 
+
+            printPubkeys(pubkey);
+
+            if( pubkey.length > 1) {
+              if( pubkey.length > 1) {
+                printWarning("Got multiple users with the same name. Try again, and/or type a more unique name or their full public keys.");
+              }
+            } else {
+              if (pubkey.isEmpty ) {
+                printWarning("Could not find the user with that id or username.");
+              } 
+              else {
+                printProfile(node, pubkey.first);
+              }
+            }
+          }
+          break;
+
+        case 11:
+          default:
+            socialMenuContinue = false;
+        } // end menu switch
+    } // end while
+} // end mainMenuUi()
+
+
+
+
 void showInitialNotifications(Store node) {
 
   bool hasNotifications (Tree t) => t.treeSelectorNotifications();
@@ -1288,8 +1377,8 @@ Future<void> mainMenuUi(Store node) async {
       await processAnyIncomingEvents(node); // this takes 300 ms
 
       // the main menu
-      int option = showMenu(['Display feed',     // 1 
-                             'Post/Reply/Like',  // 2
+      int option = showMenu(['Home Page',     // 1 
+                             'Social Network',  // 2
                              'Public Channels',  // 3
                              'Encrypted Channels',// 4
                              'Private Messages', // 5
@@ -1299,40 +1388,13 @@ Future<void> mainMenuUi(Store node) async {
       
       switch(option) {
         case 1:
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorShowAllTrees);
+          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_all);
           break;
 
         case 2:
-          // in case the program was invoked with --pubkey, then user can't send messages
-          if( userPrivateKey == "") {
-              printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
-              break;
-          }
-          stdout.write("Type comment to post/reply (type '+' to send a like): ");
-          String? $contentVar = stdin.readLineSync();
-          String content = $contentVar??"";
-          if( content == "") {
-            break;
-          }
-
-          stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
-          String? $replyToVar = stdin.readLineSync();
-          String replyToId = $replyToVar??"";
-          if( replyToId == "x") {
-            print("Cancelling post/reply.");
-            break;
-          }
-          String replyKind = "1";
-          if( content == "+") {
-            print("Sending a like to given post.");
-            replyKind = "7";
-          } else if( content == "!") {
-            print("Hiding the given post.");
-            replyKind = "7";
-          }
-
-          await sendReplyPostLike(node, replyToId, replyKind, content);
-          await processAnyIncomingEvents(node, false);
+          clearScreen();
+          await socialMenuUi(node);
+          clearScreen();
           break;
 
         case 3:

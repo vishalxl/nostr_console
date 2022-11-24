@@ -45,8 +45,8 @@ class UserNameInfo {
  */
 Map<String, UserNameInfo> gKindONames = {}; 
 
-// global reactions entry. Map of form <if of event reacted to, List of Reactors>
-// reach Reactor is a list of 2-elements ( first is public id of reactor event, second is comment)
+// global reactions entry. Map of form <id of event reacted to, List of Reactors>
+// reach Reactor is a list of 2-elements ( first is pubkey of reactor event, second is comment)
 Map< String, List<List<String>> > gReactions = {};
 
 // global contact list of each user, including of the logged in user.
@@ -1419,6 +1419,7 @@ class Contact {
   String toString() {
     return 'id: $id ( ${getAuthorName(id)})     relay: $relay';
   }
+  
 }
 
 String addEscapeChars(String str) {

@@ -62,7 +62,7 @@ String userPublicKey  = gDefaultPublicKey;
 // default follows; taken from nostr.io/stats 
 List<String> gDefaultFollows = [
                   "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681", //damus
-                  "6b0d4c8d9dc59e110d380b0429a02891f1341a0fa2ba1b1cf83a3db4d47e3964"  // dergigi
+                  "6b0d4c8d9dc59e110d380b0429a02891f1341a0fa2ba1b1cf83a3db4d47e3964",  // dergigi
                   "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245", // jb55
                   "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", // fiatjaf
                   "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5", // unclebobmarting 
@@ -83,7 +83,6 @@ List<String> gDefaultFollows = [
                   "f43c1f9bff677b8f27b602725ea0ad51af221344f69a6b352a74991a4479bac3", // manfromhighcastle
                   "80482e60178c2ce996da6d67577f56a2b2c47ccb1c84c81f2b7960637cb71b78", // Leo
                   "42a0825e980b9f97943d2501d99c3a3859d4e68cd6028c02afe58f96ba661a9d", // zerosequioso
-                  "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180", // nostr_console test
                   "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"]; // vishalxl ]; 
 
  

@@ -32,7 +32,7 @@ void main() {
 
     tree.children.add(treeChild);
   
-    store.printTree(0, DateTime.now().subtract(Duration(days:1)), selectorShowAllTrees);
+    store.printTree(0, DateTime.now().subtract(Duration(days:1)), selectorTrees_all);
   });
 
   
@@ -59,7 +59,7 @@ void main() {
     Set<Event> listEvents = { exampleEvent3, exampleEvent2,  exampleEvent1};
 
     Store node = Store.fromEvents(listEvents);
-    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorShowAllTrees); // will test for ~1000 days
+    node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorTrees_all); // will test for ~1000 days
   });
 
   test('make_paragraph', () {

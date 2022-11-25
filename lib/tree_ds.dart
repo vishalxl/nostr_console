@@ -413,6 +413,10 @@ class Tree {
         printDepth(depth+1);
         stdout.write("    ┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘\n");        
         leftShifted = true;
+
+        if(false && event.eventData.id == "471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605") 
+          print('left shifting for event id: ${event.eventData.id} i = $i child = ${children[i].event.eventData.id} child kind = ${children[i].event.eventData.kind}');
+
       }
 
       numPrinted += children[i].printTree(depth+1, newerThan, false);
@@ -1022,13 +1026,18 @@ class Store {
       }
 
       if( eKind == 4) {
-        totoalDirectMessages += handleDirectMessage(tempDirectRooms, tempChildEventsMap, tree.event);
+        handleDirectMessage(tempDirectRooms, tempChildEventsMap, tree.event);
         return;
       }
 
       if( eKind == gSecretMessageKind) {
         // add the event id to given structure if its a valid message
         handleSecretMessageKind(tempEncryptedSecretMessageIds, tempChildEventsMap, tree.event);
+        return;
+      }
+
+      if( eKind == 7) {
+        processReaction(tree.event, tempChildEventsMap);
         return;
       }
 
@@ -1055,6 +1064,8 @@ class Store {
 
       // find its parent and then add this element to that parent Tree
       String parentId = tree.event.eventData.getParent(tempChildEventsMap);
+
+      if( false && parentId == "471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605") print("Found child of 471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605 id = ${tree.event.eventData.id}");
 
       if( parentId != "") {
 
@@ -1142,7 +1153,7 @@ class Store {
     // for pubkeys that don't have any kind 0 events ( but have other evnets), add then to global kind0 store so they can still be accessed
     tempChildEventsMap.forEach((key, value) {
         if( !gKindONames.containsKey(value.event.eventData.pubkey)) {
-          gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null );
+          gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null );
         }
     });
 
@@ -1276,6 +1287,7 @@ class Store {
           case 1:
             // only kind 1 events are added to the overall tree structure
             String parentId = newTree.event.eventData.getParent(allChildEventsMap);
+            if( parentId == "471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605") print("Found child of 471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605 id = ${newTree.event.eventData.id}");
             if( parentId == "") {
                 // if its a new parent event, then add it to the main top parents 
                 topPosts.add(newTree);

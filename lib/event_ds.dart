@@ -204,7 +204,7 @@ class EventData {
           String eventId = tags[i][1];
       
           // ignore this e tag if its mentioned in the body of the event
-          String placeholder = nip08PlaceHolders[i];
+          String placeholder = nip08PlaceHolders.length > i? nip08PlaceHolders[i]: "INVALIDPLACEHOLDER_SHOULDNOTEXIST";
           if( content.contains(placeholder)) {
             continue;
           }

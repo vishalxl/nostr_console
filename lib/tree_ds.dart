@@ -1261,11 +1261,7 @@ class Store {
           // its a replacement. 
           if( gDebug >= 0 && newEvent.eventData.id == gCheckEventId) log.info("In processIncoming: Replaced old dummy event of id: ${newEvent.eventData.id}");
           tree.event = newEvent;
-          //tree = topPosts.removeAt(i);
           allChildEventsMap[tree.event.eventData.id] = tree;
-          if( newEvent.eventData.createdAt > getSecondsDaysAgo(gDontHighlightEventsOlderThan)) {
-            newEventIdsSet.add(newEvent.eventData.id);
-          }
           return;
         }
       }
@@ -1274,7 +1270,6 @@ class Store {
 
       // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
       newEventIdsSet.add(newEvent.eventData.id);
-     
      
     });
     

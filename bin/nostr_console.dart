@@ -304,8 +304,13 @@ Future<void> main(List<String> arguments) async {
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, limitPerSubscription, getSecondsDaysAgo(limitFollowPosts));
 
       // get group and meta info events
-      getKindEvents([0, 3, 40, 41, 140, 141], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitMetaInfoEvents)); // get all type 3 etc
-      getKindEvents([42, 142], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( limitFollowPosts)); // get all type 3 etc
+      getKindEvents([0, 3, 40, 41], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitMetaInfoEvents)); // get all type 3 etc
+      getKindEvents([140, 141], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(1)); // get all type 3 etc
+      
+      getKindEvents([42], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( limitFollowPosts)); // get all type 3 etc
+      getKindEvents([142], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( 1)); // get all type 3 etc
+
+      getKindEvents([gSecretMessageKind], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( 1)); // get all type 3 etc
 
       // TODO  get all 40 events, and then get all #e for them ( responses to them)
     

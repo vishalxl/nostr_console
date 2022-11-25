@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.1.8-beta";
+const String version = "0.1.9-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -11,9 +11,12 @@ int gSpecificDebug = 0;
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = "  e74e93fbc77af5275f29db688931f725813ab1385f16233bfa609078a8779dfa"; 
+String gCheckEventId = "0082a613c9f4d43f796a427d15db74f10ac64212e28f465870ceaf099f488087"; 
 
 int gDefaultNumWaitSeconds = 8000; // is used in main()
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////// encrypted Group settings
+const int gSecretMessageKind = 104;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// file related settings 
 const String gDefaultEventsFilename = "all_nostr_events.txt";

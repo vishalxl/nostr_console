@@ -281,7 +281,7 @@ class EventData {
       }
     } else {
       int eKind = json['kind'];
-      if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5 || eKind == 4 || eKind == 140 || eKind == 141 || eKind == 142) {
+      if ( eKind == 1 || eKind == 7 || eKind == 42  || eKind == 5 || eKind == 4 || eKind == 140 || eKind == 141 || eKind == 142 || eKind == gSecretMessageKind) {
         for( int i = 0; i < numTags; i++) {
           var tag = jsonTags[i];
 
@@ -338,7 +338,7 @@ class EventData {
     }
 
     // replace the patterns
-    
+    //print("in main body of expandmentions");
     for(int i = 0; i < nip08PlaceHolders.length && i < tags.length; i++) {
       int     index = -1;
       Pattern p     = nip08PlaceHolders[i];
@@ -364,18 +364,17 @@ class EventData {
   }
 
   // is called only once for each event received ( or read from file)
-  void translateAndExpandMentions(List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap) {
+  void translateAndExpandMentions(Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
-      printInColor("in translateAndExpandMensitons: decoding $gCheckEventId\n", redColor);
+      //printInColor("in translateAndExpandMentions: decoding $gCheckEventId\n", redColor);
     }
 
     if (content == "" ||  evaluatedContent != "") {
       if( id == gCheckEventId) {
-        printInColor("in translateAndExpandMensitons: returning \n", redColor);
+        //printInColor("in translateAndExpandMentions: returning \n", redColor);
       }
       return;
     }
-
 
     switch(kind) {
     case 1:
@@ -404,6 +403,64 @@ class EventData {
       }
     break;
 
+    } // end switch
+    return;
+  } // end translateAndExpandMentions
+
+  // is called only once for each event received ( or read from file)
+  String? TranslateAndDecryptSecretMessage(Map<String, Tree> tempChildEventsMap) {
+    if( id == gCheckEventId) {
+      //printInColor("in TranslateAndDecryptSecretMessage: decoding $gCheckEventId\n", redColor);
+    }
+
+    if (content == "" ||  evaluatedContent != "") {
+      if( id == gCheckEventId) {
+        //printInColor("in TranslateAndDecryptSecretMessage: returning \n", redColor);
+      }
+      return null;
+    }
+
+    switch(kind) {
+    case gSecretMessageKind: 
+      if( userPrivateKey == ""){ // cant process if private key not given
+        return null;
+      }
+
+      if(!isValidDirectMessage(this)) {
+        return null;
+      }
+
+      if( id == gCheckEventId) {
+        //printInColor("in translateAndExpandMensitons: gonna decrypt \n", redColor);
+      }
+
+      //log.info("decrypting a secret message");
+
+      String? decrypted = decryptDirectMessage();
+      if( decrypted != null) {
+        evaluatedContent = decrypted;
+      }
+      return id;
+    } // end switch
+
+    return null;
+  } // end TranslateAndDecryptSecretMessage
+
+
+  // is called only once for each event received ( or read from file)
+  void translateAndDecryptKind4(Map<String, Tree> tempChildEventsMap) {
+    if( id == gCheckEventId) {
+      printInColor("in translateAndDecryptKind4: decoding $gCheckEventId\n", redColor);
+    }
+
+    if (content == "" ||  evaluatedContent != "") {
+      if( id == gCheckEventId) {
+        printInColor("in translateAndDecryptKind4: returning \n", redColor);
+      }
+      return;
+    }
+
+    switch(kind) {
     case 4: 
       if( userPrivateKey == ""){ // cant process if private key not given
         break;
@@ -417,37 +474,63 @@ class EventData {
         printInColor("in translateAndExpandMensitons: gonna decrypt \n", redColor);
       }
 
+      //log.info("decrypting a message of kind 4");
+
       String? decrypted = decryptDirectMessage();
       if( decrypted != null) {
         evaluatedContent = decrypted;
         evaluatedContent = expandMentions(evaluatedContent, tempChildEventsMap);
       }
+      //print("evaluatedContent: $evaluatedContent");
       break;
-
-
     } // end switch
   } // end translateAndExpandMentions
 
 
   // is called only once for each event received ( or read from file)
-  void translateAndExpand14x(List<DirectMessageRoom> directRooms, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap) {
+  void translateAndDecrypt14x(List<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
-      printInColor("in translateAndExpandMensitons: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
+      //printInColor("in translateAndExpand14x: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
     }
 
     if (content == "" ||  evaluatedContent != "") {
       if( id == gCheckEventId) {
-        printInColor("in translateAndExpandMensitons: returning \n", redColor);
+        //printInColor("in translateAndExpand14x: returning \n", redColor);
       }
       return;
     }
 
+    if( createdAt < getSecondsDaysAgo(1)) {
+      //print("old 142. not decrypting");
+      return;
+    } 
+
+    
+
     switch(kind) {
     case 142:
-      String? decrypted = decryptEncryptedChannelMessage(directRooms, encryptedChannels, tempChildEventsMap);
+      //print("in translateAndDecrypt14x");
+      Channel? channel = getChannelForMessage( encryptedChannels, id); 
+      if( channel == null) {
+        break;
+      }
+
+      if(!channel.participants.contains(userPublicKey)) {
+        break;
+      }
+
+      if(!channel.participants.contains(pubkey)) {
+        break;
+      }
+
+      String? decrypted = decryptEncryptedChannelMessage(secretMessageIds, tempChildEventsMap);
       if( decrypted != null) {
+        //printWarning("Successfully decrypted kind 142: $id");
         evaluatedContent = decrypted;
+        //print("in translateAndDecrypt14x: calling expandMentions");
         evaluatedContent = expandMentions(evaluatedContent, tempChildEventsMap);
+        //print("content = $content");
+        //print(evaluatedContent);
       }
       break;
     default:
@@ -502,34 +585,21 @@ class EventData {
   }
   
 
-  String? decryptEncryptedChannelMessage(List<DirectMessageRoom> directRooms, List<Channel> encryptedChannels,Map<String, Tree> tempChildEventsMap) {
-    Channel? channel = getChannelForMessage( encryptedChannels, id);
-    if( channel == null) {
-      print("could not find channel");
-      return null;
-    }
-
-    if(!channel.participants.contains(userPublicKey)) {
-      return null;
-    }
-
-    if(!channel.participants.contains(pubkey)) {
-      return null;
-    }
+  String? decryptEncryptedChannelMessage(List<String> secretMessageIds, Map<String, Tree> tempChildEventsMap) {
 
     if( id == "865c9352de11a3959c06fce5350c5a1b9fa0475d3234078a1bb45d152b370f0b") {  // known issue
       
       //print("\n\ngoing to decrypt b1ab66ac50f00f3c3bbc91e5b9e03fc8e79e3fdb9f6d5c9ae9777aa6ca3020a2");
       //print(channel.participants);
-      return "";
+      return null;
     }
 
-    //print("Going to decrypt event id: $id");
+    //printWarning("Going to decrypt 14x event id: $id");
 
     //print("In decryptEncryptedChannelMessage: for event of kind 142 with event id = $id");
     int ivIndex = content.indexOf("?iv=");
     if( ivIndex == -1) {
-      return "";
+      return null;
     }
     var iv = content.substring( ivIndex + 4, content.length);
     var enc_str = content.substring(0, ivIndex);
@@ -537,11 +607,11 @@ class EventData {
     String channelId = getChannelIdForMessage();
     //print("In decryptEncryptedChannelMessage: got channel id $channelId");
     List<String> keys = [];
-    keys = getEncryptedChannelKeys(directRooms, tempChildEventsMap, channelId);
+    keys = getEncryptedChannelKeys(secretMessageIds, tempChildEventsMap, channelId);
 
     if( keys.length != 2) {
-      //print("Could not get keys for event id: $id and channelId: $channelId");
-      return "";
+      print("Could not get keys for event id: $id and channelId: $channelId");
+      return null;
     }
 
     //print("\nevent id: $id");
@@ -551,6 +621,7 @@ class EventData {
     String pubKey = "02" + keys[1];
 
     var decrypted = myPrivateDecrypt( priKey, pubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+    //print("decrypted = |$decrypted|");
     return decrypted;
   }
 
@@ -571,10 +642,23 @@ class EventData {
   }
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
-  void printEventData(int depth, bool topPost) {
+  void printEventData(int depth, bool topPost, Map<String, Tree>? tempChildEventsMap, List<String>? secretMessageIds, List<Channel>? encryptedChannels) {
     if( !(kind == 1 || kind == 4 || kind == 42)) {
       return; // only print kind 1 and 42 and 4
     }
+
+    // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
+    if( tempChildEventsMap != null )
+    if(kind == 4)
+      translateAndDecryptKind4( tempChildEventsMap);
+    else if ([1, 42].contains(kind)) {
+      translateAndExpandMentions(tempChildEventsMap);
+    } else if ([142].contains(kind)) {
+      if( secretMessageIds != null && encryptedChannels != null) {
+        translateAndDecrypt14x( secretMessageIds, encryptedChannels, tempChildEventsMap);
+      }
+    }
+
 
     int n = 4;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
@@ -672,12 +756,25 @@ class EventData {
     stdout.write(strToPrint);
   }
 
-  String getAsLine({int len = 20}) {
+  String getAsLine(var tempChildEventsMap, List<String>? secretMessageIds, List<Channel>? encryptedChannels, {int len = 20}) {
+
+    // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
+    if(kind == 4)
+      translateAndDecryptKind4( tempChildEventsMap);
+    else if ([1, 42].contains(kind)) {
+      translateAndExpandMentions(tempChildEventsMap);
+    } else if ([142].contains(kind)) {
+      if( tempChildEventsMap != null && secretMessageIds != null && encryptedChannels != null) {
+        translateAndDecrypt14x(secretMessageIds, encryptedChannels, tempChildEventsMap);
+      }
+    }
+
     String contentToPrint = evaluatedContent.isEmpty? content: evaluatedContent;
     if( len == 0 || len > contentToPrint.length) {
       //len = contentToPrint.length;
     }
-    
+
+
     contentToPrint = contentToPrint.replaceAll("\n", " ");
     contentToPrint = contentToPrint.replaceAll("\r", " ");
     contentToPrint = contentToPrint.replaceAll("\t", "  ");
@@ -691,10 +788,26 @@ class EventData {
       paddedStrToPrint = "$gNotificationColor$paddedStrToPrint$gColorEndMarker";
       isNotification = false;
     }
+    //print("returning $paddedStrToPrint");
     return paddedStrToPrint;
   }
 
-  String getStrForChannel(int depth) {
+
+  String getStrForChannel(int depth, var tempChildEventsMap, List<String>? secretMessageIds, List<Channel>? encryptedChannels) {
+
+    // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
+     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
+    if(kind == 4)
+      translateAndDecryptKind4( tempChildEventsMap);
+    else if ([1, 42].contains(kind)) {
+      translateAndExpandMentions(tempChildEventsMap);
+    } else if ([142].contains(kind)) {
+      if( tempChildEventsMap != null && secretMessageIds != null && encryptedChannels != null) {
+        //print('decrypting 14x in getStrForChannel');
+        translateAndDecrypt14x(secretMessageIds, encryptedChannels, tempChildEventsMap);
+      }
+    }
+
     String strToPrint = "";
     String name = getAuthorName(pubkey);    
     String strDate = getPrintableDate(createdAt);
@@ -859,7 +972,7 @@ class Event {
   }
 
   void printEvent(int depth, bool topPost) {
-    eventData.printEventData(depth, topPost);
+    eventData.printEventData(depth, topPost, null, null, null);
     //stdout.write("\n$originalJson --------------------------------\n\n");
   }
 
@@ -1463,21 +1576,32 @@ bool isValidDirectMessage(EventData directMessageData) {
   bool validUserMessage = false;
 
   List<String> allPtags = [];
+
+  if( [4, gSecretMessageKind].contains( directMessageData.kind)  ) {
+    if(gDebug > 0 && gCheckEventId == directMessageData.id) print("in isValidDirectMessage for kind $gSecretMessageKind. its id = ${directMessageData.id}");
+  }
+
   directMessageData.tags.forEach((tag) {
-    if( tag.length < 2 )
+    if( tag.length < 2 ) {
       return;
+    }
     if( tag[0] == "p" && tag[1].length == 64) { // basic length sanity test
       allPtags.add(tag[1]);
     }
   });
+
+  if(gDebug > 0 && gCheckEventId == directMessageData.id) print("In isvalid direct message: ptags len: ${allPtags.length}, ptags = ${allPtags}");
 
   if( directMessageData.pubkey == userPublicKey && allPtags.length == 1) {
     if( allPtags[0].substring(0, 32) != "0".padLeft(32, '0')) { // check that the message hasn't been sent to an invalid pubkey
       validUserMessage = true; // case where this user is sender
     }
   } else {
+    if(gCheckEventId == directMessageData.id) print("in else case 3");
     if ( directMessageData.pubkey != userPublicKey) {
+      if(gDebug > 0 && gCheckEventId == directMessageData.id) print("in if 5 allpags 1st = ${allPtags[0]} userPUblic key = $userPublicKey");
       if( allPtags.length == 1 && allPtags[0] == userPublicKey) {
+
         validUserMessage = true; // case where this user is recipeint 
       }
     }
@@ -1656,40 +1780,36 @@ bool isValidPubkey(String pubkey) {
 }
 
 
-List<String> getEncryptedChannelKeys(List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap, String channelId) {
+List<String> getEncryptedChannelKeys(List<String> secretMessageIds, Map<String, Tree> tempChildEventsMap, String channelId) {
   Event? e = tempChildEventsMap[channelId]?.event;
   if( e != null) {
     //print("\n----------------\nIn getEncryptedChannelKeys for encrypted channel $channelId");
     String creatorPubKey = e.eventData.pubkey;
-    for( int i = 0; i < directRooms.length; i++) {
-      DirectMessageRoom room = directRooms[i];
-      if( room.otherPubkey == creatorPubKey) {
-        //print("got other pubkey $creatorPubKey");
-        for( int j = 0; j < room.messageIds.length; j++) {
-          String messageId = room.messageIds[j];
 
-          Event? messageEvent = tempChildEventsMap[messageId]?.event;
-          if( messageEvent != null) {
-            //print("got a message which is: ${messageEvent.eventData.evaluatedContent}");
-            //print(messageEvent.eventData.getStrForChannel(0));
-            String evaluatedContent = messageEvent.eventData.evaluatedContent;
-            if( evaluatedContent.startsWith("App Encrypted Channels:")) {
-              //print("got App");
-              if( evaluatedContent.contains(channelId) && evaluatedContent.length == 288) {
-                //print("in getEncryptedChannelKeys:    success: got password in pvt message: $evaluatedContent");
-                //print("len of evaluated content: ${evaluatedContent.length} ");
-                String priKey = evaluatedContent.substring(159, 159 + 64);
-                String pubKey = evaluatedContent.substring(224, 224 + 64);
 
-                if( priKey.length == 64 && pubKey.length == 64) {
-                  return [priKey, pubKey];
-                }
-              }
+    for( int j = 0; j < secretMessageIds.length; j++) {
+      String messageId = secretMessageIds[j];
+
+      Event? messageEvent = tempChildEventsMap[messageId]?.event;
+      if( messageEvent != null) {
+        //print("got a message which is: ${messageEvent.eventData.evaluatedContent}");
+        //print(messageEvent.eventData.getStrForChannel(0));
+        String evaluatedContent = messageEvent.eventData.evaluatedContent;
+        if( evaluatedContent.startsWith("App Encrypted Channels:")) {
+          //print("got App");
+          if( evaluatedContent.contains(channelId) && evaluatedContent.length == 288) {
+            //print("in getEncryptedChannelKeys:    success: got password in pvt message: $evaluatedContent");
+            //print("len of evaluated content: ${evaluatedContent.length} ");
+            String priKey = evaluatedContent.substring(159, 159 + 64);
+            String pubKey = evaluatedContent.substring(224, 224 + 64);
+
+            if( priKey.length == 64 && pubKey.length == 64) {
+              return [priKey, pubKey];
             }
-          } else {
-            print("could not get message event");
           }
         }
+      } else {
+        print("could not get message event");
       }
     }
   }

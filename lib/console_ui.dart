@@ -132,12 +132,14 @@ Future<void> sendChannelReply(Store node, Channel channel, String replyTo, Strin
 }
 
 // send DM
-Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend) async {
+Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend, {String replyKind = "4"}) async {
   //messageToSend = addEscapeChars(messageToSend); since this get encrypted , it does not need escaping
   String otherPubkey02 = "02" + otherPubkey;
   String encryptedMessageToSend =        myEncrypt(userPrivateKey, otherPubkey02, messageToSend);
 
-  String replyKind = "4";
+  //print("in sendDirectMessage: replyKind = $replyKind");
+
+  //String replyKind = "4";
   String strTags = '["p","$otherPubkey"]';
   strTags += gWhetherToSendClientTag?',["client","nostr_console"]':'';
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -609,7 +611,7 @@ Future<void> channelMenuUI(Store node) async {
     //await processNotifications(node); // this takes 300 ms
     if( !justShowedChannels) {
       printInColor("                                     Public Channels ", gCommentColor);
-      node.printChannelsOverview(node.channels, 20, selectorShowAllRooms);
+      node.printChannelsOverview(node.channels, 20, selectorShowAllRooms, node.allChildEventsMap, null);
       justShowedChannels = true;
     }
 
@@ -645,7 +647,7 @@ Future<void> channelMenuUI(Store node) async {
             firstIteration = false;
           }
 
-          String fullChannelId = node.showChannel(node.channels, channelId, pageNum);
+          String fullChannelId = node.showChannel(node.channels, channelId, null, null, null, pageNum); // direct channel does not need this, only encrypted channels needs them
           if( fullChannelId == "") {
             //print("Could not find the given channel.");
             showChannelOption = false;
@@ -719,7 +721,7 @@ Future<void> channelMenuUI(Store node) async {
       case 2:
         clearScreen();
         printInColor("                                 All Public Channels ", gCommentColor);
-        node.printChannelsOverview(node.channels, node.channels.length, selectorShowAllRooms);
+        node.printChannelsOverview(node.channels, node.channels.length, selectorShowAllRooms, node.allChildEventsMap, null);
         justShowedChannels = true;
         break;
 
@@ -777,7 +779,7 @@ Future<void> createEncryptedChannel(Store node) async {
   String messageToSend = "App Encrypted Channels: inviting you to encrypted channel $newEncryptedChannelId encrypted using private public keys $channelPriKey $channelPubKey";
   for( int i = 0; i < participants.length; i++) {
     // send message to all ( including self which is in that list)
-    await sendDirectMessage(node, participants[i], messageToSend);
+    await sendDirectMessage(node, participants[i], messageToSend, replyKind: gSecretMessageKind.toString());
   }
 
   await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
@@ -788,7 +790,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
                                     String channelName, String channelAbout, String channelPic, String content, String tags, 
                                     Set<String> participants, Set<String> newParticipants) async {
 
-  List<String> keys = getEncryptedChannelKeys(node.directRooms, node.allChildEventsMap, channelId);
+  List<String> keys = getEncryptedChannelKeys(node.encryptedGroupSecretIds, node.allChildEventsMap, channelId);
   if( keys.length == 2) {
     String channelPriKey = keys[0], channelPubKey = keys[1];
 
@@ -797,7 +799,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
     
     // send message to all new participants
     newParticipants.forEach((participant) async {
-      await sendDirectMessage(node, participant, messageToSend);
+      await sendDirectMessage(node, participant, messageToSend, replyKind: gSecretMessageKind.toString());
     });
 
     int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
@@ -815,7 +817,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
 String encryptChannelMessage(Store node, String channelId, String messageToSend) {
   String encryptedMessage = '';
 
-  List<String> keys = getEncryptedChannelKeys(node.directRooms, node.allChildEventsMap, channelId);
+  List<String> keys = getEncryptedChannelKeys(node.encryptedGroupSecretIds, node.allChildEventsMap, channelId);
   if( keys.length != 2) {
     return '';
   }
@@ -888,7 +890,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
     if( !justShowedChannels) {
       printInColor("                                  Encrypted Channels ", gCommentColor);
-      node.printChannelsOverview(node.encryptedChannels, 20, selectorShowAllRooms);
+      node.printChannelsOverview(node.encryptedChannels, 20, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupSecretIds);
       justShowedChannels = true;
     }
 
@@ -926,7 +928,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
             firstIteration = false;
           }
 
-          String fullChannelId = node.showChannel(node.encryptedChannels, channelId, pageNum);
+          String fullChannelId = node.showChannel(node.encryptedChannels, channelId, node.allChildEventsMap, node.encryptedGroupSecretIds, node.encryptedChannels, pageNum);
           if( fullChannelId == "") {
             //print("Could not find the given channel.");
             showChannelOption = false;
@@ -1007,7 +1009,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
       case 2:
         clearScreen();
         printInColor("                              All Encrypted Channels ", gCommentColor);
-        node.printChannelsOverview(node.encryptedChannels, node.encryptedChannels.length, selectorShowAllRooms);
+        node.printChannelsOverview(node.encryptedChannels, node.encryptedChannels.length, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupSecretIds);
         justShowedChannels = true;
         break;
 
@@ -1036,7 +1038,7 @@ Future<void> PrivateMenuUI(Store node) async {
     await processAnyIncomingEvents(node, true); // this takes 300 ms
 
     printInColor("                                Direct Messages", gCommentColor);
-    node.printDirectRoomInfo(showAllRooms);
+    node.printDirectRoomInfo(showAllRooms, node.allChildEventsMap);
 
     String menuInfo = """Direct Message howto: To send a Direct Message to someone for the first time, enter their 64 byte hex pubkey.
                       To enter or continue a conversation seen in overview, enter the first few letters of the other person's name or of their pubkey""";
@@ -1368,7 +1370,7 @@ void showInitialNotifications(Store node) {
   print("\n");
 
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
-  int numDirectRoomsPrinted = node.printDirectRoomInfo(showNotifications);
+  int numDirectRoomsPrinted = node.printDirectRoomInfo( showNotifications, node.allChildEventsMap);
   
   if( numDirectRoomsPrinted > 0)
       print("\n");

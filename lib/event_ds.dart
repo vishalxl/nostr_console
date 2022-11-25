@@ -610,7 +610,7 @@ class EventData {
     keys = getEncryptedChannelKeys(secretMessageIds, tempChildEventsMap, channelId);
 
     if( keys.length != 2) {
-      print("Could not get keys for event id: $id and channelId: $channelId");
+      printWarning("\nCould not get keys for event id: $id and channelId: $channelId\n");
       return null;
     }
 

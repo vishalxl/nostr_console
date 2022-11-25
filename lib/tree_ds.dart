@@ -1006,7 +1006,7 @@ class Store {
     if( gDebug > 0) print("In Tree from Events: after adding all required events of type ${typesInEventMap} to tempChildEventsMap map, its size = ${tempChildEventsMap.length} ");
 
 
-    log.info('in middle of fromEvents');
+    //log.info('in middle of fromEvents');
     int totoalDirectMessages = 0;
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
@@ -1090,7 +1090,6 @@ class Store {
             } // else is handled in above for loop itself
             
             tempWithoutParent.add(tree.event.eventData.id); 
-            //printWarning("added ${tree.event.eventData.id} as a non kind 1 top tree");
             // dont add this dummy in dummyEventIds list ( cause that's used to fetch events not in store)
           } else {
             tempChildEventsMap[parentId]?.children.add(tree);
@@ -1155,7 +1154,6 @@ class Store {
       
       if( secretEvent != null) {
         secretEvent.eventData.TranslateAndDecryptSecretMessage(tempChildEventsMap);
-        //printWarning("created enc room");
         createEncryptedRoomFromInvite(tempEncryptedSecretMessageIds, encryptedChannels, tempChildEventsMap, secretEvent);
       }
     });
@@ -1175,16 +1173,12 @@ class Store {
       }
     }
 
-    //log.info("In fromEvents bfore calling SendEventsRequest for ${dummyEventIds.length} dummy evnets");
 
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
-
-    log.info("total direct messages: $totoalDirectMessages");
 
     // get dummy events
     sendEventsRequest(gListRelayUrls1, dummyEventIds);
 
-    //log.info("In fromEvents After calling SendEventsRequest for ${dummyEventIds.length} dummy evnets ids: $dummyEventIds");
 
     // create a dummy top level tree and then create the main Tree object
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms, tempEncryptedSecretMessageIds);
@@ -2367,8 +2361,6 @@ Store getTree(Set<Event> events) {
     //log.info("Entered getTree for ${events.length} events");
 
     if( events.isEmpty) {
-      if(gDebug > 0) log.info("Warning: In printEventsAsTree: events length = 0");
-
       List<DirectMessageRoom> temp =[];
       return Store([], {}, [], [], [], temp, []);
     }
@@ -2388,34 +2380,21 @@ Store getTree(Set<Event> events) {
     events.retainWhere((event) => ids.add(event.eventData.id));
 
     // process kind 0 events about metadata 
-    int totalKind0Processed = 0, notProcessed = 0;
-    events.forEach( (event) =>  processKind0Event(event)? totalKind0Processed++: notProcessed++);
-    if( gDebug > 0) print("In getTree: totalKind0Processed = $totalKind0Processed  notProcessed = $notProcessed gKindONames.length = ${gKindONames.length}"); 
+    events.forEach( (event) =>  processKind0Event(event));
 
     // process kind 3 events which is contact list. Update global info about the user (with meta data) 
-    int totalKind3Processed = 0, notProcessed3 = 0;
-    events.forEach( (event) =>  processKind3Event(event)? totalKind3Processed++: notProcessed3++);
-    if( gDebug > 0) print("In getTree: totalKind3Processed = $totalKind3Processed  notProcessed = $notProcessed3 gKindONames.length = ${gKindONames.length}"); 
-
-    if( gDebug > 0) log.info("Calling fromEvents for ${events.length} events.");
+    events.forEach( (event) =>  processKind3Event(event));
 
     // create tree from events
-    log.info("Before calling fromEvents for ${events.length} events");
+    //log.info("Before calling fromEvents for ${events.length} events");
     Store node = Store.fromEvents(events);
-    log.info("After calling fromEvents with ${node.allChildEventsMap.length} events in its internal store");
+    //log.info("After calling fromEvents with ${node.allChildEventsMap.length} events in its internal store");
 
     // translate and expand mentions for all ( both take 0.5 sec for 20k events)
-    log.info('before calling expandmentions');
     events.where((element) => [1, 42, gSecretMessageKind].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.translateAndExpandMentions( node.allChildEventsMap));;
 
-
-
-    log.info('between calling expandmentions');
     events.where((element) => element.eventData.kind == 142).forEach( (event) => event.eventData.translateAndDecrypt14x(node.encryptedGroupSecretIds, node.encryptedChannels, node.allChildEventsMap));;
-    log.info('after calling expandmentions');
-    if( gDebug > 0) log.info("expand mentions finished.");
 
-    if(gDebug > 0) print("total number of posts/replies in main tree = ${node.count()}");
     return node;
 }
 

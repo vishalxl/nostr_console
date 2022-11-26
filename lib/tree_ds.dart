@@ -2218,16 +2218,17 @@ class Store {
     List<String> validReactionList = ["+", "!"]; // TODO support opposite reactions 
     List<String> opppositeReactions = ['-', "~"];
 
-    if  ( event.eventData.content == "" 
-       || event.eventData.content == "❤️"
-       || event.eventData.content == "🙌"
-       
-        ) { // cause damus sends blank reactions, and some send heart emojis
-      event.eventData.content = "+";
-    }
 
     if( event.eventData.kind == 7 
       && event.eventData.eTags.isNotEmpty) {
+
+      if  ( event.eventData.content == "" 
+        || event.eventData.content == "❤️"
+        || event.eventData.content == "🙌"
+        
+          ) { // cause damus sends blank reactions, and some send heart emojis
+        event.eventData.content = "+";
+      }
 
       if(gDebug > 1) ("Got event of type 7"); // this can be + or !, which means 'hide' event for me
       String reactorPubkey  = event.eventData.pubkey;

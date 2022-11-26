@@ -19,7 +19,7 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
 
     String nameToDisplay = userPrivateKey.length == 64? 
                               "$gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
-                              "${gWarningColor}You are not signed in$gColorEndMarker but are using public key $userPublicKey";
+                              "${gWarningColor}You are not signed in$gColorEndMarker";
     
     if( printNotifications) {
       node.printNotifications(newEventIdsSet, nameToDisplay);
@@ -414,11 +414,11 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
     print("\n");
 
     printMenu(menuOptions);
-    String nameToDisplay = userPrivateKey.length == 64? 
-                              "$gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
-                              "${gWarningColor}You are not signed in$gColorEndMarker but are using public key $userPublicKey";
+    String promptWithName = userPrivateKey.length == 64? 
+                              "Signed in as $gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
+                              "${gWarningColor}You are not signed in so can't send any messages$gColorEndMarker";
 
-    stdout.write("Signed in as $nameToDisplay. ");
+    stdout.write("$promptWithName. ");
     stdout.write("Type option number: ");
     String? userOptionInput = stdin.readLineSync();
     String userOption = userOptionInput??"";
@@ -493,6 +493,11 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
 
       case 2: //edit your profile
+        if( userPublicKey == "" || userPrivateKey == "") {
+          printWarning("No private key provided so you can't edit your profile.");
+          break;
+        }
+
         print("Your current name: ${getAuthorName(userPublicKey)}");
         print("Your 'about me': ${gKindONames[userPublicKey]?.about}");
         print("Your current profile picture: ${gKindONames[userPublicKey]?.picture}\n");
@@ -515,6 +520,11 @@ Future<void> otherOptionsMenuUi(Store node) async {
         break;
 
       case 3:
+        if( userPublicKey == "" || userPrivateKey == "") {
+          printWarning("No private key provided so you can't delete any event.");
+          break;
+        }
+
         stdout.write("Enter event id to delete: ");
         String? $tempEventId = stdin.readLineSync();
         String userInputId = $tempEventId??"";

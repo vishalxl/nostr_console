@@ -58,7 +58,7 @@ List<String> gListRelayUrls2 = [
                               ];
 
 // well known disposable test private key
-const String gDefaultPublicKey  = "e8caa2028a7090ffa85f1afee67451b309ba2f9dee655ec8f7e0a02c29388180";
+const String gDefaultPublicKey  = "";
 String userPrivateKey = "";
 String userPublicKey  = gDefaultPublicKey;
 

@@ -1499,7 +1499,7 @@ extension StringX on String {
 
     // https://www.thoughtco.com/most-common-french-words-1372759
     Set<String> frenchWords = {"oui", "je", "le", "un", "de", "et", "merci", "une", "ce", "pas"};
-    Set<String> spanishWords = {"y", "se", "el", "uso", "que", "te", "los", "va", "ser", "si", "por", "lo", "es", "era", "un"};;
+    Set<String> spanishWords = {"y", "se", "el", "uso", "que", "te", "los", "va", "ser", "si", "por", "lo", "es", "era", "un", "o"};;
 
     Set<String> romanceWords = frenchWords.union(spanishWords);
     for( String word in romanceWords) {

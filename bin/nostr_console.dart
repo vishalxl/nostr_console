@@ -93,23 +93,23 @@ Future<void> main(List<String> arguments) async {
           return;
         }
         userPrivateKey = "";
-        print("Going to use public key $userPublicKey. You will not be able to send posts/replies.");
       }
+
+      // process private key argument, and it overrides what's given in pub key argument, if any pubkey is given
       if( argResults[prikeyArg] != null) {
         userPrivateKey = argResults[prikeyArg];
         if( userPrivateKey.length != 64){ 
           print("Length of provided private key should be 64. Exiting.");
           return;
         }
-        userPublicKey = myGetPublicKey(userPrivateKey); 
+        userPublicKey = myGetPublicKey(userPrivateKey);
         print("Going to use the provided private key");
       }
 
-      // write informative message in case user is using the default private key
+      // write informative message in case user is not using proper keys
       if( userPublicKey == gDefaultPublicKey) {
-        print("${gWarningColor}You seem to be using the default public key starting with e8c, which comes bundled with this $exename ");
         print("You should ideally create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
-        print("You can create your own private key from ${gWarningColor}astral.ninja, branle.netlify.app$gColorEndMarker, or other such tools.\n");
+        print("Create a private key from ${gWarningColor}astral.ninja, @damusapp or anigma.io, or even from command line using `openssl rand -hex 32`.$gColorEndMarker.\n");
       }
 
       // handle relay related argument
@@ -297,8 +297,10 @@ Future<void> main(List<String> arguments) async {
       }
 
       // get event for user
-      getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-      getMentionEvents(gListRelayUrls2, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents)); // from relay group 2
+      if( userPublicKey!= "") {
+        getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
+        getMentionEvents(gListRelayUrls2, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents)); // from relay group 2
+      }
 
       // get other user events
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, limitPerSubscription, getSecondsDaysAgo(limitFollowPosts));
@@ -326,26 +328,26 @@ Future<void> main(List<String> arguments) async {
         if( gDebug > 0) log.info("Received user events.");
 
         initialEvents.forEach((e) => processKind3Event(e)); // first process the kind 3 event
-        // get the latest kind 3 event for the user, which lists his 'follows' list
-        Event? contactEvent = getContactEvent(userPublicKey);
+        
+        if( userPublicKey != "") {
+          // get the latest kind 3 event for the user, which lists his 'follows' list
+          Event? contactEvent = getContactEvent(userPublicKey);
 
-        // if contact list was found, get user's feed; also get some default contacts
-        Set<String> contacts = {};
-        //contacts.addAll(gDefaultFollows);
-        if (contactEvent != null ) {
-          if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-          contactEvent.eventData.contactList.forEach((contact) {
-            contacts.add(contact.id);
-          });
+          // if contact list was found, get user's feed; also get some default contacts
+          Set<String> contacts = {};
+          //contacts.addAll(gDefaultFollows);
+          if (contactEvent != null ) {
+            if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
+            contactEvent.eventData.contactList.forEach((contact) {
+              contacts.add(contact.id);
+            });
+          }
+          getContactFeed(gListRelayUrls1, contacts, gLimitPerSubscription, getSecondsDaysAgo(2 * limitFollowPosts));
         }
-        getContactFeed(gListRelayUrls1, contacts, gLimitPerSubscription, getSecondsDaysAgo(2 * limitFollowPosts));
 
         // calculate top mentioned ptags, and then get the events for those users
-        //log.info('calling getpTags');
         List<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
-        //log.info('after getpTags\n');
         getMultiUserEvents(gListRelayUrls1, pTags, gLimitPerSubscription, getSecondsDaysAgo(limitFollowPosts));
-        
         
         stdout.write('Waiting for feed to come in..............');
         Future.delayed(Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
@@ -357,10 +359,7 @@ Future<void> main(List<String> arguments) async {
             if( gDebug > 0) log.info("Received ptag events events.");
 
             // Creat tree from all events read form file
-            //log.info("going to call getTree.");
             Store node = getTree(initialEvents);
-            //node.printEventInfo();
-            //log.info("after getTree returned.");
             gStore = node;
             
             clearEvents();

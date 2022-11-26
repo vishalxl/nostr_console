@@ -251,7 +251,7 @@ String expectedResult =
       Store node = await getTree(initialEvents);
       
       //await node.printDirectRoomInfo(showAllRooms);
-      expect(7, node.getNumDirectRooms(), reason:'verify correct number of direct chat rooms created');
+      expect(0, node.getNumDirectRooms(), reason:'verify correct number of direct chat rooms created');
       expect(78, node.getNumChannels(), reason: 'verify correct number of public channels created');
 
       expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'), 

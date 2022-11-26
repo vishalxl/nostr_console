@@ -21,7 +21,7 @@ void   printWarning(String s) => stdout.supportsAnsiEscapes ?stdout.write("$gWar
 // translate 
 GoogleTranslator? translator; // initialized in main when argument given
  
-const int gNumTranslateDays = 2;// translate for this number of days
+const int gNumTranslateDays = 1;// translate for this number of days
 bool gTranslate = false; // translate flag
 
 List<String> nip08PlaceHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]", "#[8]", "#[9]" ];
@@ -1485,7 +1485,7 @@ extension StringX on String {
     if( !isLatinAlphabet())
       return false;
 
-    if (isFrench())
+    if (isRomanceLanguage())
       return false;
 
     return true;
@@ -1495,13 +1495,16 @@ extension StringX on String {
     false; // https://1000mostcommonwords.com/1000-most-common-portuguese-words/
   }
 
-  bool isFrench() {
+  bool isRomanceLanguage() {
 
     // https://www.thoughtco.com/most-common-french-words-1372759
-    List<String> frenchWords = ["oui", "je", "le", "un", "de", "et", "merci", "une", "ce", "pas"];
-    for( int i = 0; i < frenchWords.length; i++) {
-      if( this.toLowerCase().contains(" ${frenchWords[i]} ")) {
-        if( gDebug > 0) print("isFrench: Found ${this.toString()} is french"); 
+    Set<String> frenchWords = {"oui", "je", "le", "un", "de", "et", "merci", "une", "ce", "pas"};
+    Set<String> spanishWords = {"y", "se", "el", "uso", "que", "te", "los", "va", "ser", "si", "por", "lo", "es", "era", "un"};;
+
+    Set<String> romanceWords = frenchWords.union(spanishWords);
+    for( String word in romanceWords) {
+      if( this.toLowerCase().contains(" $word ")) {
+        if( gDebug > 0) print("isRomanceLanguage: Found ${this.toString()} is romance language"); 
         return true;
       }
     }

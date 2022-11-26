@@ -1062,6 +1062,10 @@ class Store {
         print("In fromEvent: got evnet id $gCheckEventId");
       }
 
+      if( tree.event.eventData.kind != 1) {
+        return;
+      }
+
       // find its parent and then add this element to that parent Tree
       String parentId = tree.event.eventData.getParent(tempChildEventsMap);
 

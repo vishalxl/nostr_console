@@ -160,6 +160,7 @@ class EventData {
 
       int numRoot = 0, numReply = 0;
 
+      // first go over all tags and find out at least one reply and root tag, and count their numbers
       String rootId = "", replyId = "";
       for( int i = 0; i < eTags.length; i++) {
         String eventId = eTags[i][0];
@@ -176,6 +177,7 @@ class EventData {
         }
       }
   
+      // then depending on the numbers and values ( of root and replyto) return the parent
       if( replyId.length > 0) {
         if( numReply == 1) {
           return replyId;
@@ -197,7 +199,7 @@ class EventData {
       }
 
 
-      // if reply/root tags don't work, then try to look for parent tag with the deprecated logic from NIP-10
+      // but if reply/root tags don't work, then try to look for parent tag with the deprecated logic from NIP-10
       if( gDebug > 0) log.info("using deprecated logic of nip10 for event id : $id");
       for( int i = tags.length - 1; i >= 0; i--) {
         if( tags[i][0] == "e") {
@@ -1498,8 +1500,8 @@ extension StringX on String {
   bool isRomanceLanguage() {
 
     // https://www.thoughtco.com/most-common-french-words-1372759
-    Set<String> frenchWords = {"oui", "je", "le", "un", "de", "et", "merci", "une", "ce", "pas"};
-    Set<String> spanishWords = {"y", "se", "el", "uso", "que", "te", "los", "va", "ser", "si", "por", "lo", "es", "era", "un", "o"};;
+    Set<String> frenchWords = {"oui", "je", "le", "un", "de", "merci", "une", "ce", "pas"}; // "et" is in 'et al'
+    Set<String> spanishWords = {"y", "se", "el", "uso", "que", "te", "los", "va", "ser", "si", "por", "lo", "es", "era", "un", "o"};
 
     Set<String> romanceWords = frenchWords.union(spanishWords);
     for( String word in romanceWords) {

@@ -5,6 +5,7 @@ import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:bip340/bip340.dart';
+import 'package:qr/qr.dart';
 
 Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = true])  async {
   reAdjustAlignment();
@@ -275,6 +276,32 @@ void reAdjustAlignment() {
     Store.reCalculateMarkerStr();
 }
 
+String getQrCodeAsString(String str) {
+  String output = "";
+
+  final qrCode = QrCode(4, QrErrorCorrectLevel.L)
+                ..addData('$str');
+  final qrImage = QrImage(qrCode);
+
+  //print("qrimage modulecount =  ${qrImage.moduleCount}");
+  String leftPadding = "   ";
+  for (var x = 0; x < qrImage.moduleCount; x++) {
+    output += leftPadding;
+    for (var y = 0; y < qrImage.moduleCount; y++) {
+      if (qrImage.isDark(y, x)) {
+        // render a dark square on the canvas
+        output += "██";
+      }
+      else {
+        output += "  ";
+      }
+    }
+    output += "\n";
+  }
+
+  return output;
+}
+
 void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike(profilePubkey);
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
@@ -307,6 +334,13 @@ void printProfile(Store node, String profilePubkey) {
     print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
     print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
     
+    // print QR code
+    print("The QR code for the public key:\n\n");
+    try {
+     print(getQrCodeAsString(profilePubkey));
+    } catch(e) {
+      print("Could not generate qr code.\n");
+    }
 
     if( profilePubkey != userPublicKey) {
       if( profileContactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {

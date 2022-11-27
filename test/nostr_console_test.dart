@@ -1,3 +1,4 @@
+import 'package:nostr_console/console_ui.dart';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:test/test.dart';
@@ -257,6 +258,27 @@ String expectedResult =
       expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'), 
               reason:'verify a public channel has correct number of messages');
 
+      String qrCodeResult1 = 
+  """   █▀▀▀▀▀█ ██▄▄▀ ▄▄     █ ▄▀ █▀▀▀▀▀█
+   █ ███ █ █▄█ ██▄   ▄▄ ██▀▀ █ ███ █
+   █ ▀▀▀ █  ▀ ▀ █▀▄█▄███  ██ █ ▀▀▀ █
+   ▀▀▀▀▀▀▀ ▀ ▀▄█ █▄▀ █ █▄█▄▀ ▀▀▀▀▀▀▀
+   █ ▀██▄▀▄▀▄▀ █ ▀ ▀▄█▀██ ▀▄▀▄▄▄█▀▀█
+     ▄▄█ ▀▄   ▄▄█ ▀█▀█▀▄ ▄▀▀▄▄▄▀▀▀█▀
+    ▄█▄ █▀    █▄ ▀▀▄█▀▀███ ▀▀▄ ▀ ▄▄▄
+   ▀  ██▀▀▀ ▀ ▄▄▄ █▀█▄▀   ▄██ ▀▀██▀▀
+     ▀█▄▄▀█▄ ▄▀▄▀ ▀  ▄▄▄ █ █▄▄▀▀▀███
+   ▄ █▀█▄▀▄▄▄ ▄▀█▄█▀ ▀ ██▀█▀█▄▀█ ▀▄█
+   ▄▀▀  ▀▀ █▄▄ ▀▀▄▄▄ ▄▀█▄▄▀   ▄▄ ▄ ▄
+   ▄▄▄▀  ▀  ▄█▀█ ▀ ██ █▀█▄ █ ▄▀██ ▀ 
+    ▀   ▀▀▀█▀ ▄▄ █  ▀▀ ▀▀▀ █▀▀▀█  █▄
+   █▀▀▀▀▀█  ▀█▀▄▄▄▀█▀   ▀▀▀█ ▀ █▄██▄
+   █ ███ █ █▄██▀▄▀ ▀▀▀▄▄ ▄▄▀█▀██▄ ██
+   █ ▀▀▀ █ ▀█▀▄ ▄█▀███ ▀ ▄   ▀▀▀▄█ ▀
+   ▀▀▀▀▀▀▀ ▀▀▀     ▀▀ ▀ ▀▀     ▀  ▀ \n""";
+
+      String profilePubkey1 = "add06b88bd78c5cbb2cd990e873adfba3eaf8e0217d3208be2be770eb506d430";
+      expect (qrCodeResult1, getQrCodeAsString(profilePubkey1), reason: "testing qr code function");
   });
 
   return ;

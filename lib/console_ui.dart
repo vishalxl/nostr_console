@@ -342,6 +342,16 @@ void printProfile(Store node, String profilePubkey) {
     pronoun = "They";
   }
 
+  // print QR code
+  print("The QR code for public key:\n\n");
+  try {
+    print(getQrCodeAsString(profilePubkey));
+  } catch(e) {
+    print("Could not generate qr code.  \n");
+  }
+
+  print("");
+
   print("\nName        : $authorName ( ${profilePubkey} ).");
 
   if (profileContactEvent != null ) {
@@ -356,14 +366,6 @@ void printProfile(Store node, String profilePubkey) {
     print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
     print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
     
-    // print QR code
-    print("The QR code for the public key:\n\n");
-    try {
-     print(getQrCodeAsString(profilePubkey));
-    } catch(e) {
-      print("Could not generate qr code.  \n");
-    }
-
     if( profilePubkey != userPublicKey) {
       if( profileContactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
           print("* They follow you");

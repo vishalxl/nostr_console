@@ -1782,8 +1782,6 @@ List<String> getEncryptedChannelKeys(List<String> secretMessageIds, Map<String, 
   Event? e = tempChildEventsMap[channelId]?.event;
   if( e != null) {
     //print("\n----------------\nIn getEncryptedChannelKeys for encrypted channel $channelId");
-    String creatorPubKey = e.eventData.pubkey;
-
 
     for( int j = 0; j < secretMessageIds.length; j++) {
       String messageId = secretMessageIds[j];

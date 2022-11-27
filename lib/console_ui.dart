@@ -887,6 +887,7 @@ String encryptChannelMessage(Store node, String channelId, String messageToSend)
 
   List<String> keys = getEncryptedChannelKeys(node.encryptedGroupSecretIds, node.allChildEventsMap, channelId);
   if( keys.length != 2) {
+    printWarning("Could not get channel secret for channel id: $channelId");
     return '';
   }
 
@@ -897,7 +898,7 @@ String encryptChannelMessage(Store node, String channelId, String messageToSend)
   return encryptedMessage;
 }
 
-Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String messageToSend) async {
+Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, Set<String> newPubKeys) async {
     // first check user is creator of channel
     Event? channelEvent = node.allChildEventsMap[fullChannelId]?.event;
     if( channelEvent != null) {
@@ -912,17 +913,16 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String
 
           // now send invite 
           List<String> toAdd = [];
-          List<String> newPubKeys = messageToSend.split(' ');
-          newPubKeys = newPubKeys.sublist(1);
 
-          for(int i = 0; i < newPubKeys.length; i++) {
-            if( newPubKeys[i].length != 64) {
-              printWarning("Invalid pubkey. The given pubkey should be 64 byte long.");
+          for(var newPubkey in newPubKeys) {
+            if( newPubkey.length != 64) {
+
+              printWarning("Invalid pubkey. The given pubkey should be 64 byte long. offending pubkey: $newPubkey");
               continue;
             }
-            toAdd.add(newPubKeys[i]);
-            newParticipants.add(newPubKeys[i]);
-            participants.add(newPubKeys[i]);
+            toAdd.add(newPubkey);
+            newParticipants.add(newPubkey);
+            participants.add(newPubkey);
           }
           
           String channelName = node.getChannelNameFromId(node.encryptedChannels, fullChannelId);
@@ -938,15 +938,45 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, String
           int numNewUsers = participants.length;
 
           if( numNewUsers > numOldUsers) {
-            print("sending kind 141 invites to: $participants");
+            print("\nSending kind 141 invites to: $participants");
             await updateEncryptedChannel(node, fullChannelId, channelName, channelAbout, channelPic, content, tags, participants, newParticipants);
           } else {
-            printWarning("Note: No new users added. ");
+            printWarning("\nNote: No new users added. Kindly check whether the given user(s) aren't already members of the group, that pubkeys are valid etc");
           }
+        }
+      } else {
+        printWarning("Not being the creator of this channel, you cannot add members to it.");
+      }
+    }
+}
+
+Future<void> sendInvitesForEncryptedChannel(Store node, String channelId, Set<String> newPubKeys) async {
+    // first check user is creator of channel
+    Event? channelEvent = node.allChildEventsMap[channelId]?.event;
+    
+    if( channelEvent != null) {
+      if( channelEvent.eventData.pubkey == userPublicKey) {
+    
+        Channel? channel = node.getChannelFromId(node.encryptedChannels, channelId);
+        if( channel != null ) {
+          List<String> keys = getEncryptedChannelKeys(node.encryptedGroupSecretIds, node.allChildEventsMap, channelId);
+
+          String channelPriKey = keys[0], channelPubKey = keys[1];
+
+          // now send password as direct message to yourself and to all the people you tagged
+          String messageToSend = "App Encrypted Channels: inviting you to encrypted channel $channelId encrypted using private public keys $channelPriKey $channelPubKey";
+          
+          // send message to all new participants
+          newPubKeys.forEach((participant) async {
+            await sendDirectMessage(node, participant, messageToSend, replyKind: gSecretMessageKind.toString());
+          });
+
+
         }
       }
     }
 }
+
 
 Future<void> encryptedChannelMenuUI(Store node) async {
  
@@ -1023,17 +1053,35 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                     printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
                 } else {
                   if( messageToSend.startsWith('/add ')) {
-                    await addUsersToEncryptedChannel(node, fullChannelId, messageToSend);
+                    Set<String> newPubKeys = messageToSend.split(' ').sublist(1).toSet();
+                    await addUsersToEncryptedChannel(node, fullChannelId, newPubKeys);
                     continue;
                   }
 
-                  if( messageToSend.startsWith('/remove ')) {
-                    // TODO finish
-                    //continue;
+                  Channel? channel = node.getChannelFromId(node.encryptedChannels, fullChannelId);
+                  if( channel == null) {
+                    break;
                   }
 
+                  if( messageToSend.startsWith('/reinvite all')) {
+                    Set<String> participantPubkeys = channel.participants;
+                    print("Sending the shared secret again to: $participantPubkeys");
+                    await sendInvitesForEncryptedChannel(node, fullChannelId, participantPubkeys);
+                    continue;
+                  }
+
+                  if( messageToSend.startsWith('/members')) {
+                    print("\nMembers names and pubkeys:\n");
+                    for( String pubkey in channel.participants) {
+                      stdout.write("${getAuthorName(pubkey)} - $pubkey , ");
+                    }
+                    print("");
+                    
+                    continue;
+                  }
+
+
                   // send message to the given room
-                  Channel? channel = node.getChannelFromId(node.encryptedChannels, fullChannelId);
                   if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
                     List<String> tokens = messageToSend.split(' ');
                     if( tokens.length >= 3) {
@@ -1043,23 +1091,21 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                       if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
                         actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
 
-                      if( channel != null) {
-                        String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, actualMessage);
-                        if( encryptChannelMessage != "") {
-                          await sendChannelReply(node, channel, replyTo, encryptedMessageToSend, "142");
-                          pageNum = 1; // reset it 
-                        }
-                      }
+                      String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, actualMessage);
+                      if( encryptedMessageToSend != "") {
+                        await sendChannelReply(node, channel, replyTo, encryptedMessageToSend, "142");
+                        pageNum = 1; // reset it 
+                      } else {
+                        printWarning("\nCould not get send reply message because could not encrypt message.");
+                      } 
                     }
                   } else {
-                    if( channel != null) {
-                      String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
-                      if( encryptChannelMessage != "") {
-                        await sendChannelMessage(node, channel, encryptedMessageToSend, "142");
-                        pageNum = 1; // reset it 
-                      }
+                    String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
+                    if( encryptedMessageToSend != "") {
+                      await sendChannelMessage(node, channel, encryptedMessageToSend, "142");
+                      pageNum = 1; // reset it 
                     } else {
-                      printWarning("\nCould not get send message because could not get channel id.");
+                      printWarning("\nCould not get send message because could not encrypt message.");
                     }
                   }
 

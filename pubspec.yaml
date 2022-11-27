@@ -7,6 +7,7 @@ homepage: https://github.com/vishalxl/nostr_console
 # used kind 104
 # fix for tag related test fail 
 # default without argument invocation now possible with no pubkey  
+# fixed issues that made channels act wonky ( not update properly when created)
 
 
 

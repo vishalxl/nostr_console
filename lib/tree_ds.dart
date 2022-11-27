@@ -640,7 +640,7 @@ class Store {
   List<Channel>   encryptedChannels = [];
   List<DirectMessageRoom> directRooms = [];
 
-  List<String>    encryptedGroupSecretIds; // event id's of gSecretMessageKind messages, which contain encrypted room secrets
+  List<String>    encryptedGroupSecretIds; // event id's of gSecretMessageKind messages, which contain encrypted room secrets; channel users will look up here for the secret
 
   static String startMarkerStr = "" ;
   static String endMarkerStr = "";
@@ -754,6 +754,10 @@ class Store {
     return null;
   }
 
+  /**
+   * Will create a entry in encryptedChannels ( if one does not already exist)
+   * 
+   */
   static void createEncryptedRoomFromInvite( List<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event eventSecretMessage) {
 
       String? event140Id = getEncryptedChannelIdFromSecretMessage(secretMessageIds, tempChildEventsMap, eventSecretMessage);
@@ -1328,7 +1332,8 @@ class Store {
               //printWarning("1. decrypting secret message with id: ${newTree.event.eventData.id}");
               String ? temp = newTree.event.eventData.TranslateAndDecryptSecretMessage( allChildEventsMap); 
               if( temp != null) {
-                //printWarning("added to the secretMesssageIds");
+                //printWarning("Incoming 104: creating channel");
+                encryptedGroupSecretIds.add(newTree.event.eventData.id);
                 createEncryptedRoomFromInvite(encryptedGroupSecretIds, encryptedChannels, allChildEventsMap, newTree.event);
               }
             } else {

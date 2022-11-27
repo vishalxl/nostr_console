@@ -590,15 +590,9 @@ class EventData {
   String? decryptEncryptedChannelMessage(List<String> secretMessageIds, Map<String, Tree> tempChildEventsMap) {
 
     if( id == "865c9352de11a3959c06fce5350c5a1b9fa0475d3234078a1bb45d152b370f0b") {  // known issue
-      
-      //print("\n\ngoing to decrypt b1ab66ac50f00f3c3bbc91e5b9e03fc8e79e3fdb9f6d5c9ae9777aa6ca3020a2");
-      //print(channel.participants);
       return null;
     }
 
-    //printWarning("Going to decrypt 14x event id: $id");
-
-    //print("In decryptEncryptedChannelMessage: for event of kind 142 with event id = $id");
     int ivIndex = content.indexOf("?iv=");
     if( ivIndex == -1) {
       return null;
@@ -607,7 +601,6 @@ class EventData {
     var enc_str = content.substring(0, ivIndex);
         
     String channelId = getChannelIdForMessage();
-    //print("In decryptEncryptedChannelMessage: got channel id $channelId");
     List<String> keys = [];
     keys = getEncryptedChannelKeys(secretMessageIds, tempChildEventsMap, channelId);
 
@@ -616,14 +609,10 @@ class EventData {
       return null;
     }
 
-    //print("\nevent id: $id");
-    //print(keys);
-
     String priKey = keys[0];
     String pubKey = "02" + keys[1];
 
     var decrypted = myPrivateDecrypt( priKey, pubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
-    //print("decrypted = |$decrypted|");
     return decrypted;
   }
 
@@ -632,12 +621,12 @@ class EventData {
     if( kind != 42 && kind != 142 && kind!=141) {
       return "";
     }
-    //print("in getChannelIdForMessage tag length = ${tags.length}");
+
     // get first e tag, which should be the channel of which this is part of
-    for( int i = 0; i < tags.length; i++) {
-      List tag = tags[i];
-      if( tag[0] == 'e') {
-        return tag[1];
+    for( int i = 0; i < eTags.length; i++) {
+      List tag = eTags[i];
+      if( tag.length >= 1) {
+        return tag[0];
       }
     }
     return '';

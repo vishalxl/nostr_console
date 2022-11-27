@@ -180,23 +180,14 @@ class Relays {
 
                 e = Event.fromJson(d, relay);
 
-                if( gDebug > 0) log.info("In listener: Event size before adding: ${rEvents.length}");
                 if( rEvents.add(e) ) {
                   uniqueIdsRecieved.add(id);
-                  String receivedSubscription = json[1];
-                  if( gDebug > 3) e.eventData.printEventData(0, true, null, null, null); 
-                  if( gDebug > 2) print("");
-
-                  if( gDebug > 1) log.info("In relay listener for relay url $relay: after adding element, rEvents Size = ${rEvents.length}  numReceived = ${newRelay.numReceived} for subscription $receivedSubscription");
-                  if( gDebug > 1) print("\n"); 
                 } else {
                 }
               } on FormatException {
-                if( gDebug > 0) print( 'in Relay::sendRequset. FormatException in sendRequest for event');
                 return;
               } catch(err) {
                 //dynamic json = jsonDecode(d);
-                if( gDebug > 0) print('---\nin Relay::sendRequset. exception = "$err" ;  for relay $relay d = \n${d}');
                 return;
               }                
             },

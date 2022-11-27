@@ -674,25 +674,6 @@ class Store {
       int    eKind = ce.eventData.kind;
 
       switch(eKind) {
-      case 42:
-      {
-        if( gCheckEventId == ce.eventData.id)          print("In handleChannelEvents: processing $gCheckEventId ");
-        String channelId = ce.eventData.getChannelIdForMessage();
-        if( channelId != "") { // sometimes people may forget to give e tags or give wrong tags like #e
-          Channel? channel = getChannel(rooms, channelId);
-          if( channel != null) {
-            if( gDebug > 0) print("chat room already exists = $channelId adding event to it" );
-            if( gCheckEventId == ce.eventData.id) print("Adding new message $eId to a chat room $channelId. ");
-   
-            channel.addMessageToRoom(eId, tempChildEventsMap);
-    
-          } else {
-            Channel newChannel = Channel(channelId, "", "", "", [eId], {}, 0);
-            rooms.add( newChannel);
-          }
-        }
-      }
-      break;
       case 40:
        {
         String chatRoomId = eId;
@@ -712,9 +693,12 @@ class Store {
             if( json.containsKey('about')) {
               roomAbout = json['about'];
             }
+
             List<String> emptyMessageList = [];
+
+            assert(chatRoomId.length == 64);
+
             Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, {}, ce.eventData.createdAt);
-            //print("created room with id $chatRoomId name ${roomName}");
             rooms.add( room);
           }
         } on Exception catch(e) {
@@ -722,6 +706,30 @@ class Store {
         }
       }
         break;
+      case 42:
+      {
+        String channelId = ce.eventData.getChannelIdForMessage();
+
+        if( channelId.length != 64) {
+          break;
+        }
+
+        //print( "for event id ${ce.eventData.id} getting channel id of ${channelId} ");
+        assert(channelId.length == 64);
+
+        if( channelId != "") { // sometimes people may forget to give e tags or give wrong tags like #e
+          Channel? channel = getChannel(rooms, channelId);
+          if( channel != null) {
+            channel.addMessageToRoom(eId, tempChildEventsMap);
+          } else {
+
+            Channel newChannel = Channel(channelId, "", "", "", [eId], {}, 0); 
+            // message added in above line
+            rooms.add( newChannel);
+          }
+        }
+      }
+      break;
       default:
         break;  
       } // end switch
@@ -792,7 +800,7 @@ class Store {
         }
       } // end if 140
       else {
-        printWarning("could not find event 140 from event $gSecretMessageKind ${eventSecretMessage.eventData.id}");
+        //printWarning("could not find event 140 from event $gSecretMessageKind ${eventSecretMessage.eventData.id}");
       }
 
   }
@@ -808,21 +816,16 @@ class Store {
       switch(eKind) {
       case 142:
       {
-        if( gCheckEventId == ce.eventData.id)          print("In handleEncryptedChannelEvents: processing $gCheckEventId ");
         String channelId = ce.eventData.getChannelIdForMessage();
-        if( channelId != "") { // sometimes people may forget to give e tags or give wrong tags like #e
-          Channel? channel = getChannel(encryptedChannels, channelId);
 
+        if( channelId.length == 64) { // sometimes people may forget to give e tags or give wrong tags like #e
+          Channel? channel = getChannel(encryptedChannels, channelId);
           if( channel != null) {
-            if( gDebug > 0) print("encrypted chat room already exists = $channelId adding event to it" );
-            if( gCheckEventId == ce.eventData.id) print("Adding new message $eId to a chat room $channelId. ");
-   
             channel.addMessageToRoom(eId, tempChildEventsMap);
-    
-          } else {
-            //Channel newChannel = Channel(channelId, "", "", "", [eId], {}, 0);
-            //encryptedChannels.add( newChannel);
-          }
+          } 
+        } else {
+          // could not get channel id of message. 
+          printWarning("---Could not get encryptd channel for message id ${ce.eventData.id} got channelId : ${channelId} its len ${channelId.length}");
         }
       }
       break;
@@ -831,25 +834,19 @@ class Store {
         Set<String> participants = {};
         ce.eventData.pTags.forEach((element) { participants.add(element);});
         
-        if( ce.eventData.id == "21779b82caf3628c83f382ad45a78ca0958e5edae7643d3fb222c03732c299d0") {
-          //printInColor("handling 141 : 21779b82caf3628c83f382ad45a78ca0958e5edae7643d3fb222c03732c299d0\n", redColor);
+        String chatRoomId = ce.eventData.getChannelIdForMessage();
+        if( chatRoomId.length != 64) {
+          break;
         }
 
-        String chatRoomId = ce.eventData.getChannelIdForMessage();
-        //print("--------\nIn handleEncryptedChannelEvents: processing kind 141 id with ${ce.eventData.id} with participants = $participants");
-        //print("for original channel id: $chatRoomId");
         try {
           dynamic json = jsonDecode(ce.eventData.content);
           Channel? channel = getChannel(encryptedChannels, chatRoomId);
           if( channel != null) {
-            //print("got 141, and channel structure already exists");
             // as channel entry already exists, then update its participants info, and name info
             if( channel.chatRoomName == "" && json.containsKey('name')) {
               channel.chatRoomName = json['name'];
               //print("renamed channel to ${channel.chatRoomName}");
-            }
-            if( ce.eventData.id == "21779b82caf3628c83f382ad45a78ca0958e5edae7643d3fb222c03732c299d0") {
-              //printInColor("original: ${channel.participants}\n new participants: $participants \n chatRoomId:${chatRoomId}", redColor);
             }
 
             if( channel.lastUpdated < ce.eventData.createdAt) {
@@ -862,26 +859,13 @@ class Store {
               for(int i = 0; i < channel.messageIds.length; i++) {
                 Event ?e = tempChildEventsMap[channel.messageIds[i]]?.event;
                 if( e != null) {
-                  //print("num directRooms = ${directRooms.length}");
                   e.eventData.translateAndDecrypt14x(secretMessageIds, encryptedChannels, tempChildEventsMap);
                 }
               }
             }
 
           } else {
-            //print("In handleEncryptedChannelEvents: got 141 when 140 is not yet found");
-            String roomName = "", roomAbout = "";
-            if(  json.containsKey('name') ) {
-              roomName = json['name']??"";
-            }
-            
-            if( json.containsKey('about')) {
-              roomAbout = json['about'];
-            }
-            List<String> emptyMessageList = [];
-            //Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants, ce.eventData.createdAt);
-            //print("created encrypted room with id $chatRoomId and name $roomName");
-            //encryptedChannels.add( room);
+            // encrypted channel is only created on getting invite through kind 104, not here
           }
         } on Exception catch(e) {
           if( gDebug > 0) print("In From Event. Event type 140. Json Decode error for event id ${ce.eventData.id}. error = $e");
@@ -1328,27 +1312,9 @@ class Store {
             break;
 
           case 40:
+          case 42:
             //print("calling handleChannelEvents for kind 40");
             handleChannelEvents(channels, allChildEventsMap, newTree.event);
-            break;
-
-          case 42:
-            newTree.event.eventData.isNotification = true; // highlight it too in next printing
-            // add 42 chat message event id to its chat room
-            String channelId = newTree.event.eventData.getChannelIdForMessage();
-            if( channelId != "") {
-              Channel? channel = getChannel(channels, channelId);
-              if( channel != null) {
-                if( gDebug > 0) print("added event to chat room in insert event");
-                channel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap); // adds in order
-                break;
-              } else {
-                
-                Channel newChannel = Channel(channelId, "", "", "", [], {}, 0);
-                newChannel.addMessageToRoom(newTree.event.eventData.id, allChildEventsMap);
-                channels.add(newChannel);
-              }
-            } 
             break;
 
           case 141:
@@ -1603,7 +1569,7 @@ class Store {
 
       String name = "";
       if( channelstoPrint[j].chatRoomName == "") {
-        //print("channel has no name");
+        // channel has no name, print part of its id
         name = channelstoPrint[j].channelId.substring(0, 6);
       } else {
         name = "${channelstoPrint[j].chatRoomName} ( ${channelstoPrint[j].channelId.substring(0, 6)})";
@@ -1674,16 +1640,21 @@ class Store {
       return "";
     }
 
-    
     // first check channelsId's, in case user has sent a channelId itself
     Set<String> fullChannelId = {};
     for(int i = 0; i < listChannels.length; i++) {
+      if( listChannels[i].channelId.length != 64) {
+        //printWarning("For index i = $i channel id len is ${listChannels[i].channelId.length} and listChannels[i].channelId.length = ${listChannels[i].channelId.length}");
+        continue;
+      }
+      
+      //print("listChannels[i].channelId = ${listChannels[i].channelId} channelId = ${channelId}");
       if( listChannels[i].channelId.substring(0, channelId.length) == channelId ) {
         fullChannelId.add(listChannels[i].channelId);
       }
     }
 
-    if(fullChannelId.length != 1) {
+    if(fullChannelId.length < 1) {
       // lookup in channel room name
       for(int i = 0; i < listChannels.length; i++) {
           Channel room = listChannels[i];

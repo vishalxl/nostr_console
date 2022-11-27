@@ -283,18 +283,40 @@ String getQrCodeAsString(String str) {
                 ..addData('$str');
   final qrImage = QrImage(qrCode);
 
+  assert( qrImage.moduleCount == 33);
   //print("qrimage modulecount =  ${qrImage.moduleCount}");
   String leftPadding = "   ";
-  for (var x = 0; x < qrImage.moduleCount; x++) {
+  var x = 0;
+  for (x = 0; x < qrImage.moduleCount -1 ; x += 2) {
     output += leftPadding;
-    for (var y = 0; y < qrImage.moduleCount; y++) {
-      if (qrImage.isDark(y, x)) {
-        // render a dark square on the canvas
-        output += "██";
+    for (var y = 0; y < qrImage.moduleCount ; y++) {
+
+      bool topDark = qrImage.isDark(y, x);
+      bool bottomDark = qrImage.isDark(y, x + 1);
+      if (topDark && bottomDark) {
+        output += "█";
       }
-      else {
-        output += "  ";
+      else if (topDark ) {
+        output += "▀";
+      } else if ( bottomDark) {
+        output += "▄";
+      } else if( !topDark && !bottomDark) {
+        output += " ";
       }
+    }
+    output += "\n";
+  }
+
+  if( qrImage.moduleCount %2 == 1) {
+    output += leftPadding;
+    for (var y = 0; y < qrImage.moduleCount ; y++) {
+      bool dark = qrImage.isDark(y, x);
+      if (dark ) {
+        output += "▀";
+      } else {
+        output += " ";
+      }
+
     }
     output += "\n";
   }
@@ -339,7 +361,7 @@ void printProfile(Store node, String profilePubkey) {
     try {
      print(getQrCodeAsString(profilePubkey));
     } catch(e) {
-      print("Could not generate qr code.\n");
+      print("Could not generate qr code.  \n");
     }
 
     if( profilePubkey != userPublicKey) {

@@ -1491,8 +1491,10 @@ extension StringX on String {
     // https://www.thoughtco.com/most-common-french-words-1372759
     Set<String> frenchWords = {"oui", "je", "le", "un", "de", "merci", "une", "ce", "pas"}; // "et" is in 'et al'
     Set<String> spanishWords = {"y", "se", "el", "uso", "que", "te", "los", "va", "ser", "si", "por", "lo", "es", "era", "un", "o"};
+    Set<String> portugeseWords = {"como", "seu", "que", "ele", "foi", "eles", "tem", "este", "por", "quente", "vai", 
+                                  "ter", "mas", "ou", "teve", "fora", "é", "te", "mais"};
 
-    Set<String> romanceWords = frenchWords.union(spanishWords);
+    Set<String> romanceWords = frenchWords.union(spanishWords).union(portugeseWords);
     for( String word in romanceWords) {
       if( this.toLowerCase().contains(" $word ")) {
         if( gDebug > 0) print("isRomanceLanguage: Found ${this.toString()} is romance language"); 

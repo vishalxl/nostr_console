@@ -6,7 +6,8 @@ homepage: https://github.com/vishalxl/nostr_console
 # Release 0.1.9-beta 
 # used kind 104
 # fix for tag related test fail 
-# default without argument invocation now possible with no pubkey 
+# default without argument invocation now possible with no pubkey  
+
 
 environment:
   sdk: '>=2.17.3 <3.0.0'

@@ -1208,8 +1208,8 @@ Future<void> socialMenuUi(Store node) async {
                              'Friends Posts/Replies/Likes',   // 6
                              'Search word(s) or event id',    // 7
                              'Follow new contact',            // 8
-                             'Change number of days printed', // 9
-                             'Show user profile',             // 10
+                             'Show user profile',             // 9
+                             'Change number of days printed', // 10
                              'E(x)it to main menu'], // 11
                              "Social Network Menu");
       
@@ -1376,27 +1376,7 @@ Future<void> socialMenuUi(Store node) async {
           }
           break;
 
-        case 9: // change number of days printed
-          clearScreen();
-          stdout.write("Enter number of days for which you want to see posts: ");
-          String? $tempNumDays = stdin.readLineSync();
-          String newNumDays = $tempNumDays??"";
-
-          try {
-            gNumLastDays =  int.parse(newNumDays);
-            print("Changed number of days printed to $gNumLastDays");
-          } on FormatException catch (e) {
-            printWarning("Invalid input. Kindly try again."); 
-            if( gDebug > 0) print(" ${e.message}"); 
-            continue;
-          } on Exception catch (e) {
-            printWarning("Invalid input. Kindly try again."); 
-            if( gDebug > 0) print(" ${e}"); 
-            continue;
-          }    
-          break;
-
-        case 10:
+        case 9:
           clearScreen();
           stdout.write("Printing profile of a user; type username or first few letters of user's public key( or full public key): ");
           String? $tempUserName = stdin.readLineSync();
@@ -1419,6 +1399,26 @@ Future<void> socialMenuUi(Store node) async {
               }
             }
           }
+          break;
+
+        case 10: // change number of days printed
+          clearScreen();
+          stdout.write("Enter number of days for which you want to see posts: ");
+          String? $tempNumDays = stdin.readLineSync();
+          String newNumDays = $tempNumDays??"";
+
+          try {
+            gNumLastDays =  int.parse(newNumDays);
+            print("Changed number of days printed to $gNumLastDays");
+          } on FormatException catch (e) {
+            printWarning("Invalid input. Kindly try again."); 
+            if( gDebug > 0) print(" ${e.message}"); 
+            continue;
+          } on Exception catch (e) {
+            printWarning("Invalid input. Kindly try again."); 
+            if( gDebug > 0) print(" ${e}"); 
+            continue;
+          }    
           break;
 
         case 11:

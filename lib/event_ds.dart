@@ -1686,7 +1686,6 @@ try {
 
   //remove padding
   offset += cipherImpl.doFinal(cipherText, offset, finalPlainText, offset);
-  assert(offset == cipherText.length);
   return  finalPlainText.sublist(0, offset);
 } catch(e) {
     if( gDebug >= 0) print("Decryption error =  $e");
@@ -1738,7 +1737,7 @@ String myEncryptRaw( String privateString,
 
   //add padding 
   offset += cipherImpl.doFinal(uintInputText, offset, outputEncodedText, offset);
-  assert(offset == uintInputText.length);
+  //assert(offset == uintInputText.length);
   final Uint8List finalEncodedText = outputEncodedText.sublist(0, offset);
 
   String stringIv = convert.base64.encode(iv);;

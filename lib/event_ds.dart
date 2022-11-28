@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bip340/bip340.dart';
 import 'package:intl/intl.dart';
 import 'package:nostr_console/tree_ds.dart';
+import 'package:nostr_console/utils.dart';
 import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
 import 'package:nostr_console/settings.dart';
@@ -12,7 +13,6 @@ import 'dart:convert' as convert;
 import "package:pointycastle/export.dart";
 import 'package:kepler/kepler.dart';
 import 'package:http/http.dart' as http;
-
 
 String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
@@ -53,42 +53,6 @@ Map< String, List<List<String>> > gReactions = {};
 // maps from pubkey of a user, to the latest contact list of that user, which is the latest kind 3 message
 // is updated as kind 3 events are received 
 Map< String, List<Contact>> gContactLists = {};
-
-String myPadRight(String str, int width) {
-  String newStr = "";
-
-  if( str.length < width) {
-    newStr = str.padRight(width);
-  } else {
-    newStr = str.substring(0, width);
-  }
-  return newStr;
-}
-
-// returns tags as string that can be used to calculate event has. called from EventData constructor
-String getStrTagsFromJson(dynamic json) {
-  String str = "";
-
-  int i = 0;
-  for( dynamic tag in json ) {
-    if( i != 0) {
-      str += ",";
-    }
-
-    str += "[";
-    int j = 0;
-    for(dynamic element in tag) {
-      if( j != 0) {
-        str += ",";
-      }
-      str += "\"${element.toString()}\"";
-      j++;
-    }
-    str += "]";
-    i++;
-  }
-  return str;
-}
 
 bool verifyEvent(dynamic json) {
     return true;
@@ -1000,21 +964,6 @@ void addToHistogram(Map<String, int> histogram, List<String> pTags) {
   //return histogram;
 }
 
-class HistogramEntry {
-  String str;
-  int    count;
-  HistogramEntry(this.str, this.count);
-  static int histogramSorter(HistogramEntry a, HistogramEntry b) {
-    if( a.count < b.count ) {
-      return 1;
-    } if( a.count == b.count ) {
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-}
-
 // return the numMostFrequent number of most frequent p tags ( user pubkeys) in the given events
 List<String> getpTags(Set<Event> events, int numMostFrequent) {
   List<HistogramEntry> listHistogram = [];
@@ -1268,7 +1217,6 @@ int getSecondsDaysAgo( int N) {
   return  DateTime.now().subtract(Duration(days: N)).millisecondsSinceEpoch ~/ 1000;
 }
 
-void printUnderlined(String x) =>  { stdout.write("$x\n${getNumDashes(x.length)}\n")}; 
 
 void printDepth(int d) {
   for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
@@ -1294,34 +1242,6 @@ String getDepthSpaces(int d) {
   return str;
 }
 
-String getNumSpaces(int num) {
-  String s = "";
-  for( int i = 0; i < num; i++) {
-    s += " ";
-  }
-  return s;
-}
-
-String getNumDashes(int num, [String dashType = "-"]) {
-  String s = "";
-  for( int i = 0; i < num; i++) {
-    s += dashType;
-  }
-  return s;
-}
-
-List<List<int>> getUrlRanges(String s) {
-  List<List<int>> urlRanges = [];
-  String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/_\\-\\#\\+=\\&\\?]*)";
-  
-  RegExp httpRegExp = RegExp(regexp1);
-  for( var match in httpRegExp.allMatches(s) ) {
-    List<int> entry = [match.start, match.end];
-    urlRanges.add(entry);
-  }
-
-  return urlRanges;
-}
 
 // make a paragraph of s that starts at numSpaces ( from screen left), and does not extend beyond gTextWidth+gNumLeftMarginSpaces. break it, or add 
 // a newline if it goes beyond gTextWidth + gNumLeftMarginSpaces
@@ -1349,16 +1269,6 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
   }
 
   return newString;
-}
-
-// returns true if n is in any of the ranges given in list
-int isInRange( int n, List<List<int>> ranges ) {
-  for( int i = 0; i < ranges.length; i++) {
-    if( n >= ranges[i][0] && n < ranges[i][1]) {
-      return ranges[i][1];
-    }
-  }
-  return 0;
 }
 
 // returns from string[startIndex:] the first len number of chars. no newline is added. 
@@ -1431,104 +1341,6 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
   return  [line, i - startIndex];
 }
 
-bool nonEnglish(String str) {
-  bool result = false;
-  return result;
-}
-
-bool isNumeric(String s) {
- return double.tryParse(s) != null;
-}
-
-bool isWordSeparater(String s) {
-  if( s.length != 1) {
-    return false;
-  }
-  return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t' 
-      || s[0] == ',' || s[0] == '.' || s[0] == '-' || s[0] == '('|| s[0] == ')';
-}
-
-
-bool isWhitespace(String s) {
-  if( s.length != 1) {
-    return false;
-  }
-  return s[0] == ' ' || s[0] == '\n' || s[0] == '\r' || s[0] == '\t';
-}
-
-extension StringX on String {
-
-
-  int isChannelPageNumber(int max) {
-  
-    if(this.length < 2 || this[0] != '/') {
-      return 0;
-    } 
-
-    String rest = this.substring(1);
-
-    //print("rest = $rest");
-    int? n = int.tryParse(rest);
-    if( n != null) {
-      if( n < max)
-        return n;
-    }
-    return 0;
-  }
-
-  isEnglish( ) {
-    // since smaller words can be smileys they should not be translated
-    if( length < 10) 
-      return true;
-    
-    if( !isLatinAlphabet())
-      return false;
-
-    if (isRomanceLanguage())
-      return false;
-
-    return true;
-  }
-
-  isPortugese() {
-    false; // https://1000mostcommonwords.com/1000-most-common-portuguese-words/
-  }
-
-  bool isRomanceLanguage() {
-
-    // https://www.thoughtco.com/most-common-french-words-1372759
-    Set<String> frenchWords = {"oui", "je", "le", "un", "de", "merci", "une", "ce", "pas"}; // "et" is in 'et al'
-    Set<String> spanishWords = {"y", "se", "el", "uso", "que", "te", "los", "va", "ser", "si", "por", "lo", "es", "era", "un", "o"};
-    Set<String> portugeseWords = {"como", "seu", "que", "ele", "foi", "eles", "tem", "este", "por", "quente", "vai", 
-                                  "ter", "mas", "ou", "teve", "fora", "é", "te", "mais"};
-
-    Set<String> romanceWords = frenchWords.union(spanishWords).union(portugeseWords);
-    for( String word in romanceWords) {
-      if( this.toLowerCase().contains(" $word ")) {
-        if( gDebug > 0) print("isRomanceLanguage: Found ${this.toString()} is romance language"); 
-        return true;
-      }
-    }
-    return false;
-  }
-
-  isLatinAlphabet({caseSensitive = false}) {
-    int countLatinletters = 0;
-    for (int i = 0; i < length; i++) {
-      final target = caseSensitive ? this[i] : this[i].toLowerCase();
-      if ( (target.codeUnitAt(0) > 96 && target.codeUnitAt(0) < 123)  || ( isNumeric(target) ) || isWhitespace(target)) {
-        countLatinletters++; 
-      }
-    }
-    
-    if( countLatinletters < ( 40.0/100 ) * length ) {
-      if( gDebug > 0) print("in isLatinAlphabet: latin letters: $countLatinletters and total = $length ");
-      return false;
-    } else {
-      return true;
-    }
-  }
-}    
 
 // The contact only stores id and relay of contact. The actual name is stored in a global variable/map
 class Contact {
@@ -1541,23 +1353,6 @@ class Contact {
   }
   
 }
-
-String addEscapeChars(String str) {
-  String temp = "";
-  //temp = temp.replaceAll("\\", "\\\\");
-  temp = str.replaceAll("\"", "\\\"");
-  return temp.replaceAll("\n", "\\n");
-}
-
-String unEscapeChars(String str) {
-  //print("in unEscape: |$str|");
-  String temp = str.replaceAll("\"", "\\\"");
-  //temp = temp.replaceAll("\\\\", "\\");
-  temp = temp.replaceAll("\n", "\\n");
-  //print("returning |$temp|\n");
-  return temp;
-}
-
 
 String getShaId(String pubkey, String createdAt, String kind, String strTags, String content) {
   String buf = '[0,"$pubkey",$createdAt,$kind,[$strTags],"$content"]';
@@ -1775,14 +1570,6 @@ Set<Event> readEventsFromFile(String filename) {
 
   if( gDebug > 0) print("In readEventsFromFile: returning ${events.length} total events");
   return events;
-}
-
-bool isValidPubkey(String pubkey) {
-  if( pubkey.length == 64) {
-    return true;
-  }
-
-  return false;
 }
 
 

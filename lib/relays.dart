@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
+import 'package:nostr_console/utils.dart';
 import 'package:web_socket_channel/io.dart';
 
 class Relay { 

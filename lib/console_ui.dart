@@ -4,6 +4,7 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
+import 'package:nostr_console/utils.dart';
 import 'package:bip340/bip340.dart';
 import 'package:qr/qr.dart';
 
@@ -1473,9 +1474,6 @@ Future<void> socialMenuUi(Store node) async {
         } // end menu switch
     } // end while
 } // end mainMenuUi()
-
-
-
 
 void showInitialNotifications(Store node) {
 

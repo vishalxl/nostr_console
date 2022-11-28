@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
+import 'package:nostr_console/utils.dart';
 
 typedef fTreeSelector = bool Function(Tree a);
 typedef fRoomSelector = bool Function(ScrollableMessages room);

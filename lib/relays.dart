@@ -108,7 +108,6 @@ class Relays {
     sendRequest(relayUrl, request);
   }    
 
-
   /* 
    * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
    *          received events in the given List<Event>
@@ -208,7 +207,6 @@ class Relays {
       }
     }
 
-    
     if(gDebug > 0) log.info('Sending request: \n$request\n to $relay\n\n');
     fws?.sink.add(request);
   }
@@ -230,8 +228,6 @@ class Relays {
 }
 
 Relays relays = Relays({}, {}, {});
-
-
 
 void getContactFeed(List<String> relayUrls, Set<String> setContacts, int numEventsToGet, int sinceWhen) {
   
@@ -271,7 +267,6 @@ void getMentionEvents(List<String> serverUrls, String publicKey, int numUserEven
       relays.getMentionEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
     });
 }
-
 
 getKindEvents(List<int> kind, List<String> serverUrls, int limit, int sinceWhen) {
   serverUrls.forEach((serverUrl) {

@@ -33,7 +33,6 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
     return;
   }
   await foo();
-  
 }
 
 String mySign(String privateKey, String msg) {
@@ -106,7 +105,6 @@ Future<void> sendChannelMessage(Store node, Channel channel, String messageToSen
     return;
   }
   await foo();
-
 }
 
 // Sends a public channel message
@@ -129,7 +127,6 @@ Future<void> sendChannelReply(Store node, Channel channel, String replyTo, Strin
     return;
   }
   await foo();
-
 }
 
 // send DM
@@ -222,7 +219,6 @@ Future<String> sendEventWithTags(Store node, Event e, String tags) async {
   return id;
 }
 
-
 bool sendDeleteEvent(Store node, String eventIdToDelete) {
   if( node.allChildEventsMap.containsKey(eventIdToDelete)) {
     Tree? tree = node.allChildEventsMap[eventIdToDelete];
@@ -272,7 +268,6 @@ void reAdjustAlignment() {
         gNumLeftMarginSpaces = 0;
       }
     }
-
     Store.reCalculateMarkerStr();
 }
 
@@ -303,7 +298,6 @@ void printProfile(Store node, String profilePubkey) {
   }
 
   print("");
-
   print("\nName        : $authorName ( ${profilePubkey} ).");
 
   if (profileContactEvent != null ) {
@@ -336,7 +330,6 @@ void printProfile(Store node, String profilePubkey) {
   }
 
   List<String> followers = node.getFollowers(profilePubkey);
-
   stdout.write("$pronoun have ${followers.length} followers:  ");
   followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
   print("");              
@@ -357,7 +350,6 @@ void printMenu(List<String> menuOptions) {
   if( stdout.hasTerminal )
     terminalColumns = stdout.terminalColumns;
 
-
   if( longestMenuOption + 5> gMenuWidth )
     gMenuWidth = longestMenuOption + 8;
 
@@ -365,7 +357,6 @@ void printMenu(List<String> menuOptions) {
     terminalColumns = gMenuWidth * 4;
   }
 
-  //print("gMenuWidth = $gMenuWidth");
   int rowLen = 0;
   for(int i = 0; i < menuOptions.length;i++) {
     String str = "${i+1}. ${menuOptions[i]}";
@@ -377,10 +368,8 @@ void printMenu(List<String> menuOptions) {
       stdout.write("\n" );
       rowLen = 0;
     }
-    
   }
   stdout.write("\n" );
-  
 }
 
 void printVerifiedAccounts(Store node) {
@@ -391,14 +380,12 @@ void printVerifiedAccounts(Store node) {
   print("")  ;
   print("Username                    Num Followers       pubkey                                                             Nip Id\n");
 
-
   gKindONames.forEach((key, value) {
     String pubkey = key;
     if( value.nip05Verified) {
       List<String> followers = node.getFollowers(pubkey);
       listVerified.add([followers.length, pubkey, getAuthorName(pubkey), value.nip05Id]);
     }
-
   });
 
   listVerified.sort((a, b) => a[0] > b[0]? -1: (a[0] == b[0]? 0: 1));
@@ -408,7 +395,6 @@ void printVerifiedAccounts(Store node) {
   print("\nHow to use: To get best results, print the main feed a couple of times right after starting; and then check NIP verified list. This gives application time to do the verification from user's given servers.\n\n");
 }
 
-
 int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
 
   if(menuInfo.length > 0) {
@@ -416,7 +402,6 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
   }
 
   while(true) {
-    //print("\n$menuName\n${getNumDashes(menuName.length)}");
     printInColor("                                     $menuName", yellowColor);
     print("\n");
 
@@ -450,7 +435,6 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
       }    
     }
     printWarning("\nInvalid option. Kindly try again. The valid options are from 1 to ${menuOptions.length}");
-
   }
 }
 
@@ -484,10 +468,8 @@ Future<void> otherOptionsMenuUi(Store node) async {
                             'Help and About',               // 5
                             'E(x)it to main menu'],          // 6
 
-
                           "Other Options Menu");                     // menu name
     switch(option) {
-
       case 1:
         stdout.write("Enter nostr client name whose events you want to see: ");
         String? $tempWords = stdin.readLineSync();
@@ -497,7 +479,6 @@ Future<void> otherOptionsMenuUi(Store node) async {
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), fromClient); // search for last gNumLastDays only
         }
         break;
-
 
       case 2: //edit your profile
         if( userPublicKey == "" || userPrivateKey == "") {
@@ -549,7 +530,6 @@ Future<void> otherOptionsMenuUi(Store node) async {
             printWarning("Invalid Event Id(s). Kindly enter a more unique id.");
           }
         }
-
         break;
 
       case 4: // application info
@@ -582,7 +562,6 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
       case 6:
         continueOtherMenu = false;
-  
         break;
 
       default:
@@ -591,7 +570,6 @@ Future<void> otherOptionsMenuUi(Store node) async {
   }
   return;
 }
-
 
 // sends event creating a new public channel
 Future<void> createPublicChannel(Store node) async {
@@ -660,7 +638,6 @@ Future<void> channelMenuUI(Store node) async {
             break;
           }
 
-
           stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
           $tempUserInput = stdin.readLineSync(encoding: utf8);
           String messageToSend = $tempUserInput??"";
@@ -680,47 +657,38 @@ Future<void> channelMenuUI(Store node) async {
                     printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
                     
                 } else {
+                  if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
+                    List<String> tokens = messageToSend.split(' ');
+                    if( tokens.length >= 3) {
+                      String replyTo = tokens[1];
+                      Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
+                      String actualMessage = messageToSend.substring(7);
 
-                //print("message: |$messageToSend|");
-                if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
-                  List<String> tokens = messageToSend.split(' ');
-                  //print("tokens = $tokens");
-                  if( tokens.length >= 3) {
-                    String replyTo = tokens[1];
+                      if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
+                        actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
+
+                      if( channel != null) {
+                        await sendChannelReply(node, channel, replyTo, actualMessage, "42");
+                        pageNum = 1; // reset it 
+                      }
+                    }
+
+                  } else {
+                    // send message to the given room
                     Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
-                    String actualMessage = messageToSend.substring(7);
-
-                    if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
-                      actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
-
                     if( channel != null) {
-                      //print("sending reply |$actualMessage|");
-                      await sendChannelReply(node, channel, replyTo, actualMessage, "42");
+                      await sendChannelMessage(node, channel,  messageToSend, "42");
                       pageNum = 1; // reset it 
                     }
                   }
-
-                } else {
-                  // send message to the given room
-                  //print("sending message |$messageToSend|");
-                  Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
-                  if( channel != null) {
-                    await sendChannelMessage(node, channel,  messageToSend, "42");
-                    pageNum = 1; // reset it 
-                  }
-                  
-
-                }
                 }
               }
             }
-
           } else {
             print("Refreshing...");
           }
           clearScreen();
           await processAnyIncomingEvents(node, false);
-
         } // end while showChannelOption
         break;
 
@@ -737,7 +705,6 @@ Future<void> channelMenuUI(Store node) async {
         await createPublicChannel(node);
         clearScreen();
         justShowedChannels = false;
-
         // TODO put user in the newly created channel
         break;
 
@@ -766,7 +733,6 @@ Future<void> createEncryptedChannel(Store node) async {
     if( i > 0) {
       pTags += ",";
     }
-
     pTags += '["p","${participants[i]}"]';
   }
 
@@ -776,9 +742,9 @@ Future<void> createEncryptedChannel(Store node) async {
   clearScreen();
   print("Created new encrypted channel with id: $newEncryptedChannelId\n");
 
-
   String newPriKey = getRandomPrivKey();
-  //print("Created and going to use new random privake key: $newPriKey");
+  
+  // Created and going to use new random privake key
   String channelPriKey = newPriKey, channelPubKey = myGetPublicKey(newPriKey);
 
   // now send password as direct message to yourself and to all the people you tagged
@@ -819,7 +785,6 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
   }
 }
 
-
 String encryptChannelMessage(Store node, String channelId, String messageToSend) {
   String encryptedMessage = '';
 
@@ -832,7 +797,6 @@ String encryptChannelMessage(Store node, String channelId, String messageToSend)
   String priKey = keys[0], pubKey = keys[1];
   encryptedMessage = myEncrypt(priKey, "02" + pubKey, messageToSend);
 
-  //print("encrypted message");
   return encryptedMessage;
 }
 
@@ -908,13 +872,10 @@ Future<void> sendInvitesForEncryptedChannel(Store node, String channelId, Set<St
           newPubKeys.forEach((participant) async {
             await sendDirectMessage(node, participant, messageToSend, replyKind: gSecretMessageKind.toString());
           });
-
-
         }
       }
     }
 }
-
 
 Future<void> encryptedChannelMenuUI(Store node) async {
  
@@ -950,7 +911,6 @@ Future<void> encryptedChannelMenuUI(Store node) async {
         String? $tempUserInput = stdin.readLineSync();
         String channelId = $tempUserInput??"";
 
-        
         if( channelId == "x") {
           showChannelOption = false; 
         }
@@ -1016,7 +976,6 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                     continue;
                   }
 
-
                   // send message to the given room
                   if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
                     List<String> tokens = messageToSend.split(' ');
@@ -1080,7 +1039,6 @@ Future<void> encryptedChannelMenuUI(Store node) async {
   }
   return;
 }
-
 
 Future<void> PrivateMenuUI(Store node) async {
   bool continueChatMenu = true;
@@ -1240,7 +1198,6 @@ Future<void> socialMenuUi(Store node) async {
           bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes(temp);
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userNotifications);
           break;
-
         case 4:
           clearScreen();
           node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_selfPosts);
@@ -1279,7 +1236,6 @@ Future<void> socialMenuUi(Store node) async {
           break;
   */
         case 8: // follow new contact
-
           // in case the program was invoked with --pubkey, then user can't send messages
           if( userPrivateKey == "") {
               printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
@@ -1408,7 +1364,7 @@ Future<void> socialMenuUi(Store node) async {
             socialMenuContinue = false;
         } // end menu switch
     } // end while
-} // end mainMenuUi()
+} // end socialMenuUi()
 
 void showInitialNotifications(Store node) {
 
@@ -1426,7 +1382,7 @@ void showInitialNotifications(Store node) {
 Future<void> mainMenuUi(Store node) async {
    
     clearScreen();
-    //log.info("in main menu");
+
     //Show only notifications
     showInitialNotifications(node);
 

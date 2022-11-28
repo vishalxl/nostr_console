@@ -843,7 +843,15 @@ class EventData {
       //print("in getStrForChannel: got replyTo id = ${replyToEvent.eventData.id}");
       if( replyToEvent.eventData.kind == 1 || replyToEvent.eventData.kind == 42 || replyToEvent.eventData.kind == 142) { // make sure its a kind 1 or 40 message
         if( replyToEvent.eventData.id != id) { // basic self test
-          strReplyTo = 'In reply to:"${replyToEvent.eventData.evaluatedContent}"';
+
+          // quote only a part of the reply if its too long. add ellipsis if requried.          
+          String replyToPrint = "";
+          if( replyToEvent.eventData.evaluatedContent.length <= gReplyLengthPrinted){
+             replyToPrint = replyToEvent.eventData.evaluatedContent;
+          } else {
+            replyToPrint = replyToEvent.eventData.evaluatedContent.substring(0, gReplyLengthPrinted) + "...";
+          }
+          strReplyTo = 'In reply to:"${getAuthorName(replyToEvent.eventData.pubkey)}: $replyToPrint"';
           strReplyTo = makeParagraphAtDepth(strReplyTo, finalContentDepthInSpaces + 6); // one extra for content
           
           // add reply to string to end of the content. How it will show:

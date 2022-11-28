@@ -68,7 +68,6 @@ bool userInvolved(String pubkey, Event e) {
       }
     }
   }
-
   return false;
 }
 
@@ -78,7 +77,6 @@ bool selectorTrees_all(Tree t) {
 
 // only show in which user is involved
 bool selectorTrees_userRepliesLikes(Tree t) {
-
   if( userInvolved(userPublicKey, t.event)) {
     return true;
   }
@@ -121,7 +119,6 @@ bool followsInvolved(Event e, Event? contactEvent) {
   return false;
 }
 
-
 // only show in which user is involved
 bool selectorTrees_followsPosts(Tree t) {
   Event? contactEvent = gKindONames[userPublicKey]?.latestContactEvent;
@@ -138,7 +135,6 @@ bool selectorTrees_followsPosts(Tree t) {
 
   return false;
 }
-
 
 bool selectorShowAllRooms(ScrollableMessages room) {
   return true;

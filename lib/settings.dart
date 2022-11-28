@@ -327,6 +327,7 @@ Source Code and Binaries: https://github.com/vishalxl/nostr_console
 
 ''';
 
+/////////////////////////////////////////////////////////print intro
 void printIntro(String msg) {
 
 String intro = 
@@ -358,3 +359,13 @@ if( stdout.hasTerminal )
 lines.forEach((line) {print(line.length > terminalColumns ? line.substring(0, terminalColumns) : line );});
 
 }
+
+/////////////////////////////////////////////////////////other settings related functions
+
+void printUsage() {
+  print(gUsage);
+}
+void printVersion() {
+  print("$version");
+}
+

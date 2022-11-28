@@ -1,6 +1,6 @@
-import 'package:nostr_console/console_ui.dart';
-import 'package:nostr_console/event_ds.dart';
+  import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
+import 'package:nostr_console/utils.dart';
 import 'package:test/test.dart';
 import 'package:nostr_console/tree_ds.dart';
 

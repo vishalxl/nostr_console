@@ -231,66 +231,7 @@ class Relays {
 
 Relays relays = Relays({}, {}, {});
 
-String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinceWhen) {
-  String strTime = "";
-  if( sinceWhen != 0) {
-    strTime = ', "since":${sinceWhen.toString()}';
-  }
-  var    strSubscription1  = '["REQ","$subscriptionId",{"kinds":[';
-  var    strSubscription2  ='], "limit":$limit$strTime  } ]';
 
-  String strKind = "";
-  for(int i = 0; i < kind.length; i++) {
-    String comma = ",";
-    if( i == kind.length-1) {
-      comma = "";
-    }
-    strKind = strKind + kind[i].toString() + comma;
-  }
-  String strRequest = strSubscription1 + strKind + strSubscription2;
-  //print(strRequest);
-  return strRequest;
-}
-
-String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
-  String strTime = "";
-  if( sinceWhen != 0) {
-    strTime = ', "since": ${sinceWhen.toString()}';
-  }
-  var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": ["';
-  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
-}
-
-
-String getMentionRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
-  String strTime = "";
-  if( sinceWhen != 0) {
-    strTime = ', "since": ${sinceWhen.toString()}';
-  }
-  var    strSubscription1  = '["REQ","$subscriptionId",{ "#p": ["';
-  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
-}
-
-String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int numUserEvents, int sinceWhen) {
-  String strTime = "";
-  if( sinceWhen != 0) {
-    strTime = ', "since": ${sinceWhen.toString()}';
-  }
-
-  var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": [';
-  var    strSubscription2  ='], "limit": $numUserEvents $strTime } ]';
-  String s = "";
-
-  for(int i = 0; i < publicKeys.length; i++) {
-    s += "\"${publicKeys[i].toLowerCase()}\"";
-    if( i < publicKeys.length - 1) {
-      s += ",";
-    } 
-  }
-  return strSubscription1 + s + strSubscription2;
-}
 
 void getContactFeed(List<String> relayUrls, Set<String> setContacts, int numEventsToGet, int sinceWhen) {
   

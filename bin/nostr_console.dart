@@ -26,14 +26,6 @@ const String translateArg = "translate";
 const String colorArg     = "color";
 const String overWriteFlag = "overwrite";
 
-void printUsage() {
-  print(gUsage);
-}
-void printVersion() {
-  print("$version");
-}
-
-
 Future<void> main(List<String> arguments) async {
     Logger.root.level = Level.ALL; // defaults to Level.INFO
     DateTime appStartTime = DateTime.now();

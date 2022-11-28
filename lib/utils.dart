@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:qr/qr.dart';
 
 class HistogramEntry {
   String str;
@@ -14,7 +15,6 @@ class HistogramEntry {
     }
   }
 }
-
 
 bool nonEnglish(String str) {
   bool result = false;
@@ -112,7 +112,6 @@ extension StringX on String {
   }
 }    
 
-
 bool isValidPubkey(String pubkey) {
   if( pubkey.length == 64) {
     return true;
@@ -157,7 +156,6 @@ String getStrTagsFromJson(dynamic json) {
   return str;
 }
 
-
 String addEscapeChars(String str) {
   String temp = "";
   //temp = temp.replaceAll("\\", "\\\\");
@@ -192,7 +190,6 @@ String getNumDashes(int num, [String dashType = "-"]) {
   return s;
 }
 
-
 List<List<int>> getUrlRanges(String s) {
   List<List<int>> urlRanges = [];
   String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/_\\-\\#\\+=\\&\\?]*)";
@@ -206,7 +203,6 @@ List<List<int>> getUrlRanges(String s) {
   return urlRanges;
 }
 
-
 // returns true if n is in any of the ranges given in list
 int isInRange( int n, List<List<int>> ranges ) {
   for( int i = 0; i < ranges.length; i++) {
@@ -215,4 +211,129 @@ int isInRange( int n, List<List<int>> ranges ) {
     }
   }
   return 0;
+}
+
+String getQrCodeAsString(String str) {
+  String output = "";
+
+  final qrCode = QrCode(4, QrErrorCorrectLevel.L)
+                ..addData('$str');
+  final qrImage = QrImage(qrCode);
+
+  assert( qrImage.moduleCount == 33);
+  //print("qrimage modulecount =  ${qrImage.moduleCount}");
+  String leftPadding = "   ";
+  var x = 0;
+  for (x = 0; x < qrImage.moduleCount -1 ; x += 2) {
+    output += leftPadding;
+    for (var y = 0; y < qrImage.moduleCount ; y++) {
+
+      bool topDark = qrImage.isDark(y, x);
+      bool bottomDark = qrImage.isDark(y, x + 1);
+      if (topDark && bottomDark) {
+        output += "█";
+      }
+      else if (topDark ) {
+        output += "▀";
+      } else if ( bottomDark) {
+        output += "▄";
+      } else if( !topDark && !bottomDark) {
+        output += " ";
+      }
+    }
+    output += "\n";
+  }
+
+  if( qrImage.moduleCount %2 == 1) {
+    output += leftPadding;
+    for (var y = 0; y < qrImage.moduleCount ; y++) {
+      bool dark = qrImage.isDark(y, x);
+      if (dark ) {
+        output += "▀";
+      } else {
+        output += " ";
+      }
+
+    }
+    output += "\n";
+  }
+
+  return output;
+}
+
+void clearScreen() {
+  print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+}
+
+// returns a string entered by the user
+String getStringFromUser(String prompt, [String defaultValue=""] ) {
+  String str = "";
+  
+  stdout.write(prompt);
+  str = (stdin.readLineSync())??"";
+
+  if( str.length == 0)
+    str = defaultValue;
+  return str;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// relay related functions
+String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since":${sinceWhen.toString()}';
+  }
+  var    strSubscription1  = '["REQ","$subscriptionId",{"kinds":[';
+  var    strSubscription2  ='], "limit":$limit$strTime  } ]';
+
+  String strKind = "";
+  for(int i = 0; i < kind.length; i++) {
+    String comma = ",";
+    if( i == kind.length-1) {
+      comma = "";
+    }
+    strKind = strKind + kind[i].toString() + comma;
+  }
+  String strRequest = strSubscription1 + strKind + strSubscription2;
+  //print(strRequest);
+  return strRequest;
+}
+
+String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": ["';
+  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
+  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
+}
+
+String getMentionRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "#p": ["';
+  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
+  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
+}
+
+String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int numUserEvents, int sinceWhen) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": [';
+  var    strSubscription2  ='], "limit": $numUserEvents $strTime } ]';
+  String s = "";
+
+  for(int i = 0; i < publicKeys.length; i++) {
+    s += "\"${publicKeys[i].toLowerCase()}\"";
+    if( i < publicKeys.length - 1) {
+      s += ",";
+    } 
+  }
+  return strSubscription1 + s + strSubscription2;
 }

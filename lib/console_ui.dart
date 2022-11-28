@@ -6,7 +6,6 @@ import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
 import 'package:bip340/bip340.dart';
-import 'package:qr/qr.dart';
 
 Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = true])  async {
   reAdjustAlignment();
@@ -277,54 +276,6 @@ void reAdjustAlignment() {
     Store.reCalculateMarkerStr();
 }
 
-String getQrCodeAsString(String str) {
-  String output = "";
-
-  final qrCode = QrCode(4, QrErrorCorrectLevel.L)
-                ..addData('$str');
-  final qrImage = QrImage(qrCode);
-
-  assert( qrImage.moduleCount == 33);
-  //print("qrimage modulecount =  ${qrImage.moduleCount}");
-  String leftPadding = "   ";
-  var x = 0;
-  for (x = 0; x < qrImage.moduleCount -1 ; x += 2) {
-    output += leftPadding;
-    for (var y = 0; y < qrImage.moduleCount ; y++) {
-
-      bool topDark = qrImage.isDark(y, x);
-      bool bottomDark = qrImage.isDark(y, x + 1);
-      if (topDark && bottomDark) {
-        output += "█";
-      }
-      else if (topDark ) {
-        output += "▀";
-      } else if ( bottomDark) {
-        output += "▄";
-      } else if( !topDark && !bottomDark) {
-        output += " ";
-      }
-    }
-    output += "\n";
-  }
-
-  if( qrImage.moduleCount %2 == 1) {
-    output += leftPadding;
-    for (var y = 0; y < qrImage.moduleCount ; y++) {
-      bool dark = qrImage.isDark(y, x);
-      if (dark ) {
-        output += "▀";
-      } else {
-        output += " ";
-      }
-
-    }
-    output += "\n";
-  }
-
-  return output;
-}
-
 void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike(profilePubkey);
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
@@ -457,9 +408,6 @@ void printVerifiedAccounts(Store node) {
   print("\nHow to use: To get best results, print the main feed a couple of times right after starting; and then check NIP verified list. This gives application time to do the verification from user's given servers.\n\n");
 }
 
-void clearScreen() {
-  print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-}
 
 int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
 
@@ -644,17 +592,6 @@ Future<void> otherOptionsMenuUi(Store node) async {
   return;
 }
 
-// returns a string entered by the user
-String getStringFromUser(String prompt, [String defaultValue=""] ) {
-  String str = "";
-  
-  stdout.write(prompt);
-  str = (stdin.readLineSync())??"";
-
-  if( str.length == 0)
-    str = defaultValue;
-  return str;
-}
 
 // sends event creating a new public channel
 Future<void> createPublicChannel(Store node) async {
@@ -1033,8 +970,6 @@ Future<void> encryptedChannelMenuUI(Store node) async {
             showChannelOption = false;
             break;
           }
-
-
 
           stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
           $tempUserInput = stdin.readLineSync(encoding: utf8);
@@ -1558,5 +1493,4 @@ Future<void> mainMenuUi(Store node) async {
       } // end menu switch
     } // end while
 } // end mainMenuUi()
-
 

@@ -49,6 +49,10 @@ jobs:
       - name: compile exe
         run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_elf64
 
+
+      - name: change permission to make it executible
+        run: chmod bin/nostr_console_elf64
+
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -119,6 +123,9 @@ jobs:
         
       - name: compile exe
         run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_macOS
+
+      - name: change permission to make it executible
+        run: chmod bin/nostr_console_macOS
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3

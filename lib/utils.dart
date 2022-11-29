@@ -309,12 +309,12 @@ String getUserRequest(String subscriptionId, String publicKey, int numUserEvents
   return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
 }
 
-String getMentionRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
+String getMentionRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen, String tagToGet) {
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
   }
-  var    strSubscription1  = '["REQ","$subscriptionId",{ "#p": ["';
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": ["';
   var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
   return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
 }

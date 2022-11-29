@@ -83,7 +83,7 @@ class Relays {
     sendRequest(relayUrl, request);
   }    
 
-  void getMentionEvents(String relayUrl, String publicKey, int limit, int sinceWhen) {
+  void getMentionEvents(String relayUrl, String publicKey, int limit, int sinceWhen, String tagToGet) {
     for(int i = 0; i < gBots.length; i++) { // ignore bots
       if( publicKey == gBots[i]) {
         return;
@@ -91,20 +91,8 @@ class Relays {
     }
 
     String subscriptionId = "mention" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
-    if( relays.containsKey(relayUrl)) {
-      List<String>? users = relays[relayUrl]?.users;
-      if( users != null) { // get a user only if it has not already been requested
-        // following is too restrictive casuse changed sinceWhen is not considered. TODO improve it
-        for(int i = 0; i < users.length; i++) {
-          if( users[i] == publicKey) {
-            return;
-          }
-        }
-        users.add(publicKey);
-      }
-    }
     
-    String request = getMentionRequest(subscriptionId, publicKey, limit, sinceWhen);
+    String request = getMentionRequest(subscriptionId, publicKey, limit, sinceWhen, tagToGet);
     sendRequest(relayUrl, request);
   }    
 
@@ -262,9 +250,9 @@ void getUserEvents(List<String> serverUrls, String publicKey, int numUserEvents,
     });
 }
 
-void getMentionEvents(List<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen) {
+void getMentionEvents(List<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen, String tagToGet) {
   serverUrls.forEach((serverUrl) {
-      relays.getMentionEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
+      relays.getMentionEvents(serverUrl, publicKey, numUserEvents, sinceWhen, tagToGet); 
     });
 }
 

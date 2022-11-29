@@ -27,12 +27,6 @@ const String colorArg     = "color";
 const String overWriteFlag = "overwrite";
 
 Future<void> main(List<String> arguments) async {
-    Logger.root.level = Level.ALL; // defaults to Level.INFO
-    DateTime appStartTime = DateTime.now();
-    print("app start time: $appStartTime");
-    Logger.root.onRecord.listen((record) {
-      print('${record.level.name}: ${record.time.difference(appStartTime)}: ${record.message}');
-    });
       
     final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
@@ -57,6 +51,13 @@ Future<void> main(List<String> arguments) async {
         printVersion();
         return;
       }
+
+      Logger.root.level = Level.ALL; // defaults to Level.INFO
+      DateTime appStartTime = DateTime.now();
+      print("app start time: $appStartTime");
+      Logger.root.onRecord.listen((record) {
+        print('${record.level.name}: ${record.time.difference(appStartTime)}: ${record.message}');
+      });
 
       // start application
       printIntro("Nostr");
@@ -291,7 +292,7 @@ Future<void> main(List<String> arguments) async {
       // get event for user
       if( userPublicKey!= "") {
         getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-        getMentionEvents(gListRelayUrls2, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents)); // from relay group 2
+        getMentionEvents(gListRelayUrls2, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p"); // from relay group 2
       }
 
       // get other user events
@@ -299,12 +300,12 @@ Future<void> main(List<String> arguments) async {
 
       // get group and meta info events
       getKindEvents([0, 3, 40, 41], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitMetaInfoEvents)); // get all type 3 etc
-      getKindEvents([140, 141], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(1)); // get all type 3 etc
+      //getKindEvents([140, 141], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(1)); // get all type 3 etc
       
       getKindEvents([42], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( limitFollowPosts)); // get all type 3 etc
-      getKindEvents([142], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( 1)); // get all type 3 etc
+      //getKindEvents([142], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( 1)); // get all type 3 etc
 
-      getKindEvents([gSecretMessageKind], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( 1)); // get all type 3 etc
+      getKindEvents([gSecretMessageKind], gListRelayUrls1, limitPerSubscription * 3, getSecondsDaysAgo( 3)); // get all type 3 etc
 
       // TODO  get all 40 events, and then get all #e for them ( responses to them)
     

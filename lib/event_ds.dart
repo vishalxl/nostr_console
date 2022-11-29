@@ -466,12 +466,10 @@ class EventData {
       return;
     }
 
-    if( createdAt < getSecondsDaysAgo(1)) {
+    if( createdAt < getSecondsDaysAgo(3)) {
       //print("old 142. not decrypting");
-      return;
+      //return;
     } 
-
-    
 
     switch(kind) {
     case 142:

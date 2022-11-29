@@ -893,7 +893,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
     String menuInfo = """Encrypted Channel howto: Enter a channel by typing the first few unique letters of its pubkey or full name.
                          Once in a room/channel: add new participants by typing '/add <their 64 byte hex public key>' and pressing enter,
                          To reply to a message, type '/reply <first few letters of id of post to reply to> <your message>,
-                         When in a channel, press 'x' to exit. """;
+                         Type '/help' to see more info. When in a channel, press 'x' and then enter to exit. """;
 
     int option = showMenu([ 'Enter an encrypted channel',         // 1
                             'Show all encrypted channels',        // 2

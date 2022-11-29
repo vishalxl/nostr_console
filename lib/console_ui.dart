@@ -589,7 +589,8 @@ Future<void> channelMenuUI(Store node) async {
   bool justShowedChannels = false;
   while(continueChatMenu) {
 
-    //await processNotifications(node); // this takes 300 ms
+    await processAnyIncomingEvents(node); // this takes 300 ms
+
     if( !justShowedChannels) {
       printInColor("                                     Public Channels ", gCommentColor);
       node.printChannelsOverview(node.channels, gNumRoomsShownByDefault, selectorShowAllRooms, node.allChildEventsMap, null);

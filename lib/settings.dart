@@ -11,7 +11,7 @@ int gSpecificDebug = 0;
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = "5924e987416a16df0cbc000ce264f65d133ba352589138ee3a7784f5bae75641"; 
+String gCheckEventId = "xx5924e987416a16df0cbc000ce264f65d133ba352589138ee3a7784f5bae75641"; 
 
 int gDefaultNumWaitSeconds = 8000; // is used in main()
 

@@ -1390,15 +1390,22 @@ Future<void> socialMenuUi(Store node) async {
 
 void showInitialNotifications(Store node) {
 
-  bool hasNotifications (Tree t) => t.treeSelectorNotifications();
-  node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
-  print("\n");
+  printUnderlined("Notifications:");
 
+  bool hasNotifications (Tree t) => t.treeSelectorNotifications();
+  int numTreesPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
+  
+  
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
   int numDirectRoomsPrinted = node.printDirectRoomsOverview( showNotifications, 100, node.allChildEventsMap);
   
   if( numDirectRoomsPrinted > 0)
       print("\n");
+
+  if( numTreesPrinted == 0 && numDirectRoomsPrinted == 0) {
+    print("No new posts.");
+  }
+  
 }
 
 Future<void> mainMenuUi(Store node) async {
@@ -1409,9 +1416,13 @@ Future<void> mainMenuUi(Store node) async {
     showInitialNotifications(node);
 
     bool mainMenuContinue = true;
+    bool firstTime = true;
     while(mainMenuContinue) {
 
-      await processAnyIncomingEvents(node); // this takes 300 ms
+      if( !firstTime) {
+        await processAnyIncomingEvents(node); // this takes 300 ms
+        firstTime = false;
+      }
 
       // the main menu
       int option = showMenu(['Home Page',     // 1 

@@ -290,7 +290,7 @@ class EventData {
 
   String expandMentions(String content, Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
-      printInColor("in expandMentions: decoding $gCheckEventId\n", redColor);
+      //printInColor("in expandMentions: decoding $gCheckEventId\n", redColor);
     }
 
     if( tags.isEmpty) {

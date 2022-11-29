@@ -1507,11 +1507,10 @@ class Store {
     }
 
     print("\n\n");
-    printUnderlined("      Channel Name                Num of Messages            Latest Message           ");
+    printUnderlined("  id      Channel Name                Num of Messages            Latest Message                       ");
     for(int j = 0; j < numRoomsOverview; j++) {
 
       if( channelstoPrint[j].participants.length > 0 &&  !channelstoPrint[j].participants.contains(userPublicKey)) {
-        //print(channelstoPrint[j].participants);
         continue;
       }
 
@@ -1520,15 +1519,13 @@ class Store {
       }
 
       String name = "";
-      if( channelstoPrint[j].chatRoomName == "") {
-        // channel has no name, print part of its id
-        name = channelstoPrint[j].channelId.substring(0, 6);
-      } else {
-        name = "${channelstoPrint[j].chatRoomName} ( ${channelstoPrint[j].channelId.substring(0, 6)})";
+      String id = channelstoPrint[j].channelId.substring(0, 6);
+      if( channelstoPrint[j].chatRoomName != "") {
+        name = "${channelstoPrint[j].chatRoomName}";
       }
 
       int numMessages = channelstoPrint[j].getNumValidMessages();
-      stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
+      stdout.write("$id    ${name} ${getNumSpaces(32-name.length)}  $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
       numChannelsActuallyPrinted++;
       List<String> messageIds = channelstoPrint[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i--) {
@@ -1672,15 +1669,16 @@ class Store {
     stdout.write("\n");
     stdout.write("\n\n");
     
-    printUnderlined(" From                                Num of Messages          Latest Message           ");
+    printUnderlined("Pubkey   From                                Num of Messages          Latest Message           ");
     for( int j = 0; j < directRooms.length; j++) {
       if( !roomSelector(directRooms[j]))
         continue;
       DirectMessageRoom room = directRooms[j];
+      String id = room.otherPubkey.substring(0, 6);
       String name = getAuthorName(room.otherPubkey, 4);
 
       int numMessages = room.messageIds.length;
-      stdout.write("${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
+      stdout.write("$id   ${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
 
       // print latest event in one line
       List<String> messageIds = room.messageIds;
@@ -1719,8 +1717,11 @@ class Store {
         lookedUpName.add(roomId);
       }
 
-      if( getAuthorName( directRooms[j].otherPubkey).trim() == directRoomId){
-        lookedUpName.add(roomId);
+      String otherName = getAuthorName( directRooms[j].otherPubkey);
+      if( otherName.length >= directRoomId.length) {
+        if( otherName.substring(0, directRoomId.length).toLowerCase() == directRoomId.toLowerCase()){
+          lookedUpName.add(roomId);
+        }
       }
     }
 
@@ -1740,7 +1741,10 @@ class Store {
       }
     } else {
       if( lookedUpName.length > 0) {
-       print("Got more than one public id for the name given, which are: ${lookedUpName.length}");
+       printWarning("Got more than one public id for the name given, which are: ");
+       for(String pubkey in lookedUpName) {
+        print("${getAuthorName(pubkey)} - ${pubkey}, ");
+       }
       }
       else { // in case the given id is not present in our global list of usernames, create new room for them 
         if( isValidPubkey(directRoomId)) {

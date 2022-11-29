@@ -17,7 +17,6 @@ Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 //bool skipTest = true;
 
 void main() {
-
   
   test('PrintEmptyEvent', () {
     //expect(EventData("non","",1,1,"", [], [], [], [[]], {}).toString(), "");

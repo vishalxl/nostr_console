@@ -1525,7 +1525,7 @@ class Store {
     }
 
     print("\n\n");
-    printUnderlined("  id      Channel Name                Num of Messages            Latest Message                       ");
+    printUnderlined("Channel Name                       id        Num of Messages     Latest Message                       ");
     for(int j = 0; j < numRoomsOverview; j++) {
 
       if( channelstoPrint[j].participants.length > 0 &&  !channelstoPrint[j].participants.contains(userPublicKey)) {
@@ -1543,7 +1543,7 @@ class Store {
       }
 
       int numMessages = channelstoPrint[j].getNumValidMessages();
-      stdout.write("$id    ${name} ${getNumSpaces(32-name.length)}  $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
+      stdout.write("${name} ${getNumSpaces(32-name.length)}  $id    $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
       numChannelsActuallyPrinted++;
       List<String> messageIds = channelstoPrint[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i--) {
@@ -1687,7 +1687,7 @@ class Store {
     stdout.write("\n");
     stdout.write("\n\n");
     
-    printUnderlined("Pubkey   From                                Num of Messages          Latest Message           ");
+    printUnderlined("From                                       Pubkey   Num of Messages   Latest Message                       ");
     for( int j = 0; j < directRooms.length; j++) {
       if( !roomSelector(directRooms[j]))
         continue;
@@ -1696,7 +1696,7 @@ class Store {
       String name = getAuthorName(room.otherPubkey, 4);
 
       int numMessages = room.messageIds.length;
-      stdout.write("$id   ${name} ${getNumSpaces(32-name.length)}          $numMessages${getNumSpaces(12- numMessages.toString().length)}"); 
+      stdout.write("${name} ${getNumSpaces(32-name.length)}          $id   $numMessages${getNumSpaces(18- numMessages.toString().length)}"); 
 
       // print latest event in one line
       List<String> messageIds = room.messageIds;

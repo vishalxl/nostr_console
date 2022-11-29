@@ -9,27 +9,35 @@ import 'package:nostr_console/utils.dart';
 import 'package:bip340/bip340.dart';
 
 Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = true])  async {
+  //print("In process incoming");
   reAdjustAlignment();
+
+  const int waitMilliSeconds1 = 100, waitMilliSeconds2 = 200;
+
+  Future<void> foo1() async {
+    await Future.delayed(Duration(milliseconds: waitMilliSeconds1));
+    return;
+  }
+  await foo1();
 
   // need a bit of wait to give other events to execute, so do a delay, which allows
   // relays to recieve and handle new events
-  const int waitMilliSeconds = 200;
-  Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
+  Future.delayed(const Duration(milliseconds: waitMilliSeconds2 ), ()  {
     
     Set<String> newEventIds = node.processIncomingEvent(getRecievedEvents());
     clearEvents();
 
-    Point numPrinted1 = Point(0,0);
+    Point numPrinted1 = Point(0, 0);
     if( printNotifications) {
       numPrinted1 = node.printTreeNotifications(newEventIds);
+      showAllNotifications(node, numPrinted1.x.toInt(), numPrinted1.y.toInt());
     }
 
-    showAllNotifications(node, numPrinted1.x.toInt(), numPrinted1.y.toInt());
   });
 
   
   Future<void> foo() async {
-    await Future.delayed(Duration(milliseconds: waitMilliSeconds));
+    await Future.delayed(Duration(milliseconds: waitMilliSeconds2));
     return;
   }
   await foo();
@@ -1087,7 +1095,6 @@ Future<void> PrivateMenuUI(Store node) async {
         int pageNum = 1;
         while(showChannelOption) {
 
-
           String fullChannelId = node.showDirectRoom(directRoomId, pageNum);
           if( fullChannelId == "") {
             printWarning("Could not find the given direct room.");
@@ -1114,18 +1121,16 @@ Future<void> PrivateMenuUI(Store node) async {
                   // send message to the given room
                   await sendDirectMessage(node, fullChannelId, messageToSend);
                   await processAnyIncomingEvents(node, false); // get latest message
-                  //print("in privateMenuUI: sent message");
+                  
                   pageNum = 1; // reset it 
               }
             }
           } else {
             print("Refreshing...");
           }
-
-          await processAnyIncomingEvents(node, false);
-
+          clearScreen();
+          
         }
-        clearScreen();
         justShowedChannels = false;
         break;
 
@@ -1393,6 +1398,7 @@ Future<void> socialMenuUi(Store node) async {
 } // end socialMenuUi()
 
 void showAllNotifications(Store node, [int x = 0, int y = 0]) {
+  //print("In showAllNotifications. x = $x y = $y");
 
   Point numPrinted = Point(x, y);
 
@@ -1410,7 +1416,8 @@ void showAllNotifications(Store node, [int x = 0, int y = 0]) {
   if( totalNotifications > 0) {
     print("Showed $totalNotifications notifications.\n");
   }
-  
+
+  //print("printed $totalNotifications notifications")  ;
 }
 
 Future<void> mainMenuUi(Store node) async {
@@ -1426,8 +1433,8 @@ Future<void> mainMenuUi(Store node) async {
 
       if( !firstTime) {
         await processAnyIncomingEvents(node); // this takes 300 ms
-        firstTime = false;
       }
+      firstTime = false;
 
       // the main menu
       int option = showMenu(['Home Page',     // 1 

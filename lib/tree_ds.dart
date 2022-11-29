@@ -1259,7 +1259,6 @@ class Store {
           case 1:
             // only kind 1 events are added to the overall tree structure
             String parentId = newTree.event.eventData.getParent(allChildEventsMap);
-            if( parentId == "471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605") print("Found child of 471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605 id = ${newTree.event.eventData.id}");
             if( parentId == "") {
                 // if its a new parent event, then add it to the main top parents 
                 topPosts.add(newTree);
@@ -1437,10 +1436,7 @@ class Store {
    */
   Point printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
 
-    int numPrinted = 0;
-
     topPosts.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
-
 
     // https://gist.github.com/dsample/79a97f38bf956f37a0f99ace9df367b9
     // bottom half ▄

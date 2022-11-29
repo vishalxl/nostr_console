@@ -20,6 +20,8 @@ const int gSecretMessageKind = 104;
 
 const int gReplyLengthPrinted = 115; // how much of replied-to comment is printed at max
 
+const int gNumRoomsShownByDefault = 20;
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// file related settings 
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
@@ -18,12 +19,8 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
     Set<String> newEventIdsSet = node.processIncomingEvent(getRecievedEvents());
     clearEvents();
 
-    String nameToDisplay = userPrivateKey.length == 64? 
-                              "$gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
-                              "${gWarningColor}You are not signed in$gColorEndMarker";
-    
     if( printNotifications) {
-      node.printNotifications(newEventIdsSet, nameToDisplay);
+      showAllNotifications(node);
     }
   });
 
@@ -595,7 +592,7 @@ Future<void> channelMenuUI(Store node) async {
     //await processNotifications(node); // this takes 300 ms
     if( !justShowedChannels) {
       printInColor("                                     Public Channels ", gCommentColor);
-      node.printChannelsOverview(node.channels, 20, selectorShowAllRooms, node.allChildEventsMap, null);
+      node.printChannelsOverview(node.channels, gNumRoomsShownByDefault, selectorShowAllRooms, node.allChildEventsMap, null);
       justShowedChannels = true;
     }
 
@@ -886,7 +883,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
     if( !justShowedChannels) {
       printInColor("                                  Encrypted Channels ", gCommentColor);
-      node.printChannelsOverview(node.encryptedChannels, 20, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupSecretIds);
+      node.printChannelsOverview(node.encryptedChannels, gNumRoomsShownByDefault, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupSecretIds);
       justShowedChannels = true;
     }
 
@@ -1054,11 +1051,9 @@ Future<void> PrivateMenuUI(Store node) async {
 
     if( !justShowedChannels) {
       printInColor("                                Direct Messages", gCommentColor);
-      node.printDirectRoomsOverview(showAllRooms, 10, node.allChildEventsMap);
+      node.printDirectRoomsOverview(showAllRooms, gNumRoomsShownByDefault, node.allChildEventsMap);
       justShowedChannels = true;
     }
-
-
 
     String menuInfo = """Direct Message howto: To send a Direct Message to someone for the first time, enter their 64 byte hex pubkey.
                       To enter or continue a conversation seen in overview, enter the first few letters of the other person's name or of their pubkey""";
@@ -1153,12 +1148,16 @@ Future<void> socialMenuUi(Store node) async {
     clearScreen();
 
     //Show only notifications
-    showInitialNotifications(node);
+    showAllNotifications(node);
 
     bool socialMenuContinue = true;
+    bool firstTime = true;
     while(socialMenuContinue) {
 
-      await processAnyIncomingEvents(node); // this takes 300 ms
+      if( !firstTime) {
+        await processAnyIncomingEvents(node); // this takes 300 ms
+        firstTime = false;
+      }
 
       // the main menu
       int option = showMenu([
@@ -1239,9 +1238,9 @@ Future<void> socialMenuUi(Store node) async {
           String words = $tempWords??"";
           if( words != "") {
             bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
-            int numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
-            if( numPrinted == 0) {
-              print("Word(s) not found in last $gNumLastDays days. Try increasing the number of days printed, from social network options to search further back into history.\n");
+            Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyWords); // search for last gNumLastDays only
+            if( numPrinted.x.toInt() == 0) {
+              print("\nNot found in the last $gNumLastDays day(s). Try increasing the number of days printed, from social network options to search further back into history.\n");
             }
           } else printWarning("Blank word entered. Try again.");
           break;
@@ -1388,13 +1387,13 @@ Future<void> socialMenuUi(Store node) async {
     } // end while
 } // end socialMenuUi()
 
-void showInitialNotifications(Store node) {
+void showAllNotifications(Store node) {
 
-  printUnderlined("Notifications:");
+  //printUnderlined("Notifications:");
 
   bool hasNotifications (Tree t) => t.treeSelectorNotifications();
-  int numTreesPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
-  
+  Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
+  int numNotificationsPrinted = numPrinted.y.toInt();
   
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
   int numDirectRoomsPrinted = node.printDirectRoomsOverview( showNotifications, 100, node.allChildEventsMap);
@@ -1402,8 +1401,9 @@ void showInitialNotifications(Store node) {
   if( numDirectRoomsPrinted > 0)
       print("\n");
 
-  if( numTreesPrinted == 0 && numDirectRoomsPrinted == 0) {
-    print("No new posts.");
+  int totalNotifications = numNotificationsPrinted + numDirectRoomsPrinted;
+  if( totalNotifications > 0) {
+    print("Showed $totalNotifications notifications.\n");
   }
   
 }
@@ -1413,7 +1413,7 @@ Future<void> mainMenuUi(Store node) async {
     clearScreen();
 
     //Show only notifications
-    showInitialNotifications(node);
+    showAllNotifications(node);
 
     bool mainMenuContinue = true;
     bool firstTime = true;

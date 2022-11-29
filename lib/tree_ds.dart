@@ -4,6 +4,8 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
+import 'dart:math'; // for Point 
+ 
 
 typedef fTreeSelector = bool Function(Tree a);
 typedef fRoomSelector = bool Function(ScrollableMessages room);
@@ -390,13 +392,18 @@ class Tree {
 
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
+   * returns Point , where first int is total trees printed, and second is notifications printed
    */
-  int printTree(int depth, DateTime newerThan, bool topPost) {
-    int numPrinted = 0;
+  Point printTree(int depth, DateTime newerThan, bool topPost) {
+    Point numPrinted = Point(0,0);
 
+    if(event.eventData.isNotification) {
+      numPrinted += Point(0, 1);
+    }
+
+    numPrinted += Point(1, 0);
     event.printEvent(depth, topPost);
-    numPrinted++;
-
+    
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
 
@@ -1425,9 +1432,9 @@ class Store {
     });
   }
 
-  static int printTopPost(Tree topTree, int depth, DateTime newerThan) {
+  static Point printTopPost(Tree topTree, int depth, DateTime newerThan) {
     stdout.write(Store.startMarkerStr);
-    int numPrinted = topTree.printTree(depth, newerThan, true);
+    Point numPrinted = topTree.printTree(depth, newerThan, true);
     stdout.write(endMarkerStr);
     return numPrinted;
   }
@@ -1435,7 +1442,7 @@ class Store {
    /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    */
-  int printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
+  Point printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
 
     int numPrinted = 0;
 
@@ -1452,6 +1459,8 @@ class Store {
     // gTextWidth = S2 - S1 
     // comment starts at Sd , then depth = Sd - S1 / gSpacesPerDepth
     // Depth is in gSpacesPerDepth 
+
+    Point retval = Point(0,0);
 
     for( int i = 0; i < topPosts.length; i++) {
       // continue if this children isn't going to get printed anyway; selector is only called for top most tree
@@ -1470,14 +1479,14 @@ class Store {
         stdout.write("\n"); 
       }
 
-      numPrinted += printTopPost(topPosts[i], depth, newerThan);
+      retval += printTopPost(topPosts[i], depth, newerThan);
     }
 
-    if( numPrinted > 0) {
-      print("\nTotal posts printed: $numPrinted for last $gNumLastDays days.\n");
+    if( retval.x > 0) {
+      print("\nTotal posts printed: ${retval.x} for last $gNumLastDays days.\n");
     }
 
-    return numPrinted;
+    return retval;
   }
  
   int getNumChannels() {
@@ -1515,43 +1524,43 @@ class Store {
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom) and for 14x channels both; channelsToPrint is different for both
    */
-  int printChannelsOverview(List<Channel> channelstoPrint, int numRoomsOverview, fRoomSelector selector, var tempChildEventsMap , List<String>? secretMessageIds) {
+  int printChannelsOverview(List<Channel> channelsToPrint, int numRoomsOverview, fRoomSelector selector, var tempChildEventsMap , List<String>? secretMessageIds) {
 
-    channelstoPrint.sort(scrollableCompareTo);
+    channelsToPrint.sort(scrollableCompareTo);
     int numChannelsActuallyPrinted = 0;
 
-    if( channelstoPrint.length < numRoomsOverview) {
-      numRoomsOverview = channelstoPrint.length;
+    if( channelsToPrint.length < numRoomsOverview) {
+      numRoomsOverview = channelsToPrint.length;
     }
 
     print("\n\n");
     printUnderlined("Channel Name                       id        Num of Messages     Latest Message                       ");
     for(int j = 0; j < numRoomsOverview; j++) {
 
-      if( channelstoPrint[j].participants.length > 0 &&  !channelstoPrint[j].participants.contains(userPublicKey)) {
+      if( channelsToPrint[j].participants.length > 0 &&  !channelsToPrint[j].participants.contains(userPublicKey)) {
         continue;
       }
 
-      if( !selector(channelstoPrint[j]) ) {
+      if( !selector(channelsToPrint[j]) ) {
         continue;
       }
 
       String name = "";
-      String id = channelstoPrint[j].channelId.substring(0, 6);
-      if( channelstoPrint[j].chatRoomName != "") {
-        name = "${channelstoPrint[j].chatRoomName}";
+      String id = channelsToPrint[j].channelId.substring(0, 6);
+      if( channelsToPrint[j].chatRoomName != "") {
+        name = "${channelsToPrint[j].chatRoomName}";
       }
 
-      int numMessages = channelstoPrint[j].getNumValidMessages();
+      int numMessages = channelsToPrint[j].getNumValidMessages();
       stdout.write("${name} ${getNumSpaces(32-name.length)}  $id    $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
       numChannelsActuallyPrinted++;
-      List<String> messageIds = channelstoPrint[j].messageIds;
+      List<String> messageIds = channelsToPrint[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i--) {
         if( allChildEventsMap.containsKey(messageIds[i])) {
           Event? e = allChildEventsMap[messageIds[i]]?.event;
           if( e!= null) {
             if( !(e.eventData.kind == 142 && e.eventData.content == e.eventData.evaluatedContent)) {
-              stdout.write("${e.eventData.getAsLine(tempChildEventsMap, secretMessageIds, channelstoPrint)}");
+              stdout.write("${e.eventData.getAsLine(tempChildEventsMap, secretMessageIds, channelsToPrint)}");
               break; // print only one event, the latest one
             }
           }
@@ -1561,7 +1570,7 @@ class Store {
     }
 
     print("");
-    print("Showing $numChannelsActuallyPrinted channels\n");
+    print("Showing $numChannelsActuallyPrinted/${channelsToPrint.length} channels\n");
 
     return numChannelsActuallyPrinted;
   }
@@ -1693,9 +1702,17 @@ class Store {
     stdout.write("\n\n");
     
     printUnderlined("From                                       Pubkey   Num of Messages   Latest Message                       ");
-    for( int j = 0; j < numNotificationRooms; j++) {
+
+    int iNotification = 0; // notification counter
+    for( int j = 0; j < directRooms.length; j++) {
       if( !roomSelector(directRooms[j]))
         continue;
+
+      // print only that we have been asked for
+      if( iNotification++ > numNotificationRooms) {
+        break;
+      }
+      
       DirectMessageRoom room = directRooms[j];
       String id = room.otherPubkey.substring(0, 6);
       String name = getAuthorName(room.otherPubkey, 4);

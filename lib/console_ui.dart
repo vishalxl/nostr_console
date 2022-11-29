@@ -1047,17 +1047,24 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 }
 
 Future<void> PrivateMenuUI(Store node) async {
+  bool justShowedChannels = false;
   bool continueChatMenu = true;
   while(continueChatMenu) {
     await processAnyIncomingEvents(node, true); // this takes 300 ms
 
-    printInColor("                                Direct Messages", gCommentColor);
-    node.printDirectRoomInfo(showAllRooms, node.allChildEventsMap);
+    if( !justShowedChannels) {
+      printInColor("                                Direct Messages", gCommentColor);
+      node.printDirectRoomsOverview(showAllRooms, 10, node.allChildEventsMap);
+      justShowedChannels = true;
+    }
+
+
 
     String menuInfo = """Direct Message howto: To send a Direct Message to someone for the first time, enter their 64 byte hex pubkey.
                       To enter or continue a conversation seen in overview, enter the first few letters of the other person's name or of their pubkey""";
     int option = showMenu([ 
                             'Reply or Send a direct message',
+                            'Show all direct rooms',
                             'E(x)it to main menu'],          // 3
                           "Direct Message Menu", // name of menu
                           menuInfo); 
@@ -1119,9 +1126,18 @@ Future<void> PrivateMenuUI(Store node) async {
           await processAnyIncomingEvents(node, false);
 
         }
+        clearScreen();
+        justShowedChannels = false;
         break;
 
       case 2:
+        clearScreen();
+        printInColor("                                Direct Messages", gCommentColor);
+        node.printDirectRoomsOverview(showAllRooms, node.directRooms.length, node.allChildEventsMap);
+        justShowedChannels = true;
+        break;
+
+      case 3:
         continueChatMenu = false;
         break;
 
@@ -1379,7 +1395,7 @@ void showInitialNotifications(Store node) {
   print("\n");
 
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
-  int numDirectRoomsPrinted = node.printDirectRoomInfo( showNotifications, node.allChildEventsMap);
+  int numDirectRoomsPrinted = node.printDirectRoomsOverview( showNotifications, 100, node.allChildEventsMap);
   
   if( numDirectRoomsPrinted > 0)
       print("\n");

@@ -1669,7 +1669,7 @@ class Store {
   /**
    * @printDirectRoomInfo Print one line information about chat rooms
    */
-  int printDirectRoomInfo(fRoomSelector roomSelector, var tempChildEventsMap) { 
+  int printDirectRoomsOverview(fRoomSelector roomSelector, int numRoomsOverview, var tempChildEventsMap) { 
     directRooms.sort(scrollableCompareTo);
 
     int numNotificationRooms = 0;
@@ -1683,12 +1683,17 @@ class Store {
       return 0;
     }
 
+
+    if( numNotificationRooms > numRoomsOverview) {
+      numNotificationRooms = numRoomsOverview;
+    }
+
     int numRoomsActuallyPrinted = 0;
     stdout.write("\n");
     stdout.write("\n\n");
     
     printUnderlined("From                                       Pubkey   Num of Messages   Latest Message                       ");
-    for( int j = 0; j < directRooms.length; j++) {
+    for( int j = 0; j < numNotificationRooms; j++) {
       if( !roomSelector(directRooms[j]))
         continue;
       DirectMessageRoom room = directRooms[j];
@@ -1713,6 +1718,8 @@ class Store {
       }
       stdout.write("\n");
     }
+
+    print("\nShowing $numNotificationRooms/${directRooms.length} direct rooms.");
 
     return numRoomsActuallyPrinted;
   }

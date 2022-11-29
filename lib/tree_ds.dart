@@ -1343,10 +1343,8 @@ class Store {
    * @printNotifications Add the given events to the Tree, and print the events as notifications
    *                     It should be ensured that these are only kind 1 events
    */
-  void printNotifications(Set<String> newEventIdsSet, String userName) {
-    if( gDebug > 0) print("Info: in printNotifications: num new evetns = ${newEventIdsSet.length}");
+  Point printTreeNotifications(Set<String> newEventIdsSet) {
 
-    String strToWrite = "";
     int countNotificationEvents = 0;
     for( var newEventId in newEventIdsSet) {
       int k = (allChildEventsMap[newEventId]?.event.eventData.kind??-1);
@@ -1361,18 +1359,11 @@ class Store {
       }
     }
 
-    if(gDebug > 0) print("Info: In printNotifications: newEventsId = $newEventIdsSet count17 = $countNotificationEvents");
-    
     if( countNotificationEvents == 0) {
-      return;
+      return Point(0,0);
     }
-    // TODO call count() less
-    strToWrite += "Number of new replies/posts = ${newEventIdsSet.length}\n";
-    stdout.write("${getNumDashes(strToWrite.length -1 )}\n$strToWrite");
-    //stdout.write("Total posts  : ${count()}\n");
-    stdout.write("Signed in as : $userName\n");
-    stdout.write("\nHere are the threads with new replies or new likes: \n\n");
-    
+
+   
     List<Tree> topNotificationTree = []; // collect all top tress to display in this list. only unique tress will be displayed
     newEventIdsSet.forEach((eventID) { 
       
@@ -1422,14 +1413,16 @@ class Store {
     // remove duplicate top trees
     Set ids = {};
     topNotificationTree.retainWhere((t) => ids.add(t.event.eventData.id));
-    
 
     Store.reCalculateMarkerStr();
 
+    Point retval = Point(0,0);
     topNotificationTree.forEach( (t) { 
-      Store.printTopPost(t, 0, DateTime(0));
+      retval += Store.printTopPost(t, 0, DateTime(0));
       print("\n");
     });
+
+    return retval;
   }
 
   static Point printTopPost(Tree topTree, int depth, DateTime newerThan) {
@@ -1712,7 +1705,7 @@ class Store {
       if( iNotification++ > numNotificationRooms) {
         break;
       }
-      
+
       DirectMessageRoom room = directRooms[j];
       String id = room.otherPubkey.substring(0, 6);
       String name = getAuthorName(room.otherPubkey, 4);

@@ -16,12 +16,15 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
   const int waitMilliSeconds = 200;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
-    node.processIncomingEvent(getRecievedEvents());
+    Set<String> newEventIds = node.processIncomingEvent(getRecievedEvents());
     clearEvents();
 
+    Point numPrinted1 = Point(0,0);
     if( printNotifications) {
-      showAllNotifications(node);
+      numPrinted1 = node.printTreeNotifications(newEventIds);
     }
+
+    showAllNotifications(node, numPrinted1.x.toInt(), numPrinted1.y.toInt());
   });
 
   
@@ -1210,7 +1213,9 @@ Future<void> socialMenuUi(Store node) async {
           }
 
           await sendReplyPostLike(node, replyToId, replyKind, content);
-          await processAnyIncomingEvents(node, false);
+          clearScreen();
+
+          await processAnyIncomingEvents(node, true);
           break;
 
         case 3:
@@ -1387,12 +1392,12 @@ Future<void> socialMenuUi(Store node) async {
     } // end while
 } // end socialMenuUi()
 
-void showAllNotifications(Store node) {
+void showAllNotifications(Store node, [int x = 0, int y = 0]) {
 
-  //printUnderlined("Notifications:");
+  Point numPrinted = Point(x, y);
 
   bool hasNotifications (Tree t) => t.treeSelectorNotifications();
-  Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
+  numPrinted += node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), hasNotifications);
   int numNotificationsPrinted = numPrinted.y.toInt();
   
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
@@ -1413,7 +1418,7 @@ Future<void> mainMenuUi(Store node) async {
     clearScreen();
 
     //Show only notifications
-    showAllNotifications(node);
+    await processAnyIncomingEvents(node); // this takes 300 ms
 
     bool mainMenuContinue = true;
     bool firstTime = true;

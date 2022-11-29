@@ -16,7 +16,7 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
   const int waitMilliSeconds = 200;
   Future.delayed(const Duration(milliseconds: waitMilliSeconds), ()  {
     
-    Set<String> newEventIdsSet = node.processIncomingEvent(getRecievedEvents());
+    node.processIncomingEvent(getRecievedEvents());
     clearEvents();
 
     if( printNotifications) {
@@ -1147,8 +1147,7 @@ Future<void> socialMenuUi(Store node) async {
    
     clearScreen();
 
-    //Show only notifications
-    showAllNotifications(node);
+    await processAnyIncomingEvents(node); // this takes 300 ms
 
     bool socialMenuContinue = true;
     bool firstTime = true;

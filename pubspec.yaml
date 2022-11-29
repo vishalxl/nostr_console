@@ -10,6 +10,7 @@ homepage: https://github.com/vishalxl/nostr_console
 # improved channel display
 # /help in enc groups  
 # still fixing notifications   
+# reset notifications for dm 
 
 
 environment:

@@ -10,6 +10,8 @@ import 'dart:math'; // for Point
 typedef fTreeSelector = bool Function(Tree a);
 typedef fRoomSelector = bool Function(ScrollableMessages room);
 
+typedef fvisitorMarkNotifications = void Function(Event e);
+
 Store? gStore = null;
 
 // only show in which user is involved
@@ -288,6 +290,16 @@ class ScrollableMessages {
     }
 
     return false;
+  }
+
+ // will visit every event in the scrollable . used to reset all notifications etc.
+  void visitAllMessages(Store node, fScrollableEventVisitor) {
+    for(int i = 0; i < messageIds.length; i++) {
+      EventData? ed = node.allChildEventsMap[messageIds[i]]?.event.eventData;
+      if( ed != null) {
+        ed.isNotification = false;
+      }
+    }    
   }
 } // end class ScrollableMessages
 
@@ -1705,6 +1717,9 @@ class Store {
       DirectMessageRoom room = directRooms[j];
       String id = room.otherPubkey.substring(0, 6);
       String name = getAuthorName(room.otherPubkey, 4);
+
+      void markAllRead (Event e) => e.eventData.isNotification = false;
+      room.visitAllMessages(this, markAllRead);
 
       int numMessages = room.messageIds.length;
       stdout.write("${name} ${getNumSpaces(32-name.length)}          $id   $numMessages${getNumSpaces(18- numMessages.toString().length)}"); 

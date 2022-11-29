@@ -488,7 +488,7 @@ class Tree {
     return false;
   } 
 
-  // returns true if the treee or its children has a post or like by user; and notification flags are set for such events
+  // returns true if the tree or its children has a post or like by user; and notification flags are set for such events
   bool treeSelectorUserPostAndLike(String pubkey) {
     bool hasReacted = false;
 
@@ -619,7 +619,7 @@ class Tree {
 
 /***********************************************************************************************************************************/
 /*  
- * The actual tree holds only kind 1 events, or only posts
+ * The actual tree struture holds only kind 1 events, or only posts. Tree itself can hold any event type( to be fixed, needs renaming etc TODO)
  * This Store class holds events too in its map, and in its chatRooms structure
  */
 class Store {
@@ -1580,11 +1580,11 @@ class Store {
     // write owner
     String creator = room.creatorPubkey;
     print("\n\n");
-    stdout.write("Encrypted channel creator: ");
+    stdout.write("Encrypted channel admin: ");
     printInColor(getAuthorName(creator), gCommentColor);
 
     // write participants 
-    stdout.write("\nChannel participants:      ");
+    stdout.write("\nChannel participants   : ");
     
     int i = 0;
     room.participants.forEach((participant) {

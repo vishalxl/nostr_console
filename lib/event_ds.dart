@@ -1215,7 +1215,7 @@ int getSecondsDaysAgo( int N) {
   return  DateTime.now().subtract(Duration(days: N)).millisecondsSinceEpoch ~/ 1000;
 }
 
-
+// will write d tabs worth of space ( where tab width is in settings)
 void printDepth(int d) {
   for( int i = 0; i < gSpacesPerDepth * d + gNumLeftMarginSpaces; i++) {
     stdout.write(" ");

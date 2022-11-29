@@ -655,7 +655,6 @@ Future<void> channelMenuUI(Store node) async {
                 // in case the program was invoked with --pubkey, then user can't send messages
                 if( userPrivateKey == "") {
                     printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey \n");
-                    
                 } else {
                   if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
                     List<String> tokens = messageToSend.split(' ');
@@ -959,51 +958,58 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                     break;
                   }
 
-                  if( messageToSend.startsWith('/reinvite all')) {
+                  switch( messageToSend.trim()) {
+                  case '/reinvite all': 
                     Set<String> participantPubkeys = channel.participants;
                     print("Sending the shared secret again to: $participantPubkeys");
                     await sendInvitesForEncryptedChannel(node, fullChannelId, participantPubkeys);
-                    continue;
-                  }
+                    continue;  // get to next while loop to avoid cleascreen
 
-                  if( messageToSend.startsWith('/members')) {
+                  case '/members':
                     print("\nMembers names and pubkeys:\n");
                     for( String pubkey in channel.participants) {
                       stdout.write("${getAuthorName(pubkey)} - $pubkey , ");
                     }
                     print("");
+                    continue;  // get to next while loop to avoid cleascreen
                     
-                    continue;
-                  }
+                  case  '/help':
+                    print("""\n                                /members                      - print names/pubkeys of all members
+                                /add <pubkey1> <pubkey2> ... - Space-separated pubkeys are taken as new user pubkeys, and they're added to group (admin only).
+                                /reinvite all                - send secret password to all again (admin only)
+                    """);
+                    continue;  // get to next while loop to avoid cleascreen
+                    
+                  default:
+                    // send message to the given room
+                    if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
+                      List<String> tokens = messageToSend.split(' ');
+                      if( tokens.length >= 3) {
+                        String replyTo = tokens[1];
+                        String actualMessage = messageToSend.substring(7);
 
-                  // send message to the given room
-                  if( messageToSend.length >= 7 && messageToSend.substring(0, 7).compareTo("/reply ") == 0) {
-                    List<String> tokens = messageToSend.split(' ');
-                    if( tokens.length >= 3) {
-                      String replyTo = tokens[1];
-                      String actualMessage = messageToSend.substring(7);
+                        if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
+                          actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
 
-                      if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
-                        actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
-
-                      String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, actualMessage);
+                        String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, actualMessage);
+                        if( encryptedMessageToSend != "") {
+                          await sendChannelReply(node, channel, replyTo, encryptedMessageToSend, "142");
+                          pageNum = 1; // reset it 
+                        } else {
+                          printWarning("\nCould not get send reply message because could not encrypt message.");
+                        } 
+                      }
+                    } 
+                    else {
+                      String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
                       if( encryptedMessageToSend != "") {
-                        await sendChannelReply(node, channel, replyTo, encryptedMessageToSend, "142");
+                        await sendChannelMessage(node, channel, encryptedMessageToSend, "142");
                         pageNum = 1; // reset it 
                       } else {
-                        printWarning("\nCould not get send reply message because could not encrypt message.");
-                      } 
+                        printWarning("\nCould not get send message because could not encrypt message.");
+                      }
                     }
-                  } else {
-                    String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, messageToSend);
-                    if( encryptedMessageToSend != "") {
-                      await sendChannelMessage(node, channel, encryptedMessageToSend, "142");
-                      pageNum = 1; // reset it 
-                    } else {
-                      printWarning("\nCould not get send message because could not encrypt message.");
-                    }
-                  }
-
+                  }// inner switch
                 }
               }
             }

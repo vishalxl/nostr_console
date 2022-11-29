@@ -16,11 +16,6 @@ class HistogramEntry {
   }
 }
 
-bool nonEnglish(String str) {
-  bool result = false;
-  return result;
-}
-
 bool isNumeric(String s) {
  return double.tryParse(s) != null;
 }

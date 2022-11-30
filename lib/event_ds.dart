@@ -1066,7 +1066,7 @@ bool processKind0Event(Event e) {
   }
 
   if(gDebug > 0) { 
-    print("At end of processKind0Events: for name = $name ${newEntry? "added entry": ( entryModified?"modified entry": "No change done")} ");
+    print("At end of processKind0Events: for pubkey ${e.eventData.pubkey} for name = $name ${newEntry? "added entry": ( entryModified?"modified entry": "No change done")} ");
   }
 
   bool localDebug = false; //e.eventData.pubkey == "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437"? true: false;

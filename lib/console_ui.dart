@@ -283,9 +283,6 @@ void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike(profilePubkey);
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
 
-  // get the latest kind 3 event for the user, which lists his 'follows' list
-  Event? profileContactEvent = getContactEvent(profilePubkey);
-
   // if contact list was found, get user's feed, and keep the contact list for later use 
   String authorName = gKindONames[profilePubkey]?.name??"";
   String pronoun = "";
@@ -306,19 +303,20 @@ void printProfile(Store node, String profilePubkey) {
   }
 
   print("");
+  String about = gKindONames[profilePubkey]?.about??"";
+  String picture = gKindONames[profilePubkey]?.picture??"";
+  int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
+  bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
+  String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
   print("\nName        : $authorName ( ${profilePubkey} ).");
+  print("About       : $about");
+  print("Picture     : $picture");
+  print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
+  print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
 
+  // get the latest kind 3 event for the user, which lists his 'follows' list
+  Event? profileContactEvent = getContactEvent(profilePubkey);
   if (profileContactEvent != null ) {
-    String about = gKindONames[profilePubkey]?.about??"";
-    String picture = gKindONames[profilePubkey]?.picture??"";
-    int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
-    bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
-    String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
-
-    print("About       : $about");
-    print("Picture     : $picture");
-    print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
-    print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
     
     if( profilePubkey != userPublicKey) {
       if( profileContactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {

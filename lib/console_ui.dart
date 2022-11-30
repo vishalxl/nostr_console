@@ -974,6 +974,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
                   switch( messageToSend.trim()) {
                   case '/reinvite all': 
+                    clearScreen();
                     Set<String> participantPubkeys = channel.participants;
                     print("Sending the shared secret again to: $participantPubkeys");
                     await sendInvitesForEncryptedChannel(node, fullChannelId, participantPubkeys);
@@ -987,6 +988,8 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                     continue;  // get to next while loop to avoid clearscreen
                     
                   case  '/help':
+                    clearScreen();
+                    print("Help commands available:");
                     print("""\n                                /members                     - print names/pubkeys of all members
                                 /add <pubkey1> <pubkey2> ... - Space-separated pubkeys are taken as new user pubkeys, and they're added to group (admin only).
                                 /reinvite all                - send secret password to all again (admin only)

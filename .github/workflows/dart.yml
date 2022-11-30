@@ -53,18 +53,6 @@ jobs:
       - name: change permission to make it executible
         run: chmod 755 bin/nostr_console_elf64
 
-      - name: Generate Release Hashes
-        uses: MCJack123/ghaction-Generate-Release-Hashes@v4
-        with:
-          hash-type: sha1
-          file-name: linux_hash.txt
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Linux asset hash
-          path: linux_hash.txt
-
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3

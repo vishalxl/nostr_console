@@ -447,6 +447,13 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
 }
 
 void printPubkeys(Set<String> pubkey) {
+  print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}   ${myPadRight("Nip05", 30)}");
+  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x), 20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}"));
+  print("");
+}
+
+void printPubkeyResult(Set<String> pubkey) {
+
   if( pubkey.length == 0) {
     print("There is no pubkey for that given name.");
     return;
@@ -457,9 +464,7 @@ void printPubkeys(Set<String> pubkey) {
       print("There are ${pubkey.length} public keys for the given name, which are: ");
     }
   }
-  print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}   ${myPadRight("Nip05", 30)}");
-  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x), 20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}"));
-  print("");
+  printPubkeys(pubkey);
 }
 
 Future<void> otherOptionsMenuUi(Store node) async {
@@ -972,22 +977,21 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                     Set<String> participantPubkeys = channel.participants;
                     print("Sending the shared secret again to: $participantPubkeys");
                     await sendInvitesForEncryptedChannel(node, fullChannelId, participantPubkeys);
-                    continue;  // get to next while loop to avoid cleascreen
+                    continue;  // get to next while loop to avoid clearscreen
 
                   case '/members':
+                    clearScreen();
                     print("\nMembers names and pubkeys:\n");
-                    for( String pubkey in channel.participants) {
-                      stdout.write("${getAuthorName(pubkey)} - $pubkey , ");
-                    }
+                    printPubkeys(channel.participants );
                     print("");
-                    continue;  // get to next while loop to avoid cleascreen
+                    continue;  // get to next while loop to avoid clearscreen
                     
                   case  '/help':
-                    print("""\n                                /members                      - print names/pubkeys of all members
+                    print("""\n                                /members                     - print names/pubkeys of all members
                                 /add <pubkey1> <pubkey2> ... - Space-separated pubkeys are taken as new user pubkeys, and they're added to group (admin only).
                                 /reinvite all                - send secret password to all again (admin only)
                     """);
-                    continue;  // get to next while loop to avoid cleascreen
+                    continue;  // get to next while loop to avoid clearscreen
                     
                   default:
                     // send message to the given room
@@ -1280,7 +1284,7 @@ Future<void> socialMenuUi(Store node) async {
           if( userName != "") {
             Set<String> pubkey = getPublicKeyFromName(userName); 
             
-            printPubkeys(pubkey);
+            printPubkeyResult(pubkey);
             
             if( pubkey.length > 1) {
               if( pubkey.length > 1) {
@@ -1353,7 +1357,7 @@ Future<void> socialMenuUi(Store node) async {
           if( userName != "") {
             Set<String> pubkey = getPublicKeyFromName(userName); 
 
-            printPubkeys(pubkey);
+            printPubkeyResult(pubkey);
 
             if( pubkey.length > 1) {
               if( pubkey.length > 1) {

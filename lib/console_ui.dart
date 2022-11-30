@@ -1232,21 +1232,40 @@ Future<void> socialMenuUi(Store node) async {
 
         case 3:
           clearScreen();
-          String temp = userPublicKey;
-          bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes(temp);
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userNotifications);
+          bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes(userPublicKey);
+          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userNotifications);
+          if( numPrinted.y > 0) {
+            print("Showed ${numPrinted.y.toInt()} notifications.\n");
+          } else {
+            print("No notifications.");
+          }
           break;
         case 4:
           clearScreen();
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_selfPosts);
+          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_selfPosts);
+          if( numPrinted.x > 0) {
+            print("Showed ${numPrinted.x.toInt()} posts made by you in last $gNumLastDays days.\n");
+          } else {
+            print("No posts made by you in last $gNumLastDays days.");
+          }
           break;
         case 5:
           clearScreen();
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userRepliesLikes);
+          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_userRepliesLikes);
+          if( numPrinted.x > 0) {
+            print("Showed ${numPrinted.x.toInt()} thread where you replied or liked in in last $gNumLastDays days.\n");
+          } else {
+            print("No replies/likes made by you in last $gNumLastDays days.");
+          }
           break;
         case 6:
           clearScreen();
-          node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_followsPosts);
+          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), selectorTrees_followsPosts);
+          if( numPrinted.x > 0) {
+            print("Showed ${numPrinted.x.toInt()} threads where your follows/freiends participated.\n");
+          } else {
+            print("No threads to show where your follows/friends participated in last $gNumLastDays days. To see some users to follow, check out https://nostr.io/stats or astral.ninja global feed.");
+          }
           break;
         case 7: // search word or event id
           clearScreen();

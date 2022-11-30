@@ -404,7 +404,7 @@ class Tree {
 
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
-   * returns Point , where first int is total trees printed, and second is notifications printed
+   * returns Point , where first int is total Threads ( or top trees) printed, and second is notifications printed
    */
   Point printTree(int depth, DateTime newerThan, bool topPost) {
     Point numPrinted = Point(0,0);
@@ -413,7 +413,6 @@ class Tree {
       numPrinted += Point(0, 1);
     }
 
-    numPrinted += Point(1, 0);
     event.printEvent(depth, topPost);
     
     bool leftShifted = false;
@@ -1436,9 +1435,11 @@ class Store {
     return retval;
   }
 
+// returns Point , where first int is total Threads ( or top trees) printed, and second is notifications printed
   static Point printTopPost(Tree topTree, int depth, DateTime newerThan) {
     stdout.write(Store.startMarkerStr);
     Point numPrinted = topTree.printTree(depth, newerThan, true);
+    numPrinted += Point(1, 0); // for this top post 
     stdout.write(endMarkerStr);
     return numPrinted;
   }
@@ -1461,7 +1462,7 @@ class Store {
     // comment starts at Sd , then depth = Sd - S1 / gSpacesPerDepth
     // Depth is in gSpacesPerDepth 
 
-    Point retval = Point(0,0);
+    Point numPrinted = Point(0,0);
 
     for( int i = 0; i < topPosts.length; i++) {
       // continue if this children isn't going to get printed anyway; selector is only called for top most tree
@@ -1480,14 +1481,14 @@ class Store {
         stdout.write("\n"); 
       }
 
-      retval += printTopPost(topPosts[i], depth, newerThan);
+      numPrinted += printTopPost(topPosts[i], depth, newerThan);
     }
 
-    if( retval.x > 0) {
-      print("\nTotal posts printed: ${retval.x} for last $gNumLastDays days.\n");
+    if( numPrinted.x > 0) {
+      print("\nTotal threads printed: ${numPrinted.x} for last $gNumLastDays days.\n");
     }
 
-    return retval;
+    return numPrinted;
   }
  
   int getNumChannels() {

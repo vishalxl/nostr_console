@@ -764,23 +764,37 @@ class Store {
    * Returns id of channel if one is created, null otherwise.
    * 
    */
+ 
+  /**
+   * Will create a entry in encryptedChannels ( if one does not already exist)
+   * Returns id of channel if one is created, null otherwise.
+   * 
+   */
   static String? createEncryptedRoomFromInvite( Set<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event eventSecretMessage) {
 
-    String? event140Id = getEncryptedChannelIdFromSecretMessage(eventSecretMessage);
-    Event? event140 = tempChildEventsMap[event140Id]?.event;
-    if( event140 != null) {
-      String eId = event140.eventData.id;
+    String? temp140Id = getEncryptedChannelIdFromSecretMessage( eventSecretMessage);
 
+    String event140Id = "";
+    if( temp140Id == null) {
+      return null;
+    } else {
+      event140Id = temp140Id;
+    }
+
+    Event? event140 = tempChildEventsMap[temp140Id]?.event;
+    if( event140 != null) {
+      
       Set<String> participants = {};
       event140.eventData.pTags.forEach((element) { participants.add(element);});
 
-      String chatRoomId = eId;
+      String chatRoomId = event140Id;
       try {
         dynamic json = jsonDecode(event140.eventData.content);
         Channel? channel = getChannel(encryptedChannels, chatRoomId);
         if( channel != null) {
           // if channel entry already exists, then do nothing, cause we've already processed this channel create event 
         } else {
+
           // create new encrypted channel
           String roomName = "", roomAbout = "";
           if(  json.containsKey('name') ) {
@@ -790,9 +804,9 @@ class Store {
           if( json.containsKey('about')) {
             roomAbout = json['about'];
           }
-          List<String> emptyMessageList = [];
-          Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, participants, event140.eventData.createdAt, enumRoomType.kind140, event140.eventData.pubkey);
+          Channel room = Channel(chatRoomId, roomName, roomAbout, "", [], participants, event140.eventData.createdAt, enumRoomType.kind140, event140.eventData.pubkey);
           encryptedChannels.add( room);
+          //print("created enc room with id $event140Id");
           return chatRoomId;
         }
       } on Exception catch(e) {
@@ -800,49 +814,62 @@ class Store {
       }
     } // end if 140
     else {
-      //printWarning("could not find event 140 from event $gSecretMessageKind ${eventSecretMessage.eventData.id}");
+        // create with lastUpdated == 0 so that later when/if 140 is seen then it can update this (only in that case and not otherwise)
+        Channel room = Channel(event140Id, "", "", "", [], {}, 0, enumRoomType.kind140, eventSecretMessage.eventData.pubkey); 
+        encryptedChannels.add( room);
+        return event140Id;
     }
     return null;
   }
 
-  static void handleEncryptedChannelEvent( Set<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event ce) {
-      String eId = ce.eventData.id;
-      int    eKind = ce.eventData.kind;
-
-      if( ce.eventData.createdAt < getSecondsDaysAgo(3)) {
-        //return; // dont process old 142/141 messages cause they're different format
-      }
+  static void handleEncryptedChannelEvent( Set<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event event14x) {
+      String eId = event14x.eventData.id;
+      int    eKind = event14x.eventData.kind;
 
       switch(eKind) {
-      case 142:
-        //if( gSpecificDebug > 0 && eId == gCheckEventId) printWarning("Got ${eId}");
-        if( gSpecificDebug > 0) print("got kind 142 message. total number of encrypted channels: ${encryptedChannels.length}. event e tags ${ce.eventData.eTags}");
-        String channelId = ce.eventData.getChannelIdForMessage();
 
-        if( channelId.length == 64) { // sometimes people may forget to give e tags or give wrong tags like #e
-          Channel? channel = getChannel(encryptedChannels, channelId);
-          if( channel != null) {
-            channel.addMessageToRoom(eId, tempChildEventsMap);
-          } else {
-            if( gSpecificDebug > 0) print("could not get channel");
+      // in only one case is 140 processed: when we got 104, at that time we creat channel ds, but later we get 140 which will have actual info about the channel
+      // the infor will be name, about, pic, participant list; the created at will be 0 in such case when 104 created the channel data structure
+      case 140:
+
+        // update the participant list if the event already exists ( the room was likely creted with 104 invite, which did not have participant list)
+        Set<String> participants = {};
+        event14x.eventData.pTags.forEach((element) { participants.add(element);});
+        Channel? channel = getChannel(encryptedChannels, event14x.eventData.id);
+        
+        dynamic json = jsonDecode(event14x.eventData.content);
+
+        if( channel != null && channel.lastUpdated == 0) {
+          String roomName = "", roomAbout = "";
+          if(  json.containsKey('name') ) {
+            roomName = json['name']??"";
           }
-        } else {
-          // could not get channel id of message. 
-          printWarning("---Could not get encryptd channel for message id ${ce.eventData.id} got channelId : ${channelId} its len ${channelId.length}");
+          
+          if( json.containsKey('about')) {
+            roomAbout = json['about'];
+          }
+          
+          channel.participants = participants;
+          channel.chatRoomName = roomName;
+          channel.about = roomAbout;
+
+          channel.lastUpdated = event14x.eventData.createdAt;
         }
+
         break;
+
       case 141:
       
         Set<String> participants = {};
-        ce.eventData.pTags.forEach((element) { participants.add(element);});
+        event14x.eventData.pTags.forEach((element) { participants.add(element);});
         
-        String chatRoomId = ce.eventData.getChannelIdForMessage();
+        String chatRoomId = event14x.eventData.getChannelIdForMessage();
         if( chatRoomId.length != 64) {
           break;
         }
 
         try {
-          dynamic json = jsonDecode(ce.eventData.content);
+          dynamic json = jsonDecode(event14x.eventData.content);
           Channel? channel = getChannel(encryptedChannels, chatRoomId);
           if( channel != null) {
             // as channel entry already exists, then update its participants info, and name info
@@ -850,13 +877,13 @@ class Store {
               channel.chatRoomName = json['name'];
             }
 
-            if( channel.lastUpdated < ce.eventData.createdAt) {
+            if( channel.lastUpdated < event14x.eventData.createdAt) {
               if( participants.contains(userPublicKey) && !channel.participants.contains(userPublicKey) ) {
                 //printInColor("\nReceived new invite to a new group with id: $chatRoomId\n", greenColor);
               }
 
               channel.participants = participants;
-              channel.lastUpdated  = ce.eventData.createdAt;
+              channel.lastUpdated  = event14x.eventData.createdAt;
               for(int i = 0; i < channel.messageIds.length; i++) {
                 Event ?e = tempChildEventsMap[channel.messageIds[i]]?.event;
                 if( e != null) {
@@ -868,7 +895,25 @@ class Store {
             // encrypted channel is only created on getting invite through kind 104, not here
           }
         } on Exception catch(e) {
-          if( gDebug > 0) print("In From Event. Event type 140. Json Decode error for event id ${ce.eventData.id}. error = $e");
+          if( gDebug > 0) print("In From Event. Event type 140. Json Decode error for event id ${event14x.eventData.id}. error = $e");
+        }
+        break;
+
+      case 142:
+        //if( gSpecificDebug > 0 && eId == gCheckEventId) printWarning("Got ${eId}");
+        if( gSpecificDebug > 0) print("got kind 142 message. total number of encrypted channels: ${encryptedChannels.length}. event e tags ${event14x.eventData.eTags}");
+        String channelId = event14x.eventData.getChannelIdForMessage();
+
+        if( channelId.length == 64) { // sometimes people may forget to give e tags or give wrong tags like #e
+          Channel? channel = getChannel(encryptedChannels, channelId);
+          if( channel != null) {
+            channel.addMessageToRoom(eId, tempChildEventsMap);
+          } else {
+            if( gSpecificDebug > 0) print("could not get channel");
+          }
+        } else {
+          // could not get channel id of message. 
+          printWarning("---Could not get encryptd channel for message id ${event14x.eventData.id} got channelId : ${channelId} its len ${channelId.length}");
         }
         break;
 
@@ -876,6 +921,20 @@ class Store {
         break;  
       } // end switch
   }
+
+  // returns 1 if message was to the user; adds the secret message id to tempEncyrp... variable
+  static int handleEncryptedGroupInvite(Set<String> tempEncryptedSecretMessageIds, Map<String, Tree> tempChildEventsMap, Event ce) {
+      int    eKind = ce.eventData.kind;
+
+      if( gSecretMessageKind != eKind || !isValidDirectMessage(ce.eventData)) {
+        return 0;
+      }
+
+      tempEncryptedSecretMessageIds.add( ce.eventData.id);
+
+      return 1;   
+  }
+
 
   static int handleDirectMessage( List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap, Event ce) {
       String eId = ce.eventData.id;
@@ -969,7 +1028,7 @@ class Store {
       int eKind = tree.event.eventData.kind;
 
       // these are handled in another iteration ( cause first private messages need to be populated)
-      if( eKind == 142 || eKind == 140 || eKind == 141) {
+      if( eKind >= 140 && eKind <= 142 ) {
         return;
       }
 
@@ -1127,11 +1186,13 @@ class Store {
 
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
-      if( eKind == 142  || eKind == 141) {
+      if( eKind >= 140 && eKind <= 142 ) {
         handleEncryptedChannelEvent(allEncryptedGroupInviteIds, encryptedChannels, tempChildEventsMap, tree.event);
       }
     });
 
+
+    //print("num channels created by 104: ${encryptedChannels.length}");
     // add parent trees as top level child trees of this tree
     for( var tree in tempChildEventsMap.values) {
       if( tree.event.eventData.kind == 1 &&  tree.event.eventData.getParent(tempChildEventsMap) == "") {  // only posts which are parents
@@ -1145,7 +1206,7 @@ class Store {
     sendEventsRequest(gListRelayUrls1, dummyEventIds.union(usersEncryptedChannelIds));
 
     // get encrypted channel events,  get 141/142 by their mention of channels to which user has been invited through kind 104. get 140 by its event id.
-    getMentionEvents(gListRelayUrls2, usersEncryptedChannelIds, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
+    getMentionEvents(gListRelayUrls1, usersEncryptedChannelIds, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
     
     //sendEventsRequest(gListRelayUrls1, usersEncryptedChannelIds);
     

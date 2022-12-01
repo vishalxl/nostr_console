@@ -879,26 +879,6 @@ class Store {
       } // end switch
   }
 
-  // returns 1 if message was to the user; adds the secret message id to tempEncyrp... variable
-  static int handleSecretMessageKind(List<String> tempEncryptedSecretMessageIds, Map<String, Tree> tempChildEventsMap, Event ce) {
-      int    eKind = ce.eventData.kind;
-
-      if( gSecretMessageKind != eKind || !isValidDirectMessage(ce.eventData)) {
-        return 0;
-      }
-
-      int i = 0;
-      for(i = 0; i < tempEncryptedSecretMessageIds.length; i++) {
-        if ( ce.eventData.id == tempEncryptedSecretMessageIds[i]) {
-          return 0;
-        }
-      }
-
-      tempEncryptedSecretMessageIds.add( ce.eventData.id);
-
-      return 1;   
-  }
-
   static int handleDirectMessage( List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap, Event ce) {
       String eId = ce.eventData.id;
       int    eKind = ce.eventData.kind;
@@ -985,16 +965,8 @@ class Store {
     List<Channel> encryptedChannels = [];
     List<DirectMessageRoom> tempDirectRooms = [];
     Set<String> dummyEventIds = {};
-    List<String> allEncryptedGroupInviteIds = [];
+    List<String> encryptedGroupInviteIds = [];
 
-    int numEventsNotPosts = 0; // just for debugging info
-    int numKind40Events   = 0;
-    int numKind42Events   = 0;
-    if( gDebug > 0) print("In Tree from Events: after adding all required events of type ${typesInEventMap} to tempChildEventsMap map, its size = ${tempChildEventsMap.length} ");
-
-
-    //log.info('in middle of fromEvents');
-    int totoalDirectMessages = 0;
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
 
@@ -1015,7 +987,10 @@ class Store {
 
       if( eKind == gSecretMessageKind) {
         // add the event id to given structure if its a valid message
-        handleSecretMessageKind(allEncryptedGroupInviteIds, tempChildEventsMap, tree.event);
+        if( isValidDirectMessage(tree.event.eventData, acceptableKind: gSecretMessageKind)) {
+          //print("adding to enc list");
+          encryptedGroupInviteIds.add(tree.event.eventData.id);
+        }
         return;
       }
 
@@ -1140,12 +1115,12 @@ class Store {
     // tempEncrytedSecretMessageIds has been created above 
     // now create encrypted rooms
     Set<String> usersEncryptedGroups = {};
-    allEncryptedGroupInviteIds.forEach((secretEventId) {
+    encryptedGroupInviteIds.forEach((secretEventId) {
       Event? secretEvent = tempChildEventsMap[secretEventId]?.event;
       
       if( secretEvent != null) {
-        secretEvent.eventData.TranslateAndDecryptSecretMessage(tempChildEventsMap);
-        String? newEncryptedChannelId = createEncryptedRoomFromInvite(allEncryptedGroupInviteIds, encryptedChannels, tempChildEventsMap, secretEvent);
+        secretEvent.eventData.TranslateAndDecryptGroupInvite(tempChildEventsMap);
+        String? newEncryptedChannelId = createEncryptedRoomFromInvite(encryptedGroupInviteIds, encryptedChannels, tempChildEventsMap, secretEvent);
         if( newEncryptedChannelId != null) {
           usersEncryptedGroups.add(newEncryptedChannelId);
         }
@@ -1155,7 +1130,7 @@ class Store {
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
       if( eKind == 142  || eKind == 141) {
-        handleEncryptedChannelEvent(allEncryptedGroupInviteIds, encryptedChannels, tempChildEventsMap, tree.event);
+        handleEncryptedChannelEvent(encryptedGroupInviteIds, encryptedChannels, tempChildEventsMap, tree.event);
       }
     });
 
@@ -1178,14 +1153,13 @@ class Store {
     
     sendEventsRequest(gListRelayUrls1, usersEncryptedGroups);
     
-
     // create a dummy top level tree and then create the main Tree object
-    return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms, allEncryptedGroupInviteIds);
+    return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms, encryptedGroupInviteIds);
   } // end fromEvents()
 
    /***********************************************************************************************************************************/
    /* @processIncomingEvent inserts the relevant events into the tree and otherwise processes likes, delete events etc.
-    *                        returns the id of the relevant ones actually inserted so that they can be printed as notifications. 
+    *                        returns the id of the ones actually new so that they can be printed as notifications. 
     */
   Set<String> processIncomingEvent(Set<Event> newEventsToProcess) {
     if( gDebug > 0) log.info("In insertEvetnts: allChildEventsMap size = ${allChildEventsMap.length}, called for ${newEventsToProcess.length} NEW events");
@@ -1321,8 +1295,8 @@ class Store {
             break;
 
           case gSecretMessageKind:
-            if( isValidDirectMessage(newTree.event.eventData)) {
-              String ? temp = newTree.event.eventData.TranslateAndDecryptSecretMessage( allChildEventsMap); 
+            if( isValidDirectMessage(newTree.event.eventData, acceptableKind: gSecretMessageKind)) {
+              String ? temp = newTree.event.eventData.TranslateAndDecryptGroupInvite( allChildEventsMap); 
               if( temp != null) {
                 encryptedGroupInviteIds.add(newTree.event.eventData.id);
                 createEncryptedRoomFromInvite(encryptedGroupInviteIds, encryptedChannels, allChildEventsMap, newTree.event);

@@ -374,7 +374,7 @@ class EventData {
   } // end translateAndExpandMentions
 
   // is called only once for each event received ( or read from file)
-  String? TranslateAndDecryptSecretMessage(Map<String, Tree> tempChildEventsMap) {
+  String? TranslateAndDecryptGroupInvite(Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
       //printInColor("in TranslateAndDecryptSecretMessage: decoding $gCheckEventId\n", redColor);
     }
@@ -392,7 +392,7 @@ class EventData {
         return null;
       }
 
-      if(!isValidDirectMessage(this)) {
+      if(!isValidDirectMessage(this, acceptableKind: this.kind)) {
         return null;
       }
 
@@ -1370,16 +1370,16 @@ String getPrintableDate(int createdAt) {
 }
 
 /*
- * Returns true if this is a valid direct message to just this user
+ * Returns true if this is a valid direct message to just this user. Direct message = kind 4 AND 104
  */
-bool isValidDirectMessage(EventData directMessageData) {
-  bool validUserMessage = false;
+bool isValidDirectMessage(EventData directMessageData, {int acceptableKind = 4}) {
 
-  List<String> allPtags = [];
-
-  if( [4, gSecretMessageKind].contains( directMessageData.kind)  ) {
-    if(gDebug > 0 && gCheckEventId == directMessageData.id) print("in isValidDirectMessage for kind $gSecretMessageKind. its id = ${directMessageData.id}");
+  if( acceptableKind != directMessageData.kind) {
+    return false;
   }
+
+  bool validUserMessage = false;
+  List<String> allPtags = [];
 
   directMessageData.tags.forEach((tag) {
     if( tag.length < 2 ) {

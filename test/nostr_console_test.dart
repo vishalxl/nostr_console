@@ -11,7 +11,7 @@ EventData exampleEdataChild = EventData("id2", "pubkey", 1111111, 1, "content ch
 Event exampleEvent = Event('event', 'id3', exampleEdata, ['relay name'], "[json]");
 Event exampleEventChild = Event('event', 'id4', exampleEdataChild, ['relay name'], "[json]");
 
-Store exampleStore = Store([], {}, [], [], [], [], []);
+Store exampleStore = Store([], {}, [], [], [], [], {});
 Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 
 //bool skipTest = true;

@@ -16,6 +16,14 @@ class HistogramEntry {
   }
 }
 
+void myWait(int ms) async {
+  Future<void> foo1() async {
+    await Future.delayed(Duration(milliseconds: ms));
+    return;
+  }
+  await foo1();
+}
+
 bool isNumeric(String s) {
  return double.tryParse(s) != null;
 }

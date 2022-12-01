@@ -374,15 +374,9 @@ class EventData {
   } // end translateAndExpandMentions
 
   // is called only once for each event received ( or read from file)
-  String? TranslateAndDecryptGroupInvite(Map<String, Tree> tempChildEventsMap) {
-    if( id == gCheckEventId) {
-      //printInColor("in TranslateAndDecryptSecretMessage: decoding $gCheckEventId\n", redColor);
-    }
+  String? TranslateAndDecryptGroupInvite() {
 
     if (content == "" ||  evaluatedContent != "") {
-      if( id == gCheckEventId) {
-        //printInColor("in TranslateAndDecryptSecretMessage: returning \n", redColor);
-      }
       return null;
     }
 
@@ -396,12 +390,6 @@ class EventData {
         return null;
       }
 
-      if( id == gCheckEventId) {
-        //printInColor("in translateAndExpandMensitons: gonna decrypt \n", redColor);
-      }
-
-      //log.info("decrypting a secret message");
-
       String? decrypted = decryptDirectMessage();
       if( decrypted != null) {
         evaluatedContent = decrypted;
@@ -410,8 +398,7 @@ class EventData {
     } // end switch
 
     return null;
-  } // end TranslateAndDecryptSecretMessage
-
+  } // end TranslateAndDecryptGroupInvite
 
   // is called only once for each event received ( or read from file)
   void translateAndDecryptKind4(Map<String, Tree> tempChildEventsMap) {
@@ -454,7 +441,7 @@ class EventData {
 
 
   // is called only once for each event received ( or read from file)
-  void translateAndDecrypt14x(List<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap) {
+  void translateAndDecrypt14x(Set<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap) {
     if( id == gCheckEventId) {
       //printInColor("in translateAndExpand14x: decoding ee810ea73072af056cceaa6d051b4fcce60739247f7bcc752e72fa5defb64f09\n", redColor);
     }
@@ -549,7 +536,7 @@ class EventData {
   }
   
 
-  String? decryptEncryptedChannelMessage(List<String> secretMessageIds, Map<String, Tree> tempChildEventsMap) {
+  String? decryptEncryptedChannelMessage(Set<String> secretMessageIds, Map<String, Tree> tempChildEventsMap) {
 
     if( id == "865c9352de11a3959c06fce5350c5a1b9fa0475d3234078a1bb45d152b370f0b") {  // known issue
       return null;
@@ -568,6 +555,7 @@ class EventData {
 
     if( keys.length != 2) {
       printWarning("\nCould not get keys for event id: $id and channelId: $channelId\n");
+      print("keys = $keys\n\n");
       return null;
     }
 
@@ -595,7 +583,7 @@ class EventData {
   }
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
-  void printEventData(int depth, bool topPost, Map<String, Tree>? tempChildEventsMap, List<String>? secretMessageIds, List<Channel>? encryptedChannels) {
+  void printEventData(int depth, bool topPost, Map<String, Tree>? tempChildEventsMap, Set<String>? secretMessageIds, List<Channel>? encryptedChannels) {
     if( !(kind == 1 || kind == 4 || kind == 42)) {
       return; // only print kind 1 and 42 and 4
     }
@@ -709,7 +697,7 @@ class EventData {
     stdout.write(strToPrint);
   }
 
-  String getAsLine(var tempChildEventsMap, List<String>? secretMessageIds, List<Channel>? encryptedChannels, {int len = 20}) {
+  String getAsLine(var tempChildEventsMap, Set<String>? secretMessageIds, List<Channel>? encryptedChannels, {int len = 20}) {
 
     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
     if(kind == 4)
@@ -746,7 +734,7 @@ class EventData {
   }
 
 
-  String getStrForChannel(int depth, var tempChildEventsMap, List<String>? secretMessageIds, List<Channel>? encryptedChannels) {
+  String getStrForChannel(int depth, var tempChildEventsMap, Set<String>? secretMessageIds, List<Channel>? encryptedChannels) {
 
     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
      // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
@@ -1390,7 +1378,7 @@ bool isValidDirectMessage(EventData directMessageData, {int acceptableKind = 4})
     }
   });
 
-  if(gDebug > 0 && gCheckEventId == directMessageData.id) print("In isvalid direct message: ptags len: ${allPtags.length}, ptags = ${allPtags}");
+  if(gDebug >= 0 && gCheckEventId == directMessageData.id) print("In isvalid direct message: ptags len: ${allPtags.length}, ptags = ${allPtags}");
 
   if( directMessageData.pubkey == userPublicKey && allPtags.length == 1) {
     if( allPtags[0].substring(0, 32) != "0".padLeft(32, '0')) { // check that the message hasn't been sent to an invalid pubkey
@@ -1571,24 +1559,17 @@ Set<Event> readEventsFromFile(String filename) {
 }
 
 
-List<String> getEncryptedChannelKeys(List<String> secretMessageIds, Map<String, Tree> tempChildEventsMap, String channelId) {
+List<String> getEncryptedChannelKeys(Set<String> inviteMessageIds, Map<String, Tree> tempChildEventsMap, String channelId) {
   Event? e = tempChildEventsMap[channelId]?.event;
   if( e != null) {
-    //print("\n----------------\nIn getEncryptedChannelKeys for encrypted channel $channelId");
 
-    for( int j = 0; j < secretMessageIds.length; j++) {
-      String messageId = secretMessageIds[j];
+    for( String inviteMessageid in inviteMessageIds) {
 
-      Event? messageEvent = tempChildEventsMap[messageId]?.event;
+      Event? messageEvent = tempChildEventsMap[inviteMessageid]?.event;
       if( messageEvent != null) {
-        //print("got a message which is: ${messageEvent.eventData.evaluatedContent}");
-        //print(messageEvent.eventData.getStrForChannel(0));
         String evaluatedContent = messageEvent.eventData.evaluatedContent;
         if( evaluatedContent.startsWith("App Encrypted Channels:")) {
-          //print("got App");
           if( evaluatedContent.contains(channelId) && evaluatedContent.length == 288) {
-            //print("in getEncryptedChannelKeys:    success: got password in pvt message: $evaluatedContent");
-            //print("len of evaluated content: ${evaluatedContent.length} ");
             String priKey = evaluatedContent.substring(159, 159 + 64);
             String pubKey = evaluatedContent.substring(224, 224 + 64);
 

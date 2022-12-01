@@ -773,7 +773,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
                                     String channelName, String channelAbout, String channelPic, String content, String tags, 
                                     Set<String> participants, Set<String> newParticipants) async {
 
-  List<String> keys = getEncryptedChannelKeys(node.encryptedGroupSecretIds, node.allChildEventsMap, channelId);
+  List<String> keys = getEncryptedChannelKeys(node.encryptedGroupInviteIds, node.allChildEventsMap, channelId);
   if( keys.length == 2) {
     String channelPriKey = keys[0], channelPubKey = keys[1];
 
@@ -799,7 +799,7 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
 String encryptChannelMessage(Store node, String channelId, String messageToSend) {
   String encryptedMessage = '';
 
-  List<String> keys = getEncryptedChannelKeys(node.encryptedGroupSecretIds, node.allChildEventsMap, channelId);
+  List<String> keys = getEncryptedChannelKeys(node.encryptedGroupInviteIds, node.allChildEventsMap, channelId);
   if( keys.length != 2) {
     printWarning("Could not get channel secret for channel id: $channelId");
     return '';
@@ -872,7 +872,7 @@ Future<void> sendInvitesForEncryptedChannel(Store node, String channelId, Set<St
     
         Channel? channel = node.getChannelFromId(node.encryptedChannels, channelId);
         if( channel != null ) {
-          List<String> keys = getEncryptedChannelKeys(node.encryptedGroupSecretIds, node.allChildEventsMap, channelId);
+          List<String> keys = getEncryptedChannelKeys(node.encryptedGroupInviteIds, node.allChildEventsMap, channelId);
 
           String channelPriKey = keys[0], channelPubKey = keys[1];
 
@@ -898,7 +898,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
     if( !justShowedChannels) {
       printInColor("                                  Encrypted Channels ", gCommentColor);
-      node.printChannelsOverview(node.encryptedChannels, gNumRoomsShownByDefault, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupSecretIds);
+      node.printChannelsOverview(node.encryptedChannels, gNumRoomsShownByDefault, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupInviteIds);
       justShowedChannels = true;
     }
 
@@ -935,7 +935,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
             firstIteration = false;
           }
 
-          String fullChannelId = node.showChannel(node.encryptedChannels, channelId, node.allChildEventsMap, node.encryptedGroupSecretIds, node.encryptedChannels, pageNum);
+          String fullChannelId = node.showChannel(node.encryptedChannels, channelId, node.allChildEventsMap, node.encryptedGroupInviteIds, node.encryptedChannels, pageNum);
           if( fullChannelId == "") {
             //print("Could not find the given channel.");
             showChannelOption = false;
@@ -1038,7 +1038,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
       case 2:
         clearScreen();
         printInColor("                              All Encrypted Channels ", gCommentColor);
-        node.printChannelsOverview(node.encryptedChannels, node.encryptedChannels.length, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupSecretIds);
+        node.printChannelsOverview(node.encryptedChannels, node.encryptedChannels.length, selectorShowAllRooms, node.allChildEventsMap, node.encryptedGroupInviteIds);
         justShowedChannels = true;
         break;
 

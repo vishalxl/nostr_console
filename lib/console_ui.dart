@@ -712,6 +712,11 @@ Future<void> channelMenuUI(Store node) async {
 
       case 3:
         clearScreen();
+        if( userPrivateKey == "") {
+            printWarning("Since no user private key has been supplied, you cannot create channels or send any event. Invoke with --prikey \n");
+            justShowedChannels = false;
+            break;
+        }
         print("Creating new channel. Kindly enter info about channel: \n");
         await createPublicChannel(node);
         clearScreen();
@@ -1044,6 +1049,12 @@ Future<void> encryptedChannelMenuUI(Store node) async {
 
       case 3:
         clearScreen();
+        if( userPrivateKey == "") {
+            printWarning("Since no user private key has been supplied, you cannot create channels or send any event. Invoke with --prikey \n");
+            justShowedChannels = false;
+            break;
+        }
+
         print("Creating new encrypted channel. Kindly enter info about channel: \n");
         await createEncryptedChannel(node);
         justShowedChannels = false;
@@ -1086,6 +1097,8 @@ Future<void> PrivateMenuUI(Store node) async {
         // in case the program was invoked with --pubkey, then user can't send messages
         if( userPrivateKey == "") {
             print("Since no private key has been supplied, messages and replies can't be sent. Invoke with --prikey \n");
+            justShowedChannels = false;
+            clearScreen();
             break;
         }
 

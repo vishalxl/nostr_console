@@ -764,12 +764,6 @@ class Store {
    * Returns id of channel if one is created, null otherwise.
    * 
    */
- 
-  /**
-   * Will create a entry in encryptedChannels ( if one does not already exist)
-   * Returns id of channel if one is created, null otherwise.
-   * 
-   */
   static String? createEncryptedRoomFromInvite( Set<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event eventSecretMessage) {
 
     String? temp140Id = getEncryptedChannelIdFromSecretMessage( eventSecretMessage);

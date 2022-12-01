@@ -5,6 +5,7 @@ import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/console_ui.dart';
 import 'package:nostr_console/settings.dart';
+import 'package:nostr_console/utils.dart';
 import 'package:args/args.dart';
 import 'package:logging/logging.dart';
 
@@ -292,7 +293,7 @@ Future<void> main(List<String> arguments) async {
       // get event for user
       if( userPublicKey!= "") {
         getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-        getMentionEvents(gListRelayUrls2, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p"); // from relay group 2
+        getMentionEvents(gListRelayUrls2, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p"); // from relay group 2
       }
 
       // get other user events
@@ -352,6 +353,7 @@ Future<void> main(List<String> arguments) async {
             Store node = getTree(initialEvents);
             gStore = node;
             
+
             clearEvents();
             mainMenuUi(node);
           });

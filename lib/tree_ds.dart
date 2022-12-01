@@ -1120,7 +1120,7 @@ class Store {
         secretEvent.eventData.TranslateAndDecryptGroupInvite();
         String? newEncryptedChannelId = createEncryptedRoomFromInvite(allEncryptedGroupInviteIds, encryptedChannels,  tempChildEventsMap, secretEvent);
         if( newEncryptedChannelId != null) {
-          usersEncryptedChannelIds.add(secretEventId); // is later used so a request can be sent for this
+          usersEncryptedChannelIds.add(newEncryptedChannelId); // is later used so a request can be sent for this
         }
       }
     });
@@ -1141,17 +1141,14 @@ class Store {
 
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
-    // get dummy events
-    sendEventsRequest(gListRelayUrls1, dummyEventIds);
+    // get dummy events and encryped channel create events
+    sendEventsRequest(gListRelayUrls1, dummyEventIds.union(usersEncryptedChannelIds));
 
     // get encrypted channel events,  get 141/142 by their mention of channels to which user has been invited through kind 104. get 140 by its event id.
-    for(String newEncryptedGroup in usersEncryptedChannelIds) {
-      getMentionEvents(gListRelayUrls2, newEncryptedGroup, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
-    }
+    getMentionEvents(gListRelayUrls2, usersEncryptedChannelIds, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
     
-    sendEventsRequest(gListRelayUrls1, usersEncryptedChannelIds);
+    //sendEventsRequest(gListRelayUrls1, usersEncryptedChannelIds);
     
-    myWait(200);
     /*
     print("allEncryptedGroupInviteIds = ${allEncryptedGroupInviteIds.length} $allEncryptedGroupInviteIds");
     print("usersEncryptedGroupIds = ${usersEncryptedGroupIds.length} $usersEncryptedGroupIds");

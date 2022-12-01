@@ -83,16 +83,16 @@ class Relays {
     sendRequest(relayUrl, request);
   }    
 
-  void getMentionEvents(String relayUrl, String publicKey, int limit, int sinceWhen, String tagToGet) {
+  void getMentionEvents(String relayUrl, Set<String> ids, int limit, int sinceWhen, String tagToGet) {
     for(int i = 0; i < gBots.length; i++) { // ignore bots
-      if( publicKey == gBots[i]) {
+      if( ids == gBots[i]) {
         return;
       }
     }
 
     String subscriptionId = "mention" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
     
-    String request = getMentionRequest(subscriptionId, publicKey, limit, sinceWhen, tagToGet);
+    String request = getMentionRequest(subscriptionId, ids, limit, sinceWhen, tagToGet);
     sendRequest(relayUrl, request);
   }    
 
@@ -102,7 +102,7 @@ class Relays {
    */
   void getMultiUserEvents(String relayUrl, List<String> publicKeys, int limit, int sinceWhen) {
     
-    List<String> reqKeys = [];
+    Set<String> reqKeys = {};
     if( relays.containsKey(relayUrl)) {
       List<String>? users = relays[relayUrl]?.users;
       if( users != null) {
@@ -250,9 +250,9 @@ void getUserEvents(List<String> serverUrls, String publicKey, int numUserEvents,
     });
 }
 
-void getMentionEvents(List<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen, String tagToGet) {
+void getMentionEvents(List<String> serverUrls, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
   serverUrls.forEach((serverUrl) {
-      relays.getMentionEvents(serverUrl, publicKey, numUserEvents, sinceWhen, tagToGet); 
+      relays.getMentionEvents(serverUrl, ids, numUserEvents, sinceWhen, tagToGet); 
     });
 }
 
@@ -283,19 +283,12 @@ void sendEventsRequest(List<String> serverUrls, Set<String> eventIds) {
   if( eventIds.length == 0) 
     return;
 
-  String eventIdsStr = "";
-  int i = 0;
-
-  eventIds.forEach((event) {
-    String comma = ",";
-    if( i == 0) 
-      comma = "";
-    eventIdsStr =  '$eventIdsStr$comma"${event}"';
-    i++;
-  });
+  String eventIdsStr = getJsonList(eventIds);;
 
   String getEventRequest = '["REQ","event_${eventIds.length}",{"ids":[$eventIdsStr]}]';
   if( gDebug > 0) log.info("sending $getEventRequest");
+  //print("send event req: $getEventRequest\n");
+
   for(int i = 0; i < serverUrls.length; i++) {
     relays.sendRequest(serverUrls[i], getEventRequest);
   }

@@ -16,7 +16,7 @@ class HistogramEntry {
   }
 }
 
-void myWait(int ms) async {
+Future<void> myWait(int ms) async {
   Future<void> foo1() async {
     await Future.delayed(Duration(milliseconds: ms));
     return;
@@ -281,6 +281,22 @@ String getStringFromUser(String prompt, [String defaultValue=""] ) {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// relay related functions
+
+// returns list in form  ( if 3 sized list)
+// "pubkey1","pubkey2","pubkey3"
+String getJsonList(Set<String> publicKeys) {
+  String s = "";
+  int i = 0;
+  for(String pubkey in publicKeys) {
+    s += "\"${pubkey.toLowerCase()}\"";
+    if( i < publicKeys.length - 1) {
+      s += ",";
+    }
+    i++; 
+  }
+  return s;
+}
+
 String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinceWhen) {
   String strTime = "";
   if( sinceWhen != 0) {
@@ -312,17 +328,17 @@ String getUserRequest(String subscriptionId, String publicKey, int numUserEvents
   return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
 }
 
-String getMentionRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen, String tagToGet) {
+String getMentionRequest(String subscriptionId, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
   }
-  var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": ["';
-  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": [';
+  var    strSubscription2  ='], "limit": $numUserEvents $strTime  } ]';
+  return strSubscription1 + getJsonList(ids) + strSubscription2;
 }
 
-String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int numUserEvents, int sinceWhen) {
+String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int numUserEvents, int sinceWhen) {
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
@@ -331,12 +347,6 @@ String getMultiUserRequest(String subscriptionId, List<String> publicKeys, int n
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": [';
   var    strSubscription2  ='], "limit": $numUserEvents $strTime } ]';
   String s = "";
-
-  for(int i = 0; i < publicKeys.length; i++) {
-    s += "\"${publicKeys[i].toLowerCase()}\"";
-    if( i < publicKeys.length - 1) {
-      s += ",";
-    } 
-  }
+  s = getJsonList(publicKeys);
   return strSubscription1 + s + strSubscription2;
 }

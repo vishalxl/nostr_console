@@ -105,18 +105,16 @@ nostr_console.exe  --file=eventsFile.txt --prikey=K
  
  # Screenshots
 
-![](https://pbs.twimg.com/media/FcdrdCVX0AE77RC?format=png&name=4096x4096) 
-Social network, mid sept 2022.
+<img width="1280" alt="2022-12-02 (5)" src="https://user-images.githubusercontent.com/64505169/205257958-8b9cdb32-2139-48dc-8394-dc1952ef825d.png">
+Showing Social network thread with re-shifting to left where threads are re-alignment to left for easier reading. 
 
-![](https://pbs.twimg.com/media/FcdsoTeX0AApZ53?format=png&name=4096x4096)
-Showing Tree with re-shifting to left threads are re-alignment to left for easier reading.
+<img width="1280" alt="2022-12-02 (6)" src="https://user-images.githubusercontent.com/64505169/205258177-3d236aaa-2745-4f99-8f04-f75a1442cee6.png">
 
-![](https://pbs.twimg.com/media/FcdsFm9XoAAk3m3?format=png&name=4096x4096)
 Public channels overview with menu
 
+<img width="1280" alt="2022-12-02 (7)" src="https://user-images.githubusercontent.com/64505169/205258403-ca81a17f-374b-4858-aa08-86e1e2f29b17.png">
 
-<img width="1280" alt="How public channels look like as of mid nov 2022" src="https://user-images.githubusercontent.com/64505169/202233571-38ca5263-e1cb-49c6-ad3b-fc51bf0a484c.png">
-How public channels look like as of mid nov 2022
+How public channels look like as of mid late 2022, with --translate flag automatically translating into English.
 
 
 # Contact

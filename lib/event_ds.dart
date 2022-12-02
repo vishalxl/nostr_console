@@ -911,11 +911,9 @@ class Event {
         newEventData.isNotification = true;
       return Event(json[0] as String, json[1] as String, newEventData, [relay], d, fromFile );
     } on Exception catch(e) {
-      if( gDebug> 0) {
-        print("Could not create event. $e");
-        print("problem str: $d\n");
+      if( gDebug > 0) {
+        print("Could not create event. $e\nproblem str: $d\n");
       }
-      //print("Caught an exception in Event.fromJson");
       throw e;
     }
   }
@@ -1537,7 +1535,10 @@ String myEncryptRaw( String privateString,
   return  outputPlainText;
 }
 
-
+/**
+ * Read events from file. a flag is set for such events, so that when writing events back, the ones read from file aren't added, and only
+ * new events from relays are written to file.
+ */
 Set<Event> readEventsFromFile(String filename) {
   Set<Event> events = {};
   final File  file   = File(filename);

@@ -1,19 +1,11 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console
-version: 0.2.1-beta
+version: 0.2.2-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
-# Release 0.2.0-beta 
-# added utils.dart
-# reply shortened
-# chmod in actions
-# improved channel display
-# /help in enc groups  
-# still fixing notifications   
-# reset notifications for dm 
-# increased ininital delay and improved print ui for enc groups
-# adding hash support
-   
+# Release 0.2.2-beta 
+# fixed issue with encrypted groups where an invite from non-follow wasn't processed/received
+
 environment:
   sdk: '>=2.17.3 <3.0.0'
 

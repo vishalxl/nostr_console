@@ -287,7 +287,7 @@ void printProfile(Store node, String profilePubkey) {
   String authorName = gKindONames[profilePubkey]?.name??"";
   String pronoun = "";
   if( profilePubkey == userPublicKey) {
-    printUnderlined("\nYour profile ($authorName):");
+    printUnderlined("\nYour profile - $authorName:");
     pronoun = "You";
   } else {
     printUnderlined("\nProfile for $authorName");
@@ -326,15 +326,17 @@ void printProfile(Store node, String profilePubkey) {
       }
     }
 
-    // print social distance info. 
-    node.printSocialDistance(profileContactEvent, authorName);
+    // print mutual follows
+    node.printMutualFollows(profileContactEvent, authorName);
     print("");
     
+    // print follow list
     stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
     profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
     print("\n");
   }
 
+  // print followers
   List<String> followers = node.getFollowers(profilePubkey);
   stdout.write("$pronoun have ${followers.length} followers:  ");
   followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));

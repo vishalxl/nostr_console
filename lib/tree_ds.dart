@@ -2099,7 +2099,7 @@ class Store {
   }
 
   // finds all your followers, and then finds which of them follow the otherPubkey
-  void printSocialDistance(Event contactEvent, String otherName) {
+  void printMutualFollows(Event contactEvent, String otherName) {
     String otherPubkey = contactEvent.eventData.pubkey;
     String otherName = getAuthorName(otherPubkey);
 

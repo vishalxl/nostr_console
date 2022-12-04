@@ -254,21 +254,19 @@ String expectedResult =
 
 
       String input_filename = 'test_event_file.csv';
-      //print("input file name = $input_filename");
       initialEvents = await readEventsFromFile(input_filename);
 
       int numFilePosts = 0;
       // count events
       initialEvents.forEach((element) { element.eventData.kind == 1? numFilePosts++: numFilePosts;});
       //print("read $numFilePosts posts from file $gEventsFilename");
-      expect(numFilePosts, 3481, reason:'Verify right number of kind 1 posts');
+      expect(numFilePosts, 3486, reason:'Verify right number of kind 1 posts');
       
 
       Store node = await getTree(initialEvents);
       
-      //await node.printDirectRoomInfo(showAllRooms);
       expect(0, node.getNumDirectRooms(), reason:'verify correct number of direct chat rooms created');
-      expect(78, node.getNumChannels(), reason: 'verify correct number of public channels created');
+      expect(80, node.getNumChannels(), reason: 'verify correct number of public channels created');
 
       expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'), 
               reason:'verify a public channel has correct number of messages');

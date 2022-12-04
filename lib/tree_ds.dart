@@ -756,7 +756,7 @@ class Store {
     String? location = eventData.getSpecificTag("location");
     if( location != null && location != "") {
       String chatRoomId = eventData.getChannelIdForTagRooms();
-      print("for event ${eventData.id} got chat room id ${chatRoomId}");
+      //print("for event ${eventData.id} got chat room id ${chatRoomId}");
       Channel? channel = getChannel(rooms, chatRoomId);
       if( channel == null) {
         Channel room = Channel(chatRoomId, "Room: " + location, "", "", [eventData.id], {}, eventData.createdAt, enumRoomType.RoomLocationTag);

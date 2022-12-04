@@ -107,7 +107,7 @@ Future<void> sendChannelMessage(Store node, Channel channel, String messageToSen
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
 
-  printInColor(toSendMessage, gCommentColor);
+  //printInColor(toSendMessage, gCommentColor);
   sendRequest( gListRelayUrls1, toSendMessage);
 
   Future<void> foo() async {

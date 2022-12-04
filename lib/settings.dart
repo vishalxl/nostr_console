@@ -96,6 +96,8 @@ List<String> gDefaultFollows = [
 // dummy account pubkey
 const String gDummyAccountPubkey = "Non";
 
+String gUserLocation = "";
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color 
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable
 const int  gDefaultTextWidth    = 96; // default text width

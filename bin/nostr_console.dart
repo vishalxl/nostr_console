@@ -26,6 +26,7 @@ const String difficultyArg  = "difficulty";
 const String translateArg = "translate";
 const String colorArg     = "color";
 const String overWriteFlag = "overwrite";
+const String locationArg = "location";
 
 Future<void> main(List<String> arguments) async {
       
@@ -40,6 +41,7 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(colorArg, abbr:"c")
                               ..addOption(difficultyArg, abbr:"y")
                               ..addFlag(overWriteFlag, abbr:"e", defaultsTo: false)
+                              ..addOption(locationArg, abbr:"l")
                               ..addFlag("debug");
     try {
       ArgResults argResults = parser.parse(arguments);
@@ -78,6 +80,16 @@ Future<void> main(List<String> arguments) async {
         gTranslate = true;
         print("Going to translate comments in last $gNumTranslateDays days using Google translate service");
         translator = GoogleTranslator();
+      }
+
+      // get location of user if given
+      if( argResults[locationArg] != null) {
+        gUserLocation = argResults[locationArg];
+        userPrivateKey = "";
+      }
+
+      if( gUserLocation.length > 0){ 
+        print("Going to add $gUserLocation as the location tag with each post.");
       }
 
       if( argResults[pubkeyArg] != null) {

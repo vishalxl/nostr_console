@@ -987,6 +987,90 @@ class Store {
       return numMessagesDecrypted;
   }
  
+  static void handleInitialKind1(Tree tree, Map<String, Tree> tempChildEventsMap, 
+                          List<Tree> topLevelTrees, List<String> tempWithoutParent, Set<String> eventIdsToFetch) {
+
+    // find its parent and then add this element to that parent Tree
+    String parentId = tree.event.eventData.getParent(tempChildEventsMap);
+
+    if( parentId != "") {
+
+      if( tree.event.eventData.id == gCheckEventId) {
+        if(gDebug >= 0) print("In Tree FromEvents: e tag not empty. its parent id = $parentId  for id: $gCheckEventId");
+      }
+
+      if(tempChildEventsMap.containsKey( parentId)) {
+        // if parent is in store
+        if( tree.event.eventData.id == gCheckEventId) {
+          if(gDebug >= 0) print("In Tree FromEvents: found its parent $parentId : for id: $gCheckEventId");
+        }
+
+        if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) {
+          // first check there isn't already a dummy in top trees
+          bool dummyParentAlreadyExists = false;
+          for( int i = 0; i < topLevelTrees.length; i++) {
+            if( topLevelTrees[i].event.eventData.id == parentId) {
+              dummyParentAlreadyExists = true;
+              topLevelTrees[i].children.add(tree); 
+              break;
+            }
+          }
+
+          if(!dummyParentAlreadyExists) {
+            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "<Parent is not of Kind 1>", [], [], [], [[]], {}), [""], "[json]");
+
+            Tree dummyTopNode = Tree.withoutStore(dummy, []);
+            dummyTopNode.children.add(tree);   
+            topLevelTrees.add(dummyTopNode);
+          } // else is handled in above for loop itself
+          
+          tempWithoutParent.add(tree.event.eventData.id); 
+          // dont add this dummy in dummyEventIds list ( cause that's used to fetch events not in store)
+        } else {
+          tempChildEventsMap[parentId]?.children.add(tree);
+        }
+      } else {
+        // in case where the parent of the new event is not in the pool of all events, 
+        // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
+
+        if( parentId.length == 64) {
+          // add the dummy evnets to top level trees, so that their real children get printed too with them so no post is missed by reader
+
+          // first check there isn't already a dummy in top trees
+          bool dummyParentAlreadyExists = false;
+          for( int i = 0; i < topLevelTrees.length; i++) {
+            if( topLevelTrees[i].event.eventData.id == parentId) {
+              dummyParentAlreadyExists = true;
+              topLevelTrees[i].children.add(tree); 
+              break;
+            }
+          }
+
+          if(!dummyParentAlreadyExists) {
+            // kind 1 is needed to enable search etc . the dummy pubkey distinguishes it as a dummy node
+            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
+
+            Tree dummyTopNode = Tree.withoutStore(dummy, []);
+            dummyTopNode.children.add(tree);
+            tempWithoutParent.add(tree.event.eventData.id); 
+            eventIdsToFetch.add(parentId);
+            topLevelTrees.add(dummyTopNode);
+          }
+          //printWarning("Added unknown event as top : ${parentId}");
+        }
+        else {
+          if( gDebug > 0) {
+            print("--------\ngot invalid parentId in fromEvents: $parentId");
+            print("original json of event:\n${tree.event.originalJson}");
+          }
+        }
+          
+      }
+    } else {
+      // is not a parent, has no parent tag. then make it its own top tree, which will be done later in this function
+    }
+  }
+
   /***********************************************************************************************************************************/
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
@@ -1015,7 +1099,7 @@ class Store {
     List<Channel> channels = [];
     List<Channel> encryptedChannels = [];
     List<DirectMessageRoom> tempDirectRooms = [];
-    Set<String> dummyEventIds = {};
+    Set<String> eventIdsToFetch = {};
     Set<String> allEncryptedGroupInviteIds = {};
 
     tempChildEventsMap.forEach((newEventId, tree) {
@@ -1051,20 +1135,12 @@ class Store {
       }
 
       // if reacted to event is not in store, then add it to dummy list so it can be fetched
-      try {
-        if( tree.event.eventData.eTags.length > 0) {
-          if (tree.event.eventData.eTags.last.length > 0) {
-            String reactedToId  = tree.event.eventData.eTags.last[0];
-            // only if the reaction was made recently in last 3 days
-            // TODO while storing need to store these newly fetched events too; otherwise these are fetched everytime
-            if( false && !tempChildEventsMap.containsKey(reactedToId) && tree.event.eventData.createdAt > getSecondsDaysAgo(3)) {
-              print("liked event not found in store.");
-              dummyEventIds.add(reactedToId);
-            }
-          }
+      if( tree.event.eventData.eTags.length > 0 && tree.event.eventData.eTags.last.length > 0) {
+        String reactedToId  = tree.event.eventData.eTags.last[0];
+        if( !tempChildEventsMap.containsKey(reactedToId) && tree.event.eventData.createdAt > getSecondsDaysAgo(3)) {
+          //print("liked event not found in store.");
+          eventIdsToFetch.add(reactedToId);
         }
-      }  catch(e) {
-        print(e);
       }
 
       if( tree.event.eventData.id == gCheckEventId) {
@@ -1075,85 +1151,9 @@ class Store {
         return;
       }
 
-      // find its parent and then add this element to that parent Tree
-      String parentId = tree.event.eventData.getParent(tempChildEventsMap);
+      // will handle kind 1 
+      handleInitialKind1(tree, tempChildEventsMap, topLevelTrees, tempWithoutParent, eventIdsToFetch);
 
-      if( parentId != "") {
-
-        if( tree.event.eventData.id == gCheckEventId) {
-          if(gDebug >= 0) print("In Tree FromEvents: e tag not empty. its parent id = $parentId  for id: $gCheckEventId");
-        }
-
-        if(tempChildEventsMap.containsKey( parentId)) {
-          // if parent is in store
-          if( tree.event.eventData.id == gCheckEventId) {
-            if(gDebug >= 0) print("In Tree FromEvents: found its parent $parentId : for id: $gCheckEventId");
-          }
-
-          if( tempChildEventsMap[parentId]?.event.eventData.kind != 1) {
-            // first check there isn't already a dummy in top trees
-            bool dummyParentAlreadyExists = false;
-            for( int i = 0; i < topLevelTrees.length; i++) {
-              if( topLevelTrees[i].event.eventData.id == parentId) {
-                dummyParentAlreadyExists = true;
-                topLevelTrees[i].children.add(tree); 
-                break;
-              }
-            }
-
-            if(!dummyParentAlreadyExists) {
-              Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "<Parent is not of Kind 1>", [], [], [], [[]], {}), [""], "[json]");
-
-              Tree dummyTopNode = Tree.withoutStore(dummy, []);
-              dummyTopNode.children.add(tree);   
-              topLevelTrees.add(dummyTopNode);
-            } // else is handled in above for loop itself
-            
-            tempWithoutParent.add(tree.event.eventData.id); 
-            // dont add this dummy in dummyEventIds list ( cause that's used to fetch events not in store)
-          } else {
-            tempChildEventsMap[parentId]?.children.add(tree);
-          }
-        } else {
-          // in case where the parent of the new event is not in the pool of all events, 
-          // then we create a dummy event and put it at top ( or make this a top event?) TODO handle so that this can be replied to, and is fetched
-
-          if( parentId.length == 64) {
-            // add the dummy evnets to top level trees, so that their real children get printed too with them so no post is missed by reader
-
-            // first check there isn't already a dummy in top trees
-            bool dummyParentAlreadyExists = false;
-            for( int i = 0; i < topLevelTrees.length; i++) {
-              if( topLevelTrees[i].event.eventData.id == parentId) {
-                dummyParentAlreadyExists = true;
-                topLevelTrees[i].children.add(tree); 
-                break;
-              }
-            }
-
-            if(!dummyParentAlreadyExists) {
-              // kind 1 is needed to enable search etc . the dummy pubkey distinguishes it as a dummy node
-              Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
-
-              Tree dummyTopNode = Tree.withoutStore(dummy, []);
-              dummyTopNode.children.add(tree);
-              tempWithoutParent.add(tree.event.eventData.id); 
-              dummyEventIds.add(parentId);
-              topLevelTrees.add(dummyTopNode);
-            }
-            //printWarning("Added unknown event as top : ${parentId}");
-          }
-          else {
-            if( gDebug > 0) {
-              print("--------\ngot invalid parentId in fromEvents: $parentId");
-              print("original json of event:\n${tree.event.originalJson}");
-            }
-          }
-            
-        }
-      } else {
-        // is not a parent, has no parent tag. then make it its own top tree, which will be done later in this function
-      }
     }); // going over tempChildEventsMap and adding children to their parent's .children list
 
     // for pubkeys that don't have any kind 0 events ( but have other evnets), add then to global kind0 store so they can still be accessed
@@ -1185,7 +1185,6 @@ class Store {
       }
     });
 
-
     //print("num channels created by 104: ${encryptedChannels.length}");
     // add parent trees as top level child trees of this tree
     for( var tree in tempChildEventsMap.values) {
@@ -1197,23 +1196,10 @@ class Store {
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
     // get dummy events and encryped channel create events
-    sendEventsRequest(gListRelayUrls1, dummyEventIds.union(usersEncryptedChannelIds));
+    sendEventsRequest(gListRelayUrls1, eventIdsToFetch.union(usersEncryptedChannelIds));
 
     // get encrypted channel events,  get 141/142 by their mention of channels to which user has been invited through kind 104. get 140 by its event id.
     getMentionEvents(gListRelayUrls1, usersEncryptedChannelIds, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
-    
-    //sendEventsRequest(gListRelayUrls1, usersEncryptedChannelIds);
-    
-    /*
-    print("allEncryptedGroupInviteIds = ${allEncryptedGroupInviteIds.length} $allEncryptedGroupInviteIds");
-    print("usersEncryptedGroupIds = ${usersEncryptedGroupIds.length} $usersEncryptedGroupIds");
-
-    Set<String> d1 = usersEncryptedGroupIds.difference(allEncryptedGroupInviteIds);
-    print("d1  = ${d1.length} $d1");
-
-    Set<String> d2 =  allEncryptedGroupInviteIds.difference(usersEncryptedGroupIds);
-    print("d2  = ${d2.length} $d2");
-    */
 
     // create a dummy top level tree and then create the main Tree object
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms, allEncryptedGroupInviteIds);

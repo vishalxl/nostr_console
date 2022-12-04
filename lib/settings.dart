@@ -98,6 +98,9 @@ const String gDummyAccountPubkey = "Non";
 
 String gUserLocation = "";
 
+const String gLocationNamePrefix = "Location: ";
+const String gLocationTagIdSuffix = " #location";
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color 
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable
 const int  gDefaultTextWidth    = 96; // default text width

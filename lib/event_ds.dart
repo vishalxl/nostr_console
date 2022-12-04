@@ -599,11 +599,11 @@ class EventData {
   }
 
   // only applicable for kind 42/142 event; returns the channel 40/140 id of which the event is part of
-  String getChannelIdForTagRooms() {
+  String getChannelIdForLocationRooms() {
     String ? location = getSpecificTag("location");
 
     if( kind == 1 &&  location != null && location != "") {
-      return location +  " #location";
+      return location +  gLocationTagIdSuffix;
     }
     return '';
   }

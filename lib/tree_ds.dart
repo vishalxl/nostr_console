@@ -746,20 +746,19 @@ class Store {
       } // end switch
 
     // create channels for location tag if it has location tag
-
-    putTagEventInChannel(ce.eventData, rooms, tempChildEventsMap);
+    addLocationTagEventInChannel(ce.eventData, rooms, tempChildEventsMap);
 
   }
 
-  static void putTagEventInChannel(EventData eventData, List<Channel> rooms, Map<String, Tree> tempChildEventsMap) {
+  // events with tag 'location' are added to their own public channel depending on value of tag. 
+  static void addLocationTagEventInChannel(EventData eventData, List<Channel> rooms, Map<String, Tree> tempChildEventsMap) {
 
     String? location = eventData.getSpecificTag("location");
     if( location != null && location != "") {
-      String chatRoomId = eventData.getChannelIdForTagRooms();
-      //print("for event ${eventData.id} got chat room id ${chatRoomId}");
+      String chatRoomId = eventData.getChannelIdForLocationRooms();
       Channel? channel = getChannel(rooms, chatRoomId);
       if( channel == null) {
-        Channel room = Channel(chatRoomId, "Room: " + location, "", "", [eventData.id], {}, eventData.createdAt, enumRoomType.RoomLocationTag);
+        Channel room = Channel(chatRoomId, gLocationNamePrefix + location, "", "", [eventData.id], {}, eventData.createdAt, enumRoomType.RoomLocationTag);
         rooms.add( room);
       } else {
         // channel already exists
@@ -1338,7 +1337,7 @@ class Store {
             // now process case where there is a tag which should put this kind 1 message in a channel
             String? location = newTree.event.eventData.getSpecificTag("location");
             if( location != null && location != "") {
-              putTagEventInChannel(newTree.event.eventData, this.channels, allChildEventsMap);
+              addLocationTagEventInChannel(newTree.event.eventData, this.channels, allChildEventsMap);
             }
 
             break;
@@ -1589,7 +1588,7 @@ class Store {
     }
 
     print("\n\n");
-    printUnderlined("Channel Name                       id        Num of Messages     Latest Message                       ");
+    printUnderlined("Channel Name                       id                Num of Messages     Latest Message                       ");
     for(int j = 0; j < numRoomsOverview; j++) {
 
       if( channelsToPrint[j].participants.length > 0 &&  !channelsToPrint[j].participants.contains(userPublicKey)) {
@@ -1601,13 +1600,19 @@ class Store {
       }
 
       String name = "";
-      String id = channelsToPrint[j].channelId.substring(0, 6);
+      String id = "";
+      if( channelsToPrint[j].channelId.contains('location')) {
+        id = myPadRight(channelsToPrint[j].channelId, 16);
+      } else {
+        id = myPadRight( channelsToPrint[j].channelId.substring(0, 6), 16);
+      }
+
       if( channelsToPrint[j].chatRoomName != "") {
         name = "${channelsToPrint[j].chatRoomName}";
       }
 
       int numMessages = channelsToPrint[j].getNumValidMessages();
-      stdout.write("${name} ${getNumSpaces(32-name.length)}  $id    $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
+      stdout.write("${name} ${getNumSpaces(32-name.length)}  $id  $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
       numChannelsActuallyPrinted++;
       List<String> messageIds = channelsToPrint[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i--) {
@@ -2039,7 +2044,7 @@ class Store {
       strTags += '["client","$clientName"]' ;
     } else if( channel.roomType == enumRoomType.RoomLocationTag) {
       String channelId = channel.getChannelId();
-      String location = channelId.substring(0, channelId.length - " #location".length);
+      String location = channelId.substring(0, channelId.length - gLocationTagIdSuffix.length);
       strTags += '["location","$location"]';
       strTags += ',["client","$clientName"]' ;
     }

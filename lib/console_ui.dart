@@ -91,6 +91,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   String sig = mySign(userPrivateKey, id);
   
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$vanityTag],"content":"$content","sig":"$sig"}]';
+  print("sending $toSendMessage");
   sendRequest( gListRelayUrls1, toSendMessage);
 }
 

@@ -1920,13 +1920,23 @@ class Store {
    */
   String getTagStr(String replyToId, String clientName, [bool addAllP = false]) {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
-    if( replyToId.isEmpty) {
-      if( gWhetherToSendClientTag)
-        return '["client","$clientName"]';
-      return "[]";
+
+    String otherTags = "";
+    if( gWhetherToSendClientTag)
+      otherTags = '["client","$clientName"]';
+
+    if( gUserLocation != "") {
+      if( otherTags.length > 0) 
+        otherTags += ",";
+      otherTags += '["location","$gUserLocation"]';
     }
 
-    String strTags = "";
+    if( replyToId.isEmpty) {
+      return otherTags.length >0 ? otherTags: '[]';
+    }
+
+    String strTags = otherTags ;
+    
 
     // find the latest event with the given id; needs to be done because we allow user to refer to events with as few as 3 or so first letters
     // and only the event that's latest is considered as the intended recipient ( this is not perfect, but easy UI)
@@ -1956,7 +1966,9 @@ class Store {
     if( latestEventId.isNotEmpty) {
       String? pTagPubkey = allChildEventsMap[latestEventId]?.event.eventData.pubkey;
       if( pTagPubkey != null) {
-        strTags += '["p","$pTagPubkey"],';
+        if( strTags.length > 0) 
+          strTags += ",";
+        strTags += '["p","$pTagPubkey"]';
       }
       String relay = getRelayOfUser(userPublicKey, pTagPubkey??"");
       relay = (relay == "")? defaultServerUrl: relay;
@@ -1968,15 +1980,17 @@ class Store {
         Tree topTree = getTopTree(t);
         rootEventId = topTree.event.eventData.id;
         if( rootEventId != latestEventId) { // if the reply is to a top/parent event, then only one e tag is sufficient
-          strTags +=  '["e","$rootEventId","","root"],';
+          if( strTags.length > 0) 
+            strTags += ",";
+          strTags +=  '["e","$rootEventId","","root"]';
         }
       }
+
+      if( strTags.length > 0) 
+        strTags += ",";
       strTags +=  '["e","$latestEventId","$relay","reply"]';
     }
 
-    if( gWhetherToSendClientTag)
-      strTags += ',["client","$clientName"]' ;
-    
     return strTags;
   }
 

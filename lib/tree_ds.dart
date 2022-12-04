@@ -205,7 +205,7 @@ int scrollableCompareTo(ScrollableMessages a, ScrollableMessages b) {
   }
 }
 
-enum enumRoomType { kind4, kind40, kind140}
+enum enumRoomType { kind4, kind40, kind140, RoomLocationTag}
 
 class ScrollableMessages {
   String       topHeader;
@@ -714,10 +714,11 @@ class Store {
           if( gDebug > 0) print("In From Event. Event type 40. Json Decode error for event id ${ce.eventData.id}. error = $e");
         }
       }
-        break;
+      return;
+
       case 42:
       {
-        String channelId = ce.eventData.getChannelIdForMessage();
+        String channelId = ce.eventData.getChannelIdForKind4x();
 
         if( channelId.length != 64) {
           break;
@@ -738,10 +739,33 @@ class Store {
           }
         }
       }
-      break;
+      return;
+
       default:
         break;  
       } // end switch
+
+    // create channels for location tag if it has location tag
+
+    putTagEventInChannel(ce.eventData, rooms, tempChildEventsMap);
+
+  }
+
+  static void putTagEventInChannel(EventData eventData, List<Channel> rooms, Map<String, Tree> tempChildEventsMap) {
+
+    String? location = eventData.getSpecificTag("location");
+    if( location != null && location != "") {
+      String chatRoomId = eventData.getChannelIdForTagRooms();
+      print("for event ${eventData.id} got chat room id ${chatRoomId}");
+      Channel? channel = getChannel(rooms, chatRoomId);
+      if( channel == null) {
+        Channel room = Channel(chatRoomId, "Room: " + location, "", "", [eventData.id], {}, eventData.createdAt, enumRoomType.RoomLocationTag);
+        rooms.add( room);
+      } else {
+        // channel already exists
+        channel.addMessageToRoom(eventData.id, tempChildEventsMap);
+      }
+    }
   }
 
   static String? getEncryptedChannelIdFromSecretMessage( Event eventSecretMessage) {
@@ -857,7 +881,7 @@ class Store {
         Set<String> participants = {};
         event14x.eventData.pTags.forEach((element) { participants.add(element);});
         
-        String chatRoomId = event14x.eventData.getChannelIdForMessage();
+        String chatRoomId = event14x.eventData.getChannelIdForKind4x();
         if( chatRoomId.length != 64) {
           break;
         }
@@ -896,7 +920,7 @@ class Store {
       case 142:
         //if( gSpecificDebug > 0 && eId == gCheckEventId) printWarning("Got ${eId}");
         if( gSpecificDebug > 0) print("got kind 142 message. total number of encrypted channels: ${encryptedChannels.length}. event e tags ${event14x.eventData.eTags}");
-        String channelId = event14x.eventData.getChannelIdForMessage();
+        String channelId = event14x.eventData.getChannelIdForKind4x();
 
         if( channelId.length == 64) { // sometimes people may forget to give e tags or give wrong tags like #e
           Channel? channel = getChannel(encryptedChannels, channelId);
@@ -1067,7 +1091,7 @@ class Store {
           
       }
     } else {
-      // is not a parent, has no parent tag. then make it its own top tree, which will be done later in this function
+      // is not a parent, has no parent tag. then make it its own top tree, which will be done later in the calling function
     }
   }
 
@@ -1110,7 +1134,7 @@ class Store {
         return;
       }
 
-      if( eKind == 42 || eKind == 40) {
+      if( eKind == 42 || eKind == 40 || (eKind == 1 && tree.event.eventData.getSpecificTag("location") != null )){
         handleChannelEvents(channels, tempChildEventsMap, tree.event);
         return;
       }
@@ -1156,15 +1180,15 @@ class Store {
 
     }); // going over tempChildEventsMap and adding children to their parent's .children list
 
-    // for pubkeys that don't have any kind 0 events ( but have other evnets), add then to global kind0 store so they can still be accessed
+    // for pubkeys that don't have any kind 0 events ( but have other events), add then to global kind0 store so they can still be accessed
     tempChildEventsMap.forEach((key, value) {
         if( !gKindONames.containsKey(value.event.eventData.pubkey)) {
           gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null );
         }
     });
 
-    // tempEncrytedSecretMessageIds has been created above 
-    // now create encrypted rooms
+    // allEncryptedGroupInviteIds has been created above 
+    // now create encrypted rooms from that list which are just for the current user
     Set<String> usersEncryptedChannelIds = {};
     allEncryptedGroupInviteIds.forEach((secretEventId) {
       Event? secretEvent = tempChildEventsMap[secretEventId]?.event;
@@ -1173,7 +1197,7 @@ class Store {
         secretEvent.eventData.TranslateAndDecryptGroupInvite();
         String? newEncryptedChannelId = createEncryptedRoomFromInvite(allEncryptedGroupInviteIds, encryptedChannels,  tempChildEventsMap, secretEvent);
         if( newEncryptedChannelId != null) {
-          usersEncryptedChannelIds.add(newEncryptedChannelId); // is later used so a request can be sent for this
+          usersEncryptedChannelIds.add(newEncryptedChannelId); // is later used so a request can be sent to fetch events related to this room
         }
       }
     });
@@ -1185,7 +1209,6 @@ class Store {
       }
     });
 
-    //print("num channels created by 104: ${encryptedChannels.length}");
     // add parent trees as top level child trees of this tree
     for( var tree in tempChildEventsMap.values) {
       if( tree.event.eventData.kind == 1 &&  tree.event.eventData.getParent(tempChildEventsMap) == "") {  // only posts which are parents
@@ -1201,7 +1224,7 @@ class Store {
     // get encrypted channel events,  get 141/142 by their mention of channels to which user has been invited through kind 104. get 140 by its event id.
     getMentionEvents(gListRelayUrls1, usersEncryptedChannelIds, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
 
-    // create a dummy top level tree and then create the main Tree object
+    // create Store
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms, allEncryptedGroupInviteIds);
   } // end fromEvents()
 
@@ -1311,6 +1334,13 @@ class Store {
                     dummyEventIds.add(parentId);                  
                 }
             }
+
+            // now process case where there is a tag which should put this kind 1 message in a channel
+            String? location = newTree.event.eventData.getSpecificTag("location");
+            if( location != null && location != "") {
+              putTagEventInChannel(newTree.event.eventData, this.channels, allChildEventsMap);
+            }
+
             break;
           case 4:
             // add kind 4 direct chat message event to its direct massage room
@@ -2003,8 +2033,17 @@ class Store {
     String channelId = channel.channelId;
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
     String strTags = "";
-    strTags +=  '["e","$channelId"],';
-    strTags += '["client","$clientName"]' ;
+    
+    if( channel.roomType == enumRoomType.kind40) {
+      strTags +=  '["e","$channelId"],';
+      strTags += '["client","$clientName"]' ;
+    } else if( channel.roomType == enumRoomType.RoomLocationTag) {
+      String channelId = channel.getChannelId();
+      String location = channelId.substring(0, channelId.length - " #location".length);
+      strTags += '["location","$location"]';
+      strTags += ',["client","$clientName"]' ;
+    }
+    
     return strTags;
   }
 

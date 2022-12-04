@@ -192,7 +192,23 @@ class EventData {
     return "";
   }
 
-   
+  // returns valueof location tag if present. returns null if that tag is not present. 
+  String? getSpecificTag(String tagName) {
+
+    for( int i = 0; i < tags.length; i++) {
+      List<String> tag = tags[i];
+      if( tag.length < 2) {
+        continue;
+      }
+      if( tag[0] == tagName) {
+        // return the first value
+        return tag[1];
+      }
+    }
+
+    return null;
+  }
+
   factory EventData.fromJson(dynamic json) {
     
     List<Contact> contactList = [];
@@ -549,7 +565,7 @@ class EventData {
     var iv = content.substring( ivIndex + 4, content.length);
     var enc_str = content.substring(0, ivIndex);
         
-    String channelId = getChannelIdForMessage();
+    String channelId = getChannelIdForKind4x();
     List<String> keys = [];
     keys = getEncryptedChannelKeys(secretMessageIds, tempChildEventsMap, channelId);
 
@@ -567,7 +583,7 @@ class EventData {
   }
 
   // only applicable for kind 42/142 event; returns the channel 40/140 id of which the event is part of
-  String getChannelIdForMessage() {
+  String getChannelIdForKind4x() {
     if( kind != 42 && kind != 142 && kind!=141) {
       return "";
     }
@@ -581,6 +597,17 @@ class EventData {
     }
     return '';
   }
+
+  // only applicable for kind 42/142 event; returns the channel 40/140 id of which the event is part of
+  String getChannelIdForTagRooms() {
+    String ? location = getSpecificTag("location");
+
+    if( kind == 1 &&  location != null && location != "") {
+      return location +  " #location";
+    }
+    return '';
+  }
+
 
   // prints event data in the format that allows it to be shown in tree form by the Tree class
   void printEventData(int depth, bool topPost, Map<String, Tree>? tempChildEventsMap, Set<String>? secretMessageIds, List<Channel>? encryptedChannels) {

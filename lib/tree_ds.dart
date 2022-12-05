@@ -2071,7 +2071,7 @@ class Store {
     String strTags = "";
     
     if( channel.roomType == enumRoomType.kind40) {
-      strTags +=  '["e","$channelId"],';
+      strTags +=  '["e","$channelId"]';
     } else if( channel.roomType == enumRoomType.RoomLocationTag) {
       String channelId = channel.getChannelId();
       String location = channelId.substring(0, channelId.length - gLocationTagIdSuffix.length);
@@ -2081,7 +2081,7 @@ class Store {
       String tag = channelId.substring(0, channelId.length - gTTagIdSuffix.length);
       strTags += '["t","$tag"]';
     }
-    
+
     strTags += ',["client","$clientName"]' ;
     return strTags;
   }

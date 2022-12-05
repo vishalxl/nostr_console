@@ -2093,7 +2093,7 @@ class Store {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
     String strTags = "";
     
-    if( channel.roomType == enumRoomType.kind40) {
+    if( channel.roomType == enumRoomType.kind40 || channel.roomType == enumRoomType.kind140) {
       strTags +=  '["e","$channelId"]';
     } else if( channel.roomType == enumRoomType.RoomLocationTag) {
       String channelId = channel.getChannelId();

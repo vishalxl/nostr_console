@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.2.2-beta";
+const String version = "0.2.3-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -253,6 +253,7 @@ usage: $exename [OPTIONS]
       -s, --disable-file            When turned on, even the default filename is not read from.
       -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
                                     is accessed for any translation request only if this flag is present, and not otherwise.
+      -l, --location                The given value is added as a 'location' tag with every kind 1 post made
       -h, --help                    Print help/usage message and exit. 
       -v, --version                 Print version and exit.
 

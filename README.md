@@ -56,6 +56,7 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       -s, --disable-file            When turned on, even the default file is not read from.
       -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
                                     is accessed for any translation request only if this flag is present, and not otherwise.
+      -l, --location                The given value is added as a 'location' tag with every kind 1 post made
       -h, --help                    Print help/usage message and exit. 
       -v, --version                 Print version and exit.
 

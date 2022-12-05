@@ -49,14 +49,13 @@ String mySign(String privateKey, String msg) {
   return sign(privateKey, msg, randomSeed);
 }
 
-
 /* @function sendReplyPostLike Used to send Reply, Post and Like ( event 1 for reply and post, and event 7 for like/reaction)
  * If replyToId is blank, then it does not reference any e/p tags, and thus becomes a top post
  * otherwise e and p tags are found for the given event being replied to, if that event data is available
  */
 Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, String content) async {
   content = addEscapeChars(content);
-  String strTags = node.getTagStr(replyToId, exename, true);
+  String strTags = node.getTagStr(replyToId, exename, true, getTagsFromContent(content));
   if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
     print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$gColorEndMarker"); 
     return; 

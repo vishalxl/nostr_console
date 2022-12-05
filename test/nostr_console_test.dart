@@ -161,13 +161,6 @@ String expectedResult =
                               a""";
                                   
     String res = makeParagraphAtDepth(paragraph, 30);
-   /* stdout.write(getNumSpaces(30));
-    stdout.write("\n");
-    stdout.write(getNumDashes(30));
-    //stdout.write(getNumSpaces(30)); */
-    //stdout.write(res); 
-
-    //return res == expectedResult;;
     expect( res, expectedResult);
   });
 
@@ -195,19 +188,6 @@ String expectedResult =
                               words""";
                                   
     String res = makeParagraphAtDepth(paragraph, 30);
-    /*stdout.write(getNumSpaces(30));
-    stdout.write("\n");
-    stdout.write(getNumDashes(30));
-    stdout.write(getNumSpaces(30));
-    stdout.write(res); */
-
-/*
-    print("paragraph length = ${paragraph.length} res length = ${res.length}");
-    print("paragraph last: ${paragraph.substring(paragraph.length - 4, paragraph.length)}");
-    print( res.substring(res.length - 100, res.length).codeUnits);
-    //res = res.trim();
-    print("res trimmed len = ${res.length}");
-*/
     expect( res, expectedResult);
   });
 
@@ -261,12 +241,10 @@ String expectedResult =
       initialEvents.forEach((element) { element.eventData.kind == 1? numFilePosts++: numFilePosts;});
       //print("read $numFilePosts posts from file $gEventsFilename");
       expect(numFilePosts, 3486, reason:'Verify right number of kind 1 posts');
-      
 
       Store node = await getTree(initialEvents);
       
       expect(0, node.getNumDirectRooms(), reason:'verify correct number of direct chat rooms created');
-
 
       int numKind4xChannels = 0;
       node.channels.forEach((channel) => channel.roomType == enumRoomType.kind40? numKind4xChannels++:1);
@@ -276,7 +254,6 @@ String expectedResult =
 
       int numLocationTagChannels = 0;
       node.channels.forEach((channel) => channel.roomType == enumRoomType.RoomLocationTag? numLocationTagChannels++:1);
-
 
       expect(78, numKind4xChannels, reason: 'verify correct number of public channels created of kind 4x');
       expect(41, numTTagChannels, reason: 'verify correct number of public channels created of T tag type');
@@ -308,7 +285,16 @@ String expectedResult =
       expect (qrCodeResult1, getQrCodeAsString(profilePubkey1), reason: "testing qr code function");
   });
 
+
+  test('utils_fns', () async {
+
+    String content1 = '#bitcoin #chatgpt #u-s-a #u_s_a #1947 #1800';
+    Set<String>? tags = getTagsFromContent(content1);
+    //print(tags);  
+    expect(tags?.length, 6);
+  });
   return ;
 } // end main
+
 
 

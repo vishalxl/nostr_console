@@ -1931,21 +1931,6 @@ class Store {
           }
         }
 
-        /*
-        // only write if its not too old ( except in case of user logged in)
-        if( gDontWriteOldEvents) {
-          if(  tree.event.eventData.createdAt <  getSecondsDaysAgo(gDontSaveBeforeDays) ) {
-            if( tree.event.eventData.pubkey != userPublicKey ) {
-              if( !(tree.event.eventData.kind == 4 && isValidDirectMessage(tree.event.eventData)))
-                if( !tree.event.eventData.pTags.contains(userPublicKey))
-                  if( ![0, 3, 40, 41, 140, 141].contains(tree.event.eventData.kind))
-                    continue;
-            
-            }
-          }
-        }
-        */
-
         if( gDummyAccountPubkey == tree.event.eventData.pubkey) {
           print("not writing dummy event pubkey");
           continue; // dont write dummy events
@@ -1984,12 +1969,24 @@ class Store {
    *                   Also adds 'client' tag with application name.
    * @parameter replyToId First few letters of an event id for which reply is being made
    */
-  String getTagStr(String replyToId, String clientName, [bool addAllP = false]) {
+  String getTagStr(String replyToId, String clientName, [bool addAllP = false, Set<String>? extraTags = null]) {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
 
+    print("extraTags = $extraTags");
     String otherTags = "";
-    if( gWhetherToSendClientTag)
-      otherTags = '["client","$clientName"]';
+
+    if( extraTags != null)
+    for( String extraTag in extraTags) {
+      if( otherTags.length > 0) 
+        otherTags += ",";
+      otherTags += '["t","$extraTag"]';
+    }
+
+    if( gWhetherToSendClientTag) {
+      if( otherTags.length > 0) 
+        otherTags += ",";
+      otherTags += '["client","$clientName"]';
+    }
 
     if( gUserLocation != "") {
       if( otherTags.length > 0) 
@@ -1997,12 +1994,12 @@ class Store {
       otherTags += '["location","$gUserLocation"]';
     }
 
+    print("otherTags = $otherTags");
     if( replyToId.isEmpty) {
       return otherTags.length >0 ? otherTags: '[]';
     }
 
     String strTags = otherTags ;
-    
 
     // find the latest event with the given id; needs to be done because we allow user to refer to events with as few as 3 or so first letters
     // and only the event that's latest is considered as the intended recipient ( this is not perfect, but easy UI)

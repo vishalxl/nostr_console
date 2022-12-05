@@ -19,6 +19,22 @@ String getPostKindFrom(enumRoomType eType) {
 
 }
 
+Set<String>? getTagsFromContent(String content) {
+  Set<String>? tags = null;
+
+  String regexp1 = '(#[a-zA-Z0-9_\-]+ )|(#[a-zA-Z0-9_\-]+)\$';
+  RegExp httpRegExp = RegExp(regexp1);
+  
+  for( var match in httpRegExp.allMatches(content) ) {
+    if( tags == null)
+      tags = {};
+
+    tags.add( content.substring(match.start + 1, match.end) );
+  }
+  return tags;
+}
+
+
 class HistogramEntry {
   String str;
   int    count;

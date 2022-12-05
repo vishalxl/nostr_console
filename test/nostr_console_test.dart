@@ -266,7 +266,21 @@ String expectedResult =
       Store node = await getTree(initialEvents);
       
       expect(0, node.getNumDirectRooms(), reason:'verify correct number of direct chat rooms created');
-      expect(80, node.getNumChannels(), reason: 'verify correct number of public channels created');
+
+
+      int numKind4xChannels = 0;
+      node.channels.forEach((channel) => channel.roomType == enumRoomType.kind40? numKind4xChannels++:1);
+
+      int numTTagChannels = 0;
+      node.channels.forEach((channel) => channel.roomType == enumRoomType.RoomTTag? numTTagChannels++:1);
+
+      int numLocationTagChannels = 0;
+      node.channels.forEach((channel) => channel.roomType == enumRoomType.RoomLocationTag? numLocationTagChannels++:1);
+
+
+      expect(78, numKind4xChannels, reason: 'verify correct number of public channels created of kind 4x');
+      expect(41, numTTagChannels, reason: 'verify correct number of public channels created of T tag type');
+      expect(2, numLocationTagChannels, reason: 'verify correct number of public channels created of Location tag');
 
       expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'), 
               reason:'verify a public channel has correct number of messages');

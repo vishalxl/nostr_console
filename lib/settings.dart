@@ -100,6 +100,7 @@ String gUserLocation = "";
 
 const String gLocationNamePrefix = "Location: ";
 const String gLocationTagIdSuffix = " #location";
+const String gTTagIdSuffix = " #t";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// UI and Color 
 const int  gMinValidTextWidth   = 60; // minimum text width acceptable

@@ -91,7 +91,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   String sig = mySign(userPrivateKey, id);
   
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$vanityTag],"content":"$content","sig":"$sig"}]';
-  print("sending $toSendMessage");
+  //print("sending $toSendMessage");
   sendRequest( gListRelayUrls1, toSendMessage);
 }
 
@@ -683,7 +683,7 @@ Future<void> channelMenuUI(Store node) async {
                         actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
 
                       if( channel != null) {
-                        await sendChannelReply(node, channel, replyTo, actualMessage, channel.roomType == enumRoomType.kind40? "42": "1");
+                        await sendChannelReply(node, channel, replyTo, actualMessage, getPostKindFrom( channel.roomType));
                         pageNum = 1; // reset it 
                       }
                     }
@@ -692,7 +692,7 @@ Future<void> channelMenuUI(Store node) async {
                     // send message to the given room
                     Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
                     if( channel != null) {
-                      await sendChannelMessage(node, channel,  messageToSend, channel.roomType == enumRoomType.kind40? "42": "1");
+                      await sendChannelMessage(node, channel,  messageToSend, getPostKindFrom(channel.roomType));
                       pageNum = 1; // reset it 
                     }
                   }

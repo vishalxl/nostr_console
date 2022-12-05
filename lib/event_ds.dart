@@ -192,6 +192,26 @@ class EventData {
     return "";
   }
 
+  List<String>? getTTags() {
+    List<String>? tTags = null;
+
+    for( int i = 0; i < tags.length; i++) {
+      List<String> tag = tags[i];
+      if( tag.length < 2) {
+        continue;
+      }
+      if( tag[0] == 't') {
+        if( tTags == null ) {
+          tTags = [];
+        }
+
+        tTags.add(tag[1]);
+      }
+    }
+
+    return tTags;
+  }
+
   // returns valueof location tag if present. returns null if that tag is not present. 
   String? getSpecificTag(String tagName) {
 
@@ -596,6 +616,10 @@ class EventData {
       }
     }
     return '';
+  }
+
+  String getChannelIdForTTagRoom(String tagValue) {
+    return tagValue + " #t";
   }
 
   // only applicable for kind 42/142 event; returns the channel 40/140 id of which the event is part of

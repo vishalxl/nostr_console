@@ -1,6 +1,24 @@
 import 'dart:io';
 import 'package:qr/qr.dart';
 
+enum enumRoomType { kind4, kind40, kind140, RoomLocationTag, RoomTTag}
+
+String getPostKindFrom(enumRoomType eType) {
+  switch (eType) {
+  case enumRoomType.kind4:
+    return "4";
+  case enumRoomType.kind40:
+    return "42";
+  case enumRoomType.kind140:
+    return "142";
+  case enumRoomType.RoomLocationTag:
+    return "1";
+  case enumRoomType.RoomTTag:
+    return "1";
+  }
+
+}
+
 class HistogramEntry {
   String str;
   int    count;

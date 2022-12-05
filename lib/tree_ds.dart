@@ -205,8 +205,6 @@ int scrollableCompareTo(ScrollableMessages a, ScrollableMessages b) {
   }
 }
 
-enum enumRoomType { kind4, kind40, kind140, RoomLocationTag}
-
 class ScrollableMessages {
   String       topHeader;
   List<String> messageIds;
@@ -746,9 +744,35 @@ class Store {
       } // end switch
 
     // create channels for location tag if it has location tag
-    addLocationTagEventInChannel(ce.eventData, rooms, tempChildEventsMap);
+    if(eKind == 1 && ce.eventData.getSpecificTag("location") != null ) {
+      addLocationTagEventInChannel(ce.eventData, rooms, tempChildEventsMap);
+    }
+    
+    if (eKind == 1 && ce.eventData.getTTags() != null) {
+      addTTagEventInChannel(ce.eventData, rooms, tempChildEventsMap);
+    }
 
   }
+
+  // events with tag 'location' are added to their own public channel depending on value of tag. 
+  static void addTTagEventInChannel(EventData eventData, List<Channel> rooms, Map<String, Tree> tempChildEventsMap) {
+
+    List<String>? tTags = eventData.getTTags();
+    if( tTags != null && tTags.length > 0) {
+      for( int i = 0; i < tTags.length; i++) {
+        String chatRoomId = eventData.getChannelIdForTTagRoom(tTags[i]);
+        Channel? channel = getChannel(rooms, chatRoomId);
+        if( channel == null) {
+          Channel room = Channel(chatRoomId, "#${tTags[i]}", "", "", [eventData.id], {}, eventData.createdAt, enumRoomType.RoomTTag);
+          rooms.add( room);
+        } else {
+          // channel already exists
+          channel.addMessageToRoom(eventData.id, tempChildEventsMap);
+        }
+      }
+    }
+  }
+
 
   // events with tag 'location' are added to their own public channel depending on value of tag. 
   static void addLocationTagEventInChannel(EventData eventData, List<Channel> rooms, Map<String, Tree> tempChildEventsMap) {
@@ -1133,7 +1157,9 @@ class Store {
         return;
       }
 
-      if( eKind == 42 || eKind == 40 || (eKind == 1 && tree.event.eventData.getSpecificTag("location") != null )){
+      if(   eKind == 42 || eKind == 40 
+        || (eKind == 1 && tree.event.eventData.getSpecificTag("location") != null )
+        || (eKind == 1 && tree.event.eventData.getTTags() != null)){
         handleChannelEvents(channels, tempChildEventsMap, tree.event);
         return;
       }
@@ -1338,6 +1364,12 @@ class Store {
             String? location = newTree.event.eventData.getSpecificTag("location");
             if( location != null && location != "") {
               addLocationTagEventInChannel(newTree.event.eventData, this.channels, allChildEventsMap);
+            }
+
+            // now process case where there is a tag which should put this kind 1 message in a channel
+            List<String>? tTags = newTree.event.eventData.getTTags();
+            if( tTags != null && tTags != "") {
+              addTTagEventInChannel(newTree.event.eventData, this.channels, allChildEventsMap);
             }
 
             break;
@@ -1601,10 +1633,13 @@ class Store {
 
       String name = "";
       String id = "";
-      if( channelsToPrint[j].channelId.contains('location')) {
+      if( channelsToPrint[j].channelId.contains('#location')) {
         id = myPadRight(channelsToPrint[j].channelId, 16);
+      } else if ( channelsToPrint[j].channelId.contains(" #t")){
+        id = myPadRight(channelsToPrint[j].channelId, 16);  
       } else {
-        id = myPadRight( channelsToPrint[j].channelId.substring(0, 6), 16);
+        String temp = channelsToPrint[j].channelId.substring(0, channelsToPrint[j].channelId.length > 6? 6: channelsToPrint[j].channelId.length);
+        id = myPadRight( temp, 16);
       }
 
       if( channelsToPrint[j].chatRoomName != "") {
@@ -1676,31 +1711,27 @@ class Store {
       return "";
     }
 
+    //print("looking for $channelId");
+
     // first check channelsId's, in case user has sent a channelId itself
     Set<String> fullChannelId = {};
     for(int i = 0; i < listChannels.length; i++) {
-      if( listChannels[i].channelId.length != 64) {
-        //printWarning("For index i = $i channel id len is ${listChannels[i].channelId.length} and listChannels[i].channelId.length = ${listChannels[i].channelId.length}");
-        continue;
-      }
-      
-      if( listChannels[i].channelId.substring(0, channelId.length) == channelId ) {
+      if( listChannels[i].channelId.length >= channelId.length && listChannels[i].channelId.substring(0, channelId.length) == channelId ) {
         fullChannelId.add(listChannels[i].channelId);
       }
     }
 
-    if(fullChannelId.length < 1) {
-      // lookup in channel room name
-      for(int i = 0; i < listChannels.length; i++) {
-          Channel room = listChannels[i];
-          if( room.chatRoomName.length < channelId.length) {
-            continue;
-          }
-          if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
-            fullChannelId.add(room.channelId);
-          }
-      } // end for
-    }
+    // lookup in channel room name
+    for(int i = 0; i < listChannels.length; i++) {
+        Channel room = listChannels[i];
+        if( room.chatRoomName.length < channelId.length) {
+          continue;
+        }
+        //print("comparing with name ${room.chatRoomName}");
+        if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
+          fullChannelId.add(room.channelId);
+        }
+    } // end for
 
     if( fullChannelId.length == 1) {
       Channel? room = getChannel( listChannels, fullChannelId.first);
@@ -2041,14 +2072,17 @@ class Store {
     
     if( channel.roomType == enumRoomType.kind40) {
       strTags +=  '["e","$channelId"],';
-      strTags += '["client","$clientName"]' ;
     } else if( channel.roomType == enumRoomType.RoomLocationTag) {
       String channelId = channel.getChannelId();
       String location = channelId.substring(0, channelId.length - gLocationTagIdSuffix.length);
       strTags += '["location","$location"]';
-      strTags += ',["client","$clientName"]' ;
+    } else if (channel.roomType == enumRoomType.RoomTTag) {
+      String channelId = channel.getChannelId();
+      String tag = channelId.substring(0, channelId.length - gTTagIdSuffix.length);
+      strTags += '["t","$tag"]';
     }
     
+    strTags += ',["client","$clientName"]' ;
     return strTags;
   }
 
@@ -2060,12 +2094,26 @@ class Store {
   String getTagStrForChannelReply(Channel channel, String replyToId, String clientName, [bool addAllP = false]) {
     String channelId = channel.channelId;
 
-    clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
-    if( replyToId.isEmpty) {
-      return '["client","$clientName"]';
+    String strTags = "";
+
+    if( channel.roomType == enumRoomType.RoomLocationTag) {
+      String channelId = channel.getChannelId();
+      String location = channelId.substring(0, channelId.length - gLocationTagIdSuffix.length);
+      strTags += '["location","$location"]';
+    } else if (channel.roomType == enumRoomType.RoomTTag) {
+      String channelId = channel.getChannelId();
+      String tag = channelId.substring(0, channelId.length - gTTagIdSuffix.length);
+      strTags += '["t","$tag"]';
+    } else {
+      strTags +=  '["e","$channelId"]';
     }
 
-    String strTags = "";
+    clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
+    if( replyToId.isEmpty) {
+      return ',["client","$clientName"]';
+    }
+
+    strTags += ',["client","$clientName"]' ;
 
     // find the latest event with the given id; needs to be done because we allow user to refer to events with as few as 3 or so first letters
     // and only the event that's latest is considered as the intended recipient ( this is not perfect, but easy UI)
@@ -2092,20 +2140,18 @@ class Store {
       printWarning('Could not find the given id: $replyToId. Sending a regular message.');
     }
 
-    strTags +=  '["e","$channelId"],';
     // found the id of event we are replying to; now gets its top event to set as root, if there is one
     if( latestEventId.isNotEmpty) {
       String? pTagPubkey = allChildEventsMap[latestEventId]?.event.eventData.pubkey;
       String relay = getRelayOfUser(userPublicKey, pTagPubkey??"");
       relay = (relay == "")? defaultServerUrl: relay;
-      strTags +=  '["e","$latestEventId"],';
+      strTags +=  ',["e","$latestEventId","","reply"]';
 
       if( pTagPubkey != null) {
-        strTags += '["p","$pTagPubkey"],';
+        strTags += ',["p","$pTagPubkey"]';
       }
     }
 
-    strTags += '["client","$clientName"]' ;
     return strTags;
   }
 

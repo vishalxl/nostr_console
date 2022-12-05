@@ -29,7 +29,7 @@ Set<String>? getTagsFromContent(String content) {
     if( tags == null)
       tags = {};
 
-    tags.add( content.substring(match.start + 1, match.end) );
+    tags.add( content.substring(match.start + 1, match.end).trim() );
   }
   return tags;
 }

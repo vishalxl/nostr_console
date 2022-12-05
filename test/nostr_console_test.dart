@@ -292,6 +292,7 @@ String expectedResult =
     Set<String>? tags = getTagsFromContent(content1);
     //print(tags);  
     expect(tags?.length, 6);
+    expect(tags?.contains("bitcoin"), true);
   });
   return ;
 } // end main

@@ -169,7 +169,7 @@ int getLatestMessageTime(ScrollableMessages channel) {
 
 Channel? getChannel(List<Channel> channels, String channelId) {
   for( int i = 0; i < channels.length; i++) {
-    if( channels[i].channelId == channelId) {
+    if( channels[i].channelId.toLowerCase() == channelId.toLowerCase()) {
       return channels[i];
     }
   }
@@ -1581,7 +1581,7 @@ class Store {
 
   Channel? getChannelFromId(List<Channel> chs, String channelId) {
     for( int i = 0; i < chs.length; i++) {
-      if( chs[i].channelId == channelId) {
+      if( chs[i].channelId.toLowerCase() == channelId.toLowerCase()) {
         return chs[i];
       }
     }
@@ -1717,30 +1717,39 @@ class Store {
     Set<String> fullChannelId = {};
     for(int i = 0; i < listChannels.length; i++) {
       if( listChannels[i].channelId.length >= channelId.length && listChannels[i].channelId.substring(0, channelId.length) == channelId ) {
-        fullChannelId.add(listChannels[i].channelId);
+        fullChannelId.add(listChannels[i].channelId.toLowerCase());
       }
     }
 
     // lookup in channel room name
     for(int i = 0; i < listChannels.length; i++) {
-        Channel room = listChannels[i];
-        if( room.chatRoomName.length < channelId.length) {
-          continue;
+      Channel room = listChannels[i];
+      if( room.chatRoomName.length < channelId.length) {
+        continue;
+      }
+
+      if( room.chatRoomName.substring(0, channelId.length).toLowerCase() == channelId.toLowerCase() ) {
+        
+        if( room.chatRoomName.toLowerCase() == channelId.toLowerCase()) {
+          //if there is an exact match in name, then use that
+          fullChannelId = {};
+          fullChannelId.add(room.channelId.toLowerCase());
+          break;
+        } else {
+          // otherwise add it to list
+          fullChannelId.add(room.channelId.toLowerCase());
         }
-        //print("comparing with name ${room.chatRoomName}");
-        if( room.chatRoomName.substring(0, channelId.length) == channelId ) {
-          fullChannelId.add(room.channelId);
-        }
+      }
     } // end for
 
     if( fullChannelId.length == 1) {
       Channel? room = getChannel( listChannels, fullChannelId.first);
       if( room != null) {
 
-        if( room.participants.length > 0) {
+        if( room.roomType == enumRoomType.kind140) {
           // enforce the participants-only rule
           if( !room.participants.contains(userPublicKey)) {
-            print("\nnot a user: ${room.participants}");
+            print("\nYou are not not a participant in this encrypted room, where the participant list is: ${room.participants}");
             print("room name: ${room.chatRoomName}");
             return "";
           }

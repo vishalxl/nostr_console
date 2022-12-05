@@ -1157,12 +1157,17 @@ class Store {
         return;
       }
 
-      if(   eKind == 42 || eKind == 40 
-        || (eKind == 1 && tree.event.eventData.getSpecificTag("location") != null )
-        || (eKind == 1 && tree.event.eventData.getTTags() != null)){
+      if(   eKind == 42 || eKind == 40 ){
         handleChannelEvents(channels, tempChildEventsMap, tree.event);
         return;
       }
+
+      if( (eKind == 1 && tree.event.eventData.getSpecificTag("location") != null )
+        || (eKind == 1 && tree.event.eventData.getTTags() != null)){
+        handleChannelEvents(channels, tempChildEventsMap, tree.event);
+        // same as above but no return cause these are processed as kind 1 too
+      }
+
 
       if( eKind == 4) {
         handleDirectMessage(tempDirectRooms, tempChildEventsMap, tree.event);
@@ -2167,6 +2172,16 @@ class Store {
 
       if( pTagPubkey != null) {
         strTags += ',["p","$pTagPubkey"]';
+      }
+
+      // add root for kind 1 in rooms
+      if( [enumRoomType.RoomLocationTag, enumRoomType.RoomTTag].contains( channel.roomType) ) {
+        Tree? replyTree = allChildEventsMap[latestEventId]??null;
+        if( replyTree != null) {
+          Tree rootTree = getTopTree(replyTree);
+          String rootEventId = rootTree.event.eventData.id;
+          strTags +=  ',["e","$rootEventId","","root"]';
+        }
       }
     }
 

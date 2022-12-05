@@ -150,6 +150,7 @@ class EventData {
           if( replyId.length > 0) { 
             return replyId;  
           } else {
+            // this is case when there is no reply id . should not actually happen given if conditions
             if( rootId.length > 0) {
               return rootId;
             }

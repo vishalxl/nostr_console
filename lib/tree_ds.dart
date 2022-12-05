@@ -1703,6 +1703,25 @@ class Store {
 
   }
 
+  Set<String> getExactMatches(List<Channel> listChannels, channelId) {
+    Set<String> matches = {};
+
+    for(int i = 0; i < listChannels.length; i++) {
+      Channel room = listChannels[i];
+
+      // exact match name
+      if( room.chatRoomName.toLowerCase() == channelId.toLowerCase()) {
+        matches.add(room.channelId);
+      }
+
+      // exact match channel id
+      if( room.channelId.toLowerCase() == channelId.toLowerCase()) {
+        matches.add(room.channelId);
+      }
+    }
+    return matches;
+  }
+
   // works for both 4x and 14x channels
   // shows the given channelId, where channelId is prefix-id or channel name as mentioned in room.name. returns full id of channel.
   // looks for channelId in id first, then in names. 
@@ -1711,36 +1730,29 @@ class Store {
       return "";
     }
 
-    //print("looking for $channelId");
-
     // first check channelsId's, in case user has sent a channelId itself
-    Set<String> fullChannelId = {};
-    for(int i = 0; i < listChannels.length; i++) {
-      if( listChannels[i].channelId.length >= channelId.length && listChannels[i].channelId.substring(0, channelId.length) == channelId ) {
-        fullChannelId.add(listChannels[i].channelId.toLowerCase());
-      }
-    }
+    Set<String> fullChannelId = getExactMatches(listChannels, channelId);
 
-    // lookup in channel room name
-    for(int i = 0; i < listChannels.length; i++) {
-      Channel room = listChannels[i];
-      if( room.chatRoomName.length < channelId.length) {
-        continue;
-      }
-
-      if( room.chatRoomName.substring(0, channelId.length).toLowerCase() == channelId.toLowerCase() ) {
-        
-        if( room.chatRoomName.toLowerCase() == channelId.toLowerCase()) {
-          //if there is an exact match in name, then use that
-          fullChannelId = {};
-          fullChannelId.add(room.channelId.toLowerCase());
-          break;
-        } else {
-          // otherwise add it to list
-          fullChannelId.add(room.channelId.toLowerCase());
+    if( fullChannelId.length != 1) {
+      for(int i = 0; i < listChannels.length; i++) {
+        // do partial match in channel room name
+        Channel room = listChannels[i];
+        if( room.chatRoomName.length >= channelId.length) {
+          if( room.chatRoomName.substring(0, channelId.length).toLowerCase() == channelId.toLowerCase() ) {
+            // otherwise add it to list
+            fullChannelId.add(room.channelId.toLowerCase());
+          }
         }
-      }
-    } // end for
+
+        // do partial match in ids
+        if( room.chatRoomName.length >= channelId.length) {
+          if( listChannels[i].channelId.length >= channelId.length && listChannels[i].channelId.substring(0, channelId.length).toLowerCase() == channelId.toLowerCase() ) {
+            // otherwise add it to list
+            fullChannelId.add(room.channelId.toLowerCase());
+          }
+        }
+      } // end for
+    }
 
     if( fullChannelId.length == 1) {
       Channel? room = getChannel( listChannels, fullChannelId.first);

@@ -120,6 +120,11 @@ How public channels look like as of mid late 2022, with --translate flag automat
 
 # Contact
 
-[Nostr Telegram Channel](https://t.me/nostr_protocol) or at Nostr Pulic Channel 52cab2e3e504ad6447d284b85b5cc601ca0613b151641e77facfec851c2ca816
+[Nostr Telegram Channel](https://t.me/nostr_protocol)
+
+[Nostr Console Telegram channel](https://t.me/+YswV5fvfvPwyNmI1)
+
+Nostr Pulic Channel 52cab2e3e504ad6447d284b85b5cc601ca0613b151641e77facfec851c2ca816
+
 
 

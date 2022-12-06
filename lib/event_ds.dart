@@ -786,7 +786,7 @@ class EventData {
   }
 
 
-  String getStrForChannel(int depth, var tempChildEventsMap, Set<String>? secretMessageIds, List<Channel>? encryptedChannels) {
+  String getStrForChannel(int depth, Map<String, Tree> tempChildEventsMap, Set<String>? secretMessageIds, List<Channel>? encryptedChannels) {
 
     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
      // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
@@ -839,7 +839,7 @@ class EventData {
 
     String contentShifted = makeParagraphAtDepth(tempEvaluatedContent, finalContentDepthInSpaces);
 
-    Event? replyToEvent = getReplyToEvent();
+    Event? replyToEvent = getReplyToChannelEvent(tempChildEventsMap);
     String strReplyTo = "";
     if( replyToEvent != null) {
       //print("in getStrForChannel: got replyTo id = ${replyToEvent.eventData.id}");
@@ -912,21 +912,30 @@ class EventData {
   }
 
   // returns the last e tag as reply to event for kind 42 and 142 events
-  Event? getReplyToEvent() {
-    for(int i = tags.length - 1; i >= 0; i--) {
-      List tag = tags[i];
-      if( tag[0] == 'e') {
-        String replyToEventId = tag[1];
-        Event? eventInReplyTo = (gStore?.allChildEventsMap[replyToEventId]?.event)??null;
-        if( eventInReplyTo != null) {
-          if ( [1,42,142].contains( eventInReplyTo.eventData.kind)) {
-            return eventInReplyTo;
+  Event? getReplyToChannelEvent(Map<String, Tree> tempChildEventsMap) {
+    switch (this.kind) {
+      case 42:
+      case 142:
+      for(int i = tags.length - 1; i >= 0; i--) {
+        List tag = tags[i];
+        if( tag[0] == 'e') {
+          String replyToEventId = tag[1];
+          Event? eventInReplyTo = (gStore?.allChildEventsMap[replyToEventId]?.event)??null;
+          if( eventInReplyTo != null) {
+            // add 1 cause 42 can reply to or tag kind 1, and we'll show that kind 1
+            if ( [1,42,142].contains( eventInReplyTo.eventData.kind)) { 
+              return eventInReplyTo;
+            }
           }
         }
       }
-    }
+      break;
+      case 1:
+        String replyToId = getParent(tempChildEventsMap);
+        return tempChildEventsMap[replyToId]?.event;
+    } // end of switch
     return null;
-  } // end getReplyToEvent() 
+  } // end getReplyToChannelEvent() 
 }
 
 // This is mostly a placeholder for EventData. TODO combine both?

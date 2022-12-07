@@ -12,6 +12,14 @@ Nostr console client using Dart
 
 # Running Nostr Console using Docker
 
+```
+docker build  -t nostr_console .
+```
+
+Then run using
+```
+docker run -it nostr_console start
+```
 
 
 # Running Remotely Using Docker
@@ -20,15 +28,15 @@ Use Nostr Terminal + Nostr Console to run Nostr Console remotely froma  browser.
 
 Build using 
 ```
-docker build -t nostr_console_image .
+docker build  -f Dockerfile.remote -t nostr_console_remote .
 ```
 
 Then run using
 ```
-docker run -it nostr_console_image start
+docker run -it nostr_console_remote start
 ```
 
-Do keep safety factors in mind.
+Do keep security/privacy factors in mind. The link is basically a online backdoor into the local terminal.
 
 
 # Use

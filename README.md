@@ -10,7 +10,13 @@ Nostr console client using Dart
 * build appimage for linux use
 
 
-# Docker 
+# Running Nostr Console using Docker
+
+
+
+# Running Remotely Using Docker
+
+Use Nostr Terminal + Nostr Console to run Nostr Console remotely froma  browser. 
 
 Build using 
 ```
@@ -19,9 +25,10 @@ docker build -t nostr_console_image .
 
 Then run using
 ```
-docker run -it nostr_console_image .
+docker run -it nostr_console_image start
 ```
 
+Do keep safety factors in mind.
 
 
 # Use

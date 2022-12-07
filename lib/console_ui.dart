@@ -795,8 +795,8 @@ Future<void> updateEncryptedChannel(Store node, String channelId,
 
     int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
     EventData eventData = EventData('id', userPublicKey, createdAt, 141, content, [], [], [], [], {}, );
-    Event encryptedChannelCreateEvent = Event("EVENT", "id", eventData, [], "");
-    String newEncryptedChannelId = await sendEventWithTags(node, encryptedChannelCreateEvent, tags); // takes 400 ms
+    Event channelUpdateEvent = Event("EVENT", "id", eventData, [], "");
+    await sendEventWithTags(node, channelUpdateEvent, tags); // takes 400 ms
 
     await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
   } else {
@@ -859,7 +859,7 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, Set<St
           int numNewUsers = participants.length;
 
           if( numNewUsers > numOldUsers) {
-            print("\nSending kind 141 invites to: $participants");
+            print("\nSending kind 141 invites to new participants: $newParticipants");
             await updateEncryptedChannel(node, fullChannelId, channelName, channelAbout, channelPic, content, tags, participants, newParticipants);
           } else {
             printWarning("\nNote: No new users added. Kindly check whether the given user(s) aren't already members of the group, that pubkeys are valid etc");

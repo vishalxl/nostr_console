@@ -94,32 +94,22 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
 
 ```                                
 
-To get ALL the latest messages for last 3 days (on linux which allows backtick execution): 
+# Command line examples
 
-```
-nostr_console.exe  --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`
-```
- 
-To get the latest messages for user with private key K ( that is also used to sign posted/sent messages): 
+To 'login' as a user with private key K: 
  
 ```
 nostr_console.exe  --prikey=K
 ```
 
-To get the latest messages for user with private key K for last 4 days ( default is 1) from relay R: 
+
+To get ALL the latest messages on relays for last 3 days (on bash shell which allows backtick execution), for user with private key K: 
+
+```
+nostr_console.exe  --prikey=K --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`
+```
  
-```
-nostr_console.exe  --prikey=K --relay=R --days=4 
-```
-
- To write events to a file ( and later read from it too), for any given private key K:
-
-```
-nostr_console.exe  --file=eventsFile.txt --prikey=K
-```
-
- 
- # Screenshots
+# Screenshots
 
 <img width="1280" alt="2022-12-02 (5)" src="https://user-images.githubusercontent.com/64505169/205257958-8b9cdb32-2139-48dc-8394-dc1952ef825d.png">
 Showing Social network thread with re-shifting to left where threads are re-alignment to left for easier reading. 

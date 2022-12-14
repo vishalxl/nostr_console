@@ -36,7 +36,7 @@ Then run using
 docker run -it nostr_console_remote start
 ```
 
-Do keep security/privacy factors in mind. The link is basically a online backdoor into the local terminal.
+Do keep security/privacy factors in mind. The link is basically a online backdoor into the local terminal. Related info [here](https://github.com/vishalxl/nostr_console/discussions/18)
 
 
 # Use

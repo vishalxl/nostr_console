@@ -24,7 +24,7 @@ docker run -it nostr_console start
 
 # Running Remotely Using Docker
 
-Use Nostr Terminal + Nostr Console to run Nostr Console remotely froma  browser. 
+Use Nostr Terminal + Nostr Console to run Nostr Console remotely from a  browser. 
 
 Build using 
 ```
@@ -36,7 +36,7 @@ Then run using
 docker run -it nostr_console_remote start
 ```
 
-Do keep security/privacy factors in mind. The link is basically a online backdoor into the local terminal. Related info [here](https://github.com/vishalxl/nostr_console/discussions/18)
+Do keep security/privacy factors in mind. The link is basically an online backdoor into the local terminal. Related info [here](https://github.com/vishalxl/nostr_console/discussions/18)
 
 
 # Use
@@ -64,7 +64,7 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
                                     sent. Default is same-as-above hard-coded well known private key. 
       -r, --relay   <relay wss url> The relay url that is used as main relay. Default is wss://nostr-relay.untethr.me.
       -d, --days    <N as num>      The latest number of days for which events are shown. Default is 1.
-      -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
+      -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to receive all events
                                     from a relay. If not provided, then events for default or given user are shown.
       -f, --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
                                     to it all the events (including the ones read, and any new received).
@@ -79,13 +79,13 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
                                     the posts or text is aligned to the center of the terminal. 
       -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 100. 
-                                    Cant be less than 60.
+                                    Can't be less than 60.
       -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is 2 and
                                     maximum allowed is 12. 
       -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
 
   Advanced
-      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
+      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. The next larger number divisible by 4 is 
                                     taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
                                     time. Minimum and default is 0, which means no difficulty.
       -e, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is

@@ -7,6 +7,7 @@ Nostr console client using Dart
 * fix issue where need to go back into main menu to update the feed
 * prikey from file, create it too --genkey 
 * initial creation of private/pub key 
+* fix --help that's dated
 * show lightning invoice as qr code 
 * notifications should show mentions too ( it does not yet) 
 * notifications , option 3, is shown only for one entry in whole thread 

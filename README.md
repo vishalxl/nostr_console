@@ -4,6 +4,7 @@ Nostr console client using Dart
 # todo
 
 * support bech32 keys
+* add new relays  ( zbd)
 * fix issue where need to go back into main menu to update the feed
 * prikey from file, create it too --genkey 
 * initial creation of private/pub key 

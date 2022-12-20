@@ -120,16 +120,18 @@ Future<void> main(List<String> arguments) async {
 
       // handle relay related argument
       if( argResults[relayArg] != null) {
-        String newRelay = argResults[relayArg];
-        if( newRelay.startsWith("wss://")) {
-          if( !gListRelayUrls1.contains(newRelay)) {
-            print("Also going to use new relay: $newRelay apart from the relays $gListRelayUrls1");
-            gListRelayUrls1.add( newRelay);
+        List<String> relayList = argResults[relayArg].split(",");
+        for (var i = 0; i < relayList.length; i++) {
+          if( relayList[i].startsWith("wss://")) {
+            if( !gListRelayUrls1.contains(relayList[i])) {
+              print("Also going to use new relay: ${relayList[i]} apart from the relays $gListRelayUrls1");
+              gListRelayUrls1.add(relayList[i]);
+            } else {
+              print("The given relay ${relayList[i]} is already present in the default relays for the app, which are $gListRelayUrls1");
+            }
           } else {
-            print("The given relay $newRelay is already present in the default relays for the app, which are $gListRelayUrls1");
+            print("The provided relay does not start with wss:// so not going to use it.");
           }
-        } else {
-          print("The provided relay does not start with wss:// so not going to use it.");
         }
       }
 

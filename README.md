@@ -16,6 +16,7 @@ Nostr console client using Dart
 * hashtag regexp should have underscore 
 * add more default users. improve who is fetched. 
 * after going to a dm room, screen doesn't clear 
+* when seeing a profile, if they have liked something, then likes after their name are shown white
 * kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
 * allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
 

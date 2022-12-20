@@ -120,19 +120,28 @@ Future<void> main(List<String> arguments) async {
 
       // handle relay related argument
       if( argResults[relayArg] != null) {
-        List<String> relayList = argResults[relayArg].split(",");
-        for (var i = 0; i < relayList.length; i++) {
-          if( relayList[i].startsWith("wss://")) {
-            if( !gListRelayUrls1.contains(relayList[i])) {
-              print("Also going to use new relay: ${relayList[i]} apart from the relays $gListRelayUrls1");
-              gListRelayUrls1.add(relayList[i]);
+        List<String> userRelayList = argResults[relayArg].split(",");
+        List<String> parsedRelays = [];
+        for (var i = 0; i < userRelayList.length; i++) {
+          if( userRelayList[i].startsWith("wss://")) {
+            if( !parsedRelays.contains(userRelayList[i])) {
+              parsedRelays.add(userRelayList[i]);
             } else {
-              print("The given relay ${relayList[i]} is already present in the default relays for the app, which are $gListRelayUrls1");
+              print("The given relay ${userRelayList[i]} is already present in the default relays for the app, which are $parsedRelays");
             }
           } else {
-            print("The provided relay does not start with wss:// so not going to use it.");
+            print("The provided relay entry: ${userRelayList[i]} does not start with wss://, omitting");
           }
         }
+
+        // verify that there is at least one valid relay they provided, otherwise keep defaults
+        if (parsedRelays.length > 0) {
+          gListRelayUrls1 = parsedRelays;
+        } else {
+          print("No valid relays were provided, using the default relay list");
+        }
+
+        print("Relay List: ${gListRelayUrls1}");
       }
 
       if( argResults[lastdaysArg] != null) {

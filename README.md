@@ -5,6 +5,7 @@ Nostr console client using Dart
 
 * support bech32 keys
 * add new relays  ( zbd)
+* menu should honour --width, its extending way beyond
 * fix issue where need to go back into main menu to update the feed
 * prikey from file, create it too --genkey 
 * initial creation of private/pub key 

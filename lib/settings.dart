@@ -50,16 +50,15 @@ int numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 const String relayNostrInfo   = 'wss://relay.nostr.info';
 String defaultServerUrl       = "wss://relay.damus.io";
 
-List<String> gListRelayUrls1 = [ defaultServerUrl,
+Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 relayNostrInfo,
                                 "wss://nostr-relay.wlvs.space"
-                              ];
+                              };
 
-List<String> gListRelayUrls2 = [
-                              
+Set<String> gListRelayUrls2 = {    
                               "wss://nostr.oxtr.dev",
                               "wss://nostr.ono.re"
-                              ];
+                              };
 
 // well known disposable test private key
 const String gDefaultPublicKey  = "";

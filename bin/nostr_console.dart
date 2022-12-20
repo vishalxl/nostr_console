@@ -120,19 +120,15 @@ Future<void> main(List<String> arguments) async {
 
       // handle relay related argument
       if( argResults[relayArg] != null) {
-        List<String> userRelayList = argResults[relayArg].split(",");
-        List<String> parsedRelays = [];
-        for (var i = 0; i < userRelayList.length; i++) {
-          if( userRelayList[i].startsWith("wss://")) {
-            if( !parsedRelays.contains(userRelayList[i])) {
-              parsedRelays.add(userRelayList[i]);
-            } else {
-              print("The given relay ${userRelayList[i]} is already present in the default relays for the app, which are $parsedRelays");
-            }
+        Set<String> userRelayList = Set.from(argResults[relayArg].split(","));
+        Set<String> parsedRelays = {};
+        userRelayList.forEach((relay) {
+          if(relay.startsWith(RegExp(r'^ws[a-z]?:\/\/'))) {
+            parsedRelays.add(relay);
           } else {
-            print("The provided relay entry: ${userRelayList[i]} does not start with wss://, omitting");
+            print("The provided relay entry: $relay does not start with ws:// or wss://, omitting");
           }
-        }
+        });
 
         // verify that there is at least one valid relay they provided, otherwise keep defaults
         if (parsedRelays.length > 0) {

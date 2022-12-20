@@ -217,7 +217,7 @@ class Relays {
 
 Relays relays = Relays({}, {}, {});
 
-void getContactFeed(List<String> relayUrls, Set<String> setContacts, int numEventsToGet, int sinceWhen) {
+void getContactFeed(Set<String> relayUrls, Set<String> setContacts, int numEventsToGet, int sinceWhen) {
   
   List<String> contacts = setContacts.toList();
   //print("in getContactFeed: numEventsToGet = $numEventsToGet numContacts = ${setContacts.length} num contacts list = ${contacts.length}");
@@ -244,25 +244,25 @@ void getContactFeed(List<String> relayUrls, Set<String> setContacts, int numEven
   return;
 }
 
-void getUserEvents(List<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen) {
+void getUserEvents(Set<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen) {
   serverUrls.forEach((serverUrl) {
       relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
     });
 }
 
-void getMentionEvents(List<String> serverUrls, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
+void getMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
   serverUrls.forEach((serverUrl) {
       relays.getMentionEvents(serverUrl, ids, numUserEvents, sinceWhen, tagToGet); 
     });
 }
 
-getKindEvents(List<int> kind, List<String> serverUrls, int limit, int sinceWhen) {
+getKindEvents(List<int> kind, Set<String> serverUrls, int limit, int sinceWhen) {
   serverUrls.forEach((serverUrl) {
       relays.getKindEvents(kind, serverUrl, limit, sinceWhen); 
     });
 }
 
-void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, int numUserEvents, int sinceWhen) {
+void getMultiUserEvents(Set<String> serverUrls, List<String> publicKeys, int numUserEvents, int sinceWhen) {
   if( gDebug > 0) print("Sending multi user request for ${publicKeys.length} users");
   
   for(var serverUrl in serverUrls) {
@@ -279,7 +279,7 @@ void getMultiUserEvents(List<String> serverUrls, List<String> publicKeys, int nu
 }
 
 // send request for specific events whose id's are passed as list eventIds
-void sendEventsRequest(List<String> serverUrls, Set<String> eventIds) {
+void sendEventsRequest(Set<String> serverUrls, Set<String> eventIds) {
   if( eventIds.length == 0) 
     return;
 
@@ -289,15 +289,15 @@ void sendEventsRequest(List<String> serverUrls, Set<String> eventIds) {
   if( gDebug > 0) log.info("sending $getEventRequest");
   //print("send event req: $getEventRequest\n");
 
-  for(int i = 0; i < serverUrls.length; i++) {
-    relays.sendRequest(serverUrls[i], getEventRequest);
-  }
+  serverUrls.forEach((url) {
+    relays.sendRequest(url, getEventRequest);
+  });
 }
 
-void sendRequest(List<String> serverUrls, request) {
-  for(int i = 0; i < serverUrls.length; i++) {
-    relays.sendRequest(serverUrls[i], request);
-  }
+void sendRequest(Set<String> serverUrls, request) {
+  serverUrls.forEach((url) { 
+    relays.sendRequest(url, request);
+  });
 }
 
 Set<Event> getRecievedEvents() {

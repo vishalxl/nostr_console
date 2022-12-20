@@ -123,7 +123,7 @@ Future<void> main(List<String> arguments) async {
         Set<String> userRelayList = Set.from(argResults[relayArg].split(","));
         Set<String> parsedRelays = {};
         userRelayList.forEach((relay) {
-          if(relay.startsWith(RegExp(r'^ws[a-z]?:\/\/'))) {
+          if(relay.startsWith(RegExp(r'^ws[s]?:\/\/'))) {
             parsedRelays.add(relay);
           } else {
             print("The provided relay entry: $relay does not start with ws:// or wss://, omitting");

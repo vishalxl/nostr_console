@@ -124,6 +124,27 @@ To get ALL the latest messages on relays for last 3 days (on bash shell which al
 nostr_console.exe  --prikey=K --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`
 ```
  
+# Configuring Proxy
+When you are in an network which blocks outgoing HTTPS (e.g. company firewall), but there is a proxy you can set environment variable before running nostr_console.
+Examples below use authentication. Drop username:password if not required.
+
+## Linux
+```
+$ export HTTP_PROXY=http://username:password@proxy.example.com:1234
+$ export HTTPS_PROXY=http://username:password@proxy.example.com:5678
+```
+To make permanent add to your shell profile, e.g. ~/.bashrc or to /etc/profile.d/
+
+## Windows
+```
+C:\setx HTTP_PROXY=http://username:password@proxy.example.com:1234
+C:\setx HTTPS_PROXY=http://username:password@proxy.example.com:5678
+```
+Using [setx](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/setx) to set an environment variable changes the value used in both the current command prompt session and all command prompt sessions that you create after running the command. It does not affect other command shells that are already running at the time you run the command.
+
+Use [set](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/set_1) to set an environment variable changes the value used until the end of the current command prompt session, or until you set the variable to a different value.
+
+
 # Screenshots
 
 <img width="1280" alt="2022-12-02 (5)" src="https://user-images.githubusercontent.com/64505169/205257958-8b9cdb32-2139-48dc-8394-dc1952ef825d.png">

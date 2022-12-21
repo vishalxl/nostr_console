@@ -39,21 +39,6 @@ docker run -it nostr_console start
 ```
 
 
-# Running Remotely Using Docker
-
-Use Nostr Terminal + Nostr Console to run Nostr Console remotely from a  browser. 
-
-Build using 
-```
-docker build  -f Dockerfile.remote -t nostr_console_remote .
-```
-
-Then run using
-```
-docker run -it nostr_console_remote start
-```
-
-Do keep security/privacy factors in mind. The link is basically an online backdoor into the local terminal. Related info [here](https://github.com/vishalxl/nostr_console/discussions/18)
 
 
 # Use

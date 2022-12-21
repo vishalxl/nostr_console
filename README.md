@@ -1,6 +1,9 @@
 # nostr_console
 Nostr console client using Dart
 
+This is an experimental or pre-alpha software made to show or know what a Nostr network client would look like. It works 90% of the time everytime; less when relays are not working perfectly. 
+
+
 # todo
 
 * [ ] support bech32 keys

@@ -115,7 +115,7 @@ Future<void> main(List<String> arguments) async {
       // write informative message in case user is not using proper keys
       if( userPublicKey == gDefaultPublicKey) {
         print("You should ideally create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
-        print("Create a private key from ${gWarningColor}astral.ninja, @damusapp or anigma.io, or even from command line using `openssl rand -hex 32`.$gColorEndMarker.\n");
+        print("Create a private key from ${gWarningColor}astral.ninja, @damusapp, or even from command line using `openssl rand -hex 32`.$gColorEndMarker.\n");
       }
 
       // handle relay related argument
@@ -126,7 +126,7 @@ Future<void> main(List<String> arguments) async {
           if(relay.startsWith(RegExp(r'^ws[s]?:\/\/'))) {
             parsedRelays.add(relay);
           } else {
-            print("The provided relay entry: $relay does not start with ws:// or wss://, omitting");
+            printWarning("The provided relay entry: \"$relay\" does not start with ws:// or wss://, omitting");
           }
         });
 
@@ -136,10 +136,9 @@ Future<void> main(List<String> arguments) async {
         } else {
           print("No valid relays were provided, using the default relay list");
         }
-
-        print("Relay List: ${gListRelayUrls1}");
       }
-
+      printSet( gListRelayUrls1, "Relay List: ");
+      
       if( argResults[lastdaysArg] != null) {
         gNumLastDays =  int.parse(argResults[lastdaysArg]);
         print("Going to show posts for last $gNumLastDays days");
@@ -156,7 +155,6 @@ Future<void> main(List<String> arguments) async {
       try {
 
         var terminalColumns = gDefaultTextWidth;
-
         if( stdout.hasTerminal )
           terminalColumns = stdout.terminalColumns;
 

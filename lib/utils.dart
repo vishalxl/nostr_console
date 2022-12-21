@@ -384,3 +384,19 @@ String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int nu
   s = getJsonList(publicKeys);
   return strSubscription1 + s + strSubscription2;
 }
+
+// ends with a newline
+void printSet( Set<String> toPrint, [ String prefix = ""]) {
+  stdout.write(prefix);
+
+  int i = 0;
+  toPrint.forEach((element) {
+    if( i != 0) {
+      stdout.write(", ");
+    }
+
+    stdout.write(element);
+    i++;
+  });
+  stdout.write("\n");
+}

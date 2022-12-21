@@ -3,28 +3,28 @@ Nostr console client using Dart
 
 # todo
 
-* support bech32 keys
-* increase author id to 5 and event id shown to 6 from 3 and 4 respectively
-* add new relays  ( zbd)
-* menu should honour --width, its extending way beyond
-* fix issue where need to go back into main menu to update the feed
-* prikey from file, create it too --genkey 
-* initial creation of private/pub key 
-* fix --help that's dated
-* show lightning invoice as qr code 
-* notifications should show mentions too ( it does not yet) 
-* notifications , option 3, is shown only for one entry in whole thread 
-* hashtag regexp should have underscore 
-* add more default users. improve who is fetched. 
-* after going to a dm room, screen doesn't clear 
-* when seeing a profile, if they have liked something, then likes after their name are shown white
-* kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
-* allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
+* [ ] support bech32 keys
+* [ ] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
+* [ ] add new relays  ( zbd)
+* [ ] menu should honour --width, its extending way beyond
+* [ ] fix issue where need to go back into main menu to update the feed
+* [ ] prikey from file, create it too --genkey 
+* [ ] initial creation of private/pub key 
+* [ ] fix --help that's dated
+* [ ] show lightning invoice as qr code 
+* [ ] notifications should show mentions too ( it does not yet) 
+* [ ] notifications , option 3, is shown only for one entry in whole thread 
+* [ ] hashtag regexp should have underscore 
+* [ ] add more default users. improve who is fetched. 
+* [ ] after going to a dm room, screen doesn't clear 
+* [ ] when seeing a profile, if they have liked something, then likes after their name are shown white
+* [ ] kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
+* [ ] allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
 
 
 # other longer term todo
-* parallel connections to relays in different isolate 
-* build appimage for linux use
+* [ ] parallel connections to relays in different isolate 
+* [ ] build appimage for linux use
 
 
 # Running Nostr Console using Docker

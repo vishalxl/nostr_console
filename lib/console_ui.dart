@@ -92,6 +92,8 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
       }
     }
 
+    await mySleep(500);
+
     if( gDebug > 0) log.info("Ending pow numShaDone = $numShaDone id = $id");
   }
 
@@ -175,7 +177,7 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
 
 // sends event e; used to send kind 3 event; can send other kinds too like channel create kind 40, or kind 0
 // does not honor tags mentioned in the Event, excpet if its kind 3, when it uses contact list to create tags
-Future<String> sendEvent(Store node, Event e) async {
+Future<String> sendEvent(Store node, Event e, [int delayAfterSend = 500]) async {
   String strTags = "";
   int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
   String content = addEscapeChars( e.eventData.content);
@@ -210,7 +212,7 @@ Future<String> sendEvent(Store node, Event e) async {
   sendRequest(gListRelayUrls1, toSendMessage);
 
   Future<void> foo() async {
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(Duration(milliseconds: delayAfterSend));
     return;
   }
   await foo();
@@ -307,7 +309,7 @@ void printProfile(Store node, String profilePubkey) {
   // print QR code
   print("The QR code for public key:\n\n");
   try {
-    print(getQrCodeAsString(profilePubkey));
+    print(getPubkeyAsQrString(profilePubkey));
   } catch(e) {
     print("Could not generate qr code.  \n");
   }
@@ -487,9 +489,10 @@ Future<void> otherOptionsMenuUi(Store node) async {
                             'Search by client name',         // 1
                             'Edit your profile',             // 2
                             'Delete event',                  // 3
-                            'Application stats',             // 4
-                            'Help and About',               // 5
-                            'E(x)it to main menu'],          // 6
+                            'Re-Broadcast contact list+',    // 4
+                            'Application stats',             // 5
+                            'Help and About',               // 6
+                            'E(x)it to main menu'],          // 7
 
                           "Other Options Menu");                     // menu name
     switch(option) {
@@ -555,10 +558,29 @@ Future<void> otherOptionsMenuUi(Store node) async {
         }
         break;
 
-      case 4: // application info
+      case 4:
+        print("TODO");
+        break;
+        printSet(gListRelayUrls1, "Going to broadcast your contact list ( kind 3) and About me( kind 0) to all relays. The relays are: ", ",");
+        stdout.write("Hold on, sending events to relays ...");
+        
+        int count  = 0;
+        Set<int> kindBroadcast = {};
+        node.allChildEventsMap.forEach((id, tree) {
+          if(  tree.event.eventData.pubkey == userPublicKey && [0,3].contains(tree.event.eventData.kind)) {
+            sendEvent(node, tree.event, 100);
+            count++;
+          }
+        });
+        stdout.write("..done\n");
+        print("\nFinished re-broadcasting $count events to all the servers.");
+
+        break;
+
+      case 5: // application info
         print("\n\n");
         printUnderlined("Application stats");
-        print("\n");
+        //print("\n");
         relays.printInfo();
         print("\n");
         printUnderlined("Event and User Info");
@@ -567,6 +589,9 @@ Future<void> otherOptionsMenuUi(Store node) async {
         print("\nEvent distribution by event kind:\n");
         node.printEventInfo();
         print("\nTotal number of all events:    ${node.allChildEventsMap.length}");
+
+        print("\nTotal events translated for $gNumTranslateDays days: $numEventsTranslated");
+
         print("Total number of user profiles: ${gKindONames.length}\n");
         printUnderlined("Logged in user Info");
         if( userPrivateKey.length == 64) {
@@ -579,11 +604,11 @@ Future<void> otherOptionsMenuUi(Store node) async {
         printVerifiedAccounts(node);
         break;
 
-      case 5:
+      case 6:
         print(helpAndAbout);
         break;
 
-      case 6:
+      case 7:
         continueOtherMenu = false;
         break;
 

@@ -282,7 +282,7 @@ String expectedResult =
    ▀▀▀▀▀▀▀ ▀▀▀     ▀▀ ▀ ▀▀     ▀  ▀ \n""";
 
       String profilePubkey1 = "add06b88bd78c5cbb2cd990e873adfba3eaf8e0217d3208be2be770eb506d430";
-      expect (qrCodeResult1, getQrCodeAsString(profilePubkey1), reason: "testing qr code function");
+      expect (qrCodeResult1, getPubkeyAsQrString(profilePubkey1), reason: "testing qr code function");
   });
 
 

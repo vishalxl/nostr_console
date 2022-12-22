@@ -23,8 +23,9 @@ GoogleTranslator? translator; // initialized in main when argument given
  
 const int gNumTranslateDays = 1;// translate for this number of days
 bool gTranslate = false; // translate flag
+int numEventsTranslated = 0;
 
-List<String> nip08PlaceHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]", "#[8]", "#[9]" ];
+List<String> nip08PlaceHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]", "#[8]", "#[9]", "#[10]", "#[11]", "#[12]"];
 
 // Structure to store kind 0 event meta data, and kind 3 meta data for each user. Will have info from latest
 // kind 0 event and/or kind 3 event, both with their own time stamps.
@@ -383,6 +384,7 @@ class EventData {
     case 1:
     case 42:
       evaluatedContent = expandMentions(content, tempChildEventsMap);
+      //evaluatedContent = expandLNInvoices(evaluatedContent);
       if( translator != null && gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
 
@@ -391,6 +393,7 @@ class EventData {
           if( gDebug > 0) print("Sending google request: translating $content");
           if( translator != null) {
             try {
+            numEventsTranslated++;
             translator?.translate(content, to: 'en')
                        .then( (result) => { evaluatedContent =   "$evaluatedContent\n\nTranslation: ${result.toString()}" , if( gDebug > 0)  print("Google translate returned successfully for one call.")} )
                        .onError((error, stackTrace)  { 

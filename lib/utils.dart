@@ -250,16 +250,62 @@ int isInRange( int n, List<List<int>> ranges ) {
   return 0;
 }
 
-String getQrCodeAsString(String str) {
+List<int> getTypeAndModule(String str) {
+  int type = 14, module = 73;
+
+  if( str.length > 3688 /~ 8) {
+    type = 16;
+    module = 81;
+  }
+
+  if( str.length > 4712 /~ 8) {
+    type = 18;
+    module = 89;
+  }
+
+
+  return [type, module];
+}
+
+int gMaxStrLenForQrCode = 600; // in bytes, maximum acceptable length of string that is converted to qr code. for lnbc1 invoices
+
+String expandLNInvoices(String content) {
+
+  String regexp1 = '(lnbc1[a-zA-Z0-9]+)';
+  RegExp httpRegExp = RegExp(regexp1);
+  
+  for( var match in httpRegExp.allMatches(content) ) {
+    String lnInvoice = content.substring(match.start, match.end);
+  
+    if( lnInvoice.length > gMaxStrLenForQrCode) {
+      continue;
+    }
+
+
+    //print(lnInvoice);
+    String qrStr = "";
+    List<int> typeAndModule = getTypeAndModule(lnInvoice);
+    //print(typeAndModule);
+    qrStr = getPubkeyAsQrString(lnInvoice, typeAndModule[0], typeAndModule[1], "");
+    //print(qrStr);
+
+    content = content.substring(0, match.start) + "\n\n" + qrStr + "\n\n" + content.substring(match.end);
+  }
+
+  return content;
+}
+
+// https://www.sproutqr.com/blog/qr-code-types
+// default 4 and 33 work for pubkey
+String getPubkeyAsQrString(String str, [int typeNumber = 4, moduleCount = 33, String leftPadding = "   "]) {
   String output = "";
 
-  final qrCode = QrCode(4, QrErrorCorrectLevel.L)
+  final qrCode = QrCode(typeNumber, QrErrorCorrectLevel.L)
                 ..addData('$str');
   final qrImage = QrImage(qrCode);
 
-  assert( qrImage.moduleCount == 33);
+  assert( qrImage.moduleCount == moduleCount);
   //print("qrimage modulecount =  ${qrImage.moduleCount}");
-  String leftPadding = "   ";
   var x = 0;
   for (x = 0; x < qrImage.moduleCount -1 ; x += 2) {
     output += leftPadding;

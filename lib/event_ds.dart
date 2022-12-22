@@ -653,7 +653,7 @@ class EventData {
     }
 
 
-    int n = 4;
+    int n = 6;
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
 
     String name = getAuthorName(pubkey);    
@@ -709,7 +709,7 @@ class EventData {
 
     strToPrint += "${name}: ";
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
-    String idDateLikes = "    |id: ${maxN(id)} , $strDate ${getReactionStr(depth)}" ;
+    String idDateLikes = "    |id: ${maxN(id)}, $strDate ${getReactionStr(depth)}" ;
     idDateLikes = idDateLikes.padRight(typicalxLen);
 
     String temp = tempEvaluatedContent==""?tempContent: tempEvaluatedContent;

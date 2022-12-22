@@ -274,7 +274,8 @@ usage: $exename [OPTIONS]
                                     well known private key. When given, posts/replies can't be sent.
       -k, --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
                                     sent. Default is a hard-coded well known private key.
-      -r, --relay   <relay wss url> The comma separated relay urls that are used as main relay. Default is wss://relay.damus.io.
+      -r, --relay   <relay urls>    The comma separated relay urls that are used as main relays. If given, these are used
+                                    rather than the default relays.
       -d, --days    <N as num>      The latest number of days for which events are shown. Default is $gDefaultNumLastDays.
       -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
                                     from a relay. If not provided, then events for default or given user are shown.

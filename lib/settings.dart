@@ -49,14 +49,15 @@ int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, num
 
 //String defaultServerUrl = 'wss://relay.damus.io';
 //const String nostrRelayUnther = 'wss://nostr-relay.untethr.me'; not working 
-const String relayNostrInfo   = 'wss://relay.nostr.info';
 String defaultServerUrl       = "wss://relay.damus.io";
+const String relayNostrInfo   = 'wss://relay.nostr.info';
 
 Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 relayNostrInfo,
-                                "wss://nostr.semisol.dev",
                                 "wss://nostr-2.zebedee.cloud",
-                                "wss://nostr.onsats.org"
+                                "wss://nostr.semisol.dev",
+                                "wss://nostr.onsats.org",
+                                 "wss://nostr.coinos.io"
 
                               };
 

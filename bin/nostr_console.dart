@@ -137,7 +137,7 @@ Future<void> main(List<String> arguments) async {
           print("No valid relays were provided, using the default relay list");
         }
       }
-      printSet( gListRelayUrls1, "Primary relays that will be used: ");
+      printSet( gListRelayUrls1, "Primary relays that will be used: ", ",");
       print("From among them, default relay: $defaultServerUrl");
       
       if( argResults[lastdaysArg] != null) {
@@ -237,7 +237,7 @@ Future<void> main(List<String> arguments) async {
 
         gEventsFilename =  argResults[eventFileArg];
         if( gEventsFilename != "") { 
-          print("Going to use ${whetherDefault}file to read from and store events: $gEventsFilename");
+          //print("Going to use ${whetherDefault}file to read from and store events: $gEventsFilename");
         }
       }
 

@@ -7,8 +7,8 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 # todo
 
 * [ ] support bech32 keys
-* [ ] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
-* [ ] add new relays  ( zbd)
+* [x] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
+* [x] add new relays  ( zbd)
 * [ ] menu should honour --width, its extending way beyond
 * [ ] fix issue where need to go back into main menu to update the feed
 * [ ] prikey from file, create it too --genkey 

@@ -299,7 +299,7 @@ Future<void> main(List<String> arguments) async {
       int limitPerSubscription = gLimitPerSubscription;
 
       // if more than 1000 posts have already been read from the file, then don't get too many day's events. Only for last 3 days. 
-      if(numFilePosts > 1000) {
+      if(numFileEvents > 1000) {
         limitPerSubscription = 5000;
         limitSelfEvents = 10;
         limitOthersEvents = 3;
@@ -326,7 +326,7 @@ Future<void> main(List<String> arguments) async {
 
       // get group and meta info events
       getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents)); 
-      getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, 40000);
+      getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(2));
 
       getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), {0,3});
 

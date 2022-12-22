@@ -331,7 +331,32 @@ String getJsonList(Set<String> publicKeys) {
   return s;
 }
 
+String getCommaSeparatedInts(Set<int>? kind) {
+  if( kind == null) {
+    return "";
+  }
+
+  if( kind.length == 0) {
+    return "";
+  }
+  
+  String strKind = "";
+  int i = 0;
+
+  kind.forEach((k) {
+    String comma = ",";
+    if( i == kind.length-1) {
+      comma = "";
+    }
+    strKind = strKind + k.toString() + comma;
+    i++;
+  });
+
+  return strKind;
+}
+
 String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinceWhen) {
+  //print("in getkindrequest: kind = $kind");
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since":${sinceWhen.toString()}';
@@ -339,27 +364,35 @@ String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinc
   var    strSubscription1  = '["REQ","$subscriptionId",{"kinds":[';
   var    strSubscription2  ='], "limit":$limit$strTime  } ]';
 
-  String strKind = "";
-  for(int i = 0; i < kind.length; i++) {
-    String comma = ",";
-    if( i == kind.length-1) {
-      comma = "";
-    }
-    strKind = strKind + kind[i].toString() + comma;
-  }
+  String strKind = getCommaSeparatedInts(kind.toSet());
+
   String strRequest = strSubscription1 + strKind + strSubscription2;
-  //print(strRequest);
+  //print("returning $strRequest");
   return strRequest;
 }
 
-String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen) {
+String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen, [Set<int>? _kind = null]) {
+  Set<int> kind = {};
+  if( _kind != null) {
+    kind = _kind;
+  }
+
+  String strKind = getCommaSeparatedInts(kind);
+
+  String strKindSection = "";
+  if( strKind.length > 0) {
+    strKindSection = '"kinds":[$strKind],';
+  }
+
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
   }
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": ["';
-  var    strSubscription2  ='"], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + publicKey.toLowerCase() + strSubscription2;
+  var    strSubscription2  ='"],$strKindSection"limit": $numUserEvents $strTime  } ]';
+  String request = strSubscription1 + publicKey.toLowerCase() + strSubscription2;
+  //print("In getUserRequest: $request");
+  return request;
 }
 
 String getMentionRequest(String subscriptionId, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
@@ -372,27 +405,36 @@ String getMentionRequest(String subscriptionId, Set<String> ids, int numUserEven
   return strSubscription1 + getJsonList(ids) + strSubscription2;
 }
 
-String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int numUserEvents, int sinceWhen) {
+String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int numUserEvents, int sinceWhen, [Set<int>? kind = null]) {
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
   }
 
+  String strKind = getCommaSeparatedInts(kind);
+
+  String strKindSection = "";
+  if( strKind.length > 0) {
+    strKindSection = '"kinds":[$strKind],';
+  }
+
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": [';
-  var    strSubscription2  ='], "limit": $numUserEvents $strTime } ]';
+  var    strSubscription2  ='],$strKindSection"limit": $numUserEvents $strTime } ]';
   String s = "";
   s = getJsonList(publicKeys);
-  return strSubscription1 + s + strSubscription2;
+  String request = strSubscription1 + s + strSubscription2;
+  //print("In getMultiUserRequest kind = $kind strKindSection = $strKindSection:  request = $request");
+  return request;
 }
 
 // ends with a newline
-void printSet( Set<String> toPrint, [ String prefix = ""]) {
+void printSet( Set<String> toPrint, [ String prefix = "", String separator = ""]) {
   stdout.write(prefix);
 
   int i = 0;
   toPrint.forEach((element) {
     if( i != 0) {
-      stdout.write(", ");
+      stdout.write(separator);
     }
 
     stdout.write(element);
@@ -400,3 +442,4 @@ void printSet( Set<String> toPrint, [ String prefix = ""]) {
   });
   stdout.write("\n");
 }
+

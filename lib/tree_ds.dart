@@ -1948,7 +1948,7 @@ class Store {
       for( var tree in allChildEventsMap.values) {
 
         if( tree.event.eventData.isDeleted) { // dont write those deleted
-          //continue; 
+          continue; 
         }
 
         if( gOverWriteFile == false) {
@@ -1958,19 +1958,24 @@ class Store {
         }
 
         if( gDummyAccountPubkey == tree.event.eventData.pubkey) {
-          print("not writing dummy event pubkey");
           continue; // dont write dummy events
         }
 
-        String line = "${tree.event.originalJson}\n";
+        if( tree.event.originalJson.length < 10) {
+          continue;
+        }
+
+        String temp = tree.event.originalJson.trim();
+        String line = "${temp}\n";
         nLinesStr += line;
         eventCounter++;
         if( tree.event.eventData.kind == 1) {
           countPosts++;
         }
-
+        //if( temp.length < 10) print('len < 10');
         if( eventCounter % numLinesTogether == 0) {
           await  file.writeAsString(nLinesStr, mode: FileMode.append).then( (file) => file);
+          //print("nLineStr len = ${nLinesStr.length}");
           nLinesStr = "";
           linesWritten += numLinesTogether;
         }

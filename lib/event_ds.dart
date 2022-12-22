@@ -956,6 +956,11 @@ class Event {
 
   factory Event.fromJson(String d, String relay, [bool fromFile = false]) {
     try {
+      if( d.length > gMaxEventLenthAccepted) {
+        //throw Exception("Event json is larger than max len");
+
+      }
+
       dynamic json = jsonDecode(d);
 
       if( json.length < 3) {
@@ -1010,7 +1015,7 @@ void addToHistogram(Map<String, int> histogram, List<String> pTags) {
 }
 
 // return the numMostFrequent number of most frequent p tags ( user pubkeys) in the given events
-List<String> getpTags(Set<Event> events, int numMostFrequent) {
+Set<String> getpTags(Set<Event> events, int numMostFrequent) {
   List<HistogramEntry> listHistogram = [];
   Map<String, int>   histogramMap = {};
   for(var event in events) {
@@ -1024,7 +1029,7 @@ List<String> getpTags(Set<Event> events, int numMostFrequent) {
     ptags.add(listHistogram[i].str);
   }
 
-  return ptags;
+  return ptags.toSet();
 }
 
 // From the list of events provided, lookup the lastst contact information for the given user/pubkey

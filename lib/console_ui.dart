@@ -49,6 +49,14 @@ String mySign(String privateKey, String msg) {
   return sign(privateKey, msg, randomSeed);
 }
 
+Future<void> mySleep(int duration) async {
+  Future<void> foo() async {
+    await Future.delayed(Duration(milliseconds: duration));
+    return;
+  }
+  await foo();  
+}
+
 /* @function sendReplyPostLike Used to send Reply, Post and Like ( event 1 for reply and post, and event 7 for like/reaction)
  * If replyToId is blank, then it does not reference any e/p tags, and thus becomes a top post
  * otherwise e and p tags are found for the given event being replied to, if that event data is available
@@ -92,6 +100,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$vanityTag],"content":"$content","sig":"$sig"}]';
   //print("sending $toSendMessage");
   sendRequest( gListRelayUrls1, toSendMessage);
+  await mySleep(200);
 }
 
 // Sends a public channel message

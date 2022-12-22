@@ -13,7 +13,8 @@ final log = Logger('ExampleLogger');
 // for debugging
 String gCheckEventId = "x98821b082a1d322e8cba84e8d430da300dea043348f422229f929059d1a9bb05"; 
 
-int gDefaultNumWaitSeconds = 8000; // is used in main()
+
+int gMaxEventLenthAccepted = 80000; // max event size. events larger than this are rejected. 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// encrypted Group settings
 const int gSecretMessageKind = 104;
@@ -39,11 +40,12 @@ const int gLimitPerSubscription     = 10000;
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
 const int gDontHighlightEventsOlderThan = 4;
 
-const int gMaxAuthorsInOneRequest = 100; // number of author requests to send in one request
-const int gMaxPtagsToGet          = 150; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
+int gDefaultNumWaitSeconds = 12000; // is used in main()
+const int gMaxAuthorsInOneRequest = 200; // number of author requests to send in one request
+const int gMaxPtagsToGet          = 200; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 // global counters of total events read or processed
-int numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
+int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
 //String defaultServerUrl = 'wss://relay.damus.io';
 //const String nostrRelayUnther = 'wss://nostr-relay.untethr.me'; not working 
@@ -52,12 +54,15 @@ String defaultServerUrl       = "wss://relay.damus.io";
 
 Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 relayNostrInfo,
-                                "wss://nostr-relay.wlvs.space"
+                                "wss://nostr.semisol.dev",
+                                "wss://nostr-2.zebedee.cloud",
+                                "wss://nostr.onsats.org"
+
                               };
 
 Set<String> gListRelayUrls2 = {    
                               "wss://nostr.oxtr.dev",
-                              "wss://nostr.ono.re"
+                              "wss://nostr.bitcoiner.social"
                               };
 
 // well known disposable test private key
@@ -66,9 +71,36 @@ String userPrivateKey = "";
 String userPublicKey  = gDefaultPublicKey;
 
 // default follows; taken from nostr.io/stats 
-List<String> gDefaultFollows = [
+Set<String> gDefaultFollows = {
+                  // 21 dec 2022
+                  "82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2", // Jack Dorsey
+                  "c4eabae1be3cf657bc1855ee05e69de9f059cb7a059227168b80b89761cbc4e0", // Mallers
+                  "a341f45ff9758f570a21b000c17d4e53a3a497c8397f26c0e6d61e5acffc7a98", // Saylor
+                  //"703e26b4f8bc0fa57f99d815dbb75b086012acc24fc557befa310f5aa08d1898", // Adam Back not sure
+                  "04c915daefee38317fa734444acee390a8269fe5810b2241e5e6dd343dfbecc9", // ODELL
+                  "e88a691e98d9987c964521dff60025f60700378a4879180dcbbb4a5027850411", // NVK
+                  "85080d3bad70ccdcd7f74c29a44f55bb85cbcd3dd0cbb957da1d215bdb931204", // Preston
+                  "83e818dfbeccea56b0f551576b3fd39a7a50e1d8159343500368fa085ccd964b", // Jeff Booth
+                  "f728d9e6e7048358e70930f5ca64b097770d989ccd86854fe618eda9c8a38106", // Lopp
+                  "bf2376e17ba4ec269d10fcc996a4746b451152be9031fa48e74553dde5526bce", // CARLA
+                  "e33fe65f1fde44c6dc17eeb38fdad0fceaf1cae8722084332ed1e32496291d42", // wiz
+                  "472f440f29ef996e92a186b8d320ff180c855903882e59d50de1b8bd5669301e", // MartyBent
+                  "1577e4599dd10c863498fe3c20bd82aafaf829a595ce83c5cf8ac3463531b09b", // yegorPetrov                  
+                  "be1d89794bf92de5dd64c1e60f6a2c70c140abac9932418fee30c5c637fe9479", // walletofsatoshi
+                  "eaf27aa104833bcd16f671488b01d65f6da30163b5848aea99677cc947dd00aa", // grubles
+                  "b9003833fabff271d0782e030be61b7ec38ce7d45a1b9a869fbdb34b9e2d2000", // brockm 
+                  "51b826cccd92569a6582e20982fd883fccfa78ad03e0241f7abec1830d7a2565", // Jonas Schnelli
+                  "92de68b21302fa2137b1cbba7259b8ba967b535a05c6d2b0847d9f35ff3cf56a", // Susie bdds
+                  "c48e29f04b482cc01ca1f9ef8c86ef8318c059e0e9353235162f080f26e14c11", // walker
+                  "a9b9525992a486aa16b3c1d3f9d3604bca08f3c15b712d70711b9aecd8c3dc44", // Alana
+                  
+                  "24e37c1e5b0c8ba8dde2754bcffc63b5b299f8064f8fb928bcf315b9c4965f3b", // lunaticoin
+                  "4523be58d395b1b196a9b8c82b038b6895cb02b683d0c253a955068dba1facd0", // martii malmi
+                  "97c70a44366a6535c145b333f973ea86dfdc2d7a99da618c40c64705ad98e322", // hodlbod
+
+                  // pre dec 2022
                   "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681", //damus
-                  "6b0d4c8d9dc59e110d380b0429a02891f1341a0fa2ba1b1cf83a3db4d47e3964",  // dergigi
+                  "6b0d4c8d9dc59e110d380b0429a02891f1341a0fa2ba1b1cf83a3db4d47e3964", // dergigi
                   "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245", // jb55
                   "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", // fiatjaf
                   "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5", // unclebobmarting 
@@ -89,7 +121,8 @@ List<String> gDefaultFollows = [
                   "f43c1f9bff677b8f27b602725ea0ad51af221344f69a6b352a74991a4479bac3", // manfromhighcastle
                   "80482e60178c2ce996da6d67577f56a2b2c47ccb1c84c81f2b7960637cb71b78", // Leo
                   "42a0825e980b9f97943d2501d99c3a3859d4e68cd6028c02afe58f96ba661a9d", // zerosequioso
-                  "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"]; // vishalxl ]; 
+
+                  "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"}; // vishalxl ]; 
 
  
 // dummy account pubkey
@@ -366,6 +399,12 @@ if( stdout.hasTerminal )
 
 lines.forEach((line) {print(line.length > terminalColumns ? line.substring(0, terminalColumns) : line );});
 
+}
+
+void printInfoForNewUser() {
+  print("""\nFor new users: The app only gets kind 1 events from people you follow or some popular well known pubkeys. 
+  If you see a message such as 'event not loaded' it implies its from someone you don't follow. Such events 
+  are eventually loaded; however, the ideal way to use this app is to follow people whose posts you want to read or follow.\n""");
 }
 
 /////////////////////////////////////////////////////////other settings related functions

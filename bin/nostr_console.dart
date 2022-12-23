@@ -259,7 +259,6 @@ Future<void> main(List<String> arguments) async {
 
       // if more than 1000 posts have already been read from the file, then don't get too many day's events. Only for last 3 days.
       if(numFileEvents > 1000) {
-        limitPerSubscription = 5000;
         limitSelfEvents = 10;
         limitOthersEvents = 3;
         gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/5;
@@ -280,8 +279,7 @@ Future<void> main(List<String> arguments) async {
         }
 
         if( userPublicKey!= "") {
-          getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-          getMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p"); 
+          getIdAndMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p");
         }
         
         Future.delayed(Duration(milliseconds: numWaitSeconds), () {
@@ -310,29 +308,19 @@ Future<void> main(List<String> arguments) async {
 
       // get event for user
       if( userPublicKey!= "") {
-        getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-        getMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p"); 
+        getIdAndMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p");
       }
-      //getKindEvents([gSecretMessageKind], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo( limitSelfEvents)); 
-
-      Set<String> usersFetched = {userPublicKey};
-      // remove user from default list if he exists in it. because theyv'e already been fetched. 
-      gDefaultFollows = gDefaultFollows.difference(usersFetched);
-
-      // get other user events
-      getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
-      usersFetched = usersFetched.union(gDefaultFollows);
 
       // get group and meta info events
       getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-      getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(4));
-
-      getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), {0,3});
+      getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+      
+      // get default users;  remove user from default list if user exists in it. because theyv'e already been fetched. 
+      getMultiUserEvents(gListRelayUrls1, gDefaultFollows.difference({userPublicKey}), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+      Set<String> usersFetched = gDefaultFollows.union({userPublicKey});
 
       stdout.write('Waiting for user posts to come in.....');
       Future.delayed( Duration(milliseconds: gDefaultNumWaitSeconds), () {
-        //print("total users fetched: ${usersFetched.length}");
-
         initialEvents.addAll(getRecievedEvents());
         clearEvents();
 
@@ -343,34 +331,42 @@ Future<void> main(List<String> arguments) async {
         initialEvents.forEach((e) => processKind3Event(e)); // first process the kind 3 event
         
         Set<String> contacts = {};
+        Set<String> pTags  = {};
+
         if( userPublicKey != "") {
-          // get the latest kind 3 event for the user, which lists his 'follows' list
+          // get the latest kind 3 event for the user, which has the 'follows' list
           Event? contactEvent = getContactEvent(userPublicKey);
 
           // if contact list was found, get user's feed; also get some default contacts
           if (contactEvent != null ) {
             if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-            contactEvent.eventData.contactList.forEach((contact) {
+              contactEvent.eventData.contactList.forEach((contact) {
               contacts.add(contact.id);
             });
-            contacts = contacts.difference(usersFetched); // remove already fetched users from this list
-
-            getContactFeed(gListRelayUrls1, contacts, 3 * gLimitPerSubscription, getSecondsDaysAgo( limitOthersEvents));
-            usersFetched = usersFetched.union(contacts);
           } else {
             print("Could not find your contact list.");
           }
         }
 
         // fetch extra events for people who don't have too large a follow list
-        if( usersFetched.length < gMaxPtagsToGet * 2 ) {
+        if( contacts.union(gDefaultFollows).length < gMaxPtagsToGet ) {
           // calculate top mentioned ptags, and then get the events for those users
-          Set<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
-          pTags = pTags.difference(usersFetched); 
-
-          getMultiUserEvents(gListRelayUrls1, pTags, 4 * gLimitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
-          usersFetched = usersFetched.union(pTags);
+          pTags = getpTags(initialEvents, gMaxPtagsToGet);
         }
+
+        // get only 200 contacts maximum
+        int maxContactsFetched = 200;
+        if( contacts.length > maxContactsFetched) {
+          int i = 0;
+          contacts.retainWhere((element) => i++ > 200); // retain only first 200, whichever they may be
+        }
+
+        getMultiUserEvents(gListRelayUrls1, contacts.union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+        usersFetched = usersFetched.union(contacts).union(pTags);
+        
+        // get meta events of all users fetched 
+        print("getting meta for # users : ${usersFetched.length} #contacts = ${contacts.length}");
+        getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*2), {0,3});
 
         // get events from channels of user
         Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);

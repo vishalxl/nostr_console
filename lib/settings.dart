@@ -34,13 +34,13 @@ bool         gOverWriteFile         = false; // overwrite the file, and don't ju
 const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
 const int gLimitFollowPosts       = 20; // when getting events, this is the since field (unless a fully formed request is given in command line)
-const int gLimitPerSubscription     = 10000;
+const int gLimitPerSubscription     = 20000;
 
  // don't show notifications for events that are older than 5 days and come when program is running
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
 const int gDontHighlightEventsOlderThan = 4;
 
-int gDefaultNumWaitSeconds = 12000; // is used in main()
+int gDefaultNumWaitSeconds = 10000; // is used in main()
 const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
 const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 

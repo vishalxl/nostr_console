@@ -102,6 +102,14 @@ class Relays {
     sendRequest(relayUrl, request);
   }    
 
+  void getIdAndMentionEvents(String relayUrl, Set<String> ids, int limit, int sinceWhen, String tagToGet) {
+
+    String subscriptionId = "id_mention_${tagToGet}" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
+    String request = getIdAndMentionRequest(subscriptionId, ids, limit, sinceWhen, tagToGet);
+    sendRequest(relayUrl, request);
+  }    
+
+
   /* 
    * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
    *          received events in the given List<Event>
@@ -255,6 +263,13 @@ void getMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents
     });
 }
 
+void getIdAndMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
+  serverUrls.forEach((serverUrl) {
+      relays.getIdAndMentionEvents(serverUrl, ids, numUserEvents, sinceWhen, tagToGet); 
+    });
+}
+
+
 getKindEvents(List<int> kind, Set<String> serverUrls, int limit, int sinceWhen) {
   serverUrls.forEach((serverUrl) {
       relays.getKindEvents(kind, serverUrl, limit, sinceWhen); 
@@ -283,7 +298,7 @@ void sendEventsRequest(Set<String> serverUrls, Set<String> eventIds) {
   if( eventIds.length == 0) 
     return;
 
-  String eventIdsStr = getJsonList(eventIds);;
+  String eventIdsStr = getCommaSeparatedQuotedStrs(eventIds);;
 
   String getEventRequest = '["REQ","event_${eventIds.length}",{"ids":[$eventIdsStr]}]';
   if( gDebug > 0) log.info("sending $getEventRequest");

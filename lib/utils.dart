@@ -364,7 +364,7 @@ String getStringFromUser(String prompt, [String defaultValue=""] ) {
 
 // returns list in form  ( if 3 sized list)
 // "pubkey1","pubkey2","pubkey3"
-String getJsonList(Set<String> publicKeys) {
+String getCommaSeparatedQuotedStrs(Set<String> publicKeys) {
   String s = "";
   int i = 0;
   for(String pubkey in publicKeys) {
@@ -448,8 +448,22 @@ String getMentionRequest(String subscriptionId, Set<String> ids, int numUserEven
   }
   var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": [';
   var    strSubscription2  ='], "limit": $numUserEvents $strTime  } ]';
-  return strSubscription1 + getJsonList(ids) + strSubscription2;
+  return strSubscription1 + getCommaSeparatedQuotedStrs(ids) + strSubscription2;
 }
+
+String getIdAndMentionRequest(String subscriptionId, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
+  String strTime = "";
+  if( sinceWhen != 0) {
+    strTime = ', "since": ${sinceWhen.toString()}';
+  }
+ 
+  var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": [';
+  var    strSubscription2  ='], "limit": $numUserEvents $strTime  } ]';
+  String req = '["REQ","$subscriptionId",{ "$tagToGet": [' + getCommaSeparatedQuotedStrs(ids) + '], "limit": $numUserEvents $strTime},{"authors":[' + getCommaSeparatedQuotedStrs(ids) + ']} ]';
+  //print("Created id and mention request: $req");
+  return req;
+}
+
 
 String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int numUserEvents, int sinceWhen, [Set<int>? kind = null]) {
   String strTime = "";
@@ -467,7 +481,7 @@ String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int nu
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": [';
   var    strSubscription2  ='],$strKindSection"limit": $numUserEvents $strTime } ]';
   String s = "";
-  s = getJsonList(publicKeys);
+  s = getCommaSeparatedQuotedStrs(publicKeys);
   String request = strSubscription1 + s + strSubscription2;
   //print("In getMultiUserRequest kind = $kind strKindSection = $strKindSection:  request = $request");
   return request;

@@ -5,7 +5,7 @@ source ./configfile.cfg
 limit=100000
 numHours=1
 
-echo -e "Requesting all evetns in last $numHours hours with a limit of $limit by executing the following command for each:"
+echo -e "Requesting all events in last $numHours hours with a limit of $limit by executing the following command for each:"
 sinceSeconds=`date -d "-$numHours hour" +%s` ; 
 req="[\"REQ\",\"l\",{\"since\":$sinceSeconds,\"limit\":$limit}]"; 
 echo  "echo $req  | websocat $server | wc " ; 

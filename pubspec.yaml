@@ -4,7 +4,9 @@ version: 0.2.8-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
 
-0.2.7
+
+
+#0.2.7
 # improved relay, fetching logic and added more default pubkeys to fetch
 # incresed user id lenth to 5, and event id len to 6 in SN
  
@@ -12,8 +14,8 @@ homepage: https://github.com/vishalxl/nostr_console
 # fixed new issue of taking longer time when file was already there
 # increased channel fetches from 2 days from half a day 
 
-0.2.8 
 
+#0.2.8 
 # reduced items fetched. 23/12
 # reduced items more  evening 23/12
 # reduced more evening 23/12

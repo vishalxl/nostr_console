@@ -236,9 +236,6 @@ Future<void> main(List<String> arguments) async {
         }
 
         gEventsFilename =  argResults[eventFileArg];
-        if( gEventsFilename != "") { 
-          //print("Going to use ${whetherDefault}file to read from and store events: $gEventsFilename");
-        }
       }
 
       Set<Event> initialEvents = {}; // collect all events here and then create tree out of them
@@ -247,13 +244,25 @@ Future<void> main(List<String> arguments) async {
         stdout.write('Reading events from ${whetherDefault}file.......');
 
         // read file events and give the events to relays from where they're picked up later
-        //log.info("before reading events");
         initialEvents = await readEventsFromFile(gEventsFilename);
-        //log.info("after reading events");
 
         // count events
         initialEvents.forEach((element) { numFileEvents++;});
         print("read $numFileEvents events from file $gEventsFilename");
+      }
+
+      int limitSelfEvents = 200;
+      int limitOthersEvents = 4;
+      int limitPerSubscription = gLimitPerSubscription;
+
+      // if more than 1000 posts have already been read from the file, then don't get too many day's events. Only for last 3 days.
+      if(numFileEvents > 1000) {
+        limitPerSubscription = 5000;
+        limitSelfEvents = 10;
+        limitOthersEvents = 3;
+        gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/5;
+      } else {
+        printInfoForNewUser();
       }
 
       // process request string. If this is blank then the application only reads from file and does not connect to internet. 
@@ -267,14 +276,18 @@ Future<void> main(List<String> arguments) async {
           numWaitSeconds = 0;
           gEventsFilename = ""; // so it wont write it back to keep it faster ( and since without internet no new event is there to be written )
         }
+
+        if( userPublicKey!= "") {
+          getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
+          getMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p"); 
+        }
         
-        Future.delayed(Duration(milliseconds: numWaitSeconds * 2), () {
+        Future.delayed(Duration(milliseconds: numWaitSeconds), () {
             Set<Event> receivedEvents = getRecievedEvents();
-            //stdout.write("received ${receivedEvents.length - numFilePosts} events\n");
 
             initialEvents.addAll(receivedEvents);
 
-            // Creat tree from all events read form file
+            // Create tree from all events read form file
             Store node = getTree(initialEvents);
             
             clearEvents();
@@ -293,21 +306,6 @@ Future<void> main(List<String> arguments) async {
       // then get the events of user-id's mentioned in p-tags of received events and the contact list
       // then display them all
 
-      int limitSelfEvents = 300;
-      int limitOthersEvents = 20;
-
-      int limitPerSubscription = gLimitPerSubscription;
-
-      // if more than 1000 posts have already been read from the file, then don't get too many day's events. Only for last 3 days. 
-      if(numFileEvents > 1000) {
-        limitPerSubscription = 5000;
-        limitSelfEvents = 10;
-        limitOthersEvents = 3;
-        gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/5 ;
-      } else {
-        printInfoForNewUser();
-      }
-
       // get event for user
       if( userPublicKey!= "") {
         getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
@@ -319,7 +317,6 @@ Future<void> main(List<String> arguments) async {
       // remove user from default list if he exists in it. because theyv'e already been fetched. 
       gDefaultFollows = gDefaultFollows.difference(usersFetched);
 
-      //print("getting defaultfollows. usersFetched len = ${usersFetched.length} ");
       // get other user events
       getMultiUserEvents(gListRelayUrls1, gDefaultFollows, 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
       usersFetched = usersFetched.union(gDefaultFollows);

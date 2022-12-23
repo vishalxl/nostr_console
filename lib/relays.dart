@@ -8,7 +8,7 @@ import 'package:web_socket_channel/io.dart';
 class Relay { 
   String             url;
   IOWebSocketChannel socket;
-  List<String>       users;         // is used so that duplicate requests aren't sent for same user for this same relay
+  Set<String>       users;         // is used so that duplicate requests aren't sent for same user for this same relay
   int                numReceived;
   int                numRequestsSent;
   Relay(this.url, this.socket, this.users, this.numReceived, this.numRequestsSent);
@@ -40,7 +40,7 @@ class Relays {
     IOWebSocketChannel  fws = IOWebSocketChannel.connect(relayUrl);
     print('In Relay.relay: connecting to relay $relayUrl');
     Map<String,  Relay> mapRelay = {};
-    Relay relayObject = Relay( relayUrl, fws, [], 0, 0);
+    Relay relayObject = Relay( relayUrl, fws, {}, 0, 0);
     mapRelay[relayUrl] = relayObject;
     
     return Relays(mapRelay, {}, {});
@@ -67,14 +67,19 @@ class Relays {
 
     String subscriptionId = "single_user" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
     if( relays.containsKey(relayUrl)) {
-      List<String>? users = relays[relayUrl]?.users;
+      Set<String>? users = relays[relayUrl]?.users;
       if( users != null) { // get a user only if it has not already been requested
         // following is too restrictive casuse changed sinceWhen is not considered. TODO improve it
-        for(int i = 0; i < users.length; i++) {
-          if( users[i] == publicKey) {
-            return;
+        bool alreadyRecevied = false;
+        users.forEach((user) { 
+          if( user == publicKey) {
+            alreadyRecevied = true;
           }
-        }
+        });
+
+        if( alreadyRecevied)
+          return;
+    
         users.add(publicKey);
       }
     }
@@ -104,9 +109,19 @@ class Relays {
   void getMultiUserEvents(String relayUrl, List<String> publicKeys, int limit, int sinceWhen, [Set<int>? kind = null]) {
     //print("In relays: getmulti events kind = $kind len ${publicKeys.length}");
 
+    Set<String> setPublicKeys = publicKeys.toSet();
+
+   if( relays.containsKey(relayUrl)) {
+      Set<String>? users = relays[relayUrl]?.users;
+      if( users != null) {
+        relays[relayUrl]?.users = users.union(setPublicKeys);
+
+      }
+   }
+
     String subscriptionId = "multiple_user" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
 
-    String request = getMultiUserRequest( subscriptionId, publicKeys.toSet(), limit, sinceWhen, kind);
+    String request = getMultiUserRequest( subscriptionId, setPublicKeys, limit, sinceWhen, kind);
     sendRequest(relayUrl, request);
   }    
 
@@ -132,7 +147,7 @@ class Relays {
 
       try {
           IOWebSocketChannel fws2 = IOWebSocketChannel.connect(relay);
-          Relay newRelay = Relay(relay, fws2, [], 0, 1);
+          Relay newRelay = Relay(relay, fws2, {}, 0, 1);
           relays[relay] = newRelay;
           fws = fws2;
           fws2.stream.listen(

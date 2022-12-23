@@ -365,7 +365,7 @@ Future<void> main(List<String> arguments) async {
         usersFetched = usersFetched.union(contacts).union(pTags);
         
         // get meta events of all users fetched 
-        print("getting meta for # users : ${usersFetched.length} #contacts = ${contacts.length}");
+        //print("getting meta for # users : ${usersFetched.length} #contacts = ${contacts.length}");
         getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*2), {0,3});
 
         // get events from channels of user

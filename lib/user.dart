@@ -1,5 +1,4 @@
 
-import 'dart:io';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/utils.dart';
 

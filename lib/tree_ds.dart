@@ -2004,7 +2004,7 @@ class Store {
   String getTagStr(String replyToId, String clientName, [bool addAllP = false, Set<String>? extraTags = null]) {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
 
-    print("extraTags = $extraTags");
+    //print("extraTags = $extraTags");
     String otherTags = "";
 
     if( extraTags != null)
@@ -2026,7 +2026,7 @@ class Store {
       otherTags += '["location","$gUserLocation"]';
     }
 
-    print("otherTags = $otherTags");
+    //print("otherTags = $otherTags");
     if( replyToId.isEmpty) {
       return otherTags.length >0 ? otherTags: '[]';
     }

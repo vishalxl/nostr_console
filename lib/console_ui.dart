@@ -6,6 +6,7 @@ import 'package:nostr_console/tree_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
+import 'package:nostr_console/user.dart';
 import 'package:bip340/bip340.dart';
 
 Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = true])  async {

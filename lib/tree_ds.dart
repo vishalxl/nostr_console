@@ -2,8 +2,9 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/relays.dart';
-import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
+import 'package:nostr_console/settings.dart';
+import 'package:nostr_console/user.dart';
 import 'dart:math'; // for Point 
  
 

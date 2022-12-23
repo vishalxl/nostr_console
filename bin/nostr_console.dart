@@ -6,6 +6,8 @@ import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/console_ui.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
+import 'package:nostr_console/user.dart';
+
 import 'package:args/args.dart';
 import 'package:logging/logging.dart';
 
@@ -322,8 +324,8 @@ Future<void> main(List<String> arguments) async {
       usersFetched = usersFetched.union(gDefaultFollows);
 
       // get group and meta info events
-      getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents)); 
-      getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(2));
+      getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
+      getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(4));
 
       getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), {0,3});
 
@@ -352,6 +354,7 @@ Future<void> main(List<String> arguments) async {
               contacts.add(contact.id);
             });
             contacts = contacts.difference(usersFetched); // remove already fetched users from this list
+
             getContactFeed(gListRelayUrls1, contacts, 3 * gLimitPerSubscription, getSecondsDaysAgo( limitOthersEvents));
             usersFetched = usersFetched.union(contacts);
           } else {
@@ -359,14 +362,19 @@ Future<void> main(List<String> arguments) async {
           }
         }
 
-        // calculate top mentioned ptags, and then get the events for those users
-        Set<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
+        // fetch extra events for people who don't have too large a follow list
+        if( usersFetched.length < gMaxPtagsToGet * 2 ) {
+          // calculate top mentioned ptags, and then get the events for those users
+          Set<String> pTags = getpTags(initialEvents, gMaxPtagsToGet);
+          pTags = pTags.difference(usersFetched); 
 
-        pTags = pTags.difference(usersFetched); 
-        getMultiUserEvents(gListRelayUrls1, pTags, 4 * gLimitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
-        usersFetched = usersFetched.union(pTags);
+          getMultiUserEvents(gListRelayUrls1, pTags, 4 * gLimitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+          usersFetched = usersFetched.union(pTags);
+        }
 
-        //print("total users fetched: ${usersFetched.length}");
+        // get events from channels of user
+        Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);
+        //getMentionEvents(gListRelayUrls1, userChannels, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#e"); 
 
         stdout.write('Waiting for feed to come in..............');
         Future.delayed(Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
@@ -381,7 +389,6 @@ Future<void> main(List<String> arguments) async {
             Store node = getTree(initialEvents);
             gStore = node;
             
-
             clearEvents();
             mainMenuUi(node);
           });

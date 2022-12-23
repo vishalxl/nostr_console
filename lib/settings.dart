@@ -41,14 +41,12 @@ const int gLimitPerSubscription     = 10000;
 const int gDontHighlightEventsOlderThan = 4;
 
 int gDefaultNumWaitSeconds = 12000; // is used in main()
-const int gMaxAuthorsInOneRequest = 200; // number of author requests to send in one request
-const int gMaxPtagsToGet          = 200; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
+const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
+const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 // global counters of total events read or processed
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
-//String defaultServerUrl = 'wss://relay.damus.io';
-//const String nostrRelayUnther = 'wss://nostr-relay.untethr.me'; not working 
 String defaultServerUrl       = "wss://relay.damus.io";
 const String relayNostrInfo   = 'wss://relay.nostr.info';
 

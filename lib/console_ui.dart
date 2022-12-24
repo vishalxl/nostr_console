@@ -588,7 +588,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
         //print("Total number of kind-1 posts:  ${node.count()}");
 
         print("\nEvent distribution by event kind:\n");
-        node.printEventInfo();
+          node.printEventInfo();
         print("\nTotal number of all events:    ${node.allChildEventsMap.length}");
 
         print("\nTotal events translated for $gNumTranslateDays days: $numEventsTranslated");

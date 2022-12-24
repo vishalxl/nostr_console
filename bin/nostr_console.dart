@@ -316,8 +316,8 @@ Future<void> main(List<String> arguments) async {
       }
 
       // get default users;  remove user from default list if user exists in it. because theyv'e already been fetched. 
-      getMultiUserEvents(gListRelayUrls2, gDefaultFollows.difference({userPublicKey}), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
-      Set<String> usersFetched = gDefaultFollows.union({userPublicKey});
+      //getMultiUserEvents(gListRelayUrls1, gDefaultFollows.difference({userPublicKey}), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+      Set<String> usersFetched = {userPublicKey};
 
       stdout.write('Waiting for user posts to come in.....');
       Future.delayed( Duration(milliseconds: gDefaultNumWaitSeconds), () {
@@ -335,7 +335,10 @@ Future<void> main(List<String> arguments) async {
         // get events from channels of user; gets public as well as encrypted channels
         Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);
         //printSet(userChannels, "user channels: \n", "\n");
-        getIdAndMentionEvents(gListRelayUrls2, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");
+        //getIdAndMentionEvents(gListRelayUrls2, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");
+
+        getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
+        getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));        
 
         initialEvents.forEach((e) => processKind3Event(e)); // first process the kind 3 event ; basically populate the global structure that holds this info
        
@@ -370,8 +373,8 @@ Future<void> main(List<String> arguments) async {
           contacts.retainWhere((element) => i++ > maxContactsFetched); // retain only first 200, whichever they may be
         }
 
-        getMultiUserEvents(gListRelayUrls1, contacts.union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
-        usersFetched = usersFetched.union(contacts).union(pTags);
+        getMultiUserEvents(gListRelayUrls1, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+        usersFetched = usersFetched.union(gDefaultFollows).union(contacts).union(pTags);
         
         // get meta events of all users fetched 
         getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*2), {0,3});

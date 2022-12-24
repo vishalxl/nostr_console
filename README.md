@@ -34,6 +34,9 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 
 # Running Nostr Console using Docker
 
+First check out or unzip the code to a directory, `cd` to that directory, and from there type the following commands:
+(make sure Docker desktop is running in the background) 
+
 ```
 docker build  -t nostr_console .
 ```

@@ -1024,11 +1024,20 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
   return relay;
 }
 
+// https://codewithandrea.com/articles/flutter-exception-handling-try-catch-result-type/
+
 Future<http.Response> fetchNip05Info(String nip05Url) {
   //print("in fetch nip: url = $nip05Url");
-  var retval = http.get(Uri.parse(nip05Url));
-  
-  return retval;
+  http.Response resp = http.Response.bytes([], 404);
+  //if( nip05Url == "http://nostrplebs.com:12a6ae3eaeb02663/.well-known/nostr.json?name=yashraj") print('got yashraj');
+
+  try {
+    return http.get(Uri.parse(nip05Url));
+
+  } catch(ex) {
+    //print("returning default value from fetchNIP05Info");
+    return Future.value(resp);
+  }
 }
 
 // If given event is kind 0 event, then populates gKindONames with that info

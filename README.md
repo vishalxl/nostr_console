@@ -15,6 +15,7 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 * [ ] initial creation of private/pub key 
 * [ ] fix --help that's dated
 * [ ] show lightning invoice as qr code 
+* [ ] in mention expansion, if p tag is not found in user store, then its left as #[n], whereas it should be replaced by the pubkey 
 * [ ] notifications should show mentions too ( it does not yet) 
 * [ ] notifications , option 3, is shown only for one entry in whole thread 
 * [ ] hashtag regexp should have underscore 

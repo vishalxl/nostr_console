@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.0-testing";
+const String version = "0.3.0-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -116,11 +116,11 @@ Set<String> gDefaultFollows = {
                   "97c70a44366a6535c145b333f973ea86dfdc2d7a99da618c40c64705ad98e322", // hodlbod
 
                   // pre dec 2022
-                  "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681", //damus
+                  "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681", // damus
                   "6b0d4c8d9dc59e110d380b0429a02891f1341a0fa2ba1b1cf83a3db4d47e3964", // dergigi
                   "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245", // jb55
                   "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", // fiatjaf
-                  "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5", // unclebobmarting 
+                  "2ef93f01cd2493e04235a6b87b10d3c4a74e2a7eb7c3caf168268f6af73314b5", // unclebobmartin
                   "ed1d0e1f743a7d19aa2dfb0162df73bacdbc699f67cc55bb91a98c35f7deac69", // Melvincarvalho
                   "35d26e4690cbe1a898af61cc3515661eb5fa763b57bd0b42e45099c8b32fd50f", // scsibug
                   "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437", // balas

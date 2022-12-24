@@ -8,7 +8,7 @@ import 'package:web_socket_channel/io.dart';
 class Relay { 
   String             url;
   IOWebSocketChannel socket;
-  Set<String>       users;         // is used so that duplicate requests aren't sent for same user for this same relay
+  Set<String>       users;         // is used so that duplicate requests aren't sent for same user for this same relay; unused for now
   int                numReceived;
   int                numRequestsSent;
   Relay(this.url, this.socket, this.users, this.numReceived, this.numRequestsSent);
@@ -36,7 +36,7 @@ class Relays {
       relay.close();
     });
 
-    relays.clear();
+    //relays.clear();
   }
 
   void printInfo()  {
@@ -148,27 +148,27 @@ class Relays {
   /*
    * Send the given string to the given relay. Is used to send both requests, and to send evnets. 
    */
-  void sendRequest(String relay, String request) {
-    if(relay == "" ) {
+  void sendRequest(String relayUrl, String request) {
+    if(relayUrl == "" ) {
       if( gDebug != 0) print ("Invalid or empty relay given");
       return;
     }
 
-    if( gDebug > 0) print ("\nIn relay.sendRequest for relay $relay");
+    if( gDebug > 0) print ("\nIn relay.sendRequest for relay $relayUrl");
 
     IOWebSocketChannel?  fws;
-    if(relays.containsKey(relay)) {
+    if(relays.containsKey(relayUrl)) {
       
-      fws = relays[relay]?.socket;
-      relays[relay]?.numRequestsSent++;
+      fws = relays[relayUrl]?.socket;
+      relays[relayUrl]?.numRequestsSent++;
     }
     else {
-      if(gDebug !=0) print('connecting to $relay');
+      if(gDebug !=0) print('connecting to $relayUrl');
 
       try {
-          IOWebSocketChannel fws2 = IOWebSocketChannel.connect(relay);
-          Relay newRelay = Relay(relay, fws2, {}, 0, 1);
-          relays[relay] = newRelay;
+          IOWebSocketChannel fws2 = IOWebSocketChannel.connect(relayUrl);
+          Relay newRelay = Relay(relayUrl, fws2, {}, 0, 1);
+          relays[relayUrl] = newRelay;
           fws = fws2;
           fws2.stream.listen(
             (d) {
@@ -185,7 +185,7 @@ class Relays {
                   return;
                 } 
 
-                e = Event.fromJson(d, relay);
+                e = Event.fromJson(d, relayUrl);
 
                 if( rEvents.add(e) ) {
                   uniqueIdsRecieved.add(id);
@@ -197,24 +197,24 @@ class Relays {
                 //dynamic json = jsonDecode(d);
                 return;
               }                
-            },
-            onError: (err) { printWarning("\nWarning: Error in creating connection to $relay. Kindly check your internet connection. Or maybe only this relay is down."); },
+            }, 
+            onError: (err) { printWarning("Warning: Error in creating connection to $relayUrl. Kindly check your internet connection. Or maybe only this relay is down."); },
             onDone:  () { if( gDebug > 0) print('Info: In onDone'); }
           );
       } on WebSocketException {
-        print('WebSocketException exception for relay $relay');
+        print('WebSocketException exception for relay $relayUrl');
         return;
       } on Exception catch(ex) {
         printWarning("Invalid event\n");
       }
       
       catch(err) {
-        if( gDebug >= 0) printWarning('exception generic $err for relay $relay\n');
+        if( gDebug >= 0) printWarning('exception generic $err for relay $relayUrl\n');
         return;
       }
     }
 
-    if(gDebug > 0) log.info('Sending request: \n$request\n to $relay\n\n');
+    if(gDebug > 0) log.info('Sending request: \n$request\n to $relayUrl\n\n');
     fws?.sink.add(request);
   }
 

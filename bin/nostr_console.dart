@@ -403,7 +403,7 @@ Future<void> main(List<String> arguments) async {
             stdout.write("done\n");
             if( gDebug > 0) log.info("Received ptag events events.");
 
-            resetRelays();
+            //resetRelays();
             relays = Relays({}, {}, {}); // reset relay value
           
             String req = '["REQ","cn",{"limit":40000,"kinds":[0,1,3,4,5,6,7,40,41,42,104,140,141,142],"since":${getTimeSecondsAgo(2*3600).toString()}}]';

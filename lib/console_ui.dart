@@ -1559,7 +1559,7 @@ Future<void> mainMenuUi(Store node) async {
         case 7:
         default:
           mainMenuContinue = false;
-          String authorName = getAuthorName(userPublicKey);
+          String authorName = getAuthorName(userPublicKey, 0);
           clearScreen();
           print("\nFinished Nostr session for user: ${authorName} ($userPublicKey)");
           if( gEventsFilename != "") {

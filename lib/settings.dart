@@ -89,7 +89,7 @@ Set<String> gDefaultFollows = {
                   "82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2", // Jack Dorsey
                   "c4eabae1be3cf657bc1855ee05e69de9f059cb7a059227168b80b89761cbc4e0", // Mallers
                   "a341f45ff9758f570a21b000c17d4e53a3a497c8397f26c0e6d61e5acffc7a98", // Saylor
-                  //"703e26b4f8bc0fa57f99d815dbb75b086012acc24fc557befa310f5aa08d1898", // Adam Back not sure
+                  "020f2d21ae09bf35fcdfb65decf1478b846f5f728ab30c5eaabcd6d081a81c3e", // Adam Back
                   "04c915daefee38317fa734444acee390a8269fe5810b2241e5e6dd343dfbecc9", // ODELL
                   "e88a691e98d9987c964521dff60025f60700378a4879180dcbbb4a5027850411", // NVK
                   "85080d3bad70ccdcd7f74c29a44f55bb85cbcd3dd0cbb957da1d215bdb931204", // Preston

@@ -367,7 +367,7 @@ Future<void> main(List<String> arguments) async {
         }
 
         // get only limited number of contacts otherwise relays get less responsive
-        int maxContactsFetched = 100;
+        int maxContactsFetched = 500;
         if( contacts.length > maxContactsFetched) {
           int i = 0;
           contacts.retainWhere((element) => i++ > maxContactsFetched); // retain only first 200, whichever they may be
@@ -385,12 +385,13 @@ Future<void> main(List<String> arguments) async {
         void resetRelays() {
           relays.closeAll(); 
 
-          getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getTimeSecondsAgo(1), {0,3});
+          /*getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getTimeSecondsAgo(1), {0,3});
           getMultiUserEvents(gListRelayUrls1, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getTimeSecondsAgo(1));
           getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getTimeSecondsAgo(1));
           getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getTimeSecondsAgo(1));        
           getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getTimeSecondsAgo(1));
           getMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getTimeSecondsAgo(1), "#p");       
+          */
         }
 
         stdout.write('Waiting for feed to come in..............');
@@ -402,7 +403,10 @@ Future<void> main(List<String> arguments) async {
             stdout.write("done\n");
             if( gDebug > 0) log.info("Received ptag events events.");
 
-            //resetRelays();
+            resetRelays();
+          
+            String req = '["REQ","cn",{"limit":40000,"kinds":[0,1,3,4,5,6,7,40,41,42,104,140,141,142],"since":${getTimeSecondsAgo(2*3600).toString()}}]';
+            sendRequest(gListRelayUrls1, req);
 
             // Creat tree from all events read form file
             Store node = getTree(initialEvents);

@@ -20,12 +20,12 @@ Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {
 
   userEvents.forEach((event) {
     if( event.eventData.pubkey == userPublicKey) {
-      if( event.eventData.kind == 42) {
+      if( [42, 142].contains( event.eventData.kind) ) {
         String channelId = event.eventData.getChannelIdForKind4x();
         if( channelId.length == 64) {
           userChannels.add(channelId);
         }
-      } else if([40,41].contains(event.eventData.kind)) {
+      } else if([40,41,140,141].contains(event.eventData.kind)) {
         userChannels.add(event.eventData.id);
       }
     }

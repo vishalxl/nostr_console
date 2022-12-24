@@ -332,7 +332,7 @@ Future<void> main(List<String> arguments) async {
         Set<String> userEvents = getOnlyUserEvents(initialEvents, userPublicKey);
         print('Total events fetched till now: ${initialEvents.length}. Total user events fetched: ${userEvents.length}');
 
-        // get events from channels of user
+        // get events from channels of user; gets public as well as encrypted channels
         Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);
         //printSet(userChannels, "user channels: \n", "\n");
         getIdAndMentionEvents(gListRelayUrls2, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");

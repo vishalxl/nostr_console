@@ -812,7 +812,7 @@ class Store {
    * Returns id of channel if one is created, null otherwise.
    * 
    */
-  static String? createEncryptedRoomFromInvite( Set<String> secretMessageIds, List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event eventSecretMessage) {
+  static String? createEncryptedRoomFromInvite( List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event eventSecretMessage) {
 
     String? temp140Id = getEncryptedChannelIdFromSecretMessage( eventSecretMessage);
 
@@ -1226,7 +1226,7 @@ class Store {
       
       if( secretEvent != null) {
         secretEvent.eventData.TranslateAndDecryptGroupInvite();
-        String? newEncryptedChannelId = createEncryptedRoomFromInvite(allEncryptedGroupInviteIds, encryptedChannels,  tempChildEventsMap, secretEvent);
+        String? newEncryptedChannelId = createEncryptedRoomFromInvite( encryptedChannels,  tempChildEventsMap, secretEvent);
         if( newEncryptedChannelId != null) {
           usersEncryptedChannelIds.add(newEncryptedChannelId); // is later used so a request can be sent to fetch events related to this room
         }
@@ -1414,7 +1414,7 @@ class Store {
               String ? temp = newTree.event.eventData.TranslateAndDecryptGroupInvite(); 
               if( temp != null) {
                 encryptedGroupInviteIds.add(newTree.event.eventData.id);
-                createEncryptedRoomFromInvite(encryptedGroupInviteIds, encryptedChannels, allChildEventsMap, newTree.event);
+                createEncryptedRoomFromInvite(encryptedChannels, allChildEventsMap, newTree.event);
                 // TODO send event requests for 14x 
               }
             } else {
@@ -2529,7 +2529,9 @@ Store getTree(Set<Event> events) {
 
     // translate and expand mentions 
     events.where((element) => [1, 42].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.translateAndExpandMentions( node.allChildEventsMap));;
-    events.where((element) => [gSecretMessageKind].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.TranslateAndDecryptGroupInvite( ));;
+    
+    // has been done in fromEvents
+    //events.where((element) => [gSecretMessageKind].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.TranslateAndDecryptGroupInvite( ));;
     events.where((element) => element.eventData.kind == 142).forEach( (event) => event.eventData.translateAndDecrypt14x(node.encryptedGroupInviteIds, node.encryptedChannels, node.allChildEventsMap));;
 
     return node;

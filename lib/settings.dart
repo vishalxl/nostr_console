@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.2.8-beta";
+const String version = "0.2.9-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;

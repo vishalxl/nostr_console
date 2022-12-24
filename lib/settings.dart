@@ -40,7 +40,7 @@ const int gLimitPerSubscription     = 20000;
  // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
 const int gDontHighlightEventsOlderThan = 4;
 
-int gDefaultNumWaitSeconds = 10000; // is used in main()
+int gDefaultNumWaitSeconds = 12000; // is used in main()
 const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
 const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
@@ -50,19 +50,32 @@ int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, num
 String defaultServerUrl       = "wss://relay.damus.io";
 const String relayNostrInfo   = 'wss://relay.nostr.info';
 
+
+
 Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 relayNostrInfo,
                                 "wss://nostr-2.zebedee.cloud",
                                 "wss://nostr.semisol.dev",
-                                "wss://nostr.onsats.org",
-                                 "wss://nostr.coinos.io"
+                                "wss://nostr.coinos.io",
+                                "wss://nostr-relay.digitalmob.ro",
+                                "wss://nostr.drss.io"
 
                               };
 
 Set<String> gListRelayUrls2 = {    
-                              "wss://nostr.oxtr.dev",
-                              "wss://nostr.bitcoiner.social"
+                             // "wss://nostr.oxtr.dev",
+                              "wss://nostr.bitcoiner.social",
+                                 "wss://nostr.zerofeerouting.com",
+                                 "wss://nostr-relay.trustbtc.org",
+                                 "wss://relay.stoner.com"
                               };
+
+Set<String> gListRelayUrls3 = {    
+                                "wss://nostr.onsats.org",
+                                 "wss://relay.stoner.com",
+                                  "wss://nostr.openchain.fr"
+                              };
+
 
 // well known disposable test private key
 const String gDefaultPublicKey  = "";

@@ -451,15 +451,19 @@ String getMentionRequest(String subscriptionId, Set<String> ids, int numUserEven
   return strSubscription1 + getCommaSeparatedQuotedStrs(ids) + strSubscription2;
 }
 
-String getIdAndMentionRequest(String subscriptionId, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
-  String strTime = "";
-  if( sinceWhen != 0) {
-    strTime = ', "since": ${sinceWhen.toString()}';
+String getIdAndMentionRequest(String subscriptionId, Set<String> ids, int numUserEvents, int idSinceWhen, int mentionSinceWhen, String tagToGet, String idString) {
+  String idStrTime = "", mentionStrTime = "";
+  if( idSinceWhen != 0) {
+    idStrTime = ', "since": ${idSinceWhen.toString()}';
   }
- 
+
+  if( mentionSinceWhen != 0) {
+    mentionStrTime = ', "since": ${mentionSinceWhen.toString()}';
+  }
+
   var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": [';
-  var    strSubscription2  ='], "limit": $numUserEvents $strTime  } ]';
-  String req = '["REQ","$subscriptionId",{ "$tagToGet": [' + getCommaSeparatedQuotedStrs(ids) + '], "limit": $numUserEvents $strTime},{"authors":[' + getCommaSeparatedQuotedStrs(ids) + ']} ]';
+  var    strSubscription2  ='], "limit": $numUserEvents $idStrTime  } ]';
+  String req = '["REQ","$subscriptionId",{ "$tagToGet": [' + getCommaSeparatedQuotedStrs(ids) + '], "limit": $numUserEvents $mentionStrTime},{"$idString":[' + getCommaSeparatedQuotedStrs(ids) + ']$idStrTime}]';
   //print("Created id and mention request: $req");
   return req;
 }

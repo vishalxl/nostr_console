@@ -1,5 +1,6 @@
 
 import 'package:nostr_console/event_ds.dart';
+import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
 
 // From the list of events provided, lookup the lastst contact information for the given user/pubkey
@@ -16,6 +17,19 @@ Event? getContactEvent(String pubkey) {
 
 Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {
   Set<String> userChannels = {};
+
+  userEvents.forEach((event) {
+    if( event.eventData.pubkey == userPublicKey) {
+      if( event.eventData.kind == 42) {
+        String channelId = event.eventData.getChannelIdForKind4x();
+        if( channelId.length == 64) {
+          userChannels.add(channelId);
+        }
+      } else if([40,41].contains(event.eventData.kind)) {
+        userChannels.add(event.eventData.id);
+      }
+    }
+  });
 
   return userChannels;
 }
@@ -55,4 +69,14 @@ Set<String> getpTags(Set<Event> events, int numMostFrequent) {
   }
 
   return ptags.toSet();
+}
+
+Set<String> getOnlyUserEvents(Set<Event> initialEvents, String userPubkey) {
+  Set<String> userEvents = {};
+  initialEvents.forEach((event) {
+    if( event.eventData.pubkey == userPubkey) {
+      userEvents.add(event.eventData.id);
+    }
+  });
+  return userEvents;
 }

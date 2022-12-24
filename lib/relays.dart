@@ -102,10 +102,10 @@ class Relays {
     sendRequest(relayUrl, request);
   }    
 
-  void getIdAndMentionEvents(String relayUrl, Set<String> ids, int limit, int sinceWhen, String tagToGet) {
+  void getIdAndMentionEvents(String relayUrl, Set<String> ids, int limit, int idSinceWhen, int mentionSinceWhen, String tagToGet, String idType) {
 
-    String subscriptionId = "id_mention_${tagToGet}" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
-    String request = getIdAndMentionRequest(subscriptionId, ids, limit, sinceWhen, tagToGet);
+    String subscriptionId = "id_mention_tag" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
+    String request = getIdAndMentionRequest(subscriptionId, ids, limit, idSinceWhen, mentionSinceWhen, tagToGet, idType);
     sendRequest(relayUrl, request);
   }    
 
@@ -263,9 +263,9 @@ void getMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents
     });
 }
 
-void getIdAndMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
+void getIdAndMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents, int idSinceWhen, int mentionSinceWhen, String tagToGet, String idType) {
   serverUrls.forEach((serverUrl) {
-      relays.getIdAndMentionEvents(serverUrl, ids, numUserEvents, sinceWhen, tagToGet); 
+      relays.getIdAndMentionEvents(serverUrl, ids, numUserEvents, idSinceWhen, mentionSinceWhen, tagToGet, idType); 
     });
 }
 

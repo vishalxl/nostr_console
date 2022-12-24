@@ -1025,18 +1025,13 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
 }
 
 // https://codewithandrea.com/articles/flutter-exception-handling-try-catch-result-type/
-
 Future<http.Response> fetchNip05Info(String nip05Url) {
-  //print("in fetch nip: url = $nip05Url");
-  http.Response resp = http.Response.bytes([], 404);
-  //if( nip05Url == "http://nostrplebs.com:12a6ae3eaeb02663/.well-known/nostr.json?name=yashraj") print('got yashraj');
+  http.Response resp404 = http.Response.bytes([], 404);
 
   try {
     return http.get(Uri.parse(nip05Url));
-
   } catch(ex) {
-    //print("returning default value from fetchNIP05Info");
-    return Future.value(resp);
+    return Future.value(resp404);
   }
 }
 
@@ -1536,11 +1531,8 @@ try {
 String myEncrypt( String privateString, 
                          String publicString, 
                          String plainText) {
-  //print("private = ${privateString.length} public = ${publicString.length}");
-  //print("private = ${privateString} public = ${publicString}");
   Uint8List uintInputText = convert.Utf8Encoder().convert(plainText);
   final encryptedString = myEncryptRaw(privateString, publicString, uintInputText);
-  //print("encryptedString = $encryptedString");
   return encryptedString;
 }
 
@@ -1576,7 +1568,6 @@ String myEncryptRaw( String privateString,
 
   //add padding 
   offset += cipherImpl.doFinal(uintInputText, offset, outputEncodedText, offset);
-  //assert(offset == uintInputText.length);
   final Uint8List finalEncodedText = outputEncodedText.sublist(0, offset);
 
   String stringIv = convert.base64.encode(iv);;
@@ -1601,7 +1592,6 @@ Set<Event> readEventsFromFile(String filename) {
         events.add(e);
     }
   } on Exception catch(e) {
-    //print("cannot open file $gEventsFilename");
     if( gDebug > 0) print("Could not open file. error =  $e");
   }
 
@@ -1615,7 +1605,6 @@ List<String> getEncryptedChannelKeys(Set<String> inviteMessageIds, Map<String, T
   if( e != null) {
 
     for( String inviteMessageid in inviteMessageIds) {
-
       Event? messageEvent = tempChildEventsMap[inviteMessageid]?.event;
       if( messageEvent != null) {
         String evaluatedContent = messageEvent.eventData.evaluatedContent;

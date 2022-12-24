@@ -2528,7 +2528,8 @@ Store getTree(Set<Event> events) {
     Store node = Store.fromEvents(events);
 
     // translate and expand mentions 
-    events.where((element) => [1, 42, gSecretMessageKind].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.translateAndExpandMentions( node.allChildEventsMap));;
+    events.where((element) => [1, 42].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.translateAndExpandMentions( node.allChildEventsMap));;
+    events.where((element) => [gSecretMessageKind].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.TranslateAndDecryptGroupInvite( ));;
     events.where((element) => element.eventData.kind == 142).forEach( (event) => event.eventData.translateAndDecrypt14x(node.encryptedGroupInviteIds, node.encryptedChannels, node.allChildEventsMap));;
 
     return node;

@@ -297,7 +297,7 @@ void printProfile(Store node, String profilePubkey) {
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
 
   // if contact list was found, get user's feed, and keep the contact list for later use 
-  String authorName = gKindONames[profilePubkey]?.name??"";
+  String authorName = getAuthorName(profilePubkey);
   String pronoun = "";
   if( profilePubkey == userPublicKey) {
     printUnderlined("\nYour profile - $authorName:");

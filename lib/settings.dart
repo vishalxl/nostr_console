@@ -168,6 +168,9 @@ int gMaxLenUnbrokenWord = 8; // lines are broken if space is at end of line for 
 
 int gMenuWidth          = 36;
 
+int gNameLenDisplayed = 12;
+String gValidCheckMark = "✔️";
+
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings
 const String defaultTextColor = "green";

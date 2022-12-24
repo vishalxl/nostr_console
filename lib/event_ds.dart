@@ -1179,14 +1179,28 @@ String getNip05Name( String pubkey) {
 }
 
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
-String getAuthorName(String pubkey, [int len = 5]) {
-  String max3(String v) => v.length > len? v.substring(0,len) : v.substring(0, v.length);
+String getAuthorName(String pubkey, [int pubkeyLenShown = 5]) {
+
+  String maxLen(String pubkey) => pubkey.length > pubkeyLenShown? pubkey.substring(0,pubkeyLenShown) : pubkey.substring(0, pubkey.length);
   String name = "";
   if( gKindONames[pubkey]?.name == null || gKindONames[pubkey]?.name?.length == 0)
-     name = max3(pubkey);
+     name = maxLen(pubkey);
   else {
-    name = (gKindONames[pubkey]?.name)??max3(pubkey);
+    name = (gKindONames[pubkey]?.name)??maxLen(pubkey);
   }
+
+  // first remove the check mark if its in any name
+  name = name.replaceAll(gValidCheckMark, "");
+
+  // then add valid check mark in default follows 
+  if( gDefaultFollows.contains(pubkey)) {
+    if( name.length >= gNameLenDisplayed ) {
+      name = name.substring(0, gNameLenDisplayed-1) + gValidCheckMark;
+    } else {
+      name = name + gValidCheckMark;
+    }
+  }
+
   return name;
 }
 

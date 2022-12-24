@@ -335,7 +335,7 @@ Future<void> main(List<String> arguments) async {
         // get events from channels of user; gets public as well as encrypted channels
         Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);
         //printSet(userChannels, "user channels: \n", "\n");
-        //getIdAndMentionEvents(gListRelayUrls2, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");
+        //getIdAndMentionEvents(gListRelayUrls1, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");
 
         getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
         getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));        
@@ -373,13 +373,25 @@ Future<void> main(List<String> arguments) async {
           contacts.retainWhere((element) => i++ > maxContactsFetched); // retain only first 200, whichever they may be
         }
 
-        getMultiUserEvents(gListRelayUrls1, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+        getMultiUserEvents(gListRelayUrls2, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
         usersFetched = usersFetched.union(gDefaultFollows).union(contacts).union(pTags);
         
         // get meta events of all users fetched 
         getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*2), {0,3});
         //print("fetched meta of ${usersFetched.length}");
 
+
+
+        void resetRelays() {
+          relays.closeAll(); 
+
+          getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getTimeSecondsAgo(1), {0,3});
+          getMultiUserEvents(gListRelayUrls1, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getTimeSecondsAgo(1));
+          getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getTimeSecondsAgo(1));
+          getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getTimeSecondsAgo(1));        
+          getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getTimeSecondsAgo(1));
+          getMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getTimeSecondsAgo(1), "#p");       
+        }
 
         stdout.write('Waiting for feed to come in..............');
         Future.delayed(Duration(milliseconds: gDefaultNumWaitSeconds * 1), () {
@@ -389,6 +401,8 @@ Future<void> main(List<String> arguments) async {
 
             stdout.write("done\n");
             if( gDebug > 0) log.info("Received ptag events events.");
+
+            //resetRelays();
 
             // Creat tree from all events read form file
             Store node = getTree(initialEvents);

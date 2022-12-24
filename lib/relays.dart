@@ -13,6 +13,10 @@ class Relay {
   int                numRequestsSent;
   Relay(this.url, this.socket, this.users, this.numReceived, this.numRequestsSent);
 
+  void close() {
+    socket.sink.close().onError((error, stackTrace) => null);
+  }
+
   void printInfo()   { 
     print("$url ${getNumSpaces(45 - url.length)}   $numReceived                   ${users.length}");
   }
@@ -26,6 +30,14 @@ class Relays {
   Set<Event>  rEvents = {}; // current events received. can be used by others. Is cleared after consumption
   Set<String>  uniqueIdsRecieved = {} ; // id of events received. only for internal usage, so that duplicate events are rejected
   Relays(this.relays, this.rEvents, this.uniqueIdsRecieved);
+
+  void closeAll() {
+    relays.forEach((url, relay) {
+      relay.close();
+    });
+
+    relays.clear();
+  }
 
   void printInfo()  {
     printUnderlined("Server connection info");

@@ -1751,8 +1751,8 @@ class Store {
         }
 
         // do partial match in ids
-        if( room.chatRoomName.length >= channelId.length) {
-          if( listChannels[i].channelId.length >= channelId.length && listChannels[i].channelId.substring(0, channelId.length).toLowerCase() == channelId.toLowerCase() ) {
+        if( listChannels[i].channelId.length >= channelId.length) {
+          if(  listChannels[i].channelId.substring(0, channelId.length).toLowerCase() == channelId.toLowerCase() ) {
             // otherwise add it to list
             fullChannelId.add(room.channelId.toLowerCase());
           }

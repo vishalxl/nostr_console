@@ -1217,10 +1217,16 @@ Set<String> getPublicKeyFromName(String inquiredName) {
   return pubkeys;
 }
 
-// returns the seconds since eponch N days ago
+// returns the seconds since epoch N days ago
 int getSecondsDaysAgo( int N) {
   return  DateTime.now().subtract(Duration(days: N)).millisecondsSinceEpoch ~/ 1000;
 }
+
+// returns the seconds since epoch S seconds ago
+int getTimeSecondsAgo( int S) {
+  return  DateTime.now().subtract(Duration(seconds: S)).millisecondsSinceEpoch ~/ 1000;
+}
+
 
 // will write d tabs worth of space ( where tab width is in settings)
 void printDepth(int d) {

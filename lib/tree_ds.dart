@@ -2230,7 +2230,7 @@ class Store {
   // finds all your followers, and then finds which of them follow the otherPubkey
   void printMutualFollows(Event contactEvent, String otherName) {
     String otherPubkey = contactEvent.eventData.pubkey;
-    String otherName = getAuthorName(otherPubkey);
+    String otherName = getAuthorName(otherPubkey, 0);
 
 
     bool isFollow = false;
@@ -2256,7 +2256,7 @@ class Store {
           followContactList = followContactEvent.eventData.contactList;
           for(int j = 0; j < followContactList.length; j++) {
             if( followContactList[j].id == otherPubkey) {
-              mutualFollows.add(getAuthorName(selfContacts[i].id));
+              mutualFollows.add(getAuthorName(selfContacts[i].id, 0));
               numSecond++;
               break;
             }

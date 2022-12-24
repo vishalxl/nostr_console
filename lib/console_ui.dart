@@ -297,7 +297,7 @@ void printProfile(Store node, String profilePubkey) {
   node.printTree(0, DateTime.now().subtract(Duration(days:gNumLastDays)), onlyUserPostAndLike);
 
   // if contact list was found, get user's feed, and keep the contact list for later use 
-  String authorName = getAuthorName(profilePubkey);
+  String authorName = getAuthorName(profilePubkey, 0);
   String pronoun = "";
   if( profilePubkey == userPublicKey) {
     printUnderlined("\nYour profile - $authorName:");
@@ -345,14 +345,14 @@ void printProfile(Store node, String profilePubkey) {
     
     // print follow list
     stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
-    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id)}, "));
+    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id, 0)}, "));
     print("\n");
   }
 
   // print followers
   List<String> followers = node.getFollowers(profilePubkey);
   stdout.write("$pronoun have ${followers.length} followers:  ");
-  followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+  followers.forEach((x) => stdout.write("${getAuthorName(x, 0)}, "));
   print("");              
   print("");
 }

@@ -1,17 +1,17 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console
-version: 0.2.9-beta
+version: 0.3.0-testing
 homepage: https://github.com/vishalxl/nostr_console 
 
 
-
+# added check marks
+# changed fetch logic: after fetching all friends contacts etc, then reset the relays, and fetched ALL the events in last 2 hours. 
 
 #0.2.9
 # improved fetching logic
 # added more relays; minor tweaks in relay set usage
 
 ## after taggin 
-# changed fetch logic: after fetching all friends contacts etc, then reset the relays, and fetched ALL the events in last 2 hours. 
 # only maximum 500 contacts are fetched ( at random)
 
 # 0.2.8 

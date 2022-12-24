@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.2.9-beta";
+const String version = "0.3.0-testing";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -98,14 +98,18 @@ Set<String> gDefaultFollows = {
                   "bf2376e17ba4ec269d10fcc996a4746b451152be9031fa48e74553dde5526bce", // CARLA
                   "e33fe65f1fde44c6dc17eeb38fdad0fceaf1cae8722084332ed1e32496291d42", // wiz
                   "472f440f29ef996e92a186b8d320ff180c855903882e59d50de1b8bd5669301e", // MartyBent
+                  "c49d52a573366792b9a6e4851587c28042fb24fa5625c6d67b8c95c8751aca15", // hodlonaut
                   "1577e4599dd10c863498fe3c20bd82aafaf829a595ce83c5cf8ac3463531b09b", // yegorPetrov                  
                   "be1d89794bf92de5dd64c1e60f6a2c70c140abac9932418fee30c5c637fe9479", // walletofsatoshi
+                  "3f770d65d3a764a9c5cb503ae123e62ec7598ad035d836e2a810f3877a745b24", // derek ross
+                  "edcd20558f17d99327d841e4582f9b006331ac4010806efa020ef0d40078e6da", // Natalie Brunell
                   "eaf27aa104833bcd16f671488b01d65f6da30163b5848aea99677cc947dd00aa", // grubles
                   "b9003833fabff271d0782e030be61b7ec38ce7d45a1b9a869fbdb34b9e2d2000", // brockm 
                   "51b826cccd92569a6582e20982fd883fccfa78ad03e0241f7abec1830d7a2565", // Jonas Schnelli
                   "92de68b21302fa2137b1cbba7259b8ba967b535a05c6d2b0847d9f35ff3cf56a", // Susie bdds
                   "c48e29f04b482cc01ca1f9ef8c86ef8318c059e0e9353235162f080f26e14c11", // walker
                   "a9b9525992a486aa16b3c1d3f9d3604bca08f3c15b712d70711b9aecd8c3dc44", // Alana
+                  "b5db1aacc067a056350c4fcaaa0f445c8f2acbb3efc2079c51aaba1f35cd8465", // Nostrich
                   
                   "24e37c1e5b0c8ba8dde2754bcffc63b5b299f8064f8fb928bcf315b9c4965f3b", // lunaticoin
                   "4523be58d395b1b196a9b8c82b038b6895cb02b683d0c253a955068dba1facd0", // martii malmi

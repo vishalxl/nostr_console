@@ -10,6 +10,10 @@ homepage: https://github.com/vishalxl/nostr_console
 # sorted lists printed in profile ( radixrat)
 # sorted tree children - now posts get printed in sorted order
 # --lnqr print LNBC invoices as qr code
+# only maximum 500 contacts are fetched.
+# fetching logic: first all follows, ~50 well known accounts, and top tagged people are fetched for few days. Then all live events are fetched for last 2 hous and ongoing. 
+
+# test fix
 
 #0.2.9
 # improved fetching logic

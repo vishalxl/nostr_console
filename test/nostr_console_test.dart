@@ -284,7 +284,7 @@ String expectedResult =
       String profilePubkey1 = "add06b88bd78c5cbb2cd990e873adfba3eaf8e0217d3208be2be770eb506d430";
       expect (pubkeyQrCodeResult1, getPubkeyAsQrString(profilePubkey1), reason: "testing qr code function");
 
-      String lnQrCodeResult1 = """\n\n█▀▀▀▀▀█ █▀▄█▄▄█▀ █ ▄▄ ▀▄ ▀  ▀█▀ ▀▄▀ ██  █▀ ▄█▀███ █▀   ▀▄ █▀▀▀▀▀█
+      String lnQrCodeResult1 = """:-\n\n█▀▀▀▀▀█ █▀▄█▄▄█▀ █ ▄▄ ▀▄ ▀  ▀█▀ ▀▄▀ ██  █▀ ▄█▀███ █▀   ▀▄ █▀▀▀▀▀█
 █ ███ █ ▄  ▀ ▄▀█▄▄▄▀▀ ▀▀▄▄██▄▄██▄▄█▄▄      ▄▀▄▀ ▀ █████▄▀ █ ███ █
 █ ▀▀▀ █  ▀▀█▄█▄▄▀▀▀█▀ ▀  █▄█▄██▀▀▀█ ▄▀▀  ███ █▄▄ ▄▀▀▄█▄ ▀ █ ▀▀▀ █
 ▀▀▀▀▀▀▀ █ ▀▄█▄▀ ▀ █ █ █ ▀ ▀ ▀▄█ ▀ █ ▀ ▀ █ ▀▄▀ ▀ ▀ █▄█▄▀ ▀ ▀▀▀▀▀▀▀

@@ -82,7 +82,11 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
       -s, --disable-file            When turned on, even the default file is not read from.
       -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
                                     is accessed for any translation request only if this flag is present, and not otherwise.
-      -l, --location                The given value is added as a 'location' tag with every kind 1 post made
+      -l, --lnqr                    If set any LN invoices starting with LNBC will be printed as a QR code. Will set 
+                                    width to 140, which can be reset if needed with the --width argument. Wider space is 
+                                    needed for some qr codes.
+      -g, --location                The given value is added as a 'location' tag with every kind 1 post made. Shortcut g for
+                                    geographic location.
       -h, --help                    Print help/usage message and exit. 
       -v, --version                 Print version and exit.
 

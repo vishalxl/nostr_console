@@ -416,7 +416,7 @@ class Tree {
     
     // sort children by time
     if( children.length > 1) {
-      children.sort(sortTreeNewestReply);
+      children.sort(sortTreeByItsTime);
     }
 
     bool leftShifted = false;
@@ -1579,8 +1579,16 @@ class Store {
       numPrinted += printTopPost(topPosts[i], depth, newerThan);
     }
 
+    int printedNumHours = DateTime.now().difference(newerThan).inHours;
+
+    String strTime = "";
+    if(printedNumHours > 24) {
+      strTime = "${printedNumHours ~/ 24} days";
+    } else {
+      strTime = "$printedNumHours hours";
+    }
     if( numPrinted.x > 0) {
-      print("\nTotal threads printed: ${numPrinted.x} for last $gNumLastDays days.\n");
+      print("\nTotal threads printed: ${numPrinted.x} for last $strTime.");
     }
 
     return numPrinted;
@@ -2497,6 +2505,23 @@ int sortTreeNewestReply(Tree a, Tree b) {
     }
   }
 }
+
+// sorter function that looks at the latest event in the whole tree including the/its children
+int sortTreeByItsTime(Tree a, Tree b) {
+  int aTime = a.event.eventData.createdAt;
+  int bTime = b.event.eventData.createdAt;
+
+  if(aTime < bTime) {
+    return -1;
+  } else {
+    if( aTime == bTime) {
+      return 0;
+    } else {
+        return 1;
+    }
+  }
+}
+
 
 /*
  * @function getTree Creates a Tree out of these received List of events. 

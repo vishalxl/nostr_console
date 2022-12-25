@@ -44,6 +44,10 @@ int gDefaultNumWaitSeconds = 12000; // is used in main()
 const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
 const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
+
+const int gSecsLatestLive         = 2 * 3600; // the lastst seconds for which to get the latest event in main
+int gHoursDefaultPrint      = 6; // print latest given hours only
+
 // global counters of total events read or processed
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
@@ -101,15 +105,15 @@ Set<String> gDefaultFollows = {
                   "c49d52a573366792b9a6e4851587c28042fb24fa5625c6d67b8c95c8751aca15", // hodlonaut
                   "1577e4599dd10c863498fe3c20bd82aafaf829a595ce83c5cf8ac3463531b09b", // yegorPetrov                  
                   "be1d89794bf92de5dd64c1e60f6a2c70c140abac9932418fee30c5c637fe9479", // walletofsatoshi
-                  "3f770d65d3a764a9c5cb503ae123e62ec7598ad035d836e2a810f3877a745b24", // derek ross
                   "edcd20558f17d99327d841e4582f9b006331ac4010806efa020ef0d40078e6da", // Natalie Brunell
                   "eaf27aa104833bcd16f671488b01d65f6da30163b5848aea99677cc947dd00aa", // grubles
                   "b9003833fabff271d0782e030be61b7ec38ce7d45a1b9a869fbdb34b9e2d2000", // brockm 
                   "51b826cccd92569a6582e20982fd883fccfa78ad03e0241f7abec1830d7a2565", // Jonas Schnelli
                   "92de68b21302fa2137b1cbba7259b8ba967b535a05c6d2b0847d9f35ff3cf56a", // Susie bdds
                   "c48e29f04b482cc01ca1f9ef8c86ef8318c059e0e9353235162f080f26e14c11", // walker
-                  "a9b9525992a486aa16b3c1d3f9d3604bca08f3c15b712d70711b9aecd8c3dc44", // Alana
                   "b5db1aacc067a056350c4fcaaa0f445c8f2acbb3efc2079c51aaba1f35cd8465", // Nostrich
+
+                  "6e1534f56fc9e937e06237c8ba4b5662bcacc4e1a3cfab9c16d89390bec4fca3", // Jesse Powell
                   
                   "24e37c1e5b0c8ba8dde2754bcffc63b5b299f8064f8fb928bcf315b9c4965f3b", // lunaticoin
                   "4523be58d395b1b196a9b8c82b038b6895cb02b683d0c253a955068dba1facd0", // martii malmi
@@ -127,7 +131,6 @@ Set<String> gDefaultFollows = {
                   "46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d", // Giszmo
                   "8c0da4862130283ff9e67d889df264177a508974e2feb96de139804ea66d6168", // monlovesmango
                   "c5072866b41d6b88ab2ffee16ad7cb648f940867371a7808aaa94cf7d01f4188", // randymcmillan
-                  "2183e94758481d0f124fbd93c56ccaa45e7e545ceeb8d52848f98253f497b975", // Brill
                   "00000000827ffaa94bfea288c3dfce4422c794fbb96625b6b31e9049f729d700", // cameri
                   "dd81a8bacbab0b5c3007d1672fb8301383b4e9583d431835985057223eb298a5", // plantimals
                   "1c6b3be353041dd9e09bb568a4a92344e240b39ef5eb390f5e9e821273f0ae6f", // johnonchain
@@ -176,7 +179,7 @@ int gNameLenDisplayed = 12;
 String gValidCheckMark = "✔️";
 
 bool gShowLnInvoicesAsQr = false;
-int  gMinWidthForLnQr = 150;
+const int  gMinWidthForLnQr = 140;
 
 
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
@@ -310,13 +313,17 @@ usage: $exename [OPTIONS]
       -s, --disable-file            When turned on, even the default filename is not read from.
       -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
                                     is accessed for any translation request only if this flag is present, and not otherwise.
-      -l, --location                The given value is added as a 'location' tag with every kind 1 post made
+      -l, --lnqr                    Flag, if set any LN invoices starting with LNBC will be printed as a QR code. Will set 
+                                    width to $gMinWidthForLnQr, which can be reset if needed with the --width argument. Wider
+                                    space is needed for some qr codes.
+      -g, --location <location>     The given value is added as a 'location' tag with every kind 1 post made. g in shortcut
+                                    standing for geographic location.
       -h, --help                    Print help/usage message and exit. 
       -v, --version                 Print version and exit.
 
-  UI Options                                
-      -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
-                                    the posts or text is aligned to the center of the terminal.
+  UI Options                                  
+      -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By 
+                                    default the posts or text is aligned to the center of the terminal.
       -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is $gDefaultTextWidth. 
                                     Cant be less than $gMinValidTextWidth.
       -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is $gMinimumDepthAllowed and
@@ -324,12 +331,12 @@ usage: $exename [OPTIONS]
       -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
 
   Advanced
-      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible by 4 is 
-                                    taken as difficulty. Can't be more than 24 bits, because otherwise it typically takes too much 
-                                    time. Minimum and default is 0, which means no difficulty.
-      -e, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
-                                    useful when the file has to be cleared of old unused events. A backup should be made just in case
-                                    of original file before invoking.
+      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible
+                                    by 4 is taken as difficulty. Can't be more than 24 bits, because otherwise it typically 
+                                    takes too much time. Minimum and default is 0, which means no difficulty.
+      -e, --overwrite               Will over write the file with all the events that were read from file, and all newly
+                                    received. Is useful when the file has to be cleared of old unused events. A backup should
+                                    be made just in case of original file before invoking.
 """;
 
 const String helpAndAbout = 

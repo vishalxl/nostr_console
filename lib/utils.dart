@@ -321,7 +321,7 @@ String expandLNInvoices(String content) {
     qrStr = getPubkeyAsQrString(lnInvoice, typeAndModule[0], typeAndModule[1], "");
     //print(lnInvoice); print(qrStr);
 
-    content = content.substring(0, match.start) + "\n\n" + qrStr + "\n\n" + content.substring(match.end);
+    content = content.substring(0, match.start) + ":-\n\n" + qrStr + "\n\n" + content.substring(match.end);
   }
 
   return content;

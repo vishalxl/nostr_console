@@ -16,7 +16,7 @@ const String pubkeyArg   = "pubkey";
 const String prikeyArg   = "prikey";
 const String lastdaysArg = "days";
 const String relayArg    = "relay";
-const String requestArg  = "request";
+const String requestArg  = "request"; // no abbreviation
 const String helpArg     = "help";
 const String versionArg  = "version";
 const String alignArg    = "align"; // can only be "left"
@@ -29,7 +29,7 @@ const String translateArg = "translate";
 const String colorArg     = "color";
 const String overWriteFlag = "overwrite";
 const String locationArg = "location";
-const String lnQrFlag    = "qrln";
+const String lnQrFlag    = "lnqr";
 
 Future<void> main(List<String> arguments) async {
       
@@ -44,9 +44,9 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(colorArg, abbr:"c")
                               ..addOption(difficultyArg, abbr:"y")
                               ..addFlag(overWriteFlag, abbr:"e", defaultsTo: false)
-                              ..addOption(locationArg, abbr:"l")
+                              ..addOption(locationArg, abbr:"g")
                               ..addFlag("debug")
-                              ..addFlag(lnQrFlag, abbr:"q", defaultsTo: false);
+                              ..addFlag(lnQrFlag, abbr:"l", defaultsTo: false);
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
@@ -142,13 +142,23 @@ Future<void> main(List<String> arguments) async {
         }
       }
       printSet( gListRelayUrls1, "Primary relays that will be used: ", ",");
-      print("From among them, default relay: $defaultServerUrl");
+      //print("From among them, default relay: $defaultServerUrl");
       
       if( argResults[lastdaysArg] != null) {
         gNumLastDays =  int.parse(argResults[lastdaysArg]);
         print("Going to show posts for last $gNumLastDays days");
       }
 
+      // lnqr will adjust width if needed; but it can be reset with --width because latter is processed afterwards
+      if( argResults[lnQrFlag])  {
+        gShowLnInvoicesAsQr = true;
+        if( gTextWidth < gMinWidthForLnQr) {
+          gTextWidth = gMinWidthForLnQr;
+        }
+        print("Going to show LN invoices as QR code");
+      }
+
+      // process --width argument
       if( argResults[widthArg] != null) {
         int tempTextWidth = int.parse(argResults[widthArg]);
         if( tempTextWidth < gMinValidTextWidth ) {
@@ -159,14 +169,6 @@ Future<void> main(List<String> arguments) async {
         }
       }
 
-      // lnqr will adjust width if needed
-      if( argResults[lnQrFlag] != null)  {
-        gShowLnInvoicesAsQr = true;
-        if( gTextWidth < gMinWidthForLnQr) {
-          gTextWidth = gMinWidthForLnQr;
-        }
-        print("Going to show LN invoices as QR code");
-      }
 
       try {
         var terminalColumns = gDefaultTextWidth;
@@ -303,7 +305,7 @@ Future<void> main(List<String> arguments) async {
             Store node = getTree(initialEvents);
             
             clearEvents();
-            if( gDebug > 0) stdout.write("Total events of kind 1 in created tree: ${node.count()} events\n");
+            if( gDebug > 0) stdout.write("Total events all kind in created tree: ${node.count()} events\n");
             gStore = node;
             mainMenuUi(node);            
         });
@@ -320,15 +322,12 @@ Future<void> main(List<String> arguments) async {
 
       // get event for user
       if( userPublicKey!= "") {
-        //getIdAndMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, 0, getSecondsDaysAgo(limitSelfEvents), "#p", "authors");
         //getIdAndMentionEvents(gListRelayUrls2, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), getSecondsDaysAgo(limitSelfEvents), "#p", "authors");
         getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
         getMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p");       
 
       }
 
-      // get default users;  remove user from default list if user exists in it. because theyv'e already been fetched. 
-      //getMultiUserEvents(gListRelayUrls1, gDefaultFollows.difference({userPublicKey}), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
       Set<String> usersFetched = {userPublicKey};
 
       stdout.write('Waiting for user posts to come in.....');
@@ -418,10 +417,10 @@ Future<void> main(List<String> arguments) async {
             //resetRelays();
             relays = Relays({}, {}, {}); // reset relay value
           
-            String req = '["REQ","cn",{"limit":40000,"kinds":[0,1,3,4,5,6,7,40,41,42,104,140,141,142],"since":${getTimeSecondsAgo(2*3600).toString()}}]';
+            String req = '["REQ","latest_live_all",{"limit":40000,"kinds":[0,1,3,4,5,6,7,40,41,42,104,140,141,142],"since":${getTimeSecondsAgo(gSecsLatestLive).toString()}}]';
             sendRequest(gListRelayUrls1, req);
 
-            // Creat tree from all events read form file
+            // Create tree from all events that's have yet been received/accumulated
             Store node = getTree(initialEvents);
             gStore = node;
             

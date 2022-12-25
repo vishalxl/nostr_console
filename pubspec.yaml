@@ -9,7 +9,7 @@ homepage: https://github.com/vishalxl/nostr_console
 # fixed URI exception for NIP05
 # sorted lists printed in profile ( radixrat)
 # sorted tree children - now posts get printed in sorted order
-# --qrln print LNBC invoices as qr code
+# --lnqr print LNBC invoices as qr code
 
 #0.2.9
 # improved fetching logic

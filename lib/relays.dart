@@ -198,7 +198,7 @@ class Relays {
                 return;
               }                
             }, 
-            onError: (err) { printWarning("Warning: Error in creating connection to $relayUrl. Kindly check your internet connection. Or maybe only this relay is down."); },
+            onError: (err) { if(gDebug > 0) printWarning("Warning: Error in creating connection to $relayUrl. Kindly check your internet connection. Or maybe only this relay is down."); },
             onDone:  () { if( gDebug > 0) print('Info: In onDone'); }
           );
       } on WebSocketException {

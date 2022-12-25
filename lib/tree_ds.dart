@@ -2276,6 +2276,7 @@ class Store {
         stdout.write("* Of the $selfNumContacts people you follow, $numSecond follow $otherName.");
       } else {
         stdout.write("* Of the $selfNumContacts people you follow, $numSecond follow you back. Their names are: ");
+        mutualFollows.sort();
         mutualFollows.forEach((name) { stdout.write("$name, ");});
       }
       print("");

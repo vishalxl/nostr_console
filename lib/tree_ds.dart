@@ -2243,6 +2243,7 @@ class Store {
 
     if( selfContactEvent != null) {
       List<Contact> selfContacts = selfContactEvent.eventData.contactList;
+      selfContacts.sort();
       selfNumContacts = selfContacts.length;
       for(int i = 0; i < selfContacts.length; i ++) {
         // check if you follow the other account

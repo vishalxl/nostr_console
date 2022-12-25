@@ -345,6 +345,7 @@ void printProfile(Store node, String profilePubkey) {
     
     // print follow list
     stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
+    profileContactEvent.eventData.contactList.sort();
     profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id, 0)}, "));
     print("\n");
   }
@@ -352,6 +353,7 @@ void printProfile(Store node, String profilePubkey) {
   // print followers
   List<String> followers = node.getFollowers(profilePubkey);
   stdout.write("$pronoun have ${followers.length} followers:  ");
+  followers.sort((a, b) => getAuthorName(a).compareTo(getAuthorName(b)));
   followers.forEach((x) => stdout.write("${getAuthorName(x, 0)}, "));
   print("");              
   print("");

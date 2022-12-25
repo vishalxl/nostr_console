@@ -1377,7 +1377,7 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
 
 
 // The contact only stores id and relay of contact. The actual name is stored in a global variable/map
-class Contact {
+class Contact implements Comparable<Contact> {
   String id, relay;
   Contact(this.id, this.relay);
 
@@ -1385,7 +1385,11 @@ class Contact {
   String toString() {
     return 'id: $id ( ${getAuthorName(id)})     relay: $relay';
   }
-  
+
+  @override
+  int compareTo(Contact other) {
+    return getAuthorName(id).compareTo(getAuthorName(other.id));
+  }
 }
 
 String getShaId(String pubkey, String createdAt, String kind, String strTags, String content) {

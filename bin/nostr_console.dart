@@ -29,10 +29,11 @@ const String translateArg = "translate";
 const String colorArg     = "color";
 const String overWriteFlag = "overwrite";
 const String locationArg = "location";
+const String lnQrFlag    = "qrln";
 
 Future<void> main(List<String> arguments) async {
       
-    final parser = ArgParser()..addOption(requestArg, abbr: 'q') ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
+    final parser = ArgParser()..addOption(requestArg) ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)
                               ..addFlag(versionArg, abbr:"v", defaultsTo: false)
@@ -44,7 +45,8 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(difficultyArg, abbr:"y")
                               ..addFlag(overWriteFlag, abbr:"e", defaultsTo: false)
                               ..addOption(locationArg, abbr:"l")
-                              ..addFlag("debug");
+                              ..addFlag("debug")
+                              ..addFlag(lnQrFlag, abbr:"q", defaultsTo: false);
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
@@ -146,6 +148,7 @@ Future<void> main(List<String> arguments) async {
         gNumLastDays =  int.parse(argResults[lastdaysArg]);
         print("Going to show posts for last $gNumLastDays days");
       }
+
       if( argResults[widthArg] != null) {
         int tempTextWidth = int.parse(argResults[widthArg]);
         if( tempTextWidth < gMinValidTextWidth ) {
@@ -155,8 +158,17 @@ Future<void> main(List<String> arguments) async {
           print("Going to use $gTextWidth columns for text on screen.");
         }
       }
-      try {
 
+      // lnqr will adjust width if needed
+      if( argResults[lnQrFlag] != null)  {
+        gShowLnInvoicesAsQr = true;
+        if( gTextWidth < gMinWidthForLnQr) {
+          gTextWidth = gMinWidthForLnQr;
+        }
+        print("Going to show LN invoices as QR code");
+      }
+
+      try {
         var terminalColumns = gDefaultTextWidth;
         if( stdout.hasTerminal )
           terminalColumns = stdout.terminalColumns;
@@ -330,7 +342,7 @@ Future<void> main(List<String> arguments) async {
         stdout.write("...done\n");//received $numUserPosts new posts made by the user\n");
 
         Set<String> userEvents = getOnlyUserEvents(initialEvents, userPublicKey);
-        print('Total events fetched till now: ${initialEvents.length}. Total user events fetched: ${userEvents.length}');
+        //print('Total events fetched till now: ${initialEvents.length}. Total user events fetched: ${userEvents.length}');
 
         // get events from channels of user; gets public as well as encrypted channels
         Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);

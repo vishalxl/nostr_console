@@ -414,6 +414,11 @@ class Tree {
 
     event.printEvent(depth, topPost);
     
+    // sort children by time
+    if( children.length > 1) {
+      children.sort(sortTreeNewestReply);
+    }
+
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
 

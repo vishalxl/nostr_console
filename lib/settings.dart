@@ -175,6 +175,10 @@ int gMenuWidth          = 36;
 int gNameLenDisplayed = 12;
 String gValidCheckMark = "✔️";
 
+bool gShowLnInvoicesAsQr = false;
+int  gMinWidthForLnQr = 150;
+
+
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings
 const String defaultTextColor = "green";
@@ -297,7 +301,7 @@ usage: $exename [OPTIONS]
       -r, --relay   <relay urls>    The comma separated relay urls that are used as main relays. If given, these are used
                                     rather than the default relays.
       -d, --days    <N as num>      The latest number of days for which events are shown. Default is $gDefaultNumLastDays.
-      -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to recieve all events
+      --request <REQ string>         This request is sent verbatim to the default relay. It can be used to recieve all events
                                     from a relay. If not provided, then events for default or given user are shown.
       -f, --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
                                     to it all the events (including the ones read, and any new received). Even if not given, 

@@ -3,6 +3,9 @@ import 'package:qr/qr.dart';
 
 enum enumRoomType { kind4, kind40, kind140, RoomLocationTag, RoomTTag}
 
+int gMinLnInvoiceLength = 20; // TODO put real value
+int gMaxStrLenForQrCode = 600; // in bytes, maximum acceptable length of string that is converted to qr code. for lnbc1 invoices
+
 String getPostKindFrom(enumRoomType eType) {
   switch (eType) {
   case enumRoomType.kind4:
@@ -250,44 +253,73 @@ int isInRange( int n, List<List<int>> ranges ) {
   return 0;
 }
 
-List<int> getTypeAndModule(String str) {
-  int type = 14, module = 73;
+// https://jpgraph.net/download/manuals/chunkhtml/ch27.html
+// both go from 1 to 20 inclusive. index is type.
+List<int> qrMaxDataBits = [152, 272, 440, 640, 864, 1088, 1248, 1552, 1856, 2192, 2592, 2960, 3424, 3688, 4184, 4712, 5176, 5768, 6360, 6888];
+List<int> qrModules     = [21,  25,  29,   33,  37,   41,   45,   49,   53,   57,   61,   65,   69,   73,   77,   81,   85,   89,   93,   97];
 
-  if( str.length > 3688 /~ 8) {
-    type = 16;
-    module = 81;
+// return type and module as entries in a list
+List<int>? getTypeAndModule(String str) {
+  if( qrMaxDataBits.length != qrModules.length) {
+    //print("ret null 1");
+    return null;
+  }
+   
+  // 5 for padding which it seems to need, otherwise it gives error like 'QrInputTooLongException: Input too long. 2212 > 2192' for a str which is exactly 2192
+  int strLen = str.length + 5; 
+  for( int i = 0; i < qrModules.length; i++) {
+    //print("checking $strLen, ${strLen * 8} and ${qrMaxDataBits[i]}");
+    if( strLen * 8 <= qrMaxDataBits[i]) {
+      return [i+1, qrModules[i]];
+    } 
   }
 
-  if( str.length > 4712 /~ 8) {
-    type = 18;
-    module = 89;
-  }
-
-
-  return [type, module];
+  //print("ret null 2 strLen = $strLen");
+  return null;
 }
 
-int gMaxStrLenForQrCode = 600; // in bytes, maximum acceptable length of string that is converted to qr code. for lnbc1 invoices
+bool sanityChecked(String lnInvoice) {
+
+  //for( int i = 0 ; i < lnInvoice.length; i++) {
+  //}
+
+  if( lnInvoice.length < gMinLnInvoiceLength)
+    return false;
+
+  if( lnInvoice.substring(0, 4).toLowerCase() != "lnbc") 
+    return false;
+
+  return true;
+}
 
 String expandLNInvoices(String content) {
 
-  String regexp1 = '(lnbc1[a-zA-Z0-9]+)';
+  String regexp1 = '(lnbc[a-zA-Z0-9]+)';
   RegExp httpRegExp = RegExp(regexp1);
   
-  for( var match in httpRegExp.allMatches(content) ) {
+  for( var match in httpRegExp.allMatches(content.toLowerCase()) ) {
     String lnInvoice = content.substring(match.start, match.end);
   
+    if( !sanityChecked(lnInvoice)) {
+      continue;
+    }
+
     if( lnInvoice.length > gMaxStrLenForQrCode) {
       continue;
     }
 
-
     //print(lnInvoice);
     String qrStr = "";
-    List<int> typeAndModule = getTypeAndModule(lnInvoice);
-    //print(typeAndModule);
+    //print("\nqr code len: ${lnInvoice.length}");
+  
+    List<int>? typeAndModule = getTypeAndModule(lnInvoice);
+    if( typeAndModule == null) {
+      continue;
+    }
+
+    //print("\nqr code len: ${lnInvoice.length}"); print(typeAndModule);  print("--");
     qrStr = getPubkeyAsQrString(lnInvoice, typeAndModule[0], typeAndModule[1], "");
-    //print(qrStr);
+    //print(lnInvoice); print(qrStr);
 
     content = content.substring(0, match.start) + "\n\n" + qrStr + "\n\n" + content.substring(match.end);
   }
@@ -296,6 +328,7 @@ String expandLNInvoices(String content) {
 }
 
 // https://www.sproutqr.com/blog/qr-code-types
+// https://jpgraph.net/download/manuals/chunkhtml/ch27.html
 // default 4 and 33 work for pubkey
 String getPubkeyAsQrString(String str, [int typeNumber = 4, moduleCount = 33, String leftPadding = "   "]) {
   String output = "";

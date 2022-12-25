@@ -1,12 +1,15 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console
-version: 0.3.0-testing
+version: 0.3.0-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
-
-# added check marks
+# 0.3.0
+# added check marks; added more default users
 # changed fetch logic: after fetching all friends contacts etc, then reset the relays, and fetched ALL the events in last 2 hours. but not closing connection right now of old relays.
 # fixed URI exception for NIP05
+# sorted lists printed in profile ( radixrat)
+# sorted tree children - now posts get printed in sorted order
+# --qrln print LNBC invoices as qr code
 
 #0.2.9
 # improved fetching logic

@@ -384,7 +384,9 @@ class EventData {
     case 1:
     case 42:
       evaluatedContent = expandMentions(content, tempChildEventsMap);
-      //evaluatedContent = expandLNInvoices(evaluatedContent);
+      if( gShowLnInvoicesAsQr) {
+        evaluatedContent = expandLNInvoices(evaluatedContent);
+      }
       if( translator != null && gTranslate && !evaluatedContent.isEnglish()) {
         if( gDebug > 0) print("found that this comment is non-English: $evaluatedContent");
 

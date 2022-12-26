@@ -62,7 +62,8 @@ Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 "wss://nostr.coinos.io",
                                 "wss://nostr-relay.digitalmob.ro",
                                 "wss://nostr.drss.io",
-                                "wss://nostr.radixrat.com"
+                                "wss://nostr.radixrat.com",
+                                "wss://relay.nostr.ch"
 
                               };
 
@@ -193,6 +194,7 @@ const int gMaxInValidInputAccepted = 40;
 
 // LN settings
 const int gMinLud06AddressLength = 10; // used in printProfile
+const int gMinLud16AddressLength = 3; // used in printProfile
 
 const int gMaxEventsInThreadPrinted = 20;
 const int gMaxInteger = 100000000000; // used in printTree

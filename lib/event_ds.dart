@@ -1502,55 +1502,49 @@ Uint8List myPrivateDecryptRaw( String privateString,
                                String publicString, 
                                Uint8List cipherText,
                                [String b64IV = ""]) {
-try {
-
-  List<List<int>> byteSecret = [];
-  if( gMapByteSecret.containsKey(publicString)) {
+  try {
+    List<List<int>> byteSecret = [];
+    if( gMapByteSecret.containsKey(publicString)) {
       byteSecret = gMapByteSecret[publicString]??[];
+    }
+
+    if( byteSecret.isEmpty) {
+      byteSecret = Kepler.byteSecret(privateString, publicString);;
+      gMapByteSecret[publicString] = byteSecret;
+    }
+
+    final secretIV = byteSecret;
+    final key = Uint8List.fromList(secretIV[0]);
+    final iv = b64IV.length > 6
+              ? convert.base64.decode(b64IV)
+              : Uint8List.fromList(secretIV[1]);
+
+    CipherParameters params = new PaddedBlockCipherParameters(
+        new ParametersWithIV(new KeyParameter(key), iv), null);
+
+    PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
+        new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
+
+    cipherImpl.init(false,
+                    params as PaddedBlockCipherParameters<CipherParameters?,
+                                                          CipherParameters?>);
+    final Uint8List  finalPlainText = Uint8List(cipherText.length); // allocate space
+
+    var offset = 0;
+    while (offset < cipherText.length - 16) {
+      offset += cipherImpl.processBlock(cipherText, offset, finalPlainText, offset);
+    }
+
+    //remove padding
+    offset += cipherImpl.doFinal(cipherText, offset, finalPlainText, offset);
+    return  finalPlainText.sublist(0, offset);
+  } catch(e) {
+      if( gDebug >= 0) print("Decryption error =  $e");
+      return Uint8List(0);
   }
-
-  if( byteSecret.isEmpty) {
-    byteSecret = Kepler.byteSecret(privateString, publicString);;
-    gMapByteSecret[publicString] = byteSecret;
-  }
-
-  final secretIV = byteSecret;
-  
-  final key = Uint8List.fromList(secretIV[0]);
-
-  final iv = b64IV.length > 6
-      ? convert.base64.decode(b64IV)
-      : Uint8List.fromList(secretIV[1]);
-
-
-  CipherParameters params = new PaddedBlockCipherParameters(
-      new ParametersWithIV(new KeyParameter(key), iv), null);
-
-  PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
-      new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
-
-
-  cipherImpl.init(false,
-                  params as PaddedBlockCipherParameters<CipherParameters?,
-                                                        CipherParameters?>);
-
-  final Uint8List  finalPlainText = Uint8List(cipherText.length); // allocate space
-
-  var offset = 0;
-  while (offset < cipherText.length - 16) {
-    offset += cipherImpl.processBlock(cipherText, offset, finalPlainText, offset);
-  }
-
-  //remove padding
-  offset += cipherImpl.doFinal(cipherText, offset, finalPlainText, offset);
-  return  finalPlainText.sublist(0, offset);
-} catch(e) {
-    if( gDebug >= 0) print("Decryption error =  $e");
-    return Uint8List(0);
-}
 }
 
-/// Encrypt data using self private key in nostr format ( with trailing ?iv=)
+// Encrypt data using self private key in nostr format ( with trailing ?iv=)
 String myEncrypt( String privateString, 
                          String publicString, 
                          String plainText) {
@@ -1569,20 +1563,21 @@ String myEncryptRaw( String privateString,
   FortunaRandom fr = FortunaRandom();
   final _sGen = Random.secure();;
   fr.seed(KeyParameter(
-      Uint8List.fromList(List.generate(32, (_) => _sGen.nextInt(255)))));
-  final iv = fr.nextBytes(16); //Uint8List.fromList(secretIV[1]);
+                      Uint8List.fromList(List.generate(32, (_) => _sGen.nextInt(255)))));
+  final iv = fr.nextBytes(16);
    
   CipherParameters params = new PaddedBlockCipherParameters(
-      new ParametersWithIV(new KeyParameter(key), iv), null);
+                                                            new ParametersWithIV(new KeyParameter(key), iv), null);
 
   PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
-      new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
+                                                            new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
 
   cipherImpl.init(true,  // means to encrypt
                   params as PaddedBlockCipherParameters<CipherParameters?,
                                                         CipherParameters?>);
   
-  final Uint8List  outputEncodedText = Uint8List(uintInputText.length + 16); // allocate space
+  // allocate space
+  final Uint8List  outputEncodedText = Uint8List(uintInputText.length + 16);
 
   var offset = 0;
   while (offset < uintInputText.length - 16) {

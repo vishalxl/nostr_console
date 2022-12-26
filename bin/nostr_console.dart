@@ -364,7 +364,7 @@ Future<void> main(List<String> arguments) async {
           if (contactEvent != null ) {
             if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
               contactEvent.eventData.contactList.forEach((contact) {
-              contacts.add(contact.id);
+              contacts.add(contact.contactPubkey);
             });
           } else {
             print("Could not find your contact list.");

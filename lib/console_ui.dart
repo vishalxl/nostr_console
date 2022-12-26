@@ -196,7 +196,7 @@ Future<String> sendEvent(Store node, Event e, [int delayAfterSend = 500]) async 
       if( i == e.eventData.contactList.length - 1) {
         comma = "";
       }
-      String strContact = '["p","${e.eventData.contactList[i].id}","$relay"]$comma';
+      String strContact = '["p","${e.eventData.contactList[i].contactPubkey}","$relay"]$comma';
       strTags += strContact;
     }
     
@@ -293,7 +293,7 @@ void reAdjustAlignment() {
 }
 
 void printProfile(Store node, String profilePubkey) {
-  bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike(profilePubkey);
+  bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike({profilePubkey});
   node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyUserPostAndLike);
 
   // if contact list was found, get user's feed, and keep the contact list for later use 
@@ -332,7 +332,7 @@ void printProfile(Store node, String profilePubkey) {
   if (profileContactEvent != null ) {
     
     if( profilePubkey != userPublicKey) {
-      if( profileContactEvent.eventData.contactList.any((x) => (x.id == userPublicKey))) {
+      if( profileContactEvent.eventData.contactList.any((x) => (x.contactPubkey == userPublicKey))) {
           print("* They follow you");
       } else {
           print("* They don't follow you");
@@ -346,7 +346,7 @@ void printProfile(Store node, String profilePubkey) {
     // print follow list
     stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
     profileContactEvent.eventData.contactList.sort();
-    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.id, 0)}, "));
+    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.contactPubkey, 0)}, "));
     print("\n");
   }
 
@@ -1283,7 +1283,7 @@ Future<void> socialMenuUi(Store node) async {
 
         case 3:
           clearScreen();
-          bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes({userPublicKey});
+          bool selectorTrees_userNotifications (Tree t) => t.treeSelectorotificationsFor({userPublicKey});
           int notificationHours = gHoursDefaultPrint>24? gHoursDefaultPrint: 24; // minimum 24
           Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:notificationHours)), selectorTrees_userNotifications);
           if( numPrinted.y > 0) {
@@ -1303,7 +1303,8 @@ Future<void> socialMenuUi(Store node) async {
           break;
         case 5:
           clearScreen();
-          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_userRepliesLikes);
+          bool selectorTrees_userActions (Tree t) => t.treeSelectorUserPostAndLike({userPublicKey});
+          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_userActions);
           if( numPrinted.x > 0) {
             print("Showed ${numPrinted.x.toInt()} thread where you replied or liked in in last $gHoursDefaultPrint hours.\n");
           } else {
@@ -1312,7 +1313,8 @@ Future<void> socialMenuUi(Store node) async {
           break;
         case 6:
           clearScreen();
-          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followsPosts);
+          bool selectorTrees_followActions (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey));
+          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActions);
           if( numPrinted.x > 0) {
             print("Showed ${numPrinted.x.toInt()} threads where your follows participated.\n");
           } else {
@@ -1384,7 +1386,7 @@ Future<void> socialMenuUi(Store node) async {
 
                   bool alreadyContact = false;
                   for(int i = 0; i < newContactEvent.eventData.contactList.length; i++) {
-                    if( newContactEvent.eventData.contactList[i].id == pubkey.first) {
+                    if( newContactEvent.eventData.contactList[i].contactPubkey == pubkey.first) {
                       alreadyContact = true;
                       break;
                     }

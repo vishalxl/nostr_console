@@ -15,6 +15,19 @@ Event? getContactEvent(String pubkey) {
     return null;
 }
 
+// returns all follows
+Set<String> getFollows(String pubkey) {
+  Set<String> followPubkeys = {};
+
+  Event? profileContactEvent = getContactEvent(pubkey);
+  if( profileContactEvent != null) {
+    profileContactEvent.eventData.contactList.forEach((x) => followPubkeys.add(x.contactPubkey));
+    //followPubkeys = profileContactEvent.eventData.contactList.toSet();
+  }
+
+  return followPubkeys;
+}
+
 Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {
   Set<String> userChannels = {};
 

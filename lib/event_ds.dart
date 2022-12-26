@@ -1027,7 +1027,7 @@ String getRelayOfUser(String userPubkey, String contactPubkey) {
     List<Contact>? contacts = gContactLists[userPubkey];
     if( contacts != null) {
       for( int i = 0; i < contacts.length; i++) {
-        if( contacts[i].id == contactPubkey) {
+        if( contacts[i].contactPubkey == contactPubkey) {
           relay = contacts[i].relay;
           return relay;
         }
@@ -1392,17 +1392,17 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
 
 // The contact only stores id and relay of contact. The actual name is stored in a global variable/map
 class Contact implements Comparable<Contact> {
-  String id, relay;
-  Contact(this.id, this.relay);
+  String contactPubkey, relay;
+  Contact(this.contactPubkey, this.relay);
 
   @override 
   String toString() {
-    return 'id: $id ( ${getAuthorName(id)})     relay: $relay';
+    return 'id: $contactPubkey ( ${getAuthorName(contactPubkey)})     relay: $relay';
   }
 
   @override
   int compareTo(Contact other) {
-    return getAuthorName(id).compareTo(getAuthorName(other.id));
+    return getAuthorName(contactPubkey).compareTo(getAuthorName(other.contactPubkey));
   }
 }
 

@@ -114,7 +114,7 @@ bool followsInvolved(Event e, Event? contactEvent) {
   }
 
   // if its an event by any of the contact
-  if(contactEvent.eventData.contactList.any((contact) => e.eventData.pubkey == contact.id )) {
+  if(contactEvent.eventData.contactList.any((contact) => e.eventData.pubkey == contact.contactPubkey )) {
     return true;
   }
 
@@ -124,7 +124,7 @@ bool followsInvolved(Event e, Event? contactEvent) {
     if( reactors != null) {
       for( var reactor in reactors) {
         String reactorPubkey = reactor[0];
-        if(contactEvent.eventData.contactList.any((contact) => reactorPubkey == contact.id )) {
+        if(contactEvent.eventData.contactList.any((contact) => reactorPubkey == contact.contactPubkey )) {
           return true;
         }
       }
@@ -490,7 +490,7 @@ class Tree {
 
   // returns true if the tree or its children has a reply or like for the user with public key pk; and notification flags are set for such events
   // only new controls whether replies/likes recieved are ignored if the user has already 
-  bool treeSelectorRepliesAndLikes(Set<String> pubkeys, [bool onlyNew = false]) {
+  bool treeSelectorotificationsFor(Set<String> pubkeys, [bool onlyNew = false]) {
     bool hasReaction  = false;
     bool childMatches = false;
     bool isMentioned  = false;
@@ -529,7 +529,7 @@ class Tree {
     }
 
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].treeSelectorRepliesAndLikes(pubkeys)) {
+      if( children[i].treeSelectorotificationsFor(pubkeys)) {
         childMatches = true;
       }
     }
@@ -541,17 +541,16 @@ class Tree {
   } 
 
   // returns true if the tree or its children has a post or like by user; and notification flags are set for such events
-  bool treeSelectorUserPostAndLike(String pubkey) {
+  bool treeSelectorUserPostAndLike(Set<String> pubkeys) {
     bool hasReacted = false;
 
     if( gReactions.containsKey(event.eventData.id))  {
       List<List<String>>? reactions = gReactions[event.eventData.id];
       if( reactions  != null) {
         for( int i = 0; i < reactions.length; i++) {
-          if( reactions[i][0] == pubkey) {
-            event.eventData.newLikes.add(pubkey);
+          if( pubkeys.contains(reactions[i][0]) ) {
+            event.eventData.newLikes.add(reactions[i][0]);
             hasReacted = true;
-            break;
           }
         }
       }
@@ -559,11 +558,13 @@ class Tree {
 
     bool childMatches = false;
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].treeSelectorUserPostAndLike(pubkey)) {
+      if( children[i].treeSelectorUserPostAndLike(pubkeys)) {
         childMatches = true;
       }
     }
-    if( event.eventData.pubkey == pubkey) {
+
+    // if event is by user(s)
+    if( pubkeys.contains(event.eventData.pubkey)) {
       event.eventData.isNotification = true;
       return true;
     }
@@ -2267,7 +2268,7 @@ class Store {
         List<Contact>? contactList = userInfo.latestContactEvent?.eventData.contactList;
         if( contactList != null ) {
           for(int i = 0; i < contactList.length; i ++) {
-            if( contactList[i].id == pubkey) {
+            if( contactList[i].contactPubkey == pubkey) {
               followers.add(otherPubkey);
               return;
             }
@@ -2298,17 +2299,17 @@ class Store {
       selfNumContacts = selfContacts.length;
       for(int i = 0; i < selfContacts.length; i ++) {
         // check if you follow the other account
-        if( selfContacts[i].id == otherPubkey) {
+        if( selfContacts[i].contactPubkey == otherPubkey) {
           isFollow = true;
         }
         // count the number of your contacts who know or follow the other account
         List<Contact> followContactList = [];
-        Event? followContactEvent = getContactEvent(selfContacts[i].id);
+        Event? followContactEvent = getContactEvent(selfContacts[i].contactPubkey);
         if( followContactEvent != null) {
           followContactList = followContactEvent.eventData.contactList;
           for(int j = 0; j < followContactList.length; j++) {
-            if( followContactList[j].id == otherPubkey) {
-              mutualFollows.add(getAuthorName(selfContacts[i].id, 0));
+            if( followContactList[j].contactPubkey == otherPubkey) {
+              mutualFollows.add(getAuthorName(selfContacts[i].contactPubkey, 0));
               numSecond++;
               break;
             }

@@ -18,7 +18,7 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 * [ ] in mention expansion, if p tag is not found in user store, then its left as #[n], whereas it should be replaced by the pubkey 
 * [x] notifications should show mentions too ( it does not yet)
 * [x] notifications , option 3, is shown only for one entry in whole thread 
-* [ ] hashtag regexp should have underscore 
+* [x] hashtag regexp should have underscore  (seems to be working fine)
 * [x] add more default users. improve who is fetched. 
 * [ ] after going to a dm room, screen doesn't clear 
 * [x] when seeing a profile, if they have liked something, then likes after their name are shown white

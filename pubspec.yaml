@@ -5,13 +5,14 @@ homepage: https://github.com/vishalxl/nostr_console
 
 
 # 0.3.1
+# added nostr.ch as another default relay to sync with anigma
 # printed only 20 maximum events in a thread to reduce screen spam from long threads. Only in search results are all threads printed; and a thread or event can be searched by 6 digit id-prefix of the event thats mentioned.
 # improved user notifications , menu 2 -> 3, now likes are shown as notifications and less informative
 # improved 2 -> 5. better printing. and fixed white after reaction highlighed issue
 # improved 2 -> 6 too, now follows posts get highlighed, and so do their reactions. 
 # mentions get highlighed in above menus
 # if too many wrong menu inputs are given ( >40) then program exits without saving any new events. for issue #49 
-# showed lnurl, if any, in profile as qr code. should have key lud16
+# showed lud06 and lud16, if any, in profile as qr code
 
 
 # 0.3.0

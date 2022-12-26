@@ -488,46 +488,48 @@ class Tree {
     }
   }
 
-  // returns true if the treee or its children has a reply or like for the user with public key pk; and notification flags are set for such events
+  // returns true if the tree or its children has a reply or like for the user with public key pk; and notification flags are set for such events
   // only new controls whether replies/likes recieved are ignored if the user has already 
-  bool treeSelectorRepliesAndLikes(String pubkey, [bool onlyNew = false]) {
+  bool treeSelectorRepliesAndLikes(Set<String> pubkeys, [bool onlyNew = false]) {
     bool hasReaction  = false;
     bool childMatches = false;
     bool isMentioned  = false;
 
     // check if there are any likes to this event if its user's event
-    if( event.eventData.pubkey == pubkey &&  gReactions.containsKey(event.eventData.id)) {
+    if( pubkeys.contains(event.eventData.pubkey) &&  gReactions.containsKey(event.eventData.id)) {
       List<List<String>>? reactions = gReactions[event.eventData.id];
       if( reactions  != null) {
         if( reactions.length > 0) {
           // set every reaction as a new like so they all get highlighted; these are all later reset after first printing
           Set<String> reactorPubkeys = getReactorPubkeys(event.eventData.id);
           event.eventData.newLikes = reactorPubkeys;
+          hasReaction = true;
         }
       }
     }
 
+    // check if any of the users has been tagged in this event
+    List<String> pTags = event.eventData.pTags;
+    Set<String> pplTagged = pTags.toSet().intersection(pubkeys);
 
-    // check if user has been tagged in this event
-    if( event.eventData.pubkey != pubkey) {
-      List<String> pTags = event.eventData.pTags;
-      if( pTags.contains(pubkey)) {
-        isMentioned = true;
-      }
+    // 2nd condition: person making the event should not be on this list; they would already be considered in other test
+    if( pplTagged.length > 0 && !pubkeys.contains(event.eventData.pubkey)) { 
+      event.eventData.isNotification = isMentioned = true;
     }
 
-    // check if there are any replies from other people to this event
-    if( event.eventData.pubkey == pubkey && children.length > 0) {
+    // check if there are any replies from other people to an event made by someone in list
+    if( pubkeys.contains(event.eventData.pubkey) && children.length > 0) {
       for( int i = 0; i < children.length; i++ ) {
         children.forEach((child) {  
           // if child is someone else then set notifications and flag, means there are replies to this event 
-          childMatches = child.event.eventData.isNotification =  ((child.event.eventData.pubkey != pubkey)? true: false) ; 
+           if(child.event.eventData.pubkey != event.eventData.pubkey )  // tests reply is not from same user
+             childMatches = child.event.eventData.isNotification = true;
         }); 
       }
     }
 
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].treeSelectorRepliesAndLikes(pubkey)) {
+      if( children[i].treeSelectorRepliesAndLikes(pubkeys)) {
         childMatches = true;
       }
     }

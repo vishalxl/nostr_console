@@ -1283,7 +1283,7 @@ Future<void> socialMenuUi(Store node) async {
 
         case 3:
           clearScreen();
-          bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes(userPublicKey);
+          bool selectorTrees_userNotifications (Tree t) => t.treeSelectorRepliesAndLikes({userPublicKey});
           int notificationHours = gHoursDefaultPrint>24? gHoursDefaultPrint: 24; // minimum 24
           Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:notificationHours)), selectorTrees_userNotifications);
           if( numPrinted.y > 0) {

@@ -1232,7 +1232,7 @@ Future<void> socialMenuUi(Store node) async {
                              'Your notifications',// 3
                              'Your Posts',        // 4 
                              'Your Replies/Likes',//5
-                             'Friends Posts/Replies/Likes',   // 6
+                             'Follows\' Posts/Replies/Likes',   // 6
                              'Search word(s) or event id',    // 7
                              'Follow new contact',            // 8
                              'Show user profile',             // 9
@@ -1314,9 +1314,9 @@ Future<void> socialMenuUi(Store node) async {
           clearScreen();
           Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followsPosts);
           if( numPrinted.x > 0) {
-            print("Showed ${numPrinted.x.toInt()} threads where your follows/freiends participated.\n");
+            print("Showed ${numPrinted.x.toInt()} threads where your follows participated.\n");
           } else {
-            print("No threads to show where your follows/friends or other users participated in last $gHoursDefaultPrint hours.");
+            print("No threads to show where your follows participated in last $gHoursDefaultPrint hours.");
           }
           break;
         case 7: // search word or event id

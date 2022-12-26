@@ -55,7 +55,6 @@ String defaultServerUrl       = "wss://relay.damus.io";
 const String relayNostrInfo   = 'wss://relay.nostr.info';
 
 
-
 Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 relayNostrInfo,
                                 "wss://nostr-2.zebedee.cloud",
@@ -182,6 +181,11 @@ List<String> gCheckMarksToRemove = ["✅","✔️"];
 bool gShowLnInvoicesAsQr = false;
 const int  gMinWidthForLnQr = 140;
 
+// event length printed
+const int gEventLenPrinted = 6;
+
+// used in word/event search
+const int gMinEventIdLenInSearch = gEventLenPrinted;
 
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings

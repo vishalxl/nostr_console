@@ -670,7 +670,7 @@ class EventData {
     }
 
 
-    int n = 6;
+    int n = gEventLenPrinted; // is 6 
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
 
     String name = getAuthorName(pubkey);    

@@ -475,7 +475,8 @@ class Tree {
   }
 
   // returns true if the treee or its children has a reply or like for the user with public key pk; and notification flags are set for such events
-  bool treeSelectorRepliesAndLikes(String pubkey) {
+  // only new controls whether replies/likes recieved are ignored if the user has already 
+  bool treeSelectorRepliesAndLikes(String pubkey, [bool onlyNew = false]) {
     bool hasReaction = false;
     bool childMatches = false;
 
@@ -563,7 +564,15 @@ class Tree {
     }
     if( event.eventData.id == gCheckEventId) printWarning("found the event $gCheckEventId");
 
-    if( event.eventData.content.toLowerCase().contains(word) || event.eventData.id == word ) {
+    // match event id if 
+    bool eventIdMatches = false;
+    if( word.length >= gMinEventIdLenInSearch && word.length <= 64) {
+      if( event.eventData.id.substring(0, word.length) == word) {
+        eventIdMatches = true;
+      }
+    }
+
+    if( event.eventData.content.toLowerCase().contains(word) || eventIdMatches ) {
       event.eventData.isNotification = true;
       return true;
     }

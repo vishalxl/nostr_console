@@ -56,9 +56,12 @@ bool selectorTrees_userNotifications(Tree t) {
 }
 */
 
+// returns true of user has made this comment, or liked it 
 bool userInvolved(String pubkey, Event e) {
+
   if( e.eventData.pubkey == pubkey) {
-    return true;
+    e.eventData.isNotification = true;
+    return true; // if its users comment no need to check further
   }
 
   if( gReactions.containsKey(e.eventData.id)) {
@@ -66,7 +69,9 @@ bool userInvolved(String pubkey, Event e) {
     if( reactors != null) {
       for( var reactor in reactors) {
         String reactorPubkey = reactor[0];
+        // if user has reacted to this event, then return true
         if( reactorPubkey == pubkey) {
+          e.eventData.newLikes = {pubkey};
           return true;
         }
       }
@@ -81,15 +86,24 @@ bool selectorTrees_all(Tree t) {
 
 // only show in which user is involved
 bool selectorTrees_userRepliesLikes(Tree t) {
+  bool usersEvent = false;
+  bool childNotifications = false;
+
   if( userInvolved(userPublicKey, t.event)) {
+    usersEvent = true;
+  }
+
+  
+  for( Tree child in t.children) {
+    if( selectorTrees_userRepliesLikes(child)) {
+      childNotifications = true;
+    }
+  }
+
+  if( usersEvent || childNotifications) {
     return true;
   }
 
-  for( Tree child in t.children) {
-    if( selectorTrees_userRepliesLikes(child)) {
-      return true;
-    }
-  }
   return false;
 }
 
@@ -477,9 +491,11 @@ class Tree {
   // returns true if the treee or its children has a reply or like for the user with public key pk; and notification flags are set for such events
   // only new controls whether replies/likes recieved are ignored if the user has already 
   bool treeSelectorRepliesAndLikes(String pubkey, [bool onlyNew = false]) {
-    bool hasReaction = false;
+    bool hasReaction  = false;
     bool childMatches = false;
+    bool isMentioned  = false;
 
+    // check if there are any likes to this event if its user's event
     if( event.eventData.pubkey == pubkey &&  gReactions.containsKey(event.eventData.id)) {
       List<List<String>>? reactions = gReactions[event.eventData.id];
       if( reactions  != null) {
@@ -491,6 +507,16 @@ class Tree {
       }
     }
 
+
+    // check if user has been tagged in this event
+    if( event.eventData.pubkey != pubkey) {
+      List<String> pTags = event.eventData.pTags;
+      if( pTags.contains(pubkey)) {
+        isMentioned = true;
+      }
+    }
+
+    // check if there are any replies from other people to this event
     if( event.eventData.pubkey == pubkey && children.length > 0) {
       for( int i = 0; i < children.length; i++ ) {
         children.forEach((child) {  
@@ -506,7 +532,7 @@ class Tree {
       }
     }
 
-    if( hasReaction || childMatches) {
+    if( hasReaction || childMatches || isMentioned) {
       return true;
     }
     return false;

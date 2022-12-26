@@ -4,6 +4,7 @@ version: 0.3.0-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
 # improved user notifications , menu 2 -> 3, now likes are shown as notifications and less informative
+# improved 2 -> 5. better printing. and fixed white after reaction highlighed issue
 
 # 0.3.0
 # added check marks; added more default users

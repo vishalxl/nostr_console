@@ -16,8 +16,8 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 * [ ] fix --help that's dated
 * [x] show lightning invoice as qr code 
 * [ ] in mention expansion, if p tag is not found in user store, then its left as #[n], whereas it should be replaced by the pubkey 
-* [ ] notifications should show mentions too ( it does not yet) 
-* [ ] notifications , option 3, is shown only for one entry in whole thread 
+* [ ] notifications should show mentions too ( it does not yet)
+* [x] notifications , option 3, is shown only for one entry in whole thread 
 * [ ] hashtag regexp should have underscore 
 * [x] add more default users. improve who is fetched. 
 * [ ] after going to a dm room, screen doesn't clear 

@@ -913,7 +913,7 @@ class EventData {
         String reactorId = reactors[i][0];
         if( newLikes.contains(reactorId) && reactors[i][1] == "+") {
           // this is a notifications, print it and then later empty newLikes
-          reactorNames += comma + gNotificationColor + getAuthorName(reactorId) + gColorEndMarker;
+          reactorNames += comma + gNotificationColor + getAuthorName(reactorId) + gColorEndMarker + gCommentColor ; // restart with comment color because this is part of ongoing print
           firstEntry = false;
         } else {
           // this is normal printing of the reaction. only print for + for now

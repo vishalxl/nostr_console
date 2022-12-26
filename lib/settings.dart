@@ -191,6 +191,9 @@ const int gMinEventIdLenInSearch = gEventLenPrinted;
 int gInvalidInputCount = 0;
 const int gMaxInValidInputAccepted = 40;
 
+// LN settings
+const int gMinLud16AddressLength = 10; // used in printProfile
+
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings
 const String defaultTextColor = "green";

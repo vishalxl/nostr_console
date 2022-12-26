@@ -307,6 +307,14 @@ void printProfile(Store node, String profilePubkey) {
     pronoun = "They";
   }
 
+  String about = gKindONames[profilePubkey]?.about??"";
+  String picture = gKindONames[profilePubkey]?.picture??"";
+  String lud16 = gKindONames[profilePubkey]?.lud16??"";
+  int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
+  bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
+  String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
+
+
   // print QR code
   print("The QR code for public key:\n\n");
   try {
@@ -315,13 +323,19 @@ void printProfile(Store node, String profilePubkey) {
     print("Could not generate qr code.  \n");
   }
 
-  print("");
-  String about = gKindONames[profilePubkey]?.about??"";
-  String picture = gKindONames[profilePubkey]?.picture??"";
-  String lud16 = gKindONames[profilePubkey]?.lud16??"";
-  int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
-  bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
-  String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
+  // print LNRUL if it exists
+  if( lud16.length > gMinLud16AddressLength) {
+    try {
+      List<int>? typesAndModule = getTypeAndModule(lud16);
+      if( typesAndModule != null) {
+        print("The LNRUL in lud16 as QR:\n\n");
+        print(getPubkeyAsQrString(lud16, typesAndModule[0], typesAndModule[1]));
+      }
+    } catch(e) {
+      print("Could not generate qr code for the lnurl given.  \n");
+    }
+  }
+
   print("\nName        : $authorName ( ${profilePubkey} ).");
   print("About       : $about");
   print("Picture     : $picture");

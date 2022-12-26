@@ -483,8 +483,9 @@ class Tree {
       List<List<String>>? reactions = gReactions[event.eventData.id];
       if( reactions  != null) {
         if( reactions.length > 0) {
-          event.eventData.isNotification = true;
-          return true;
+          // set every reaction as a new like so they all get highlighted; these are all later reset after first printing
+          Set<String> reactorPubkeys = getReactorPubkeys(event.eventData.id);
+          event.eventData.newLikes = reactorPubkeys;
         }
       }
     }

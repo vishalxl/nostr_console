@@ -177,6 +177,7 @@ int gMenuWidth          = 36;
 
 int gNameLenDisplayed = 12;
 String gValidCheckMark = "✔️";
+List<String> gCheckMarksToRemove = ["✅","✔️"];
 
 bool gShowLnInvoicesAsQr = false;
 const int  gMinWidthForLnQr = 140;

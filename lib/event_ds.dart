@@ -48,8 +48,20 @@ Map<String, UserNameInfo> gKindONames = {};
 
 // global reactions entry. Map of form <id of event reacted to, List of Reactors>
 // reach Reactor is a list of 2-elements ( first is pubkey of reactor event, second is comment)
+// each eventID -> multiple [ pubkey, comment ]
 Map< String, List<List<String>> > gReactions = {};
 
+// for the given eventID returns the pubkeys of reactors
+Set<String> getReactorPubkeys(String eventId) {
+  Set<String> reactorIds = {};
+  List<List<String>>? reactions = gReactions[eventId];
+
+  if( reactions != null) {
+    reactions.forEach((reaction) { reactorIds.add(reaction[0]);});
+  }
+
+  return reactorIds;
+}
 // global contact list of each user, including of the logged in user.
 // maps from pubkey of a user, to the latest contact list of that user, which is the latest kind 3 message
 // is updated as kind 3 events are received 
@@ -103,7 +115,7 @@ class EventData {
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
   String             evaluatedContent; // content which has mentions expanded, and which has been translated
-  Set<String>        newLikes;    // used for notifications, are colored as notifications and then reset  
+  Set<String>        newLikes;    // used for notifications, are colored as notifications and then reset ; set of pubkeys that are new likers
 
   List<Contact> contactList = []; // used for kind:3 events, which is contact list event
 

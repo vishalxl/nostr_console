@@ -1258,7 +1258,7 @@ class Store {
     // for pubkeys that don't have any kind 0 events ( but have other events), add then to global kind0 store so they can still be accessed
     tempChildEventsMap.forEach((key, value) {
         if( !gKindONames.containsKey(value.event.eventData.pubkey)) {
-          gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null );
+          gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null, null );
         }
     });
 

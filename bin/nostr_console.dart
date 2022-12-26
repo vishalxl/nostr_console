@@ -119,6 +119,7 @@ Future<void> main(List<String> arguments) async {
       if( userPublicKey == gDefaultPublicKey) {
         print("You should ideally create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
         print("Create a private key from ${gWarningColor}astral.ninja, @damusapp, or even from command line using `openssl rand -hex 32`.$gColorEndMarker.\n");
+        print("npub/nsec keys can be converted to hex key format using https://damus.io/key");
       }
 
       // handle relay related argument

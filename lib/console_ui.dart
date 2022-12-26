@@ -318,12 +318,14 @@ void printProfile(Store node, String profilePubkey) {
   print("");
   String about = gKindONames[profilePubkey]?.about??"";
   String picture = gKindONames[profilePubkey]?.picture??"";
+  String lud16 = gKindONames[profilePubkey]?.lud16??"";
   int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
   bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
   String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
   print("\nName        : $authorName ( ${profilePubkey} ).");
   print("About       : $about");
   print("Picture     : $picture");
+  print("Lud16       : $lud16");
   print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
   print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
 

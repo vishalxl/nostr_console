@@ -294,7 +294,7 @@ void reAdjustAlignment() {
 
 void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike({profilePubkey});
-  node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyUserPostAndLike);
+  node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyUserPostAndLike);
 
   // if contact list was found, get user's feed, and keep the contact list for later use 
   String authorName = getAuthorName(profilePubkey, 0);
@@ -529,7 +529,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
         String clientName = $tempWords??"";
         if( clientName != "") {
           bool fromClient (Tree t) => t.treeSelectorClientName(clientName);
-          node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), fromClient); // search for last gHoursDefaultPrint hours only
+          node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), fromClient); // search for last gHoursDefaultPrint hours only
         }
         break;
 
@@ -1266,7 +1266,7 @@ Future<void> socialMenuUi(Store node) async {
       
       switch(option) {
         case 1:
-          node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_all);
+          node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_all);
           break;
 
         case 2:
@@ -1309,7 +1309,7 @@ Future<void> socialMenuUi(Store node) async {
           clearScreen();
           bool selectorTrees_userNotifications (Tree t) => t.treeSelectorotificationsFor({userPublicKey});
           int notificationHours = gHoursDefaultPrint>24? gHoursDefaultPrint: 24; // minimum 24
-          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:notificationHours)), selectorTrees_userNotifications);
+          List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:notificationHours)), selectorTrees_userNotifications);
           if( numPrinted[2] > 0) {
             print("Showed ${numPrinted[2]} notifications.\n");
           } else {
@@ -1318,7 +1318,7 @@ Future<void> socialMenuUi(Store node) async {
           break;
         case 4:
           clearScreen();
-          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_selfPosts);
+          List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_selfPosts);
           if( numPrinted[2] > 0) {
             print("Showed ${numPrinted[2]} posts made by you in last $gHoursDefaultPrint hours.\n");
           } else {
@@ -1328,7 +1328,7 @@ Future<void> socialMenuUi(Store node) async {
         case 5:
           clearScreen();
           bool selectorTrees_userActions (Tree t) => t.treeSelectorUserPostAndLike({userPublicKey});
-          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_userActions);
+          List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_userActions);
           if( numPrinted[0] > 0) {
             print("Showed ${numPrinted[0]} thread where you replied or liked in in last $gHoursDefaultPrint hours.\n");
           } else {
@@ -1338,7 +1338,7 @@ Future<void> socialMenuUi(Store node) async {
         case 6:
           clearScreen();
           bool selectorTrees_followActions (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey));
-          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActions);
+          List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActions);
           if( numPrinted[0] > 0) {
             print("Showed ${numPrinted[0]} threads where your follows participated.\n");
           } else {
@@ -1352,7 +1352,7 @@ Future<void> socialMenuUi(Store node) async {
           String words = $tempWords??"";
           if( words != "") {
             bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
-            List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyWords, gMaxInteger); // search for last default hours only
+            List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyWords, gMaxInteger); // search for last default hours only
             if( numPrinted[0] == 0) {
               print("\nNot found in the last $gHoursDefaultPrint hours. Try increasing the number of days printed, from social network options to search further back into history.\n");
             }
@@ -1507,7 +1507,7 @@ void showAllNotifications(Store node, [int x = 0, int y = 0]) {
   List<int> numPrinted = [x, 0, y];
 
   bool hasNotifications (Tree t) => t.treeSelectorNotifications();
-  List<int> temp = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), hasNotifications);
+  List<int> temp = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), hasNotifications);
   numPrinted[0] = temp[0];
   numPrinted[1] = temp[1];
   numPrinted[2] = temp[2];
@@ -1557,7 +1557,7 @@ Future<void> mainMenuUi(Store node) async {
       switch(option) {
         case 1:
           
-          node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_all);
+          node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_all);
           break;
 
         case 2:

@@ -32,7 +32,7 @@ void main() {
 
     tree.children.add(treeChild);
   
-    store.printTree(0, DateTime.now().subtract(Duration(days:1)), selectorTrees_all);
+    store.printStoreTrees(0, DateTime.now().subtract(Duration(days:1)), selectorTrees_all);
   });
 
   

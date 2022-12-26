@@ -196,7 +196,7 @@ const int gMinLud06AddressLength = 10; // used in printProfile
 
 const int gMaxEventsInThreadPrinted = 20;
 const int gMaxInteger = 100000000000; // used in printTree
-String gWarning_TOO_MANY_TREES = "Note: This thread has more replies than are being printed. Search for top post by id to see full thread.";
+String gWarning_TOO_MANY_TREES = "Note: This thread has more replies than those printed. Search for top post by id to see it fully.";
 
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings

@@ -422,8 +422,7 @@ class Tree {
    * returns Point , where first int is total Threads ( or top trees) printed, and second is notifications printed
    * returns list< total top threads printed, total events printed, total notifications printed> 
    */
-  List<int> printTree(int depth, DateTime newerThan, bool topPost, [int countPrinted = 0, int maxToPrint = gMaxInteger]) { 
-    //Point numPrinted = Point(0,0);
+  List<int> printTree(int depth, DateTime newerThan, bool topPost, [int countPrinted = 0, int maxToPrint = gMaxEventsInThreadPrinted]) { 
     List<int> ret = [0,0,0];
 
     if(event.eventData.isNotification) {
@@ -435,12 +434,12 @@ class Tree {
     ret[1] = 1; 
 
     if( countPrinted > maxToPrint) {
+      //print("$countPrinted > $maxToPrint");
       print("");
       printDepth(0);
       print(gWarning_TOO_MANY_TREES);
       return ret;
     }
-
 
     // sort children by time
     if( children.length > 1) {
@@ -451,9 +450,6 @@ class Tree {
     for( int i = 0; i < children.length; i++) {
 
       if( countPrinted > maxToPrint) {
-        //print("");
-        //printDepth(depth+1);
-        //print(gWarning_TOO_MANY_TREES);
         break;
       }
 
@@ -470,9 +466,9 @@ class Tree {
       List<int> temp = children[i].printTree(depth+1, newerThan, false, countPrinted, maxToPrint);
       ret[1] += temp[1];
       ret[2] += temp[2];
-      countPrinted += ret[1];
-
+      countPrinted += temp[1];
     }
+
     // https://gist.github.com/dsample/79a97f38bf956f37a0f99ace9df367b9
     if( leftShifted) {
       stdout.write("\n");
@@ -1606,7 +1602,7 @@ class Store {
    /***********************************************************************************************************************************/
   /* The main print tree function. Calls the treeSelector() for every node and prints it( and its children), only if it returns true. 
    */
-  List<int> printTree(int depth, DateTime newerThan, fTreeSelector treeSelector, [int maxToPrint = gMaxEventsInThreadPrinted]) {
+  List<int> printStoreTrees(int depth, DateTime newerThan, fTreeSelector treeSelector, [int maxToPrint = gMaxEventsInThreadPrinted]) {
 
     topPosts.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
 

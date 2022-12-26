@@ -448,6 +448,8 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
           if( valueOption >= 1 && valueOption <= menuOptions.length) {
             reAdjustAlignment(); // in case user has changed alignment
             print('You picked: $valueOption');
+            // reset this
+            gInvalidInputCount = 0;
             return valueOption;
           }
         }
@@ -458,6 +460,13 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
       }    
     }
     printWarning("\nInvalid option. Kindly try again. The valid options are from 1 to ${menuOptions.length}");
+    gInvalidInputCount++;
+
+    if( gInvalidInputCount > gMaxInValidInputAccepted) {
+      printWarning("The program has received an invalid input more than $gMaxInValidInputAccepted. There seems to be some problem etc, so exiting");
+      exit(0);
+      //programExit();
+    }
   }
 }
 
@@ -1575,4 +1584,13 @@ Future<void> mainMenuUi(Store node) async {
       } // end menu switch
     } // end while
 } // end mainMenuUi()
+
+
+Future<void> programExit([String message= ""]) async {
+    if( gEventsFilename != "") {
+      await gStore?.writeEventsToFile(gEventsFilename);
+    }
+  print("In programexit");
+    exit(0);
+}
 

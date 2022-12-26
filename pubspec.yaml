@@ -7,7 +7,7 @@ homepage: https://github.com/vishalxl/nostr_console
 # improved 2 -> 5. better printing. and fixed white after reaction highlighed issue
 # improved 2 -> 6 too, now follows posts get highlighed, and so do their reactions. 
 # mentions get highlighed in above menus
-
+# if too many wrong menu inputs are given ( >40) then program exits without saving any new events. for issue #49 
 
 # 0.3.0
 # added check marks; added more default users

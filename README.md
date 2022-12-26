@@ -117,13 +117,17 @@ To 'login' as a user with private key K:
 nostr_console.exe  --prikey=K
 ```
 
-
 To get ALL the latest messages on relays for last 3 days (on bash shell which allows backtick execution), for user with private key K: 
 
 ```
 nostr_console.exe  --prikey=K --request=`echo "[\"REQ\",\"l\",{\"since\":$(date -d '-3 day' +%s)}]"`
 ```
  
+To get all encrypted messages:
+```
+./nostr_console_elf64 --prikey=K --request='["REQ","cn",{"limit":20000,"kinds":[104,140,141,142],"since":1663417739}]' # run on linux/bash
+```
+
 # Configuring Proxy
 When you are in an network which blocks outgoing HTTPS (e.g. company firewall), but there is a proxy you can set environment variable before running nostr_console.
 Examples below use authentication. Drop username:password if not required.

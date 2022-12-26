@@ -187,6 +187,10 @@ const int gEventLenPrinted = 6;
 // used in word/event search
 const int gMinEventIdLenInSearch = gEventLenPrinted;
 
+// invalid int  handling
+int gInvalidInputCount = 0;
+const int gMaxInValidInputAccepted = 40;
+
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings
 const String defaultTextColor = "green";

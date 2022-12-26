@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.0-beta";
+const String version = "0.3.1-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -192,7 +192,11 @@ int gInvalidInputCount = 0;
 const int gMaxInValidInputAccepted = 40;
 
 // LN settings
-const int gMinLud16AddressLength = 10; // used in printProfile
+const int gMinLud06AddressLength = 10; // used in printProfile
+
+const int gMaxEventsInThreadPrinted = 20;
+const int gMaxInteger = 100000000000; // used in printTree
+String gWarning_TOO_MANY_TREES = "Note: This thread has more replies than are being printed. Search for top post by id to see full thread.";
 
 // https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#8-colors
 // Color related settings

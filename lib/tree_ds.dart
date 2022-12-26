@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
@@ -415,19 +416,32 @@ class Tree {
     store = s;
   }
 
+  
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    * returns Point , where first int is total Threads ( or top trees) printed, and second is notifications printed
+   * returns list< total top threads printed, total events printed, total notifications printed> 
    */
-  Point printTree(int depth, DateTime newerThan, bool topPost) {
-    Point numPrinted = Point(0,0);
+  List<int> printTree(int depth, DateTime newerThan, bool topPost, [int countPrinted = 0, int maxToPrint = gMaxInteger]) { 
+    //Point numPrinted = Point(0,0);
+    List<int> ret = [0,0,0];
 
     if(event.eventData.isNotification) {
-      numPrinted += Point(0, 1);
+      ret[2] = 1;
     }
 
+    countPrinted++;
     event.printEvent(depth, topPost);
-    
+    ret[1] = 1; 
+
+    if( countPrinted > maxToPrint) {
+      print("");
+      printDepth(0);
+      print(gWarning_TOO_MANY_TREES);
+      return ret;
+    }
+
+
     // sort children by time
     if( children.length > 1) {
       children.sort(sortTreeByItsTime);
@@ -435,6 +449,13 @@ class Tree {
 
     bool leftShifted = false;
     for( int i = 0; i < children.length; i++) {
+
+      if( countPrinted > maxToPrint) {
+        //print("");
+        //printDepth(depth+1);
+        //print(gWarning_TOO_MANY_TREES);
+        break;
+      }
 
       // if the thread becomes too 'deep' then reset its depth, so that its 
       // children will not be displayed too much on the right, but are shifted
@@ -444,22 +465,22 @@ class Tree {
         printDepth(depth+1);
         stdout.write("    ┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘\n");        
         leftShifted = true;
-
-        if(false && event.eventData.id == "471bb00f66212a594c1e875f708d01fc6aa4ed83d638c928d25e37dee28f8605") 
-          print('left shifting for event id: ${event.eventData.id} i = $i child = ${children[i].event.eventData.id} child kind = ${children[i].event.eventData.kind}');
-
       }
 
-      numPrinted += children[i].printTree(depth+1, newerThan, false);
+      List<int> temp = children[i].printTree(depth+1, newerThan, false, countPrinted, maxToPrint);
+      ret[1] += temp[1];
+      ret[2] += temp[2];
+      countPrinted += ret[1];
+
     }
     // https://gist.github.com/dsample/79a97f38bf956f37a0f99ace9df367b9
     if( leftShifted) {
       stdout.write("\n");
       printDepth(depth+1);
       print("    ┴"); // same spaces as when its left shifted
-    }
+    } // end for loop
 
-    return numPrinted;
+    return ret;
   }
 
   // returns the time of the most recent comment
@@ -1487,7 +1508,7 @@ class Store {
    * @printNotifications Add the given events to the Tree, and print the events as notifications
    *                     It should be ensured that these are only kind 1 events
    */
-  Point printTreeNotifications(Set<String> newEventIdsSet) {
+  List<int> printTreeNotifications(Set<String> newEventIdsSet) {
 
     int countNotificationEvents = 0;
     for( var newEventId in newEventIdsSet) {
@@ -1504,9 +1525,8 @@ class Store {
     }
 
     if( countNotificationEvents == 0) {
-      return Point(0,0);
+      return [0,0,0];
     }
-
    
     List<Tree> topNotificationTree = []; // collect all top tress to display in this list. only unique tress will be displayed
     newEventIdsSet.forEach((eventID) { 
@@ -1560,28 +1580,33 @@ class Store {
 
     Store.reCalculateMarkerStr();
 
-    Point retval = Point(0,0);
+    List<int> ret = [0,0,0];
     topNotificationTree.forEach( (t) { 
-      retval += Store.printTopPost(t, 0, DateTime(0));
+      List<int> temp = Store.printTopPost(t, 0, DateTime(0));
+      ret[0] += temp[0]; 
+      ret[1] += temp[1]; 
+      ret[2] += temp[2];
       print("\n");
     });
 
-    return retval;
+    return ret;
   }
 
-// returns Point , where first int is total Threads ( or top trees) printed, and second is notifications printed
-  static Point printTopPost(Tree topTree, int depth, DateTime newerThan) {
+// returns Point , where first int is total Threads ( or top trees) printed, second is total events printed, and third is notifications printed
+  static List<int> printTopPost(Tree topTree, int depth, DateTime newerThan, [int maxToPrint = gMaxEventsInThreadPrinted]) {
     stdout.write(Store.startMarkerStr);
-    Point numPrinted = topTree.printTree(depth, newerThan, true);
-    numPrinted += Point(1, 0); // for this top post 
+
+    List<int> counts = topTree.printTree(depth, newerThan, true, 0, maxToPrint);
+    counts[0] += 1; // for this top post 
     stdout.write(endMarkerStr);
-    return numPrinted;
+    //print("In node printTopPost: ret =${counts}");
+    return counts;
   }
 
    /***********************************************************************************************************************************/
-  /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
+  /* The main print tree function. Calls the treeSelector() for every node and prints it( and its children), only if it returns true. 
    */
-  Point printTree(int depth, DateTime newerThan, fTreeSelector treeSelector) {
+  List<int> printTree(int depth, DateTime newerThan, fTreeSelector treeSelector, [int maxToPrint = gMaxEventsInThreadPrinted]) {
 
     topPosts.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
 
@@ -1596,7 +1621,7 @@ class Store {
     // comment starts at Sd , then depth = Sd - S1 / gSpacesPerDepth
     // Depth is in gSpacesPerDepth 
 
-    Point numPrinted = Point(0,0);
+    List<int> ret = [0,0,0];
 
     for( int i = 0; i < topPosts.length; i++) {
       // continue if this children isn't going to get printed anyway; selector is only called for top most tree
@@ -1615,7 +1640,11 @@ class Store {
         stdout.write("\n"); 
       }
 
-      numPrinted += printTopPost(topPosts[i], depth, newerThan);
+      List<int> temp = printTopPost(topPosts[i], depth, newerThan, maxToPrint);
+      ret[0] += temp[0]; 
+      ret[1] += temp[1]; 
+      ret[2] += temp[2];
+      
     }
 
     int printedNumHours = DateTime.now().difference(newerThan).inHours;
@@ -1626,11 +1655,13 @@ class Store {
     } else {
       strTime = "$printedNumHours hours";
     }
-    if( numPrinted.x > 0) {
-      print("\nTotal threads printed: ${numPrinted.x} for last $strTime.");
+    if( ret[0] > 0) {
+      print("\nTotal threads printed: ${ret[0]} for last $strTime.");
     }
 
-    return numPrinted;
+    //print("in node print all: ret = $ret");
+
+    return ret;
   }
  
   int getNumChannels() {

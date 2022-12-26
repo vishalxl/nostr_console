@@ -28,10 +28,10 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
     Set<String> newEventIds = node.processIncomingEvent(getRecievedEvents());
     clearEvents();
 
-    Point numPrinted1 = Point(0, 0);
+    List<int> numPrinted1 = [0,0,0];
     if( printNotifications) {
       numPrinted1 = node.printTreeNotifications(newEventIds);
-      showAllNotifications(node, numPrinted1.x.toInt(), numPrinted1.y.toInt());
+      showAllNotifications(node, numPrinted1[0], numPrinted1[2]);
     }
 
   });
@@ -309,11 +309,10 @@ void printProfile(Store node, String profilePubkey) {
 
   String about = gKindONames[profilePubkey]?.about??"";
   String picture = gKindONames[profilePubkey]?.picture??"";
-  String lud16 = gKindONames[profilePubkey]?.lud16??"";
+  String lud16 = gKindONames[profilePubkey]?.lud06??"";
   int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
   bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
   String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
-
 
   // print QR code
   print("The QR code for public key:\n\n");
@@ -324,7 +323,7 @@ void printProfile(Store node, String profilePubkey) {
   }
 
   // print LNRUL if it exists
-  if( lud16.length > gMinLud16AddressLength) {
+  if( lud16.length > gMinLud06AddressLength) {
     try {
       List<int>? typesAndModule = getTypeAndModule(lud16);
       if( typesAndModule != null) {
@@ -1310,18 +1309,18 @@ Future<void> socialMenuUi(Store node) async {
           clearScreen();
           bool selectorTrees_userNotifications (Tree t) => t.treeSelectorotificationsFor({userPublicKey});
           int notificationHours = gHoursDefaultPrint>24? gHoursDefaultPrint: 24; // minimum 24
-          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:notificationHours)), selectorTrees_userNotifications);
-          if( numPrinted.y > 0) {
-            print("Showed ${numPrinted.y.toInt()} notifications.\n");
+          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:notificationHours)), selectorTrees_userNotifications);
+          if( numPrinted[2] > 0) {
+            print("Showed ${numPrinted[2]} notifications.\n");
           } else {
             print("No notifications.");
           }
           break;
         case 4:
           clearScreen();
-          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_selfPosts);
-          if( numPrinted.x > 0) {
-            print("Showed ${numPrinted.x.toInt()} posts made by you in last $gHoursDefaultPrint hours.\n");
+          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_selfPosts);
+          if( numPrinted[2] > 0) {
+            print("Showed ${numPrinted[2]} posts made by you in last $gHoursDefaultPrint hours.\n");
           } else {
             print("No posts made by you in last $gHoursDefaultPrint hours.");
           }
@@ -1329,9 +1328,9 @@ Future<void> socialMenuUi(Store node) async {
         case 5:
           clearScreen();
           bool selectorTrees_userActions (Tree t) => t.treeSelectorUserPostAndLike({userPublicKey});
-          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_userActions);
-          if( numPrinted.x > 0) {
-            print("Showed ${numPrinted.x.toInt()} thread where you replied or liked in in last $gHoursDefaultPrint hours.\n");
+          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_userActions);
+          if( numPrinted[0] > 0) {
+            print("Showed ${numPrinted[0]} thread where you replied or liked in in last $gHoursDefaultPrint hours.\n");
           } else {
             print("No replies/likes made by you in last $gHoursDefaultPrint hours.");
           }
@@ -1339,9 +1338,9 @@ Future<void> socialMenuUi(Store node) async {
         case 6:
           clearScreen();
           bool selectorTrees_followActions (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey));
-          Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActions);
-          if( numPrinted.x > 0) {
-            print("Showed ${numPrinted.x.toInt()} threads where your follows participated.\n");
+          List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActions);
+          if( numPrinted[0] > 0) {
+            print("Showed ${numPrinted[0]} threads where your follows participated.\n");
           } else {
             print("No threads to show where your follows participated in last $gHoursDefaultPrint hours.");
           }
@@ -1353,8 +1352,8 @@ Future<void> socialMenuUi(Store node) async {
           String words = $tempWords??"";
           if( words != "") {
             bool onlyWords (Tree t) => t.treeSelectorHasWords(words.toLowerCase());
-            Point numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyWords); // search for last default hours only
-            if( numPrinted.x.toInt() == 0) {
+            List<int> numPrinted = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyWords, gMaxInteger); // search for last default hours only
+            if( numPrinted[0] == 0) {
               print("\nNot found in the last $gHoursDefaultPrint hours. Try increasing the number of days printed, from social network options to search further back into history.\n");
             }
           } else printWarning("Blank word entered. Try again.");
@@ -1505,11 +1504,15 @@ Future<void> socialMenuUi(Store node) async {
 void showAllNotifications(Store node, [int x = 0, int y = 0]) {
   //print("In showAllNotifications. x = $x y = $y");
 
-  Point numPrinted = Point(x, y);
+  List<int> numPrinted = [x, 0, y];
 
   bool hasNotifications (Tree t) => t.treeSelectorNotifications();
-  numPrinted += node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), hasNotifications);
-  int numNotificationsPrinted = numPrinted.y.toInt();
+  List<int> temp = node.printTree(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), hasNotifications);
+  numPrinted[0] = temp[0];
+  numPrinted[1] = temp[1];
+  numPrinted[2] = temp[2];
+
+  int numNotificationsPrinted = numPrinted[2];
   
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
   int numDirectRoomsPrinted = node.printDirectRoomsOverview( showNotifications, 100, node.allChildEventsMap);

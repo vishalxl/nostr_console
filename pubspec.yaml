@@ -3,7 +3,7 @@ description: A multi-platform nostr client built for terminal/console
 version: 0.3.1-betaa
 homepage: https://github.com/vishalxl/nostr_console 
 
-
+  
 # 0.3.1
 # added nostr.ch as another default relay to sync with anigma
 # printed only 20 maximum events in a thread to reduce screen spam from long threads. Only in search results are all threads printed; and a thread or event can be searched by 6 digit id-prefix of the event thats mentioned.

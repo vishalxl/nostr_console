@@ -269,13 +269,13 @@ Future<void> main(List<String> arguments) async {
       }
 
       int limitSelfEvents = 200;
-      int limitOthersEvents = 3;
+      int limitOthersEvents = 4;
       int limitPerSubscription = gLimitPerSubscription;
 
       // if more than 1000 posts have already been read from the file, then don't get too many day's events. Only for last 3 days.
       if(numFileEvents > 1000) {
         limitSelfEvents = 4;
-        limitOthersEvents = 2;
+        limitOthersEvents = 3;
         gDefaultNumWaitSeconds = gDefaultNumWaitSeconds ~/5;
       } else {
         printInfoForNewUser();

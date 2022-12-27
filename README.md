@@ -10,6 +10,7 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 
 * [ ] support bech32 keys
 * [x] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
+* [ ] allow faster startup with an argument or config
 * [x] add new relays  ( zbd)
 * [ ] menu should honour --width, its extending way beyond
 * [x] fix issue where need to go back into main menu to update the feed

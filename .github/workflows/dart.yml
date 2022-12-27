@@ -75,6 +75,12 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}/bin
+
+
+      - name: Rename exe for windows only
+        if: ${{ matrix.os == 'windows'}}
+        run: cp nostr_console_${{matrix.os}}_${{matrix.arch}} nostr_console_${{matrix.os}}_${{matrix.arch}}.exe  
+
           
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.0

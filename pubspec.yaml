@@ -4,7 +4,7 @@ version: 0.3.1-betaa
 homepage: https://github.com/vishalxl/nostr_console 
 
 
-# added build for ubuntu arm 64, and mac arm 64 
+# added build for ubuntu arm 64, and mac arm 64   
   
 # 0.3.1
 # added nostr.ch as another default relay to sync with anigma

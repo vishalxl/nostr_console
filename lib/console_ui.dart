@@ -31,7 +31,13 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
     List<int> numPrinted1 = [0,0,0];
     if( printNotifications) {
       numPrinted1 = node.printTreeNotifications(newEventIds);
-      showAllNotifications(node, numPrinted1[0], numPrinted1[2]);
+
+      // need to clear because only top 20 events in each thread are printed or cleared with above
+      int clearNotifications (Tree t) => t.treeSelector_clearNotifications();
+      node.traverseStoreTrees(clearNotifications);
+
+      // print direc room notifications if any, and print summary of all notifications printed
+      directRoomNotifications(node, numPrinted1[0], numPrinted1[2]);
     }
 
   });
@@ -1290,6 +1296,7 @@ Future<void> socialMenuUi(Store node) async {
       switch(option) {
         case 1:
           node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_all);
+          await processAnyIncomingEvents(node, true);
           break;
 
         case 2:
@@ -1338,6 +1345,8 @@ Future<void> socialMenuUi(Store node) async {
           } else {
             print("No notifications.");
           }
+
+          await processAnyIncomingEvents(node, true);
           break;
         case 4:
           clearScreen();
@@ -1347,6 +1356,8 @@ Future<void> socialMenuUi(Store node) async {
           } else {
             print("No posts made by you in last $gHoursDefaultPrint hours.");
           }
+
+          await processAnyIncomingEvents(node, true);
           break;
         case 5:
           clearScreen();
@@ -1357,7 +1368,9 @@ Future<void> socialMenuUi(Store node) async {
           } else {
             print("No replies/likes made by you in last $gHoursDefaultPrint hours.");
           }
+          await processAnyIncomingEvents(node, true);
           break;
+
         case 6:
           clearScreen();
           bool selectorTrees_followActions (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey));
@@ -1367,7 +1380,9 @@ Future<void> socialMenuUi(Store node) async {
           } else {
             print("No threads to show where your follows participated in last $gHoursDefaultPrint hours.");
           }
+          await processAnyIncomingEvents(node, true);
           break;
+
         case 7: // search word or event id
           clearScreen();
           stdout.write("Enter word(s) to search: ");
@@ -1380,6 +1395,7 @@ Future<void> socialMenuUi(Store node) async {
               print("\nNot found in the last $gHoursDefaultPrint hours. Try increasing the number of days printed, from social network options to search further back into history.\n");
             }
           } else printWarning("Blank word entered. Try again.");
+
           break;
 
   /*
@@ -1470,7 +1486,9 @@ Future<void> socialMenuUi(Store node) async {
               }
             }
           }
+          await processAnyIncomingEvents(node, true);
           break;
+
 
         case 9:
           clearScreen();
@@ -1524,26 +1542,20 @@ Future<void> socialMenuUi(Store node) async {
     } // end while
 } // end socialMenuUi()
 
-void showAllNotifications(Store node, [int x = 0, int y = 0]) {
+void directRoomNotifications(Store node, [int x = 0, int y = 0]) {
   //print("In showAllNotifications. x = $x y = $y");
 
   List<int> numPrinted = [x, 0, y];
 
-  bool hasNotifications (Tree t) => t.treeSelectorNotifications();
-  List<int> temp = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), hasNotifications);
-  numPrinted[0] = temp[0];
-  numPrinted[1] = temp[1];
-  numPrinted[2] = temp[2];
 
-  int numNotificationsPrinted = numPrinted[2];
-  
+  // print direct messages and count the number printed
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
   int numDirectRoomsPrinted = node.printDirectRoomsOverview( showNotifications, 100, node.allChildEventsMap);
   
   if( numDirectRoomsPrinted > 0)
       print("\n");
 
-  int totalNotifications = numNotificationsPrinted + numDirectRoomsPrinted;
+  int totalNotifications = numPrinted[2] + numDirectRoomsPrinted;
   if( totalNotifications > 0) {
     print("Showed $totalNotifications notifications.\n");
   }

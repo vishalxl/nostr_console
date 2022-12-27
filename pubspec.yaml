@@ -1,6 +1,6 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console
-version: 0.3.1-beta
+version: 0.3.1a-beta
 homepage: https://github.com/vishalxl/nostr_console 
 
 
@@ -13,6 +13,10 @@ homepage: https://github.com/vishalxl/nostr_console
 # mentions get highlighed in above menus
 # if too many wrong menu inputs are given ( >40) then program exits without saving any new events. for issue #49 
 # showed lud06 and lud16, if any, in profile as qr code
+
+# after tagging
+# improved notification count and display with recent clipped-thread change
+# fixed issue where had to go to main menu from SN menu to get notifications ; related: also got notifications in other menus so now on following someone, that event is processed in this menu itself
 
 
 # 0.3.0

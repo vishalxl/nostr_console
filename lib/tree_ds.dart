@@ -10,6 +10,8 @@ import 'dart:math'; // for Point
  
 
 typedef fTreeSelector = bool Function(Tree a);
+typedef fTreeSelector_int = int Function(Tree a);
+
 typedef fRoomSelector = bool Function(ScrollableMessages room);
 
 typedef fvisitorMarkNotifications = void Function(Event e);
@@ -425,7 +427,7 @@ class Tree {
   List<int> printTree(int depth, DateTime newerThan, bool topPost, [int countPrinted = 0, int maxToPrint = gMaxEventsInThreadPrinted]) { 
     List<int> ret = [0,0,0];
 
-    if(event.eventData.isNotification) {
+    if(event.eventData.isNotification || event.eventData.newLikes.length > 0) {
       ret[2] = 1;
     }
 
@@ -658,7 +660,7 @@ class Tree {
   } // end treeSelectorClientName()
 
   // returns true if the event or any of its children were made from the given client, and they are marked for notification
-  bool treeSelectorNotifications() {
+  bool treeSelector_hasNotifications() {
 
     bool hasNotifications = false;
     if( event.eventData.isNotification || event.eventData.newLikes.length > 0) {
@@ -667,7 +669,7 @@ class Tree {
 
     bool childMatch = false;
     for( int i = 0; i < children.length; i++ ) {
-      if( children[i].treeSelectorNotifications()) {
+      if( children[i].treeSelector_hasNotifications()) {
         childMatch = true;
         break;
       }
@@ -677,7 +679,34 @@ class Tree {
     }
 
     return false;
-  } // end treeSelectorNotifications()
+  } // end treeSelector_hasNotifications()
+
+
+  // clears all notifications; returns true always
+  int treeSelector_clearNotifications() {
+
+    int count = 0;
+
+    if( event.eventData.isNotification) {
+      event.eventData.isNotification = false;
+      count = 1;
+    }
+
+    if( event.eventData.newLikes.length > 0) {
+      event.eventData.newLikes = {};
+      count = 1;
+        
+    }
+
+
+
+    for( int i = 0; i < children.length; i++ ) {
+      count += children[i].treeSelector_clearNotifications();
+    }
+
+    return count;
+  } // end treeSelector_clearNotifications()
+
 
   // counts all valid events in the tree: ignores the dummy nodes that are added for events which aren't yet known
   int count() {
@@ -1588,7 +1617,7 @@ class Store {
     return ret;
   }
 
-// returns Point , where first int is total Threads ( or top trees) printed, second is total events printed, and third is notifications printed
+// returns list , where first int is total Threads ( or top trees) printed, second is total events printed, and third is notifications printed
   static List<int> printTopPost(Tree topTree, int depth, DateTime newerThan, [int maxToPrint = gMaxEventsInThreadPrinted]) {
     stdout.write(Store.startMarkerStr);
 
@@ -1597,6 +1626,15 @@ class Store {
     stdout.write(endMarkerStr);
     //print("In node printTopPost: ret =${counts}");
     return counts;
+  }
+
+  // will just traverse all trees in store  
+  int traverseStoreTrees(fTreeSelector_int treeSelector) {
+    int count = 0;
+    for( int i = 0; i < topPosts.length; i++) {
+      count += treeSelector(topPosts[i]);
+    }
+    return count;
   }
 
    /***********************************************************************************************************************************/

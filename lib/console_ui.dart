@@ -335,20 +335,20 @@ void printProfile(Store node, String profilePubkey) {
       List<int>? typesAndModule = getTypeAndModule(lud06);
       if( typesAndModule != null) {
         print("Printing lud06 LNURL as QR:\n\n");
-        print(getPubkeyAsQrString(lud06, typesAndModule[0], typesAndModule[1]));
+        print(getPubkeyAsQrString("lightning:" + lud06, typesAndModule[0], typesAndModule[1]));
       }
     } catch(e) {
       print("Could not generate qr code for the lnurl given.  \n");
     }
   }
 
-  // print LNRUL lud06 if it exists
+  // print LNRUL lud16 if it exists
   if( lud16.length > gMinLud06AddressLength) {
     try {
       List<int>? typesAndModule = getTypeAndModule(lud16);
       if( typesAndModule != null) {
         print("Printing lud16 address as QR:\n\n");
-        print(getPubkeyAsQrString(lud16, typesAndModule[0], typesAndModule[1]));
+        print(getPubkeyAsQrString("lightning:" + lud16, typesAndModule[0], typesAndModule[1]));
       }
     } catch(e) {
       print("Could not generate qr code for the given address.\n");

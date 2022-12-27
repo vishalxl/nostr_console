@@ -17,6 +17,7 @@ homepage: https://github.com/vishalxl/nostr_console
 # after tagging
 # improved notification count and display with recent clipped-thread change
 # fixed issue where had to go to main menu from SN menu to get notifications ; related: also got notifications in other menus so now on following someone, that event is processed in this menu itself
+# added ligning prefix in profile 
 
 
 # 0.3.0

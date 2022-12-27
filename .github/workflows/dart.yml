@@ -19,22 +19,18 @@ on:
 jobs:
   build_all:
     name: "${{matrix.os}}_${{matrix.arch}}"
-    runs-on: "${{matrix.os}}"
+    runs-on: "${{matrix.os}}-latest"
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu, windows, macos]
         arch: [x64, arm64]
         dart_channel: [stable]
         include:
           # Include LTS versions on Ubuntu
           - os: ubuntu-latest
             dart_channel: stable
-          - os: ubuntu-latest
-            dart_channel: stable
-          - os: ubuntu-latest
-            dart_channel: dev
             
     steps:
       - uses: actions/checkout@v3
@@ -89,132 +85,3 @@ jobs:
           name: nostr_console_${{matrix.os}}_${{matrix.arch}}
           # Destination path
           path: ./
-
-
-  build_linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      # Note: This workflow uses the latest stable version of the Dart SDK.
-      # You can specify other versions if desired, see documentation here:
-      # https://github.com/dart-lang/setup-dart/blob/main/README.md
-      # - uses: dart-lang/setup-dart@v1
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
-      - name: Install dependencies
-        run: dart pub get
-
-      # Uncomment this step to verify the use of 'dart format' on each commit.
-      # - name: Verify formatting
-      #   run: dart format --output=none --set-exit-if-changed .
-
-      # Consider passing '--fatal-infos' for slightly stricter analysis.
-      - name: Analyze project source
-        run: dart analyze
-
-      # Your project will need to have tests in test/ and a dependency on
-      # package:test for this step to succeed. Note that Flutter projects will
-      # want to change this to 'flutter test'.
-      - name: Run tests
-        run: dart test -r expanded
-        
-      - name: compile exe
-        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_elf64
-
-
-      - name: change permission to make it executible
-        run: chmod 755 bin/nostr_console_elf64
-
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: nostr_console_elf64
-          path: |
-            bin/nostr_console_elf64
-
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}/bin
-          
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v3.0.0
-        with:
-          # Artifact name
-          name: nostr_console_elf64
-          # Destination path
-          path: ./
-
-
-
-  build_win:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      # Note: This workflow uses the latest stable version of the Dart SDK.
-      # You can specify other versions if desired, see documentation here:
-      # https://github.com/dart-lang/setup-dart/blob/main/README.md
-      # - uses: dart-lang/setup-dart@v1
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
-      - name: Install dependencies
-        run: dart pub get
-
-      - name: compile exe
-        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_win64.exe
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: nostr_console_win64
-          path: |
-            bin/nostr_console_win64.exe
-
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v3.0.0
-        with:
-          # Artifact name
-          name: nostr_console_win64
-          # Destination path
-          path: ./
-
-
-  build_macos:
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      # Note: This workflow uses the latest stable version of the Dart SDK.
-      # You can specify other versions if desired, see documentation here:
-      # https://github.com/dart-lang/setup-dart/blob/main/README.md
-      # - uses: dart-lang/setup-dart@v1
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
-      - name: Install dependencies
-        run: dart pub get
-        
-      - name: compile exe
-        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_macOS
-
-      - name: change permission to make it executible
-        run: chmod 755 bin/nostr_console_macOS
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: nostr_console_macOS
-          path: |
-            bin/nostr_console_macOS
-
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v3.0.0
-        with:
-          # Artifact name
-          name: nostr_console_macOS
-          # Destination path
-          path: ./
-

@@ -5,7 +5,7 @@ homepage: https://github.com/vishalxl/nostr_console
 
   
 # added build for ubuntu arm 64, and mac arm 64   
-# matrix change , removed old build entries in dart.yml files
+# matrix change , removed old build entries in dart.yml files 
   
 # 0.3.1
 # added nostr.ch as another default relay to sync with anigma

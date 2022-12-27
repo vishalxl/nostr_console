@@ -79,7 +79,7 @@ jobs:
 
       - name: Rename exe for windows only
         if: ${{ matrix.os == 'windows'}}
-        run: cp nostr_console_${{matrix.os}}_${{matrix.arch}} nostr_console_${{matrix.os}}_${{matrix.arch}}.exe  
+        run: cp ${{ github.workspace }}/bin/nostr_console_${{matrix.os}}_${{matrix.arch}} ${{ github.workspace }}/bin/nostr_console_${{matrix.os}}_${{matrix.arch}}.exe  
 
           
       - name: Download a Build Artifact

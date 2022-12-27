@@ -8,6 +8,8 @@ name: Dart
 # do a built only on change to pubspec.yaml file with its version change
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
 
+# matrix logic taken from https://github.com/sass/dart-sass/blob/main/.github/workflows/ci.yml
+
 on:
   push:
     paths:
@@ -27,10 +29,6 @@ jobs:
         os: [ubuntu, windows, macos]
         arch: [x64, arm64]
         dart_channel: [stable]
-        include:
-          # Include LTS versions on Ubuntu
-          - os: ubuntu-latest
-            dart_channel: stable
             
     steps:
       - uses: actions/checkout@v3

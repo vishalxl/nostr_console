@@ -201,7 +201,7 @@ jobs:
           # Destination path
           path: ./
 
-  build_macos:
+  build_macos_arm64:
     runs-on: macos-latest.arm64
 
     steps:

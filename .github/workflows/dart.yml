@@ -17,7 +17,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build_linux:
+  build_linux_arm64:
     runs-on: ubuntu-latest.arm64
 
     steps:
@@ -73,7 +73,7 @@ jobs:
           # Destination path
           path: ./
 
-  build_linux_arm64:
+  build_linux:
     runs-on: ubuntu-latest
 
     steps:

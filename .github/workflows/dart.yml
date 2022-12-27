@@ -17,9 +17,25 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build_linux_arm64:
-    runs-on: ubuntu-latest.arm64
+  build_all:
+    name: "${{matrix.os}}_${{matrix.arch}}"
+    runs-on: "${{matrix.os}}"
 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [x64, arm64]
+        dart_channel: [stable]
+        include:
+          # Include LTS versions on Ubuntu
+          - os: ubuntu-latest
+            dart_channel: stable
+          - os: ubuntu-latest
+            dart_channel: stable
+          - os: ubuntu-latest
+            dart_channel: dev
+            
     steps:
       - uses: actions/checkout@v3
 
@@ -27,8 +43,9 @@ jobs:
       # You can specify other versions if desired, see documentation here:
       # https://github.com/dart-lang/setup-dart/blob/main/README.md
       # - uses: dart-lang/setup-dart@v1
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
+      - uses: dart-lang/setup-dart@v1
+        with: {sdk: "${{ matrix.dart_channel }}"}
+        
       - name: Install dependencies
         run: dart pub get
 
@@ -47,19 +64,19 @@ jobs:
         run: dart test -r expanded
         
       - name: compile exe
-        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_elf_arm64
+        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_${{matrix.os}}_${{matrix.arch}}
 
 
       - name: change permission to make it executible
-        run: chmod 755 bin/nostr_console_elf_arm64
+        run: chmod 755 bin/nostr_console_${{matrix.os}}_${{matrix.arch}}
 
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: nostr_console_elf_arm64
+          name: nostr_console_${{matrix.os}}_${{matrix.arch}}
           path: |
-            bin/nostr_console_elf_arm64
+            bin/nostr_console_${{matrix.os}}_${{matrix.arch}}
 
       - name: List files in the repository
         run: |
@@ -69,13 +86,13 @@ jobs:
         uses: actions/download-artifact@v3.0.0
         with:
           # Artifact name
-          name: nostr_console_elf_arm64
+          name: nostr_console_${{matrix.os}}_${{matrix.arch}}
           # Destination path
           path: ./
 
+
   build_linux:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -200,42 +217,4 @@ jobs:
           name: nostr_console_macOS
           # Destination path
           path: ./
-
-  build_macos_arm64:
-    runs-on: macos-latest.arm64
-
-    steps:
-      - uses: actions/checkout@v3
-
-      # Note: This workflow uses the latest stable version of the Dart SDK.
-      # You can specify other versions if desired, see documentation here:
-      # https://github.com/dart-lang/setup-dart/blob/main/README.md
-      # - uses: dart-lang/setup-dart@v1
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
-      - name: Install dependencies
-        run: dart pub get
-        
-      - name: compile exe
-        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_macOS_arm64
-
-      - name: change permission to make it executible
-        run: chmod 755 bin/nostr_console_macOS_arm64
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: nostr_console_macOS_arm64
-          path: |
-            bin/nostr_console_macOS_arm64
-
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v3.0.0
-        with:
-          # Artifact name
-          name: nostr_console_macOS_arm64
-          # Destination path
-          path: ./
-
-
 

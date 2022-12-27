@@ -303,7 +303,7 @@ void printProfile(Store node, String profilePubkey) {
   node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyUserPostAndLike);
 
   // if contact list was found, get user's feed, and keep the contact list for later use 
-  String authorName = getAuthorName(profilePubkey, 0);
+  String authorName = getAuthorName(profilePubkey, addTickForWellKnown: false );
   String pronoun = "";
   if( profilePubkey == userPublicKey) {
     printUnderlined("\nYour profile - $authorName:");
@@ -382,7 +382,7 @@ void printProfile(Store node, String profilePubkey) {
     // print follow list
     stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
     profileContactEvent.eventData.contactList.sort();
-    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.contactPubkey, 0)}, "));
+    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.contactPubkey)}, "));
     print("\n");
   }
 
@@ -390,7 +390,7 @@ void printProfile(Store node, String profilePubkey) {
   List<String> followers = node.getFollowers(profilePubkey);
   stdout.write("$pronoun have ${followers.length} followers:  ");
   followers.sort((a, b) => getAuthorName(a).compareTo(getAuthorName(b)));
-  followers.forEach((x) => stdout.write("${getAuthorName(x, 0)}, "));
+  followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
   print("");              
   print("");
 }
@@ -508,7 +508,7 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
 
 void printPubkeys(Set<String> pubkey) {
   print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}   ${myPadRight("Nip05", 30)}");
-  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x), 20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}"));
+  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x),  20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}"));
   print("");
 }
 
@@ -1628,7 +1628,7 @@ Future<void> mainMenuUi(Store node) async {
         case 7:
         default:
           mainMenuContinue = false;
-          String authorName = getAuthorName(userPublicKey, 0);
+          String authorName = getAuthorName(userPublicKey);
           clearScreen();
           print("\nFinished Nostr session for user: ${authorName} ($userPublicKey)");
           if( gEventsFilename != "") {

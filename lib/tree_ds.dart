@@ -383,7 +383,7 @@ class DirectMessageRoom extends ScrollableMessages{
   int          createdAt;
 
   DirectMessageRoom(this.otherPubkey, List<String> messageIds, this.createdAt):
-            super ( "${getAuthorName(otherPubkey)} ($otherPubkey)", messageIds, createdAt, enumRoomType.kind4) {
+            super ( "${(otherPubkey)} ($otherPubkey)", messageIds, createdAt, enumRoomType.kind4) {
             }
 
   String getChannelId() {
@@ -1950,7 +1950,7 @@ class Store {
 
       DirectMessageRoom room = directRooms[j];
       String id = room.otherPubkey.substring(0, 6);
-      String name = getAuthorName(room.otherPubkey, 4);
+      String name = getAuthorName(room.otherPubkey, maxDisplayLen: 4);
 
       void markAllRead (Event e) => e.eventData.isNotification = false;
       room.visitAllMessages(this, markAllRead);
@@ -2347,7 +2347,7 @@ class Store {
   // finds all your followers, and then finds which of them follow the otherPubkey
   void printMutualFollows(Event contactEvent, String otherName) {
     String otherPubkey = contactEvent.eventData.pubkey;
-    String otherName = getAuthorName(otherPubkey, 0);
+    String otherName = getAuthorName(otherPubkey);
 
 
     bool isFollow = false;
@@ -2374,7 +2374,7 @@ class Store {
           followContactList = followContactEvent.eventData.contactList;
           for(int j = 0; j < followContactList.length; j++) {
             if( followContactList[j].contactPubkey == otherPubkey) {
-              mutualFollows.add(getAuthorName(selfContacts[i].contactPubkey, 0));
+              mutualFollows.add(getAuthorName(selfContacts[i].contactPubkey));
               numSecond++;
               break;
             }

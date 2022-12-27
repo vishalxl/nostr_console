@@ -1203,8 +1203,7 @@ String getNip05Name( String pubkey) {
 }
 
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
-// if maxDisplayLen is 0 it means the length can be any max length
-String getAuthorName(String pubkey, [int maxDisplayLen = 12, int pubkeyLenShown = 5]) {
+String getAuthorName(String pubkey, {bool addTickForWellKnown = true, int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5}) {
 
   String maxLen(String pubkey) => pubkey.length > pubkeyLenShown? pubkey.substring(0,pubkeyLenShown) : pubkey.substring(0, pubkey.length);
   String name = "";
@@ -1214,22 +1213,19 @@ String getAuthorName(String pubkey, [int maxDisplayLen = 12, int pubkeyLenShown 
     name = (gKindONames[pubkey]?.name)??maxLen(pubkey);
   }
 
-  // first remove the check mark if its in any name
-  name = name.replaceAll(gValidCheckMark, "");
+  if( addTickForWellKnown) {
+    // first remove the check mark if its in any name
+    name = name.replaceAll(gValidCheckMark, "");
 
-  if( maxDisplayLen == 0) {
-    maxDisplayLen = name.length + 1;
-  }
-
-  // then add valid check mark in default follows 
-  if( gDefaultFollows.contains(pubkey)) {
-    if( name.length >= maxDisplayLen ) {
-      name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
-    } else {
-      name = name + gValidCheckMark;
+    // then add valid check mark in default follows 
+    if( gDefaultFollows.contains(pubkey)) {
+      if( name.length >= maxDisplayLen ) {
+        name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
+      } else {
+        name = name + gValidCheckMark;
+      }
     }
   }
-
   return name;
 }
 

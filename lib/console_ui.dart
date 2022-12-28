@@ -30,6 +30,7 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
 
     List<int> numPrinted1 = [0,0,0];
     if( printNotifications) {
+      // print all the new trees, the ones that we want to print
       numPrinted1 = node.printTreeNotifications(newEventIds);
 
       // need to clear because only top 20 events in each thread are printed or cleared with above
@@ -303,7 +304,7 @@ void printProfile(Store node, String profilePubkey) {
   node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyUserPostAndLike);
 
   // if contact list was found, get user's feed, and keep the contact list for later use 
-  String authorName = getAuthorName(profilePubkey, addTickForWellKnown: false );
+  String authorName = getAuthorName(profilePubkey);
   String pronoun = "";
   if( profilePubkey == userPublicKey) {
     printUnderlined("\nYour profile - $authorName:");
@@ -1280,9 +1281,9 @@ Future<void> socialMenuUi(Store node) async {
 
       // the main menu
       int option = showMenu([
-                             'All Posts',         // 1
+                             'Your Feed',         // 1
                              'Post/Reply/Like',   // 2
-                             'Your notifications',// 3
+                             'Replies/Likes to you',// 3
                              'Your Posts',        // 4 
                              'Your Replies/Likes',//5
                              'Follows\' Posts/Replies/Likes',   // 6
@@ -1295,7 +1296,8 @@ Future<void> socialMenuUi(Store node) async {
       
       switch(option) {
         case 1:
-          node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_all);
+          bool selectorTrees_followActionsNoNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey), enableNotifications: false);
+          node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActionsNoNotifications);
           await processAnyIncomingEvents(node, true);
           break;
 
@@ -1341,9 +1343,9 @@ Future<void> socialMenuUi(Store node) async {
           int notificationHours = gHoursDefaultPrint>24? gHoursDefaultPrint: 24; // minimum 24
           List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:notificationHours)), selectorTrees_userNotifications);
           if( numPrinted[2] > 0) {
-            print("Showed ${numPrinted[2]} notifications.\n");
+            print("Showed ${numPrinted[2]} replies/likes that were made to your posts.\n");
           } else {
-            print("No notifications.");
+            print("No replies or likes.");
           }
 
           await processAnyIncomingEvents(node, true);
@@ -1351,8 +1353,8 @@ Future<void> socialMenuUi(Store node) async {
         case 4:
           clearScreen();
           List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_selfPosts);
-          if( numPrinted[2] > 0) {
-            print("Showed ${numPrinted[2]} posts made by you in last $gHoursDefaultPrint hours.\n");
+          if( numPrinted[0] > 0) {
+            print("Showed ${numPrinted[0]} posts made by you in last $gHoursDefaultPrint hours.\n");
           } else {
             print("No posts made by you in last $gHoursDefaultPrint hours.");
           }
@@ -1373,8 +1375,8 @@ Future<void> socialMenuUi(Store node) async {
 
         case 6:
           clearScreen();
-          bool selectorTrees_followActions (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey));
-          List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActions);
+          bool selectorTrees_followActionsWithNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey), enableNotifications: true);
+          List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActionsWithNotifications);
           if( numPrinted[0] > 0) {
             print("Showed ${numPrinted[0]} threads where your follows participated.\n");
           } else {
@@ -1580,8 +1582,8 @@ Future<void> mainMenuUi(Store node) async {
       firstTime = false;
 
       // the main menu
-      int option = showMenu(['Home Page',     // 1 
-                             'Social Network',  // 2
+      int option = showMenu(['Global Feed',      // 1 
+                             'Social Network',   // 2
                              'Public Channels',  // 3
                              'Encrypted Channels',// 4
                              'Private Messages', // 5

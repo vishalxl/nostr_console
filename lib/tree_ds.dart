@@ -559,8 +559,39 @@ class Tree {
     return false;
   } 
 
-  // returns true if the tree or its children has a post or like by user; and notification flags are set for such events
-  bool treeSelectorUserPostAndLike(Set<String> pubkeys) {
+  // returns true if the tree has a reply by any of the pubkeys sent
+  // only used by writefile
+  bool treeSelectorUserPosted(Set<String> pubkeys, [bool checkChildrenToo = false]) {
+
+    if( pubkeys.contains(event.eventData.pubkey)) {
+      return true;
+    }
+
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].treeSelectorUserPosted(pubkeys)) {
+        return true;
+      }
+    }
+
+    return false;
+  } 
+
+  // returns true if the tree has a reply by any of the pubkeys sent
+  // only used by writefile
+  bool treeSelectorUserReplies(Set<String> pubkeys) {
+
+    for( int i = 0; i < children.length; i++ ) {
+      if( children[i].treeSelectorUserPosted(pubkeys)) {
+        return true;
+      }
+    }
+
+    return false;
+  } 
+
+
+  // returns true if the tree (or its children, depending on flag) has a post or like by user; and notification flags are set for such events
+  bool treeSelectorUserPostAndLike(Set<String> pubkeys, { bool enableNotifications = true, bool checkChildrenToo = true}) {
     bool hasReacted = false;
 
     if( gReactions.containsKey(event.eventData.id))  {
@@ -568,7 +599,8 @@ class Tree {
       if( reactions  != null) {
         for( int i = 0; i < reactions.length; i++) {
           if( pubkeys.contains(reactions[i][0]) ) {
-            event.eventData.newLikes.add(reactions[i][0]);
+            if( enableNotifications)
+              event.eventData.newLikes.add(reactions[i][0]);
             hasReacted = true;
           }
         }
@@ -576,15 +608,19 @@ class Tree {
     }
 
     bool childMatches = false;
-    for( int i = 0; i < children.length; i++ ) {
-      if( children[i].treeSelectorUserPostAndLike(pubkeys)) {
-        childMatches = true;
+
+    if( checkChildrenToo ) {
+      for( int i = 0; i < children.length; i++ ) {
+        if( children[i].treeSelectorUserPostAndLike(pubkeys)) {
+          childMatches = true;
+        }
       }
     }
 
     // if event is by user(s)
     if( pubkeys.contains(event.eventData.pubkey)) {
-      event.eventData.isNotification = true;
+      if( enableNotifications)
+        event.eventData.isNotification = true;
       return true;
     }
     if( hasReacted || childMatches) {
@@ -1605,13 +1641,19 @@ class Store {
 
     Store.reCalculateMarkerStr();
 
+    // update this list, because it is internally used by printEvent
+    gFollowList = getFollows(userPublicKey);
+
     List<int> ret = [0,0,0];
-    topNotificationTree.forEach( (t) { 
-      List<int> temp = Store.printTopPost(t, 0, DateTime(0));
-      ret[0] += temp[0]; 
-      ret[1] += temp[1]; 
-      ret[2] += temp[2];
-      print("\n");
+    topNotificationTree.forEach( (t) {
+      bool selectorTrees_followActionsWithNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey), enableNotifications: true);
+      if( selectorTrees_followActionsWithNotifications(t)) {
+        List<int> temp = Store.printTopPost(t, 0, DateTime(0));
+        ret[0] += temp[0]; 
+        ret[1] += temp[1]; 
+        ret[2] += temp[2];
+        print("\n");
+      }
     });
 
     return ret;
@@ -1641,6 +1683,9 @@ class Store {
   /* The main print tree function. Calls the treeSelector() for every node and prints it( and its children), only if it returns true. 
    */
   List<int> printStoreTrees(int depth, DateTime newerThan, fTreeSelector treeSelector, [int maxToPrint = gMaxEventsInThreadPrinted]) {
+
+    // update this list, because it is internally used by printEvent
+    gFollowList = getFollows(userPublicKey);
 
     topPosts.sort(sortTreeNewestReply); // sorting done only for top most threads. Lower threads aren't sorted so save cpu etc TODO improve top sorting
 
@@ -2046,18 +2091,26 @@ class Store {
       return room;
   }
 
-
-  // TODO to be finished
+  // threads where the user and follows have involved themselves are returnes as true ( relevant)
   bool isRelevant(Tree tree) {
-    //Set<String> contacts = getContactList(userPublicKey);
-    //contacts = contacts.union(gDefaultFollows);
 
+    if(   tree.treeSelectorUserPostAndLike(gFollowList) 
+       || tree.treeSelectorUserPostAndLike({userPublicKey})
+       || tree.treeSelectorUserReplies(gFollowList)) {
+      return true;
+    }
 
-    return true;
+    return false;
   }
 
   // Write the tree's events to file as one event's json per line
   Future<void> writeEventsToFile(String filename) async {
+
+    // this variable will be used later; update it if needed
+    if( gFollowList.length == 0) {
+      gFollowList = getFollows(userPublicKey);
+    }
+
     if( gDebug > 0) print("opening $filename to write to.");
     try {
       final File file         = File(filename);
@@ -2075,7 +2128,9 @@ class Store {
       int        linesWritten = 0;
       for( var tree in allChildEventsMap.values) {
 
-        if( tree.event.eventData.isDeleted) { // dont write those deleted
+        if(   tree.event.eventData.isDeleted                      // dont write those deleted
+           || gDummyAccountPubkey == tree.event.eventData.pubkey  // dont write dummy events
+           || tree.event.originalJson.length < 10) { 
           continue; 
         }
 
@@ -2085,18 +2140,9 @@ class Store {
           }
         }
 
-        if( gDummyAccountPubkey == tree.event.eventData.pubkey) {
-          continue; // dont write dummy events
-        }
-
-        if( tree.event.originalJson.length < 10) {
-          continue;
-        }
-
         if( !isRelevant(tree)) {
           continue;
         }
-        
 
         String temp = tree.event.originalJson.trim();
         String line = "${temp}\n";

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bip340/bip340.dart';
 import 'package:intl/intl.dart';
 import 'package:nostr_console/tree_ds.dart';
+import 'package:nostr_console/user.dart';
 import 'package:nostr_console/utils.dart';
 import 'package:translator/translator.dart';
 import 'package:crypto/crypto.dart';
@@ -1246,7 +1247,12 @@ String getNip05Name( String pubkey) {
 }
 
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
-String getAuthorName(String pubkey, {bool addTickForWellKnown = true, int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5}) {
+String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5}) {
+
+  if( gFollowList.length == 0)  {
+    gFollowList = getFollows(userPublicKey);
+  }
+  bool isFollow = gFollowList.contains(pubkey) && (pubkey != userPublicKey);
 
   String maxLen(String pubkey) => pubkey.length > pubkeyLenShown? pubkey.substring(0,pubkeyLenShown) : pubkey.substring(0, pubkey.length);
   String name = "";
@@ -1256,19 +1262,19 @@ String getAuthorName(String pubkey, {bool addTickForWellKnown = true, int maxDis
     name = (gKindONames[pubkey]?.name)??maxLen(pubkey);
   }
 
-  if( addTickForWellKnown) {
-    // first remove the check mark if its in any name
+  // then add valid check mark in default follows 
+  if( isFollow) {
+    if( name.length >= maxDisplayLen ) {
+      name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
+    } else {
+      name = name + gValidCheckMark;
+    }
+  } else {
+    // make this tick a specil character
     name = name.replaceAll(gValidCheckMark, "");
 
-    // then add valid check mark in default follows 
-    if( gDefaultFollows.contains(pubkey)) {
-      if( name.length >= maxDisplayLen ) {
-        name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
-      } else {
-        name = name + gValidCheckMark;
-      }
-    }
   }
+
   return name;
 }
 

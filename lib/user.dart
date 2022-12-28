@@ -3,6 +3,10 @@ import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
 
+
+// is set intermittently by functions. and used as required. Should be kept in sync as the kind 3 for user are received. 
+Set<String> gFollowList = {};
+
 // From the list of events provided, lookup the lastst contact information for the given user/pubkey
 Event? getContactEvent(String pubkey) {
 
@@ -27,6 +31,7 @@ Set<String> getFollows(String pubkey) {
 
   return followPubkeys;
 }
+
 
 Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {
   Set<String> userChannels = {};
@@ -94,21 +99,3 @@ Set<String> getOnlyUserEvents(Set<Event> initialEvents, String userPubkey) {
   return userEvents;
 }
 
-
-Set<String> getContactList(String pubkey) {
-  Set<String> contacts = {};
-
-  if( pubkey != "") {
-    // get the latest kind 3 event for the user, which has the 'follows' list
-    Event? contactEvent = getContactEvent(userPublicKey);
-
-    // if contact list was found, get user's feed; also get some default contacts
-    if (contactEvent != null ) {
-      contactEvent.eventData.contactList.forEach((contact) {
-        contacts.add(contact.contactPubkey);
-      });
-    } else {
-    }
-  }
-  return contacts;
-}

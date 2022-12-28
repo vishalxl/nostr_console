@@ -6,27 +6,27 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 
 # todo
 
-* [ ] due to extra color related bytes, reactions in highlighted threads are shifted a lot to left. fix that. 
-
 * [ ] support bech32 keys
-* [x] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
 * [ ] allow faster startup with an argument or config
-* [x] add new relays  ( zbd, coinos, radixrat)
 * [ ] menu should honour --width, its extending way beyond
-* [x] fix issue where need to go back into main menu to update the feed
 * [ ] read prikey from file; create it too using new feature --genkey 
 * [ ] fix --help that's dated
+* [ ] after going to a dm room, screen doesn't clear 
+* [ ] A F for friend or follow should be shown after each name that's a follow of the logged in user. F1 if the name is follow of a follow, and F2 if next level. 
+* [ ] allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
+* [ ] in url expansions, the likes string is shown in same line which is wrong
+* [ ] kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
+* [x] due to extra color related bytes, reactions in highlighted threads are shifted a lot to left. fix that. 
+* [x] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
+* [x] add new relays  ( zbd, coinos, radixrat)
+* [x] fix issue where need to go back into main menu to update the feed
 * [x] show lightning invoice as qr code 
 * [x] in mention expansion, if p tag is not found in user store, then its left as #[n], whereas it should be replaced by the pubkey 
 * [x] notifications should show mentions too ( it does not yet)
 * [x] notifications , option 3, is shown only for one entry in whole thread 
 * [x] hashtag regexp should have underscore  (seems to be working fine)
 * [x] add more default users. improve who is fetched. 
-* [ ] after going to a dm room, screen doesn't clear 
 * [x] when seeing a profile, if they have liked something, then likes after their name are shown white
-* [ ] kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
-* [ ] A F for friend or follow should be shown after each name that's a follow of the logged in user. F1 if the name is follow of a follow, and F2 if next level. 
-* [ ] allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
 
 
 # other longer term todo

@@ -301,7 +301,7 @@ const int gMaxDifficultyAllowed = 24;
 int gDifficulty = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// channel related settings
-const int gNumChannelMessagesToShow = 18;
+const int gNumChannelMessagesToShow = 40;
 const int gMaxChannelPagesDisplayed = 50;
 
 

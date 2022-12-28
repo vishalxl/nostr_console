@@ -1950,7 +1950,7 @@ class Store {
 
       DirectMessageRoom room = directRooms[j];
       String id = room.otherPubkey.substring(0, 6);
-      String name = getAuthorName(room.otherPubkey, maxDisplayLen: 4);
+      String name = getAuthorName(room.otherPubkey);
 
       void markAllRead (Event e) => e.eventData.isNotification = false;
       room.visitAllMessages(this, markAllRead);

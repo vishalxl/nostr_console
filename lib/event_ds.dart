@@ -733,7 +733,9 @@ class EventData {
 
     strToPrint += "${name}: ";
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
-    String idDateLikes = "    |id: ${maxN(id)}, $strDate ${getReactionStr(depth)}" ;
+    List<dynamic> reactionString = getReactionStr(depth);
+    //print("\n|${reactionString[0]}|\n ${  reactionString[1]}\n }");
+    String idDateLikes = "    |id: ${maxN(id)}, $strDate ${reactionString[0]}" ;
     idDateLikes = idDateLikes.padRight(typicalxLen);
 
     String temp = tempEvaluatedContent==""?tempContent: tempEvaluatedContent;
@@ -761,11 +763,14 @@ class EventData {
     if( contentShifted.length <= maxLineLen )
       effectiveLastLineLen = contentShifted.length;
 
+    // needed to use this because the color padding in notifications reactions will mess up the length calculation in the actual reaction string
+    int colorStrLen = reactionString[0].length -  reactionString[1];
+
     // now actually find where the likesDates string goes
     if( (gSpacesPerDepth * depth + effectiveNameFieldLen + effectiveLastLineLen + idDateLikes.length ) <= gTextWidth) {
-      idDateLikes =  idDateLikes.padLeft((gTextWidth ) - (gSpacesPerDepth * depth + effectiveNameFieldLen + effectiveLastLineLen));
+      idDateLikes =  idDateLikes.padLeft((gTextWidth ) + colorStrLen - (gSpacesPerDepth * depth + effectiveNameFieldLen + effectiveLastLineLen));
     } else {
-      idDateLikes =   "\n" + idDateLikes.padLeft(gNumLeftMarginSpaces + gTextWidth);
+      idDateLikes =   "\n" + idDateLikes.padLeft(gNumLeftMarginSpaces + gTextWidth + colorStrLen);
     }
 
     // print content and the dateslikes string
@@ -901,38 +906,49 @@ class EventData {
 
   // looks up global map of reactions, if this event has any reactions, and then prints the reactions
   // in appropriate color( in case one is a notification, which is stored in member variable)
-  String getReactionStr(int depth) {
+  // returns the string and its length in a dynamic list
+  List<dynamic> getReactionStr(int depth) {
     String reactorNames = "";
 
+    int len = 0;
+
     if( isHidden  ||  isDeleted) {
-      return "";
+      return ["",0];
     }
 
     if( gReactions.containsKey(id)) {
       reactorNames = "Likes: ";
+      len = reactorNames.length;
       int numReactions = gReactions[id]?.length??0;
       List<List<String>> reactors = gReactions[id]??[];
       bool firstEntry = true;
       for( int i = 0; i <numReactions; i++) {
         
         String comma = (firstEntry)?"":", ";
+        String authorName = "";
 
         String reactorId = reactors[i][0];
         if( newLikes.contains(reactorId) && reactors[i][1] == "+") {
           // this is a notifications, print it and then later empty newLikes
-          reactorNames += comma + gNotificationColor + getAuthorName(reactorId) + gColorEndMarker + gCommentColor ; // restart with comment color because this is part of ongoing print
+          authorName = getAuthorName(reactorId);
+          reactorNames += comma + gNotificationColor + authorName + gColorEndMarker + gCommentColor ; // restart with comment color because this is part of ongoing print
+          len += 2 + authorName.length;
           firstEntry = false;
         } else {
           // this is normal printing of the reaction. only print for + for now
           if( reactors[i][1] == "+")
-            reactorNames += comma + getAuthorName(reactorId);
+            authorName = getAuthorName(reactorId);
+            reactorNames += comma + authorName;
+            len += (2 + authorName.length);
             firstEntry = false;
         }
+
+
       } // end for
       newLikes.clear();
       reactorNames += "";
     }
-    return reactorNames;
+    return [reactorNames, len];
   }
 
   // returns the last e tag as reply to event for kind 42 and 142 events

@@ -32,7 +32,7 @@ void main() {
 
     tree.children.add(treeChild);
   
-    store.printStoreTrees(0, DateTime.now().subtract(Duration(days:1)), selectorTrees_all);
+    //store.printStoreTrees(0, DateTime.now().subtract(Duration(days:1)), selectorTrees_all);
   });
 
   
@@ -46,7 +46,8 @@ void main() {
     Set<Event> listEvents = {exampleEvent1, exampleEvent2, exampleEvent3};
 
     Store node = Store.fromEvents(listEvents);
-    //node.printTree(0, DateTime.now().subtract(Duration(days:1000)), selectorShowAllTrees);
+
+    //node.printStoreTrees(0, DateTime.now().subtract(Duration(days: 1000)), (a) => true);
     //print("=========================");
   });
 
@@ -261,6 +262,10 @@ String expectedResult =
 
       expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'), 
               reason:'verify a public channel has correct number of messages');
+
+
+      //node.printStoreTrees(0, DateTime.now().subtract(Duration(days: 105)), (a) => true); 28 dec 2022
+
 
       String pubkeyQrCodeResult1 = 
   """   █▀▀▀▀▀█ ██▄▄▀ ▄▄     █ ▄▀ █▀▀▀▀▀█

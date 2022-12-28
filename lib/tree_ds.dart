@@ -2046,6 +2046,16 @@ class Store {
       return room;
   }
 
+
+  // TODO to be finished
+  bool isRelevant(Tree tree) {
+    //Set<String> contacts = getContactList(userPublicKey);
+    //contacts = contacts.union(gDefaultFollows);
+
+
+    return true;
+  }
+
   // Write the tree's events to file as one event's json per line
   Future<void> writeEventsToFile(String filename) async {
     if( gDebug > 0) print("opening $filename to write to.");
@@ -2082,6 +2092,11 @@ class Store {
         if( tree.event.originalJson.length < 10) {
           continue;
         }
+
+        if( !isRelevant(tree)) {
+          continue;
+        }
+        
 
         String temp = tree.event.originalJson.trim();
         String line = "${temp}\n";

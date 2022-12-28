@@ -93,3 +93,22 @@ Set<String> getOnlyUserEvents(Set<Event> initialEvents, String userPubkey) {
   });
   return userEvents;
 }
+
+
+Set<String> getContactList(String pubkey) {
+  Set<String> contacts = {};
+
+  if( pubkey != "") {
+    // get the latest kind 3 event for the user, which has the 'follows' list
+    Event? contactEvent = getContactEvent(userPublicKey);
+
+    // if contact list was found, get user's feed; also get some default contacts
+    if (contactEvent != null ) {
+      contactEvent.eventData.contactList.forEach((contact) {
+        contacts.add(contact.contactPubkey);
+      });
+    } else {
+    }
+  }
+  return contacts;
+}

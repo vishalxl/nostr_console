@@ -17,7 +17,7 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 * [ ] read prikey from file; create it too using new feature --genkey 
 * [ ] fix --help that's dated
 * [x] show lightning invoice as qr code 
-* [ ] in mention expansion, if p tag is not found in user store, then its left as #[n], whereas it should be replaced by the pubkey 
+* [x] in mention expansion, if p tag is not found in user store, then its left as #[n], whereas it should be replaced by the pubkey 
 * [x] notifications should show mentions too ( it does not yet)
 * [x] notifications , option 3, is shown only for one entry in whole thread 
 * [x] hashtag regexp should have underscore  (seems to be working fine)

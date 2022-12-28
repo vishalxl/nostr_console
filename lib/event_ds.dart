@@ -371,8 +371,28 @@ class EventData {
                 return quote;
               }
             }
+
+            String tag = "";
+            switch(tags[n][0]) {
+            case "p":
+              tag = "@";
+              break;
+            case "e":
+              tag = "#";
+              break;
+            case "%": // something else for future
+              tag = "%";
+              break;
+            default: 
+              tag = "@";
+            }
+
+
+            return tag+mentionedId;
+
           }
         }
+
         return mentionTag;
       }
       if( gDebug > 0) printWarning("In replaceMentions returning nothing");

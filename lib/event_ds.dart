@@ -27,6 +27,7 @@ int numEventsTranslated = 0;
 
 List<String> nip08PlaceHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]", "#[6]", "#[7]", "#[8]", "#[9]", "#[10]", "#[11]", "#[12]"];
 
+
 // Structure to store kind 0 event meta data, and kind 3 meta data for each user. Will have info from latest
 // kind 0 event and/or kind 3 event, both with their own time stamps.
 class UserNameInfo {
@@ -339,10 +340,6 @@ class EventData {
   }
 
   String expandMentions(String content, Map<String, Tree> tempChildEventsMap) {
-    if( id == gCheckEventId) {
-      //printInColor("in expandMentions: decoding $gCheckEventId\n", redColor);
-    }
-
     if( tags.isEmpty) {
       return content;
     }
@@ -353,29 +350,39 @@ class EventData {
       return content;
     }
 
-    // replace the patterns
-    //print("in main body of expandmentions");
-    for(int i = 0; i < nip08PlaceHolders.length && i < tags.length; i++) {
-      int     index = -1;
-      Pattern p     = nip08PlaceHolders[i];
-      if( (index = content.indexOf(p)) != -1 ) {
-        String mentionedId = tags[i][1];
-        if( tags[i].length >= 2) {
-          if( gKindONames.containsKey(mentionedId)) {
-            String author = getAuthorName(mentionedId);
-            content = "${content.substring(0, index)}@$author${content.substring(index + 4)}";
-          } else {
-            EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData??null;
-            if( eventData != null) {
-              String quotedAuthor = getAuthorName(eventData.pubkey);
-              String prefixId = mentionedId.substring(0, 3);
-              String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"${eventData.evaluatedContent}\">";
-              content = "${content.substring(0, index)}$quote${content.substring(index + 4)}";
+    String replaceMentions(Match mentionTagMatch) {
+      String? mentionTag = mentionTagMatch.group(0);
+      if( mentionTag != null) {
+        String strInt = mentionTag.substring(2, mentionTag.length -1);
+        int? n = int.tryParse(strInt);
+        if( n != null) {
+          if( n < tags.length) {
+            String mentionedId = tags[n][1];
+
+            if( gKindONames.containsKey(mentionedId)) {
+              String author = getAuthorName(mentionedId);
+              return "@$author";
+            } else {
+              EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData??null;
+              if( eventData != null) {
+                String quotedAuthor = getAuthorName(eventData.pubkey);
+                String prefixId = mentionedId.substring(0, 3);
+                String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"${eventData.evaluatedContent}\">";
+                return quote;
+              }
             }
           }
         }
+        return mentionTag;
       }
+      if( gDebug > 0) printWarning("In replaceMentions returning nothing");
+      return "";
     }
+
+    // replace the mentions, if any are found
+    String mentionStr = "(\#\[[0-9]+\])";
+    RegExp mentionRegExp = RegExp(mentionStr);
+    content = content.replaceAllMapped(mentionRegExp, replaceMentions);
     return content;
   }
 

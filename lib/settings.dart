@@ -11,7 +11,7 @@ int gSpecificDebug = 0;
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = "x98821b082a1d322e8cba84e8d430da300dea043348f422229f929059d1a9bb05"; 
+String gCheckEventId = "b9e1824fe65b10f7d06bd5f6dfe1ab3eda876d7243df5878ca0b9686d80c0840f"; 
 
 
 int gMaxEventLenthAccepted = 80000; // max event size. events larger than this are rejected. 

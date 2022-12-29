@@ -4,6 +4,9 @@ version: 0.3.2-beta-a
 homepage: https://github.com/vishalxl/nostr_console   
 
 
+# reverted yml to 'updated readme checkin' , removed arm64 mention ( still uses matrix logic)
+# spam prevention aginst hello nostr
+
 # 0.3.2
 # added build for ubuntu arm 64, and mac arm 64   
 # fixed or improved mention expansion

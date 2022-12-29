@@ -21,27 +21,25 @@ on:
 jobs:
   build_all:
     name: "${{matrix.os}}_${{matrix.arch}}"
-    runs-on: [${{matrix.os}}-latest, ARM64]
-      with: {architecture: "${{matrix.arch}}" }
+    runs-on: "${{matrix.os}}-latest"
 
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu, windows, macos]
-        arch: [x64, arm64]
-        sdk: [stable]
+        arch: [x64]
+        dart_channel: [stable]
             
     steps:
       - uses: actions/checkout@v3
-        with: {architecture: "${{matrix.arch}}" }
 
       # Note: This workflow uses the latest stable version of the Dart SDK.
       # You can specify other versions if desired, see documentation here:
       # https://github.com/dart-lang/setup-dart/blob/main/README.md
       # - uses: dart-lang/setup-dart@v1
       - uses: dart-lang/setup-dart@v1
-        with: {sdk: "${{ matrix.sdk }}", architecture: "${{matrix.arch}}" }
-
+        with: {sdk: "${{ matrix.dart_channel }}"}
+        
       - name: Install dependencies
         run: dart pub get
 
@@ -73,12 +71,9 @@ jobs:
           name: nostr_console_${{matrix.os}}_${{matrix.arch}}
           path: |
             bin/nostr_console_${{matrix.os}}_${{matrix.arch}}
-
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}/bin
-
-
       - name: Rename exe for windows only
         if: ${{ matrix.os == 'windows'}}
         run: cp ${{ github.workspace }}/bin/nostr_console_${{matrix.os}}_${{matrix.arch}} ${{ github.workspace }}/bin/nostr_console_${{matrix.os}}_${{matrix.arch}}.exe  

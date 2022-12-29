@@ -2,6 +2,8 @@
 
 source ./configfile.cfg
 
+# ./send_request.sh   '["REQ","name",{"ids":["b10180"]}]'
+
 for server in ${nostr_servers[@]};
 do
 >&2 echo -e  "\n\n------------Sending $1 to $server---------------------------\n"

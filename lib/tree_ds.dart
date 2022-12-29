@@ -1399,6 +1399,11 @@ class Store {
     // add the event to the main event store thats allChildEventsMap
     newEventsToProcess.forEach((newEvent) { 
       
+
+      if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,2).compareTo("00") == 0) {
+        return; // spam prevention
+      }
+
       if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
         return;
       }

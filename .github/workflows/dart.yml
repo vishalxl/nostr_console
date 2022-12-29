@@ -21,8 +21,7 @@ on:
 jobs:
   build_all:
     name: "${{matrix.os}}_${{matrix.arch}}"
-    
-    runs-on: "${{matrix.os}}-latest"
+    runs-on: [${{matrix.os}}-latest, ARM64]
       with: {architecture: "${{matrix.arch}}" }
 
     strategy:

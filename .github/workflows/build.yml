@@ -1,0 +1,114 @@
+name: Build binaries
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-linux:
+    name: Build for Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Dart dependencies
+        id: cache-deps
+        uses: actions/cache@v3
+        with:
+          path: /tmp/dart
+          key: ${{ runner.os }}-dart-deps-${{ matrix.arch }}
+
+      - name: Create temporary dir for Dart deps
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: mkdir -p /tmp/dart
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Install dependencies
+        run:
+          docker run --platform linux/${{ matrix.arch }} -i --rm -v /tmp/dart:/tmp/dart -e PUB_CACHE=/tmp/dart -v $(pwd):/work --workdir /work dart:stable dart pub get
+          
+      - name: Build
+        run:
+          docker run --platform linux/${{ matrix.arch }} -i --rm -v /tmp/dart:/tmp/dart -e PUB_CACHE=/tmp/dart -v $(pwd):/work --workdir /work dart:stable dart compile exe bin/nostr_console.dart --output bin/nostr_console_linux_${{ matrix.arch }}
+
+      - name: Make file executable
+        run: |
+          sudo chown -R $(whoami) bin
+          chmod 755 bin/nostr_console_linux_${{ matrix.arch }}
+
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: nostr_console_linux_${{ matrix.arch }}
+          path: |
+            bin/nostr_console_linux_${{ matrix.arch }}
+
+  build-others:
+    name: Build
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [macos, windows]
+      fail-fast: false
+    env:
+      PUB_CACHE=: tmp/dart
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Dart dependencies
+        id: cache-deps
+        uses: actions/cache@v3
+        with:
+          path: /tmp/dart
+          key: ${{ runner.os }}-dart-deps-amd64
+
+      - name: Create temporary dir for Dart deps
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: mkdir -p /tmp/dart
+
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Build (macOS)
+        if: ${{ matrix.os == 'macos' }}
+        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_${{ matrix.os }}_amd64
+
+      # This has the .exe extension
+      # There is probably a better way to do this
+      - name: Build (Windows)
+        if: ${{ matrix.os == 'windows' }}
+        run: dart compile exe bin/nostr_console.dart --output bin/nostr_console_${{ matrix.os }}_amd64.exe
+
+      - name: Make file executable (macOS only)
+        if: ${{ matrix.os == 'macos' }}
+        run: chmod 755 bin/nostr_console_${{ matrix.os }}_amd64
+
+      - name: Archive production artifacts (macOS)
+        if: ${{ matrix.os == 'macos' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: nostr_console_${{ matrix.os }}_amd64
+          path: |
+            bin/nostr_console_${{ matrix.os }}_amd64
+
+      - name: Archive production artifacts (Windows)
+        if: ${{ matrix.os == 'windows' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: nostr_console_${{ matrix.os }}_amd64.exe
+          path: |
+            bin/nostr_console_${{ matrix.os }}_amd64.exe

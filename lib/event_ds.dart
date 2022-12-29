@@ -966,6 +966,12 @@ class EventData {
 
 
       } // end for
+
+      // if at least one entry as colored notification was made
+      if( firstEntry == false) {
+        reactorNames += gColorEndMarker;
+      }
+
       newLikes.clear();
       reactorNames += "";
     }

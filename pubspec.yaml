@@ -1,6 +1,6 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console
-version: 0.3.2-beta
+version: 0.3.2-beta-a
 homepage: https://github.com/vishalxl/nostr_console   
 
 
@@ -12,6 +12,9 @@ homepage: https://github.com/vishalxl/nostr_console
 # In writing events, only writing follow's events. and the ones they interact with. 
 # now friends have a tick; no tick for defaults
 # fixed likes colors issue for notification likes
+
+# after tag
+# notification color fix for git bash; color for likes is not being closed at end 
   
 # 0.3.1
 # added nostr.ch as another default relay to sync with anigma

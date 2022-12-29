@@ -396,6 +396,29 @@ void printProfile(Store node, String profilePubkey) {
   print("");
 }
 
+void printVerifiedAccounts(Store node) {
+
+  List<dynamic> listVerified = []; // num follows, pubkey, name, nip05id
+
+  printUnderlined("NIP 05 Verified Users");
+  print("")  ;
+  print("Username                    Num Followers       pubkey                                                             Nip Id\n");
+
+  gKindONames.forEach((key, value) {
+    String pubkey = key;
+    if( value.nip05Verified) {
+      List<String> followers = node.getFollowers(pubkey);
+      listVerified.add([followers.length, pubkey, getAuthorName(pubkey), value.nip05Id]);
+    }
+  });
+
+  listVerified.sort((a, b) => a[0] > b[0]? -1: (a[0] == b[0]? 0: 1));
+  for(var verifiedEntry in listVerified) {
+    print("${verifiedEntry[2].padRight(30)}  ${verifiedEntry[0].toString().padRight(4)}            ${verifiedEntry[1]}   ${verifiedEntry[3]}");
+  }
+  print("\nHow to use: To get best results, print the main feed a couple of times right after starting; and then check NIP verified list. This gives application time to do the verification from user's given servers.\n\n");
+}
+
 void printMenu(List<String> menuOptions) {
 
   int longestMenuOption = 0;
@@ -430,29 +453,6 @@ void printMenu(List<String> menuOptions) {
     }
   }
   stdout.write("\n" );
-}
-
-void printVerifiedAccounts(Store node) {
-
-  List<dynamic> listVerified = []; // num follows, pubkey, name, nip05id
-
-  printUnderlined("NIP 05 Verified Users");
-  print("")  ;
-  print("Username                    Num Followers       pubkey                                                             Nip Id\n");
-
-  gKindONames.forEach((key, value) {
-    String pubkey = key;
-    if( value.nip05Verified) {
-      List<String> followers = node.getFollowers(pubkey);
-      listVerified.add([followers.length, pubkey, getAuthorName(pubkey), value.nip05Id]);
-    }
-  });
-
-  listVerified.sort((a, b) => a[0] > b[0]? -1: (a[0] == b[0]? 0: 1));
-  for(var verifiedEntry in listVerified) {
-    print("${verifiedEntry[2].padRight(30)}  ${verifiedEntry[0].toString().padRight(4)}            ${verifiedEntry[1]}   ${verifiedEntry[3]}");
-  }
-  print("\nHow to use: To get best results, print the main feed a couple of times right after starting; and then check NIP verified list. This gives application time to do the verification from user's given servers.\n\n");
 }
 
 int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
@@ -747,6 +747,7 @@ Future<void> channelMenuUI(Store node) async {
           stdout.write("\nType message; or type 'x' to exit, or press <enter> to refresh: ");
           $tempUserInput = stdin.readLineSync(encoding: utf8);
           String messageToSend = $tempUserInput??"";
+          print("got word: $messageToSend");
 
           if( messageToSend != "") {
             if( messageToSend == 'x') {

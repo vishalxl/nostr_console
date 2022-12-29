@@ -12,10 +12,10 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 * [ ] read prikey from file; create it too using new feature --genkey 
 * [ ] fix --help that's dated
 * [ ] after going to a dm room, screen doesn't clear 
-* [ ] A F for friend or follow should be shown after each name that's a follow of the logged in user. F1 if the name is follow of a follow, and F2 if next level. 
 * [ ] allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
 * [ ] in url expansions, the likes string is shown in same line which is wrong
 * [ ] kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
+* [x] (showing tick for now) A F for friend or follow should be shown after each name that's a follow of the logged in user. F1 if the name is follow of a follow, and F2 if next level. 
 * [x] due to extra color related bytes, reactions in highlighted threads are shifted a lot to left. fix that. 
 * [x] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
 * [x] add new relays  ( zbd, coinos, radixrat)

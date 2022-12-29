@@ -21,7 +21,9 @@ on:
 jobs:
   build_all:
     name: "${{matrix.os}}_${{matrix.arch}}"
+    
     runs-on: "${{matrix.os}}-latest"
+      with: {architecture: "${{matrix.arch}}" }
 
     strategy:
       fail-fast: false

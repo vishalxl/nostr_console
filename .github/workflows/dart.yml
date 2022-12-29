@@ -28,17 +28,18 @@ jobs:
       matrix:
         os: [ubuntu, windows, macos]
         arch: [x64, arm64]
-        dart_channel: [stable]
+        sdk: [stable]
             
     steps:
       - uses: actions/checkout@v3
+        with: {architecture: "${{matrix.arch}}" }
 
       # Note: This workflow uses the latest stable version of the Dart SDK.
       # You can specify other versions if desired, see documentation here:
       # https://github.com/dart-lang/setup-dart/blob/main/README.md
       # - uses: dart-lang/setup-dart@v1
       - uses: dart-lang/setup-dart@v1
-        with: {channel: "${{ matrix.dart_channel }}", architecture: "${{matrix.arch}}" }
+        with: {sdk: "${{ matrix.sdk }}", architecture: "${{matrix.arch}}" }
 
       - name: Install dependencies
         run: dart pub get

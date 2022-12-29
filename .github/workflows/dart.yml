@@ -38,7 +38,7 @@ jobs:
       # https://github.com/dart-lang/setup-dart/blob/main/README.md
       # - uses: dart-lang/setup-dart@v1
       - uses: dart-lang/setup-dart@v1
-        with: {sdk: "${{ matrix.dart_channel }}", architecture: "${{matrix.arch}}" }
+        with: {channel: "${{ matrix.dart_channel }}", architecture: "${{matrix.arch}}" }
 
       - name: Install dependencies
         run: dart pub get

@@ -14,7 +14,7 @@ homepage: https://github.com/vishalxl/nostr_console
 # fixed likes colors issue for notification likes
 
 # after tag
-# fixed sdk for arm64 build; otherwise only x86 was being built for all  
+# fixed sdk for arm64 build; otherwise only x86 was being built for all    
 # notification color fix for git bash; color for likes is not being closed at end 
   
 # 0.3.1

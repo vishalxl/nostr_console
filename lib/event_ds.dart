@@ -33,12 +33,12 @@ List<String> nip08PlaceHolders = ["#[0]", "#[1]", "#[2]", "#[3]", "#[4]", "#[5]"
 // kind 0 event and/or kind 3 event, both with their own time stamps.
 class UserNameInfo {
   int? createdAt;
-  String? name, about, picture, lud06, lud16;
+  String? name, about, picture, lud06, lud16, display_name, website;
   int? createdAtKind3;
   Event ?latestContactEvent;
   bool nip05Verified;
   String? nip05Id;
-  UserNameInfo(this.createdAt, this.name, this.about, this.picture, this.lud06, this.lud16, this.nip05Id , this.latestContactEvent,  [this.createdAtKind3 = null, this.nip05Verified = false]);
+  UserNameInfo(this.createdAt, this.name, this.about, this.picture, this.lud06, this.lud16, this.display_name, this.website, this.nip05Id , this.latestContactEvent,  [this.createdAtKind3 = null, this.nip05Verified = false]);
 }
 
 /* 
@@ -1116,6 +1116,8 @@ bool processKind0Event(Event e) {
   String picture = "";
   String lud06 = "";
   String lud16 = "";
+  String display_name = "";
+  String website = "";
   String nip05 = "";
 
   try {
@@ -1125,6 +1127,8 @@ bool processKind0Event(Event e) {
     picture = json["picture"]??"";    
     lud06 = json["lud06"]??"";    
     lud16 = json["lud16"]??"";    
+    display_name = json["display_name"]??"";    
+    website = json["website"]??"";    
     nip05 = json['nip05']??"";
     //String twitterId = json['twitter']??"";
     //String githubId = json['github']??"";
@@ -1134,12 +1138,12 @@ bool processKind0Event(Event e) {
 
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(e.eventData.pubkey)) {    
-    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, nip05, null);
+    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, display_name, website, nip05, null);
     newEntry = true;;
   } else {
     int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
     if( oldTime < e.eventData.createdAt) {
-      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, nip05, null);
+      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, display_name, website, nip05, null);
       entryModified = true;
     }
   }
@@ -1175,7 +1179,7 @@ bool processKind0Event(Event e) {
                     int oldTime = 0;
                     if( !gKindONames.containsKey(e.eventData.pubkey)) {
                       //printWarning("in response handing. creating user info");
-                      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, null, null);
+                      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, display_name, website,null, null);
                     } else {
                       oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
                       //print("in response handing. user info exists with old time = $oldTime and this event time = ${e.eventData.createdAt}");
@@ -1211,7 +1215,7 @@ bool processKind3Event(Event newContactEvent) {
 
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(newContactEvent.eventData.pubkey)) {
-    gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null, null, newContactEvent, newContactEvent.eventData.createdAt);
+    gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null, null, null, null, newContactEvent, newContactEvent.eventData.createdAt);
     newEntry = true;;
   } else {
     // if entry already exists, then check its old time and update only if we have a newer entry now
@@ -1223,9 +1227,11 @@ bool processKind3Event(Event newContactEvent) {
              picture = gKindONames[newContactEvent.eventData.pubkey]?.picture,
                lud06 = gKindONames[newContactEvent.eventData.pubkey]?.lud06,
                lud16 = gKindONames[newContactEvent.eventData.pubkey]?.lud16,
+               display_name = gKindONames[newContactEvent.eventData.pubkey]?.display_name,
+               website = gKindONames[newContactEvent.eventData.pubkey]?.website,
              nip05id = gKindONames[newContactEvent.eventData.pubkey]?.nip05Id??"";
       
-      gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(createdAt, name, about, picture, lud06, lud16, nip05id, newContactEvent, newContactEvent.eventData.createdAt );
+      gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(createdAt, name, about, picture, lud06, lud16, display_name, website, nip05id, newContactEvent, newContactEvent.eventData.createdAt );
       entryModified = true;;
     }
   }

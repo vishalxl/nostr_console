@@ -318,6 +318,8 @@ void printProfile(Store node, String profilePubkey) {
   String picture = gKindONames[profilePubkey]?.picture??"";
   String lud06 = gKindONames[profilePubkey]?.lud06??"";
   String lud16 = gKindONames[profilePubkey]?.lud16??"";
+  String display_name= gKindONames[profilePubkey]?.display_name??"";
+  String website = gKindONames[profilePubkey]?.website??"";
   int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
   bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
   String nip05Id  = gKindONames[profilePubkey]?.nip05Id??"";
@@ -359,6 +361,8 @@ void printProfile(Store node, String profilePubkey) {
   print("\nName        : $authorName ( ${profilePubkey} ).");
   print("About       : $about");
   print("Picture     : $picture");
+  print("display_name: $display_name");
+  print("Website     : $website");
   print("Lud06       : $lud06");
   print("Lud16       : $lud16");
   print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
@@ -564,23 +568,29 @@ Future<void> otherOptionsMenuUi(Store node) async {
         print("Your current name: ${getAuthorName(userPublicKey)}");
         print("Your 'about me': ${gKindONames[userPublicKey]?.about}");
         print("Your current profile picture: ${gKindONames[userPublicKey]?.picture}");
+        print("Your current display name: ${gKindONames[userPublicKey]?.display_name}");
+        print("Your current website: ${gKindONames[userPublicKey]?.website}");
         print("Your current NIP 05 id: ${gKindONames[userPublicKey]?.nip05Id}");
         print("Your current lud06: ${gKindONames[userPublicKey]?.lud06}");
         print("Your current lud16: ${gKindONames[userPublicKey]?.lud16}");
 
 
-        print("\n\nEnter new data. Leave blank to use the old value:\n");
-        String userName = getStringFromUser("Enter your new display name: ", getAuthorName(userPublicKey));
-        String userAbout = getStringFromUser("Enter new 'about me' for yourself: ", gKindONames[userPublicKey]?.about??"");
-        String userPic = getStringFromUser("Enter url to your new display picture: ", gKindONames[userPublicKey]?.picture??"https://placekitten.com/200/200");
-        String nip05id = getStringFromUser("Enter your nip 05 id. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.nip05Id??"");
-        String lud06 = getStringFromUser("Enter your lud06 or lnurl. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.lud06??"");
-        String lud16 = getStringFromUser("Enter your lud16 address. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.lud16??"");
+        print("\n\nEnter new data. Leave blank to use the old value. Some clients use name, others use display name; you can enter same value for both:\n");
+        String userName =     getStringFromUser("Enter your new name                  : ", getAuthorName(userPublicKey));
+        String userAbout =    getStringFromUser("Enter new 'about me' for yourself    : ", gKindONames[userPublicKey]?.about??"");
+        String userPic =      getStringFromUser("Enter url to your new display picture: ", gKindONames[userPublicKey]?.picture??"https://placekitten.com/200/200");
+        String display_name = getStringFromUser("Enter your new display name          : ", gKindONames[userPublicKey]?.display_name??"");
+        String website =      getStringFromUser("Enter your new website               : ", gKindONames[userPublicKey]?.website??"");
+        String nip05id =   getStringFromUser("Enter your nip 05 id. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.nip05Id??"");
+        String lud06 =     getStringFromUser("Enter your lud06 or lnurl. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.lud06??"");
+        String lud16 =     getStringFromUser("Enter your lud16 address. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.lud16??"");
         
         String strLud06 =  lud06.length > 0? '"lud06":"$lud06",': ''; 
         String strLud16 =  lud16.length > 0? '"lud16":"$lud16",': ''; 
+        String strDispName =  display_name.length > 0? '"display_name":"$display_name",': ''; 
+        String strWebsite =  website.length > 0? '"website":"$website",': ''; 
 
-        String content = "{\"name\": \"$userName\", \"about\": \"$userAbout\", \"picture\": \"$userPic\"${ nip05id.length >0 ? ", $strLud06 $strLud16 \"nip05\": \"$nip05id\"":""}}";
+        String content = "{\"name\": \"$userName\", \"about\": \"$userAbout\", \"picture\": \"$userPic\"${ nip05id.length >0 ? ", $strDispName $strWebsite $strLud06 $strLud16 \"nip05\": \"$nip05id\"":""}}";
         int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
 
         EventData eventData = EventData('id', userPublicKey, createdAt, 0, content, [], [], [], [], {}, );

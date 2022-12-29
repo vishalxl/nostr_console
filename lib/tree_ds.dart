@@ -1340,7 +1340,7 @@ class Store {
     // for pubkeys that don't have any kind 0 events ( but have other events), add then to global kind0 store so they can still be accessed
     tempChildEventsMap.forEach((key, value) {
         if( !gKindONames.containsKey(value.event.eventData.pubkey)) {
-          gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null, null, null );
+          gKindONames[value.event.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null, null, null, null, null  );
         }
     });
 
@@ -1399,7 +1399,6 @@ class Store {
     // add the event to the main event store thats allChildEventsMap
     newEventsToProcess.forEach((newEvent) { 
       
-
       if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,2).compareTo("00") == 0) {
         return; // spam prevention
       }

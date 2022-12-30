@@ -595,7 +595,7 @@ class Tree {
   } // end treeSelectorUserPostAndLike()
 
   // returns true if the tree (or its children, depending on flag) has a post or like by user; and notification flags are set for such events
-  bool treeSelectorDMtoFromUser(Set<String> pubkeys, { bool enableNotifications = true, bool checkChildrenToo = true}) {
+  bool treeSelectorDMtoFromUser(Set<String> pubkeys, { bool enableNotifications = true}) {
 
     if( event.eventData.kind != 4) {
       return false;
@@ -1576,39 +1576,39 @@ class Store {
         if( gDebug > 0) print("In printNotifications: Could not find event $eventID in tree");
         return;
       } else {
-        switch(t.event.eventData.kind) {
-          case 1:
-            t.event.eventData.isNotification = true;
-            Tree topTree = getTopTree(t);
-            topNotificationTree.add(topTree);
-            break;
-          case 7:
-            Event event = t.event;
-            if(gDebug > 0) ("Got notification of type 7");
-            String reactorId  = event.eventData.pubkey;
-            int    lastEIndex = event.eventData.eTags.length - 1;
-            String reactedTo  = event.eventData.eTags[lastEIndex][0];
-            Event? reactedToEvent = allChildEventsMap[reactedTo]?.event;
-            if( reactedToEvent != null) {
-              Tree? reactedToTree = allChildEventsMap[reactedTo];
-              if( reactedToTree != null) {
-                if(event.eventData.content == "+" ) {
-                  reactedToTree.event.eventData.newLikes.add( reactorId);
-                  Tree topTree = getTopTree(reactedToTree);
-                  topNotificationTree.add(topTree);
-                } else if(event.eventData.content == "!" ) {
-                  reactedToTree.event.eventData.isHidden = true;
+        if( isRelevantForNotification(t)) {
+          switch(t.event.eventData.kind) {
+            case 1:
+              t.event.eventData.isNotification = true;
+              Tree topTree = getTopTree(t);
+              topNotificationTree.add(topTree);
+              break;
+            case 7:
+              Event event = t.event;
+              if(gDebug > 0) ("Got notification of type 7");
+              String reactorId  = event.eventData.pubkey;
+              int    lastEIndex = event.eventData.eTags.length - 1;
+              String reactedTo  = event.eventData.eTags[lastEIndex][0];
+              Event? reactedToEvent = allChildEventsMap[reactedTo]?.event;
+              if( reactedToEvent != null) {
+                Tree? reactedToTree = allChildEventsMap[reactedTo];
+                if( reactedToTree != null) {
+                  if(event.eventData.content == "+" ) {
+                    reactedToTree.event.eventData.newLikes.add( reactorId);
+                    Tree topTree = getTopTree(reactedToTree);
+                    topNotificationTree.add(topTree);
+                  } 
+                } else {
+                  if(gDebug > 0) print("Could not find reactedTo tree");
                 }
               } else {
-                if(gDebug > 0) print("Could not find reactedTo tree");
+                if(gDebug > 0) print("Could not find reactedTo event");
               }
-            } else {
-              if(gDebug > 0) print("Could not find reactedTo event");
-            }
-            break;
-          default:
-            if(gDebug > 0) print("got an event thats not 1 or 7(reaction). its kind = ${t.event.eventData.kind} count17 = $countNotificationEvents");
-            break;
+              break;
+            default:
+              if(gDebug > 0) print("got an event thats not 1 or 7(reaction). its kind = ${t.event.eventData.kind} count17 = $countNotificationEvents");
+              break;
+          }
         }
       }
     });
@@ -2070,11 +2070,23 @@ class Store {
   }
 
   // threads where the user and follows have involved themselves are returnes as true ( relevant)
-  bool isRelevant(Tree tree) {
+  bool isRelevantForNotification(Tree tree) {
+    if(   tree.treeSelectorUserPostAndLike(gFollowList.union(gDefaultFollows).union({userPublicKey}), 
+                                           enableNotifications: false,
+                                           checkChildrenToo: false)
+       || tree.treeSelectorDMtoFromUser({userPublicKey},
+                                         enableNotifications: false)) {
+      return true;
+    }
 
-    if(   tree.treeSelectorUserPostAndLike(gFollowList) 
-       || tree.treeSelectorUserPostAndLike({userPublicKey})
-       || tree.treeSelectorDMtoFromUser({userPublicKey})
+    return false;
+  }
+
+
+  // threads where the user and follows have involved themselves are returnes as true ( relevant)
+  bool isRelevantForFileSave(Tree tree) {
+    if(   tree.treeSelectorUserPostAndLike(gFollowList.union(gDefaultFollows).union({userPublicKey}), enableNotifications: false) 
+       || tree.treeSelectorDMtoFromUser({userPublicKey}, enableNotifications: false)
        || tree.treeSelectorUserReplies(gFollowList)) {
       return true;
     }
@@ -2119,7 +2131,7 @@ class Store {
           }
         }
 
-        if( !isRelevant(tree)) {
+        if( !isRelevantForFileSave(tree)) {
           continue;
         }
 
@@ -2539,6 +2551,18 @@ class Store {
         return "";
       }
 
+      // set isHidden for reactedTo if it exists in map
+      if( comment == "!" ) {
+        if( event.eventData.pubkey == userPublicKey) {
+          // is a hide reaction by the user; set reactedToid as hidden
+          tempChildEventsMap[reactedToId]?.event.eventData.isHidden = true;
+          return reactedToId;
+        } else {
+          // is hidden reaction by someone else; do nothing then
+          return "";
+        }
+      }
+
       // check if the reaction already exists by this user
       if( gReactions.containsKey(reactedToId)) {
         for( int i = 0; i < ((gReactions[reactedToId]?.length)??0); i++) {
@@ -2575,12 +2599,7 @@ class Store {
         newReactorList.add(temp);
         gReactions[reactedToId] = newReactorList;
       }
-      // set isHidden for reactedTo if it exists in map
 
-
-      if( comment == "!" &&  event.eventData.pubkey == userPublicKey) {
-        tempChildEventsMap[reactedToId]?.event.eventData.isHidden = true;
-      }
       return reactedToId;
     } else {
       // case where its not a kind 7 event, or we can't find the reactedTo event due to absense of e tag.

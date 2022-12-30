@@ -1,8 +1,6 @@
 
 import 'package:nostr_console/event_ds.dart';
-import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
-
 
 // is set intermittently by functions. and used as required. Should be kept in sync as the kind 3 for user are received. 
 Set<String> gFollowList = {};
@@ -31,7 +29,6 @@ Set<String> getFollows(String pubkey) {
 
   return followPubkeys;
 }
-
 
 Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {
   Set<String> userChannels = {};

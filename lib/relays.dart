@@ -127,20 +127,17 @@ class Relays {
    *          received events in the given List<Event>
    */
   void getMultiUserEvents(String relayUrl, List<String> publicKeys, int limit, int sinceWhen, [Set<int>? kind = null]) {
-    //print("In relays: getmulti events kind = $kind len ${publicKeys.length}");
-
     Set<String> setPublicKeys = publicKeys.toSet();
 
-   if( relays.containsKey(relayUrl)) {
+    if( relays.containsKey(relayUrl)) {
       Set<String>? users = relays[relayUrl]?.users;
       if( users != null) {
         relays[relayUrl]?.users = users.union(setPublicKeys);
 
       }
-   }
+    }
 
     String subscriptionId = "multiple_user" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
-
     String request = getMultiUserRequest( subscriptionId, setPublicKeys, limit, sinceWhen, kind);
     sendRequest(relayUrl, request);
   }    
@@ -194,7 +191,6 @@ class Relays {
               } on FormatException {
                 return;
               } catch(err) {
-                //dynamic json = jsonDecode(d);
                 return;
               }                
             }, 
@@ -239,20 +235,17 @@ Relays relays = Relays({}, {}, {});
 void getContactFeed(Set<String> relayUrls, Set<String> setContacts, int numEventsToGet, int sinceWhen) {
   
   List<String> contacts = setContacts.toList();
-  //print("in getContactFeed: numEventsToGet = $numEventsToGet numContacts = ${setContacts.length} num contacts list = ${contacts.length}");
   for( int i = 0; i < contacts.length; i += gMaxAuthorsInOneRequest) {
 
     // for last iteration change upper limit
     int upperLimit = (i + gMaxAuthorsInOneRequest) > contacts.length? 
                           (contacts.length - i): gMaxAuthorsInOneRequest;
     
-    //print("upperLimit = $upperLimit i = $i");
     List<String> groupContacts = [];
     for( int j = 0; j < upperLimit; j++) {
       groupContacts.add(contacts[i + j]);
     }
 
-    //print( "in getcontact feed . i = $i upperLimit = $upperLimit") ;
     relayUrls.forEach((relayUrl) {
       relays.getMultiUserEvents(relayUrl, groupContacts, numEventsToGet, sinceWhen);
     });
@@ -298,7 +291,6 @@ void getMultiUserEvents(Set<String> serverUrls, Set<String> setPublicKeys, int n
       if( publicKeys.length - i <= gMaxAuthorsInOneRequest) {
         getUserRequests = publicKeys.length - i;
       }
-      //print("In getMultiuserevents:    sending request form $i to ${i + getUserRequests} ");
       List<String> partialList = publicKeys.sublist(i, i + getUserRequests);
       relays.getMultiUserEvents(serverUrl, partialList, numUserEvents, sinceWhen, kind);
     }
@@ -314,7 +306,6 @@ void sendEventsRequest(Set<String> serverUrls, Set<String> eventIds) {
 
   String getEventRequest = '["REQ","event_${eventIds.length}",{"ids":[$eventIdsStr]}]';
   if( gDebug > 0) log.info("sending $getEventRequest");
-  //print("send event req: $getEventRequest\n");
 
   serverUrls.forEach((url) {
     relays.sendRequest(url, getEventRequest);

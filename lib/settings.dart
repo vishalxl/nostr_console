@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.3-beta";
+const String version = "0.3.3-beta-a";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -12,7 +12,6 @@ final log = Logger('ExampleLogger');
 
 // for debugging
 String gCheckEventId = "xb9e1824fe65b10f7d06bd5f6dfe1ab3eda876d7243df5878ca0b9686d80c0840f"; 
-
 
 int gMaxEventLenthAccepted = 80000; // max event size. events larger than this are rejected. 
 
@@ -44,7 +43,6 @@ int gDefaultNumWaitSeconds = 12000; // is used in main()
 const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
 const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
-
 const int gSecsLatestLive         = 2 * 3600; // the lastst seconds for which to get the latest event in main
 int gHoursDefaultPrint      = 6; // print latest given hours only
 
@@ -53,7 +51,6 @@ int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, num
 
 String defaultServerUrl       = "wss://relay.damus.io";
 const String relayNostrInfo   = 'wss://relay.nostr.info';
-
 
 Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 relayNostrInfo,
@@ -64,7 +61,6 @@ Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 "wss://nostr.drss.io",
                                 "wss://nostr.radixrat.com",
                                 "wss://relay.nostr.ch"
-
                               };
 
 Set<String> gListRelayUrls2 = {    
@@ -80,7 +76,6 @@ Set<String> gListRelayUrls3 = {
                                  "wss://relay.stoner.com",
                                   "wss://nostr.openchain.fr"
                               };
-
 
 // well known disposable test private key
 const String gDefaultPublicKey  = "";
@@ -245,15 +240,12 @@ a & b are orange
 2 & 3 are blue
 0 & 1 are purple
 
-
 List<String> nameColorPalette = [brightGreenColor, brightCyanColor, brightYellowColor, brightMagentaColor, 
                                  brightBlueColor, brightRedColor, brightBlackColor, brightWhiteColor,
                                  yellowColor,        magentaColor,             redColor ];
 
 List<String> nameColorPalette = [brightMagentaColor, brightBlueColor, brightCyanColor, brightGreenColor, 
                                 brightYellowColor,   brightRedColor,  yellowColor,   redColor        ];
-
-
 */
 
 Map<String, String> pubkeyColor = { '0': magentaColor, '1': brightMagentaColor,
@@ -266,7 +258,6 @@ Map<String, String> pubkeyColor = { '0': magentaColor, '1': brightMagentaColor,
                                     'e': redColor,        'f':  redColor 
                                    };
 
-
 String getNameColor( String pubkey) {
   if( pubkey.length == 0)
     return brightMagentaColor;
@@ -274,7 +265,6 @@ String getNameColor( String pubkey) {
   String firstChar = pubkey.substring(0, 1).toLowerCase();
   return pubkeyColor[firstChar]??brightMagentaColor;
 }
-
 
 // By default the threads that were started in last one day are shown
 // this can be changed with 'days' command line argument

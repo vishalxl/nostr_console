@@ -1353,7 +1353,6 @@ String getDepthSpaces(int d) {
   return str;
 }
 
-
 // make a paragraph of s that starts at numSpaces ( from screen left), and does not extend beyond gTextWidth+gNumLeftMarginSpaces. break it, or add 
 // a newline if it goes beyond gTextWidth + gNumLeftMarginSpaces
 String makeParagraphAtDepth(String s, int depthInSpaces) {
@@ -1370,8 +1369,6 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
 
     String line = listCulledLine[0];
     int lenReturned = listCulledLine[1] as int;
-
-    //print("In makeParagraphAtDepth: line len = ${line.length}  lenReturned = $lenReturned");
 
     if( line.length == 0 || lenReturned == 0) break;
 

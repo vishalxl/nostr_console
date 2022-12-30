@@ -19,7 +19,6 @@ String getPostKindFrom(enumRoomType eType) {
   case enumRoomType.RoomTTag:
     return "1";
   }
-
 }
 
 Set<String>? getTagsFromContent(String content) {
@@ -204,11 +203,8 @@ String addEscapeChars(String str) {
 }
 
 String unEscapeChars(String str) {
-  //print("in unEscape: |$str|");
   String temp = str.replaceAll("\"", "\\\"");
-  //temp = temp.replaceAll("\\\\", "\\");
   temp = temp.replaceAll("\n", "\\n");
-  //print("returning |$temp|\n");
   return temp;
 }
 
@@ -261,27 +257,21 @@ List<int> qrModules     = [21,  25,  29,   33,  37,   41,   45,   49,   53,   57
 // return type and module as entries in a list
 List<int>? getTypeAndModule(String str) {
   if( qrMaxDataBits.length != qrModules.length) {
-    //print("ret null 1");
     return null;
   }
    
   // 5 for padding which it seems to need, otherwise it gives error like 'QrInputTooLongException: Input too long. 2212 > 2192' for a str which is exactly 2192
   int strLen = str.length + 5; 
   for( int i = 0; i < qrModules.length; i++) {
-    //print("checking $strLen, ${strLen * 8} and ${qrMaxDataBits[i]}");
     if( strLen * 8 <= qrMaxDataBits[i]) {
       return [i+1, qrModules[i]];
     } 
   }
 
-  //print("ret null 2 strLen = $strLen");
   return null;
 }
 
 bool sanityChecked(String lnInvoice) {
-
-  //for( int i = 0 ; i < lnInvoice.length; i++) {
-  //}
 
   if( lnInvoice.length < gMinLnInvoiceLength)
     return false;
@@ -308,19 +298,14 @@ String expandLNInvoices(String content) {
       continue;
     }
 
-    //print(lnInvoice);
     String qrStr = "";
-    //print("\nqr code len: ${lnInvoice.length}");
   
     List<int>? typeAndModule = getTypeAndModule(lnInvoice);
     if( typeAndModule == null) {
       continue;
     }
 
-    //print("\nqr code len: ${lnInvoice.length}"); print(typeAndModule);  print("--");
     qrStr = getPubkeyAsQrString(lnInvoice, typeAndModule[0], typeAndModule[1], "");
-    //print(lnInvoice); print(qrStr);
-
     content = content.substring(0, match.start) + ":-\n\n" + qrStr + "\n\n" + content.substring(match.end);
   }
 
@@ -338,7 +323,6 @@ String getPubkeyAsQrString(String str, [int typeNumber = 4, moduleCount = 33, St
   final qrImage = QrImage(qrCode);
 
   assert( qrImage.moduleCount == moduleCount);
-  //print("qrimage modulecount =  ${qrImage.moduleCount}");
   var x = 0;
   for (x = 0; x < qrImage.moduleCount -1 ; x += 2) {
     output += leftPadding;
@@ -435,7 +419,6 @@ String getCommaSeparatedInts(Set<int>? kind) {
 }
 
 String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinceWhen) {
-  //print("in getkindrequest: kind = $kind");
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since":${sinceWhen.toString()}';
@@ -446,7 +429,6 @@ String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinc
   String strKind = getCommaSeparatedInts(kind.toSet());
 
   String strRequest = strSubscription1 + strKind + strSubscription2;
-  //print("returning $strRequest");
   return strRequest;
 }
 
@@ -470,7 +452,6 @@ String getUserRequest(String subscriptionId, String publicKey, int numUserEvents
   var    strSubscription1  = '["REQ","$subscriptionId",{ "authors": ["';
   var    strSubscription2  ='"],$strKindSection"limit": $numUserEvents $strTime  } ]';
   String request = strSubscription1 + publicKey.toLowerCase() + strSubscription2;
-  //print("In getUserRequest: $request");
   return request;
 }
 
@@ -497,7 +478,6 @@ String getIdAndMentionRequest(String subscriptionId, Set<String> ids, int numUse
   var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": [';
   var    strSubscription2  ='], "limit": $numUserEvents $idStrTime  } ]';
   String req = '["REQ","$subscriptionId",{ "$tagToGet": [' + getCommaSeparatedQuotedStrs(ids) + '], "limit": $numUserEvents $mentionStrTime},{"$idString":[' + getCommaSeparatedQuotedStrs(ids) + ']$idStrTime}]';
-  //print("Created id and mention request: $req");
   return req;
 }
 
@@ -520,7 +500,6 @@ String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int nu
   String s = "";
   s = getCommaSeparatedQuotedStrs(publicKeys);
   String request = strSubscription1 + s + strSubscription2;
-  //print("In getMultiUserRequest kind = $kind strKindSection = $strKindSection:  request = $request");
   return request;
 }
 

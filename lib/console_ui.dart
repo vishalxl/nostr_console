@@ -265,7 +265,6 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
         String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$content","sig":"$sig"}]';
         sendRequest( gListRelayUrls1, toSendMessage);
         print("sent event delete request with id = $id");
-        //print(toSendMessage);
       } else {
         print("${gWarningColor}The given id was not found and/or is not a valid id, or is not your event. Not deleted.$gColorEndMarker"); 
       }

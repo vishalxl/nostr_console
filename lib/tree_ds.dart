@@ -28,37 +28,6 @@ bool selectorTrees_selfPosts(Tree t) {
   return false;
 }
 
-/*
-// returns true of the user has received a like or response to this post
-bool userHasNotification(String pubkey, Event e) {
-  if( e.eventData.pubkey == pubkey && gReactions.containsKey(e.eventData.id) ) {
-    List<List<String>>? temp = gReactions[e.eventData.id];
-    if( temp != null) {
-      if( temp.length > 0) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-// only show in which user is involved
-bool selectorTrees_userNotifications(Tree t) {
-
-  if( userHasNotification(userPublicKey, t.event)) {
-    return true;
-  }
-
-  for( Tree child in t.children) {
-    if( selectorTrees_userNotifications(child)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-*/
-
 // returns true of user has made this comment, or liked it 
 bool userInvolved(String pubkey, Event e) {
 
@@ -95,7 +64,6 @@ bool selectorTrees_userRepliesLikes(Tree t) {
   if( userInvolved(userPublicKey, t.event)) {
     usersEvent = true;
   }
-
   
   for( Tree child in t.children) {
     if( selectorTrees_userRepliesLikes(child)) {
@@ -327,7 +295,6 @@ class Channel extends ScrollableMessages {
   String       picture;
   int          lastUpdated; // used for encryptedChannels
   
-
   Set<String> participants; // pubkey of all participants - only for encrypted channels
   String      creatorPubkey;      // creator of the channel, if event is known
 
@@ -417,7 +384,6 @@ class Tree {
   void setStore(Store s) {
     store = s;
   }
-
   
   /***********************************************************************************************************************************/
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
@@ -589,7 +555,6 @@ class Tree {
     return false;
   } 
 
-
   // returns true if the tree (or its children, depending on flag) has a post or like by user; and notification flags are set for such events
   bool treeSelectorUserPostAndLike(Set<String> pubkeys, { bool enableNotifications = true, bool checkChildrenToo = true}) {
     bool hasReacted = false;
@@ -720,7 +685,6 @@ class Tree {
 
   // clears all notifications; returns true always
   int treeSelector_clearNotifications() {
-
     int count = 0;
 
     if( event.eventData.isNotification) {
@@ -731,10 +695,7 @@ class Tree {
     if( event.eventData.newLikes.length > 0) {
       event.eventData.newLikes = {};
       count = 1;
-        
     }
-
-
 
     for( int i = 0; i < children.length; i++ ) {
       count += children[i].treeSelector_clearNotifications();
@@ -742,7 +703,6 @@ class Tree {
 
     return count;
   } // end treeSelector_clearNotifications()
-
 
   // counts all valid events in the tree: ignores the dummy nodes that are added for events which aren't yet known
   int count() {
@@ -900,7 +860,6 @@ class Store {
     }
   }
 
-
   // events with tag 'location' are added to their own public channel depending on value of tag. 
   static void addLocationTagEventInChannel(EventData eventData, List<Channel> rooms, Map<String, Tree> tempChildEventsMap) {
 
@@ -1020,14 +979,11 @@ class Store {
           channel.participants = participants;
           channel.chatRoomName = roomName;
           channel.about = roomAbout;
-
           channel.lastUpdated = event14x.eventData.createdAt;
         }
-
         break;
 
       case 141:
-      
         Set<String> participants = {};
         event14x.eventData.pTags.forEach((element) { participants.add(element);});
         
@@ -1068,7 +1024,6 @@ class Store {
         break;
 
       case 142:
-        //if( gSpecificDebug > 0 && eId == gCheckEventId) printWarning("Got ${eId}");
         if( gSpecificDebug > 0) print("got kind 142 message. total number of encrypted channels: ${encryptedChannels.length}. event e tags ${event14x.eventData.eTags}");
         String channelId = event14x.eventData.getChannelIdForKind4x();
 
@@ -1102,7 +1057,6 @@ class Store {
 
       return 1;   
   }
-
 
   static int handleDirectMessage( List<DirectMessageRoom> directRooms, Map<String, Tree> tempChildEventsMap, Event ce) {
       String eId = ce.eventData.id;
@@ -1147,7 +1101,6 @@ class Store {
             directRooms.add( newDirectRoom);
             if( ce.eventData.id == gCheckEventId && gDebug >= 0) print("Adding new message ${ce.eventData.id} to NEW direct room $directRoomId.  sender pubkey = ${ce.eventData.pubkey}.");
           }
-          //ce.eventData.translateAndExpandMentions(directRooms, tempChildEventsMap);
           if( ce.eventData.evaluatedContent.length > 0) numMessagesDecrypted++;
         } else {
           if( gDebug > 0) print("Could not get chat room id for event ${ce.eventData.id}  sender pubkey = ${ce.eventData.pubkey}.");
@@ -1230,7 +1183,6 @@ class Store {
             eventIdsToFetch.add(parentId);
             topLevelTrees.add(dummyTopNode);
           }
-          //printWarning("Added unknown event as top : ${parentId}");
         }
         else {
           if( gDebug > 0) {
@@ -1238,7 +1190,6 @@ class Store {
             print("original json of event:\n${tree.event.originalJson}");
           }
         }
-          
       }
     } else {
       // is not a parent, has no parent tag. then make it its own top tree, which will be done later in the calling function
@@ -1294,7 +1245,6 @@ class Store {
         handleChannelEvents(channels, tempChildEventsMap, tree.event);
         // same as above but no return cause these are processed as kind 1 too
       }
-
 
       if( eKind == 4) {
         handleDirectMessage(tempDirectRooms, tempChildEventsMap, tree.event);
@@ -1399,9 +1349,9 @@ class Store {
     // add the event to the main event store thats allChildEventsMap
     newEventsToProcess.forEach((newEvent) { 
       
-      /*if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,2).compareTo("00") == 0) {
+      if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,2).compareTo("000") == 0) {
         return; // spam prevention
-      }*/
+      }
 
       if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
         return;

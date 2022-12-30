@@ -349,7 +349,7 @@ void printProfile(Store node, String profilePubkey) {
   // print LNRUL lud16 if it exists
   if( lud16.length > gMinLud16AddressLength) {
     try {
-      String lud16LNString = "lightning:" + lud16;
+      String lud16LNString = "" + lud16;
       List<int>? typesAndModule = getTypeAndModule(lud16LNString);
       if( typesAndModule != null) {
         print("Printing lud16 address as QR:\n\n");

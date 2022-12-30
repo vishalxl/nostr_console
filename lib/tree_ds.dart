@@ -594,6 +594,30 @@ class Tree {
     return false;
   } // end treeSelectorUserPostAndLike()
 
+  // returns true if the tree (or its children, depending on flag) has a post or like by user; and notification flags are set for such events
+  bool treeSelectorDMtoFromUser(Set<String> pubkeys, { bool enableNotifications = true, bool checkChildrenToo = true}) {
+
+    if( event.eventData.kind != 4) {
+      return false;
+    }
+
+    // if event is by user(s)
+    if( pubkeys.contains(event.eventData.pubkey)) {
+      if( enableNotifications)
+        event.eventData.isNotification = true;
+      return true;
+    }
+
+    // if its a DM to the user
+    for(String pTag in event.eventData.pTags) {
+      if( pubkeys.contains(pTag)) {
+        return true;
+      }
+    }
+
+    return false;
+  } // end treeSelectorDMtoFromUser()
+
   // returns true if the given words exists in it or its children
   bool treeSelectorHasWords(String word) {
     if( event.eventData.content.length > 2000) { // ignore if content is too large, takes lot of time
@@ -1349,7 +1373,7 @@ class Store {
     // add the event to the main event store thats allChildEventsMap
     newEventsToProcess.forEach((newEvent) { 
       
-      if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,2).compareTo("000") == 0) {
+      if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,3).compareTo("000") == 0) {
         return; // spam prevention
       }
 
@@ -2050,6 +2074,7 @@ class Store {
 
     if(   tree.treeSelectorUserPostAndLike(gFollowList) 
        || tree.treeSelectorUserPostAndLike({userPublicKey})
+       || tree.treeSelectorDMtoFromUser({userPublicKey})
        || tree.treeSelectorUserReplies(gFollowList)) {
       return true;
     }

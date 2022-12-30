@@ -113,7 +113,7 @@ class EventData {
   int                kind;
   String             content;
   List<List<String>>       eTags;// e tags
-  List<String>       pTags;// list of p tags for kind:1
+  List<String>       pTags;// list of p tags 
   List<List<String>> tags;
   bool               isNotification; // whether its to be highlighted using highlight color
   String             evaluatedContent; // content which has mentions expanded, and which has been translated

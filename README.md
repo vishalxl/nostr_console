@@ -49,6 +49,15 @@ Then run using
 docker run -it nostr_console start
 ```
 
+## Prebuilt Docker Images
+
+Prebuilt docker image from the main branch of this repository can be found [here](https://github.com/vishalxl/nostr_console/pkgs/container/nostr_console). 
+
+`docker pull ghcr.io/vishalxl/nostr_console:main`
+
+and then 
+
+`docker run -it ghcr.io/vishalxl/nostr_console:main`
 
 
 

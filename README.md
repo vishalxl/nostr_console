@@ -33,6 +33,7 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 # other longer term todo
 * [ ] parallel connections to relays in different isolate 
 * [ ] build appimage for linux use
+* [ ] have spam rules file, which user can add and block spam
 
 
 # Running Nostr Console using Docker

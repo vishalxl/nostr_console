@@ -510,6 +510,21 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
   }
 }
 
+bool confirmFirstContact() {
+  String s = getStringFromUser(
+    """\nIt appears your contact list is empty. 
+If you are a new user, you should proceed, but if you already 
+had added people in past, then that contact list would be overwritten. 
+         
+Do you want to proceed. Press y/Y or n/N: """, "n");
+
+  if( s == 'y' || s == 'Y') {
+    return true;
+  }
+
+  return false;
+}
+
 void printPubkeys(Set<String> pubkey) {
   print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}   ${myPadRight("Nip05", 30)}");
   pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x),  20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}"));
@@ -1479,21 +1494,23 @@ Future<void> socialMenuUi(Store node) async {
                   }
                 } else {
                     // TODO fix the send event functions by streamlining them
-                    print('Sending first contact event');
-                    
-                    String newId = "", newPubkey = userPublicKey,  newContent = "";
-                    int newKind = 3;
-                    List<List<String>> newEtags = [];
-                    List<String> newPtags = [pk];
-                    List<List<String>> newTags = [[]];
-                    Set<String> newNewLikes = {};
-                    int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
-                    List<Contact> newContactList = [ Contact(pk, defaultServerUrl) ];
 
-                    EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
-                    Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
-                    getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
-                    sendEvent(node, newEvent);
+                    if(confirmFirstContact()) {
+                      print('Sending first contact event');
+                      String newId = "", newPubkey = userPublicKey,  newContent = "";
+                      int newKind = 3;
+                      List<List<String>> newEtags = [];
+                      List<String> newPtags = [pk];
+                      List<List<String>> newTags = [[]];
+                      Set<String> newNewLikes = {};
+                      int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
+                      List<Contact> newContactList = [ Contact(pk, defaultServerUrl) ];
+
+                      EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
+                      Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
+                      getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                      sendEvent(node, newEvent);
+                    }
                 }
               }
             }

@@ -701,7 +701,7 @@ class EventData {
     int n = gEventLenPrinted; // is 6 
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);
 
-    String name = getAuthorName(pubkey);    
+    String name = getAuthorName(pubkey, maxDisplayLen: gNameLengthInPost);    
     String strDate = getPrintableDate(createdAt);
     String tempEvaluatedContent = evaluatedContent;
     String tempContent = content;
@@ -817,13 +817,12 @@ class EventData {
       //len = contentToPrint.length;
     }
 
-
     contentToPrint = contentToPrint.replaceAll("\n", " ");
     contentToPrint = contentToPrint.replaceAll("\r", " ");
     contentToPrint = contentToPrint.replaceAll("\t", "  ");
     contentToPrint = contentToPrint.padRight(len).substring(0, len);
     //contentToPrint = contentToPrint.padRight(len);
-    String strToPrint = '$contentToPrint   - ${getAuthorName(pubkey).padLeft(12)}';
+    String strToPrint = '$contentToPrint   - ${getAuthorName(pubkey, maxDisplayLen: gNameLengthInPost).padLeft(12)}';
 
     String paddedStrToPrint = strToPrint;
     
@@ -852,7 +851,7 @@ class EventData {
     }
 
     String strToPrint = "";
-    String name = getAuthorName(pubkey);    
+    String name = getAuthorName(pubkey, maxDisplayLen: gNameLengthInPost);    
     String strDate = getPrintableDate(createdAt);
     String tempEvaluatedContent = evaluatedContent;
     String tempContent = evaluatedContent.isEmpty? content: evaluatedContent;
@@ -1282,7 +1281,7 @@ String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkey
       name = name + gValidCheckMark;
     }
   } else {
-    // make this tick a specil character
+    // remove this tick from other names
     name = name.replaceAll(gValidCheckMark, "");
 
   }

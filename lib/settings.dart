@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.2-beta-a";
+const String version = "0.3.3-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -11,7 +11,7 @@ int gSpecificDebug = 0;
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = "b9e1824fe65b10f7d06bd5f6dfe1ab3eda876d7243df5878ca0b9686d80c0840f"; 
+String gCheckEventId = "xb9e1824fe65b10f7d06bd5f6dfe1ab3eda876d7243df5878ca0b9686d80c0840f"; 
 
 
 int gMaxEventLenthAccepted = 80000; // max event size. events larger than this are rejected. 

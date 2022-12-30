@@ -334,10 +334,12 @@ void printProfile(Store node, String profilePubkey) {
   // print LNRUL lud06 if it exists
   if( lud06.length > gMinLud06AddressLength) {
     try {
-      List<int>? typesAndModule = getTypeAndModule(lud06);
+      String lud06LNString = "lightning:" + lud06;
+
+      List<int>? typesAndModule = getTypeAndModule(lud06LNString);
       if( typesAndModule != null) {
         print("Printing lud06 LNURL as QR:\n\n");
-        print(getPubkeyAsQrString("lightning:" + lud06, typesAndModule[0], typesAndModule[1]));
+        print(getPubkeyAsQrString(lud06LNString, typesAndModule[0], typesAndModule[1]));
       }
     } catch(e) {
       print("Could not generate qr code for the lnurl given.  \n");
@@ -345,12 +347,13 @@ void printProfile(Store node, String profilePubkey) {
   }
 
   // print LNRUL lud16 if it exists
-  if( lud16.length > gMinLud06AddressLength) {
+  if( lud16.length > gMinLud16AddressLength) {
     try {
-      List<int>? typesAndModule = getTypeAndModule(lud16);
+      String lud16LNString = "lightning:" + lud16;
+      List<int>? typesAndModule = getTypeAndModule(lud16LNString);
       if( typesAndModule != null) {
         print("Printing lud16 address as QR:\n\n");
-        print(getPubkeyAsQrString("lightning:" + lud16, typesAndModule[0], typesAndModule[1]));
+        print(getPubkeyAsQrString(lud16LNString, typesAndModule[0], typesAndModule[1]));
       }
     } catch(e) {
       print("Could not generate qr code for the given address.\n");

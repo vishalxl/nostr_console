@@ -1630,7 +1630,7 @@ class Store {
         ret[0] += temp[0]; 
         ret[1] += temp[1]; 
         ret[2] += temp[2];
-        print("\n");
+        //print("\n");
       }
     });
 

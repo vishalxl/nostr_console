@@ -32,6 +32,7 @@ const String locationArg = "location";
 const String lnQrFlag    = "lnqr";
 
 Future<void> main(List<String> arguments) async {
+
       
     final parser = ArgParser()..addOption(requestArg) ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")

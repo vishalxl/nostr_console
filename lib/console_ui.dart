@@ -30,6 +30,7 @@ Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = tru
     List<int> numPrinted1 = [0,0,0];
     if( printNotifications) {
       // print all the new trees, the ones that we want to print
+      print("");
       numPrinted1 = node.printTreeNotifications(newEventIds);
 
       // need to clear because only top 20 events in each thread are printed or cleared with above
@@ -479,6 +480,7 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
     stdout.write("Type option number: ");
     String? userOptionInput = stdin.readLineSync();
     String userOption = userOptionInput??"";
+
     userOption = userOption.trim();
     if( userOption == 'x') {
       userOption = menuOptions.length.toString();
@@ -1596,6 +1598,20 @@ void directRoomNotifications(Store node, [int x = 0, int y = 0]) {
 
 Future<void> mainMenuUi(Store node) async {
    
+    var n;
+
+    /* TODO
+    ProcessSignal.sigint.watch().listen((signal) {
+      print(" caught ${n} of 3");
+      clearScreen();
+      print("\nExiting. Writing file $gEventsFilename. ");
+      if( gEventsFilename != "") {
+        node.writeEventsToFile(gEventsFilename);
+      }
+      exit(0);
+    }); */
+
+
     clearScreen();
 
     //Show only notifications

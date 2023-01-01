@@ -142,6 +142,18 @@ To get all encrypted messages:
 ./nostr_console_elf64 --prikey=K --request='["REQ","cn",{"limit":20000,"kinds":[104,140,141,142],"since":1663417739}]' # run on linux/bash
 ```
 
+# Troubleshooting
+
+In case program is not sending events:
+
+1. Make sure you are running the latest version. ( versions from 0.2.6 to 0.2.9 were very unstable)
+2. Delete or backup the events file. Specially if its is more than 50 MB or has more than 50k events. 
+3. Right after starting, press 1 or some menu a couple of times to allow some background processing, so that events can be processed. 
+
+In case program is not fetching events:
+1. Give it other or more relays' using --relay argument. 
+2. If event file is more than 50 MB, delete/backup it and start again. 
+
 # Configuring Proxy
 When you are in an network which blocks outgoing HTTPS (e.g. company firewall), but there is a proxy you can set environment variable before running nostr_console.
 Examples below use authentication. Drop username:password if not required.

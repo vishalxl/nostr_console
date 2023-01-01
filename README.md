@@ -174,6 +174,9 @@ Using [setx](https://learn.microsoft.com/en-us/windows-server/administration/win
 
 Use [set](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/set_1) to set an environment variable changes the value used until the end of the current command prompt session, or until you set the variable to a different value.
 
+## Tor proxy
+
+TOR can be used as a HTTP proxy with HTTPTunnelPort instead of just SOCKS5.
 
 # Screenshots
 

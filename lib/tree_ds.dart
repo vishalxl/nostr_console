@@ -812,7 +812,7 @@ class Store {
             }
             
             if( json.containsKey('about')) {
-              roomAbout = json['about'];
+              roomAbout = json['about']??"";
             }
 
             List<String> emptyMessageList = [];

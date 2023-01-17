@@ -148,7 +148,7 @@ In case program is not sending events:
 
 1. Make sure you are running the latest version. ( versions from 0.2.6 to 0.2.9 were very unstable)
 2. Delete or backup the events file. Specially if its is more than 50 MB or has more than 50k events. 
-3. Right after starting, press 1 or some menu a couple of times to allow some background processing, so that events can be processed. 
+3. Right after starting, go to social network menu, and press 1 or such menu a couple of times (to print events) to allow some background processing, so that events can be processed. Once all "notifications" or new events have come in, then try sending your event(s)
 
 In case program is not fetching events:
 1. Give it other or more relays' using --relay argument. 

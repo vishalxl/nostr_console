@@ -12,4 +12,4 @@ channel=test99
 message=""
 message=$message'\n' ; for line in `cowsay hi` ;  do message=$message"${line} \n" ; done
 echo $message
-# { echo -e "3\n1\n${channel}\nHello, this is a random test.\nx\nx\nx" ; cat /dev/stdin; } | ./nostr_console_ubuntu_x64 --prikey=`openssl rand -hex 32` 
+{ echo -e "3\n1\n${channel}\nHello, this is a random test.\nx\nx\nx" ; cat /dev/stdin; } | ./nostr_console --prikey=`openssl rand -hex 32` 

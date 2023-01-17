@@ -1325,7 +1325,7 @@ Future<void> socialMenuUi(Store node) async {
       
       switch(option) {
         case 1:
-          bool selectorTrees_followActionsNoNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey).union(gDefaultFollows), enableNotifications: false);
+          bool selectorTrees_followActionsNoNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey).union(gDefaultFollows).union({userPublicKey}), enableNotifications: false);
           node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActionsNoNotifications);
           await processAnyIncomingEvents(node, true);
           break;

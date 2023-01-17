@@ -380,19 +380,18 @@ Future<void> main(List<String> arguments) async {
         }
 
         // get only limited number of contacts otherwise relays get less responsive
-        int maxContactsFetched = 500;
+        int maxContactsFetched = 700;
         if( contacts.length > maxContactsFetched) {
           int i = 0;
-          contacts.retainWhere((element) => i++ > maxContactsFetched); // retain only first 200, whichever they may be
+          contacts.retainWhere((element) => i++ < maxContactsFetched); // retain only first 200, whichever they may be
         }
 
         getMultiUserEvents(gListRelayUrls2, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
         usersFetched = usersFetched.union(gDefaultFollows).union(contacts).union(pTags);
         
         // get meta events of all users fetched 
-        getMultiUserEvents(gListRelayUrls1, usersFetched, 4 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*2), {0,3});
+        getMultiUserEvents(gListRelayUrls1, usersFetched, 10 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*100), {0,3});
         //print("fetched meta of ${usersFetched.length}");
-
 
 
         void resetRelays() {
@@ -421,12 +420,12 @@ Future<void> main(List<String> arguments) async {
           
             String req = '["REQ","latest_live_all",{"limit":40000,"kinds":[0,1,3,4,5,6,7,40,41,42,104,140,141,142],"since":${getTimeSecondsAgo(gSecsLatestLive).toString()}}]';
             sendRequest(gListRelayUrls1, req);
+            //getMultiUserEvents(gListRelayUrls1, usersFetched, 10 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*100), {0,3});
 
             // Create tree from all events that's have yet been received/accumulated
             Store node = getTree(initialEvents);
             gStore = node;
-            
-            clearEvents();
+           
             mainMenuUi(node);
           });
       });

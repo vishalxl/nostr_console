@@ -1,6 +1,6 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console
-version: 0.3.4-beta
+version: 0.3.5-beta
 homepage: https://github.com/vishalxl/nostr_console   
 
 
@@ -9,6 +9,8 @@ homepage: https://github.com/vishalxl/nostr_console
 # improved highlighted events code in 2->1
 # in 2->1 printed popular accounts with follows
 # difficulty limit set to 32
+# added three new relays and removed some older ones
+# fixed fetching of contact names ( now all are fetched whereas previously they werent)
 
 # 0.3.4
 # improved logic that only new events from follows are shown; this reduces the flood of notifications seen

@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.4-beta";
+const String version = "0.3.5-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -340,7 +340,7 @@ usage: $exename [OPTIONS]
 
   Advanced
       -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible
-                                    by 4 is taken as difficulty. Can't be more than 24 bits, because otherwise it typically 
+                                    by 4 is taken as difficulty. Can't be more than 32 bits, because otherwise it typically 
                                     takes too much time. Minimum and default is 0, which means no difficulty.
       -e, --overwrite               Will over write the file with all the events that were read from file, and all newly
                                     received. Is useful when the file has to be cleared of old unused events. A backup should
@@ -352,22 +352,15 @@ const String helpAndAbout =
 HOW TO USE
 ----------
 
-* When entering a event you want to reply to, you need to enter only the first few letters of the event-id. Lets say the event is 
+Check out the main readme, wiki and discussions on github.com/vishalxl/nostr_console 
 
-                                            +-------+
-                                            |Author : vishalxl  id: 6c1  Time: 07:48 PM Aug 24, 2022
-                                            |Message: example comment or post or reply
-
-  The event id of this event is 6c1.
-
-  When the UI asks for an event id, you can just enter 6c1, and press enter. Then the program will find the most recent event in its memory 
-  with this prefix as its id, and send a reply/like to it. It is possible that some other event has the same 3 letter prefix, and is printed
-  later than your own event, in which case a different event will get a reply/like. But the odds of that happening are very low if the event
-  you are replying to is not too old. 
-  
 
 EXAMPLES
 --------
+
+To 'login' as a user with private key K:
+
+\$ nostr_console.exe  --prikey=K
 
 To get ALL the latest messages for last 3 days (on linux bash which allows backtick execution):
 

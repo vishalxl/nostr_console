@@ -4,11 +4,18 @@ version: 0.3.4-beta
 homepage: https://github.com/vishalxl/nostr_console   
 
 
+# 0.3.5
+# fix for crash in issue #70 
+# improved highlighted events code in 2->1
+# in 2->1 printed popular accounts with follows
+# difficulty limit set to 32
 
 # 0.3.4
 # improved logic that only new events from follows are shown; this reduces the flood of notifications seen
 # longer-named follows were not getting tick mark at end. fixed it, now they get tick marks in posts, channels and in one liners for channels
 # fix lud06/16 qr code printing in profiles
+# ask user y/n to avoid overwriting contact list if no contact list is seen for user
+# saved dm's sent to user
 
 # 0.3.3
 # Linux arm64 build added; docker images pushed to github store; and improving of build process by @AaronDewes 

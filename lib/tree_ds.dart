@@ -576,7 +576,7 @@ class Tree {
 
     if( checkChildrenToo ) {
       for( int i = 0; i < children.length; i++ ) {
-        if( children[i].treeSelectorUserPostAndLike(pubkeys)) {
+        if( children[i].treeSelectorUserPostAndLike(pubkeys, enableNotifications: enableNotifications)) {
           childMatches = true;
         }
       }
@@ -1640,6 +1640,8 @@ class Store {
 // returns list , where first int is total Threads ( or top trees) printed, second is total events printed, and third is notifications printed
   static List<int> printTopPost(Tree topTree, int depth, DateTime newerThan, [int maxToPrint = gMaxEventsInThreadPrinted]) {
     stdout.write(Store.startMarkerStr);
+
+    //if(topTree.event.eventData.isNotification) print('is notification');
 
     List<int> counts = topTree.printTree(depth, newerThan, true, 0, maxToPrint);
     counts[0] += 1; // for this top post 

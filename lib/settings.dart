@@ -55,18 +55,19 @@ const String relayNostrInfo   = 'wss://relay.nostr.info';
 Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 //relayNostrInfo,
                                 //"wss://nostr-2.zebedee.cloud",
-                                "wss://nostr.semisol.dev",
-                                //"wss://nostr.coinos.io",
+                                "wss://nostr.coinos.io",
                                 "wss://nostr-relay.wlvs.space",
-                                "wss://nostr-relay.digitalmob.ro",
-                                "wss://nostr.drss.io",
                                 "wss://nostr.radixrat.com",
                                 "wss://relay.nostr.ch",
 
                                 // added on 17 jan 2023 after testing using test_servers.sh
                                 "wss://nostr.rdfriedl.com",
                                 "wss://nostr-pub.wellorder.net",
-                                "wss://nostrrelay.com"
+
+                                // added on 29 jan 2023
+                                "wss://relay.nostr.scot",
+                                "wss://nos.lol",
+                                "wss://knostr.neutrine.com"
 
                               };
 

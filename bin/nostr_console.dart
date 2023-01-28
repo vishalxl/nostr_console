@@ -386,7 +386,7 @@ Future<void> main(List<String> arguments) async {
           contacts.retainWhere((element) => i++ < maxContactsFetched); // retain only first 200, whichever they may be
         }
 
-        getMultiUserEvents(gListRelayUrls2, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+        getMultiUserEvents(gListRelayUrls1, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
         usersFetched = usersFetched.union(gDefaultFollows).union(contacts).union(pTags);
         
         // get meta events of all users fetched 

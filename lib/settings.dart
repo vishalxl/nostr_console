@@ -52,21 +52,13 @@ int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, num
 String defaultServerUrl       = "wss://relay.snort.social";
 
 Set<String> gListRelayUrls1 = { defaultServerUrl,
-                                //'wss://relay.nostr.info'
-                                "wss://nostr.coinos.io",
-                                "wss://nostr-relay.wlvs.space",
-                                "wss://nostr.radixrat.com",
+                                'wss://relay.nostr.info',
                                 "wss://relay.nostr.ch",
-
-                                // added on 17 jan 2023 after testing using test_servers.sh
-                                "wss://nostr.rdfriedl.com",
-                                "wss://nostr-pub.wellorder.net",
 
                                 // added on 29 jan 2023
                                 "wss://relay.nostr.scot",
                                 "wss://nos.lol",
                                 "wss://knostr.neutrine.com"
-
                               };
 
 Set<String> gListRelayUrls2 = {    

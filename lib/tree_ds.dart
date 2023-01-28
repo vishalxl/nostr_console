@@ -1532,7 +1532,7 @@ class Store {
     });
 
     // get dummy events
-    sendEventsRequest(gListRelayUrls2, dummyEventIds);
+    sendEventsRequest(gListRelayUrls1, dummyEventIds);
 
     int totalTreeSize = 0;
     topPosts.forEach((element) {totalTreeSize += element.count();});

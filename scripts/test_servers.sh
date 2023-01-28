@@ -2,7 +2,7 @@
 
 source ./configfile.cfg
 
-limit=100000
+limit=10000
 numHours=1
 
 echo -e "Requesting all events in last $numHours hours with a limit of $limit by executing the following command for each:"

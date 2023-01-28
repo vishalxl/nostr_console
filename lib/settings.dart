@@ -49,12 +49,10 @@ int gHoursDefaultPrint      = 6; // print latest given hours only
 // global counters of total events read or processed
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
-String defaultServerUrl       = "wss://relay.damus.io";
-const String relayNostrInfo   = 'wss://relay.nostr.info';
+String defaultServerUrl       = "wss://relay.snort.social";
 
 Set<String> gListRelayUrls1 = { defaultServerUrl,
-                                //relayNostrInfo,
-                                //"wss://nostr-2.zebedee.cloud",
+                                //'wss://relay.nostr.info'
                                 "wss://nostr.coinos.io",
                                 "wss://nostr-relay.wlvs.space",
                                 "wss://nostr.radixrat.com",

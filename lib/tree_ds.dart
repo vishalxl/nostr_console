@@ -1168,7 +1168,7 @@ class Store {
           }
 
           if(!dummyParentAlreadyExists) {
-            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "<Parent is not of Kind 1>", [], [], [], [[]], {}), [""], "[json]");
+            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "<Event is not of Kind 1>", [], [], [], [[]], {}), [""], "[json]");
 
             Tree dummyTopNode = Tree.withoutStore(dummy, []);
             dummyTopNode.children.add(tree);   
@@ -1199,8 +1199,7 @@ class Store {
 
           if(!dummyParentAlreadyExists) {
             // kind 1 is needed to enable search etc . the dummy pubkey distinguishes it as a dummy node
-            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
-
+            Event dummy = Event("","",  EventData(parentId,gDummyAccountPubkey, tree.event.eventData.createdAt, 1, "Missing event (not yet found on any relay)", [], [], [], [[]], {}), [""], "[json]");
             Tree dummyTopNode = Tree.withoutStore(dummy, []);
             dummyTopNode.children.add(tree);
             tempWithoutParent.add(tree.event.eventData.id); 
@@ -1459,7 +1458,7 @@ class Store {
                   allChildEventsMap[parentId]?.children.add(newTree);
                 } else {
                   // create top unknown parent and then add it
-                  Event dummy = Event("","",  EventData(parentId, gDummyAccountPubkey, newTree.event.eventData.createdAt, 1, "Event not loaded", [], [], [], [[]], {}), [""], "[json]");
+                  Event dummy = Event("","",  EventData(parentId, gDummyAccountPubkey, newTree.event.eventData.createdAt, 1, "Missing event (not yet found on any relay)", [], [], [], [[]], {}), [""], "[json]");
                   Tree dummyTopNode = Tree.withoutStore(dummy, []);
                   dummyTopNode.children.add(newTree);
                   topPosts.add(dummyTopNode);

@@ -18,10 +18,6 @@ Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 
 void main() {
   
-  test('PrintEmptyEvent', () {
-    //expect(EventData("non","",1,1,"", [], [], [], [[]], {}).toString(), "");
-  });
-
   test('printEventNode', () {
     Store  store     = exampleStore;
     Tree  tree       = exampleTree;
@@ -29,13 +25,9 @@ void main() {
 
     tree.setStore(store);
     treeChild.setStore(store);
-
     tree.children.add(treeChild);
-  
     //store.printStoreTrees(0, DateTime.now().subtract(Duration(days:1)), selectorTrees_all);
   });
-
-  
 
   test('createNodeTree_ordered', () {
     
@@ -46,7 +38,6 @@ void main() {
     Set<Event> listEvents = {exampleEvent1, exampleEvent2, exampleEvent3};
 
     Store node = Store.fromEvents(listEvents);
-
     //node.printStoreTrees(0, DateTime.now().subtract(Duration(days: 1000)), (a) => true);
     //print("=========================");
   });
@@ -165,9 +156,6 @@ String expectedResult =
     expect( res, expectedResult);
   });
 
-
-
-
   test('break_line ', () {
     gTextWidth = 120;
 
@@ -262,10 +250,17 @@ String expectedResult =
 
       expect(3046, node.getNumMessagesInChannel('25e5c82273a271cb1a840d0060391a0bf4965cafeb029d5ab55350b418953fbb'), 
               reason:'verify a public channel has correct number of messages');
-
-
       //node.printStoreTrees(0, DateTime.now().subtract(Duration(days: 105)), (a) => true); 28 dec 2022
 
+  });
+
+  test('utils_fns', () async {
+
+    String content1 = '#bitcoin #chatgpt #u-s-a #u_s_a #1947 #1800';
+    Set<String>? tags = getTagsFromContent(content1);
+    //print(tags);  
+    expect(tags?.length, 6);
+    expect(tags?.contains("bitcoin"), true);
 
       String pubkeyQrCodeResult1 = 
   """   █▀▀▀▀▀█ ██▄▄▀ ▄▄     █ ▄▀ █▀▀▀▀▀█
@@ -326,19 +321,8 @@ String expectedResult =
 
       String lnInvoice1 = "lnbc30n1p3689h4sp54ft7dn46clu4h8lyey2zj2hfvp07e2ekcrmceeq4gxmw9ml2pwuspp5zfup7rmneu47f34qznatwcmkexdkl78ppntms9y8vgj75cyzvh5qdq2f38xy6t5wvxqyjw5qcqpjrzjqvhxqvs0ulx0mf5gp6x2vw047capck4pxqnsjv0gg8a4zaegej6gxzadnsqqj3cqqqqqqqqqqqqqqqqqyg9qyysgqv5cg4cly6sr2q4n0vkfcgmgxd5egdrztt8pn4003thqzr8sn5e8swdxw4g75jr233hyr2p655xgwh98jh3pkn3kranjkg0ysrwze44qpqmeq35";
       expect (expandLNInvoices(lnInvoice1),lnQrCodeResult1,  reason: "testing ln qr code function");
-  });
 
-
-  test('utils_fns', () async {
-
-    String content1 = '#bitcoin #chatgpt #u-s-a #u_s_a #1947 #1800';
-    Set<String>? tags = getTagsFromContent(content1);
-    //print(tags);  
-    expect(tags?.length, 6);
-    expect(tags?.contains("bitcoin"), true);
   });
   return ;
 } // end main
-
-
 

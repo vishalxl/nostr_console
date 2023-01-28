@@ -593,6 +593,8 @@ Future<void> otherOptionsMenuUi(Store node) async {
         print("Your current lud16: ${gKindONames[userPublicKey]?.lud16}");
 
 
+        // TODO use robohash in future: https://robohash.org/npub19yzp0sntplrcl6v85kxqahtkqzyh03s9g0w6suljfzmqm0uf5ywqwpjkda
+
         print("\n\nEnter new data. Leave blank to use the old value. Some clients use name, others use display name; you can enter same value for both:\n");
         String userName =     getStringFromUser("Enter your new name                  : ", getAuthorName(userPublicKey));
         String userAbout =    getStringFromUser("Enter new 'about me' for yourself    : ", gKindONames[userPublicKey]?.about??"");

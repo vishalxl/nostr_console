@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.5-beta";
+const String version = "0.3.6-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -49,10 +49,9 @@ int gHoursDefaultPrint      = 6; // print latest given hours only
 // global counters of total events read or processed
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
-String defaultServerUrl       = "wss://relay.damus.io";
+String defaultServerUrl       = "wss://relay.snort.social";
 
 Set<String> gListRelayUrls1 = { defaultServerUrl,
-                                "wss://relay.snort.social",
                                 "wss://relay.nostr.info",
                                 "wss://relay.nostr.ch",
 

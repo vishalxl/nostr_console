@@ -63,7 +63,7 @@ Set<String> gListRelayUrls1 = { defaultServerUrl,
 
 Set<String> gListRelayUrls2 = {    
                              // "wss://nostr.oxtr.dev",
-                              "wss://nostr.bitcoiner.social",
+                              "wss://offchain.pub",
                                  "wss://nostr.zerofeerouting.com",
                                  "wss://nostr-relay.trustbtc.org",
                                  "wss://relay.stoner.com"

@@ -53,7 +53,6 @@ String defaultServerUrl       = "wss://relay.snort.social";
 
 Set<String> gListRelayUrls1 = { defaultServerUrl,
                                 "wss://relay.nostr.info",
-                                "wss://relay.nostr.ch",
 
                                 // added on 29 jan 2023
                                 "wss://relay.nostr.scot",

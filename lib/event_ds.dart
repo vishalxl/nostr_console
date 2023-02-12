@@ -287,7 +287,7 @@ class EventData {
         String server = defaultServerUrl;
         if( tag.length >=3 ) {
           server = tag[2].toString();
-          if( server == 'wss://nostr.rocks' || server == "wss://nostr.bitcoiner.social") {
+          if( server == 'wss://nostr.rocks' || server == "wss://offchain.pub") {
             server = defaultServerUrl;
           }
         }

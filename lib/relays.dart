@@ -1,9 +1,11 @@
 import 'dart:io';
+
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
 import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/src/exception.dart';
 
 class Relay { 
   String             url;
@@ -145,7 +147,7 @@ class Relays {
   /*
    * Send the given string to the given relay. Is used to send both requests, and to send evnets. 
    */
-  void sendRequest(String relayUrl, String request) {
+  void sendRequest(String relayUrl, String request) async {
     if(relayUrl == "" ) {
       if( gDebug != 0) print ("Invalid or empty relay given");
       return;
@@ -164,6 +166,15 @@ class Relays {
 
       try {
           IOWebSocketChannel fws2 = IOWebSocketChannel.connect(relayUrl);
+
+        try {
+          await fws2.ready;
+        } catch (e) {
+          // handle exception here
+          //print("Error: Failed to connect to relay $relayUrl . Got exception = |${e.toString()}|");
+          return;
+        }          
+          
           Relay newRelay = Relay(relayUrl, fws2, {}, 0, 1);
           relays[relayUrl] = newRelay;
           fws = fws2;
@@ -200,7 +211,11 @@ class Relays {
       } on WebSocketException {
         print('WebSocketException exception for relay $relayUrl');
         return;
-      } on Exception catch(ex) {
+      } on WebSocketChannelException {
+        print('WebSocketChannelException exception for relay $relayUrl');
+        return; // is presently not used/called
+      }
+      on Exception catch(ex) {
         printWarning("Invalid event\n");
       }
       

@@ -142,6 +142,12 @@ To get all encrypted messages:
 ./nostr_console_elf64 --prikey=K --request='["REQ","cn",{"limit":20000,"kinds":[104,140,141,142],"since":1663417739}]' # run on linux/bash
 ```
 
+To run unit tests using Dart, in main/top level directory, run:
+
+```
+dart run test  -r expanded
+```
+
 # Troubleshooting
 
 In case program is not sending events:

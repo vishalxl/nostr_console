@@ -3,6 +3,7 @@ import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
 import 'package:test/test.dart';
 import 'package:nostr_console/tree_ds.dart';
+import 'package:nostr_console/relays.dart';
 
 
 EventData exampleEdata = EventData("id1", "pubkey",  1111111, 1, "content", [], [], [], [[]], {});
@@ -16,8 +17,18 @@ Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 
 //bool skipTest = true;
 
+ Relays relays = Relays({}, {}, {});
+
 void main() {
-  
+
+  test('invalid_relay', () async {
+
+      String req = '["REQ","latest_live_all",{"limit":40000,"kinds":[0,1,3,4,5,6,7,40,41,42,104,140,141,142],"since":${getTimeSecondsAgo(gSecsLatestLive).toString()}}]';
+      sendRequest({"wss://invalidurl1234123134.com"}, req);
+
+  });
+
+
   test('printEventNode', () {
     Store  store     = exampleStore;
     Tree  tree       = exampleTree;
@@ -323,6 +334,10 @@ String expectedResult =
       expect (expandLNInvoices(lnInvoice1),lnQrCodeResult1,  reason: "testing ln qr code function");
 
   });
+
+
+
   return ;
+
 } // end main
 

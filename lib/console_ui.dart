@@ -739,10 +739,11 @@ Future<void> channelMenuUI(Store node) async {
                       When inside a channel, the first column is the id of the given post. It can be used when you want to reply to a specific post.
                       To reply to a specific post, type '/reply <first few letters of id of post to reply to> <your message>. 
                       When in a channel, press 'x' to exit. """;
-    int option = showMenu([ 'Enter a public channel',          // 1
-                            'Show all public channels',        // 2
-                            'Create channel',                  // 3
-                            'E(x)it to main menu'],           // 4
+    int option = showMenu([ 'Enter a channel',           // 1
+                            'Show all public channels',  // 2
+                            'Show all tag channels',     // 3
+                            'Create a public channel',   // 4
+                            'E(x)it to main menu'],      // 5
                           "Public Channels Menu", // name of menu
                           menuInfo);
     switch(option) {
@@ -831,11 +832,18 @@ Future<void> channelMenuUI(Store node) async {
       case 2:
         clearScreen();
         printInColor("                                 All Public Channels ", gCommentColor);
-        node.printChannelsOverview(node.channels, node.channels.length, selectorShowAllRooms, node.allChildEventsMap, null);
+        node.printChannelsOverview(node.channels, node.channels.length, selectorShowOnlyPublicChannel, node.allChildEventsMap, null);
         justShowedChannels = true;
         break;
 
       case 3:
+        clearScreen();
+        printInColor("                                 All Tag Channels", gCommentColor);
+        node.printChannelsOverview(node.channels, node.channels.length, selectorShowOnlyTagChannel, node.allChildEventsMap, null);
+        justShowedChannels = true;
+        break;
+
+      case 4:
         clearScreen();
         if( userPrivateKey == "") {
             printWarning("Since no user private key has been supplied, you cannot create channels or send any event. Invoke with --prikey \n");
@@ -849,7 +857,7 @@ Future<void> channelMenuUI(Store node) async {
         // TODO put user in the newly created channel
         break;
 
-      case 4:
+      case 5:
         continueChatMenu = false;
         break;
 
@@ -1340,7 +1348,9 @@ Future<void> socialMenuUi(Store node) async {
           }
           stdout.write("Type comment to post/reply (type '+' to send a like): ");
           String? $contentVar = stdin.readLineSync();
+          print('|got string|-');
           String content = $contentVar??"";
+          print("|content| = " + content );
           if( content == "") {
             clearScreen();  
             break;
@@ -1348,7 +1358,9 @@ Future<void> socialMenuUi(Store node) async {
 
           stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
           String? $replyToVar = stdin.readLineSync();
+          print("after readlinesync");
           String replyToId = $replyToVar??"";
+          print("got id");
           if( replyToId == "x") {
             print("Cancelling post/reply.");
             break;
@@ -1530,6 +1542,7 @@ Future<void> socialMenuUi(Store node) async {
           stdout.write("Printing profile of a user; type username or first few letters of user's public key( or full public key): ");
           String? $tempUserName = stdin.readLineSync();
           String userName = $tempUserName??"";
+          stdout.write( "user name: " + userName);
           if( userName != "") {
             Set<String> pubkey = getPublicKeyFromName(userName); 
 

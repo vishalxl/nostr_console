@@ -180,7 +180,7 @@ class EventData {
 
 
       // but if reply/root tags don't work, then try to look for parent tag with the deprecated logic from NIP-10
-      if( gDebug > 0) log.info("using deprecated logic of nip10 for event id : $id");
+      //if( gDebug > 0) log.info("using deprecated logic of nip10 for event id : $id");
       for( int i = tags.length - 1; i >= 0; i--) {
         if( tags[i][0] == "e") {
           String eventId = tags[i][1];

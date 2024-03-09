@@ -50,18 +50,14 @@ int gHoursDefaultPrint      = 6; // print latest given hours only
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
 String defaultServerUrl       = "wss://relay.snort.social";
-
 Set<String> gListRelayUrls1 = { defaultServerUrl,
-                                "wss://relay.nostr.info",
-
-                                // added on 29 jan 2023
-                                "wss://relay.nostr.scot",
-                                "wss://nos.lol",
-                                "wss://knostr.neutrine.com"
+                                // edited on 4 march 2024 
+                                "wss://relay.damus.io",
+                                "wss://nostr.mom",
+                                "wss://nostr.nodeofsven.com"                                
                               };
 
 Set<String> gListRelayUrls2 = {    
-                             // "wss://nostr.oxtr.dev",
                               "wss://offchain.pub",
                                  "wss://nostr.zerofeerouting.com",
                                  "wss://nostr-relay.trustbtc.org",

@@ -124,6 +124,25 @@ bool selectorShowAllRooms(ScrollableMessages room) {
   return true;
 }
 
+bool selectorShowOnlyPublicChannel(ScrollableMessages room) {
+  if( room.roomType == enumRoomType.kind40) {
+    return true;
+  }
+  else { 
+    return false; 
+  }
+}
+
+bool selectorShowOnlyTagChannel(ScrollableMessages room) {
+  if( room.roomType == enumRoomType.RoomTTag) {
+    return true;
+  }
+  else { 
+    return false; 
+  }
+}
+
+
 bool showAllRooms (ScrollableMessages room) => selectorShowAllRooms(room);
 
 int getLatestMessageTime(ScrollableMessages channel) {
@@ -181,12 +200,12 @@ int scrollableCompareTo(ScrollableMessages a, ScrollableMessages b) {
   int thisLatest =  getLatestMessageTime(a);
 
   if( thisLatest < otherLatest) {
-    return 1;
+    return -1;
   } else {
     if( thisLatest == otherLatest) {
       return 0;
     } else {
-      return -1;
+      return 1;
     }
   }
 }
@@ -554,6 +573,20 @@ class Tree {
 
     return false;
   } 
+
+  // returns true if the tree mentions ( or is a reply to) any of the pubkeys sent
+  // only used by writefile
+  bool treeSelectorUserMentioned(Set<String> pubkeys) {
+    for( int i = 0; i < event.eventData.pTags.length; i++ ) {
+      if(  pubkeys.contains( event.eventData.pTags[i][0] )) {
+        return true;
+      }
+    }
+
+    return false;
+  } 
+
+
 
   // returns true if the tree (or its children, depending on flag) has a post or like by user; and notification flags are set for such events
   bool treeSelectorUserPostAndLike(Set<String> pubkeys, { bool enableNotifications = true, bool checkChildrenToo = true}) {
@@ -1756,19 +1789,37 @@ class Store {
 
   /**
    * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom) and for 14x channels both; channelsToPrint is different for both
+   * 
+   * @param numRoomsOverview This many number of rooms should be printed. 
    */
   int printChannelsOverview(List<Channel> channelsToPrint, int numRoomsOverview, fRoomSelector selector, var tempChildEventsMap , Set<String>? secretMessageIds) {
 
     channelsToPrint.sort(scrollableCompareTo);
     int numChannelsActuallyPrinted = 0;
 
-    if( channelsToPrint.length < numRoomsOverview) {
-      numRoomsOverview = channelsToPrint.length;
+
+    int startRoomIndex = 0, endRoomIndex = 0;
+
+
+    if( numRoomsOverview == channelsToPrint.length) {
+      startRoomIndex = 0;
+      endRoomIndex = channelsToPrint.length;
+    } else {
+      if( numRoomsOverview < channelsToPrint.length ) {
+        startRoomIndex = channelsToPrint.length - numRoomsOverview;
+        endRoomIndex = channelsToPrint.length;
+      } else {
+        startRoomIndex = 0;
+        endRoomIndex = channelsToPrint.length;
+      }
     }
+
 
     print("\n\n");
     printUnderlined("Channel Name                       id                Num of Messages     Latest Message                       ");
-    for(int j = 0; j < numRoomsOverview; j++) {
+    for(int j = startRoomIndex; j < endRoomIndex; j++) {
+
+      //stdout.write("channel type: " + channelsToPrint[j].roomType.toString());
 
       if( channelsToPrint[j].participants.length > 0 &&  !channelsToPrint[j].participants.contains(userPublicKey)) {
         continue;
@@ -2088,8 +2139,10 @@ class Store {
   bool isRelevantForFileSave(Tree tree) {
     if(   tree.treeSelectorUserPostAndLike(gFollowList.union(gDefaultFollows).union({userPublicKey}), enableNotifications: false) 
        || tree.treeSelectorDMtoFromUser({userPublicKey}, enableNotifications: false)
-       || tree.treeSelectorUserReplies(gFollowList)) {
-      return true;
+       || tree.treeSelectorUserReplies(gFollowList)
+       || tree.treeSelectorUserMentioned({userPublicKey}) ) {
+      
+          return true;
     }
 
     return false;

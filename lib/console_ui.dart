@@ -738,6 +738,7 @@ Future<void> channelMenuUI(Store node) async {
     String menuInfo = """Public channel howto: To enter a channel, enter first few letters of its name or the channel identifier. 
                       When inside a channel, the first column is the id of the given post. It can be used when you want to reply to a specific post.
                       To reply to a specific post, type '/reply <first few letters of id of post to reply to> <your message>. 
+                      The most latest updated channels are shown at bottom.
                       When in a channel, press 'x' to exit. """;
     int option = showMenu([ 'Enter a channel',           // 1
                             'Show all public channels',  // 2
@@ -1043,6 +1044,7 @@ Future<void> encryptedChannelMenuUI(Store node) async {
     String menuInfo = """Encrypted Channel howto: Enter a channel by typing the first few unique letters of its pubkey or full name.
                          Once in a room/channel: add new participants by typing '/add <their 64 byte hex public key>' and pressing enter,
                          To reply to a message, type '/reply <first few letters of id of post to reply to> <your message>,
+                         The channels updated latest are shown at bottom.
                          Type '/help' to see more info. When in a channel, press 'x' and then enter to exit. """;
 
     int option = showMenu([ 'Enter an encrypted channel',         // 1
@@ -1216,8 +1218,9 @@ Future<void> PrivateMenuUI(Store node) async {
       justShowedChannels = true;
     }
 
-    String menuInfo = """Direct Message howto: To send a Direct Message to someone for the first time, enter their 64 byte hex pubkey.
-                      To enter or continue a conversation seen in overview, enter the first few letters of the other person's name or of their pubkey""";
+    String menuInfo = """Direct Message howto: To send a Direct Message to someone for the first time, enter their 64 byte hex pubkey into menu option #1.
+                      To enter or continue a conversation seen in overview, enter the first few letters of the other person's name or of their pubkey.
+                      Latest conversations are shown at bottom.""";
     int option = showMenu([ 
                             'Reply or Send a direct message',
                             'Show all direct rooms',

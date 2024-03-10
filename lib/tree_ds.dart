@@ -1797,9 +1797,7 @@ class Store {
     channelsToPrint.sort(scrollableCompareTo);
     int numChannelsActuallyPrinted = 0;
 
-
     int startRoomIndex = 0, endRoomIndex = 0;
-
 
     if( numRoomsOverview == channelsToPrint.length) {
       startRoomIndex = 0;
@@ -1813,7 +1811,6 @@ class Store {
         endRoomIndex = channelsToPrint.length;
       }
     }
-
 
     print("\n\n");
     printUnderlined("Channel Name                       id                Num of Messages     Latest Message                       ");
@@ -2002,7 +1999,6 @@ class Store {
       return 0;
     }
 
-
     if( numNotificationRooms > numRoomsOverview) {
       numNotificationRooms = numRoomsOverview;
     }
@@ -2013,8 +2009,23 @@ class Store {
     
     printUnderlined("From                                       Pubkey   Num of Messages   Latest Message                       ");
 
+    int startRoomIndex = 0, endRoomIndex = 0;
+
+    if( numRoomsOverview == directRooms.length) {
+      startRoomIndex = 0;
+      endRoomIndex = directRooms.length;
+    } else {
+      if( numRoomsOverview < directRooms.length ) {
+        startRoomIndex = directRooms.length - numRoomsOverview;
+        endRoomIndex = directRooms.length;
+      } else {
+        startRoomIndex = 0;
+        endRoomIndex = directRooms.length;
+      }
+    }
+
     int iNotification = 0; // notification counter
-    for( int j = 0; j < directRooms.length; j++) {
+    for( int j = startRoomIndex; j < endRoomIndex; j++) {
       if( !roomSelector(directRooms[j]))
         continue;
 

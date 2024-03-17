@@ -1382,10 +1382,10 @@ class Store {
     if(gDebug != 0) print("In Tree FromEvents: number of events without parent in fromEvents = ${tempWithoutParent.length}");
 
     // get dummy events and encryped channel create events
-    sendEventsRequest(gListRelayUrls1, eventIdsToFetch.union(usersEncryptedChannelIds));
+    sendEventsRequest(gListRelayUrls, eventIdsToFetch.union(usersEncryptedChannelIds));
 
     // get encrypted channel events,  get 141/142 by their mention of channels to which user has been invited through kind 104. get 140 by its event id.
-    getMentionEvents(gListRelayUrls1, usersEncryptedChannelIds, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
+    getMentionEvents(gListRelayUrls, usersEncryptedChannelIds, gLimitFollowPosts, getSecondsDaysAgo(gDefaultNumLastDays), "#e"); // from relay group 2
 
     // create Store
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms, allEncryptedGroupInviteIds);
@@ -1565,7 +1565,7 @@ class Store {
     });
 
     // get dummy events
-    sendEventsRequest(gListRelayUrls1, dummyEventIds);
+    sendEventsRequest(gListRelayUrls, dummyEventIds);
 
     int totalTreeSize = 0;
     topPosts.forEach((element) {totalTreeSize += element.count();});
@@ -2154,6 +2154,12 @@ class Store {
        || tree.treeSelectorUserMentioned({userPublicKey}) ) {
       
           return true;
+    }
+
+    // save all group events for now 
+    var kind = tree.event.eventData.kind;
+    if( kind == 40 || kind == 41 || kind == 42 ) {
+      return true;
     }
 
     return false;

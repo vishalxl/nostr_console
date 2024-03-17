@@ -137,13 +137,13 @@ Future<void> main(List<String> arguments) async {
 
         // verify that there is at least one valid relay they provided, otherwise keep defaults
         if (parsedRelays.length > 0) {
-          gListRelayUrls1 = parsedRelays;
-          defaultServerUrl = gListRelayUrls1.first;
+          gListRelayUrls = parsedRelays;
+          defaultServerUrl = gListRelayUrls.first;
         } else {
           print("No valid relays were provided, using the default relay list");
         }
       }
-      printSet( gListRelayUrls1, "Primary relays that will be used: ", ",");
+      printSet( gListRelayUrls, "Primary relays that will be used: ", ",");
       //print("From among them, default relay: $defaultServerUrl");
       
       if( argResults[lastdaysArg] != null) {
@@ -288,14 +288,14 @@ Future<void> main(List<String> arguments) async {
 
         if( argResults[requestArg] != "") {
           stdout.write('Sending request ${argResults[requestArg]} and waiting for events...');
-          sendRequest(gListRelayUrls1, argResults[requestArg]);
+          sendRequest(gListRelayUrls, argResults[requestArg]);
         } else {
           numWaitSeconds = 0;
           gEventsFilename = ""; // so it wont write it back to keep it faster ( and since without internet no new event is there to be written )
         }
 
         if( userPublicKey!= "") {
-          getIdAndMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), getSecondsDaysAgo(limitSelfEvents), "#p", "authors");
+          getIdAndMentionEvents(gListRelayUrls, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), getSecondsDaysAgo(limitSelfEvents), "#p", "authors");
         }
         
         Future.delayed(Duration(milliseconds: numWaitSeconds), () {
@@ -325,8 +325,8 @@ Future<void> main(List<String> arguments) async {
       // get event for user
       if( userPublicKey!= "") {
         //getIdAndMentionEvents(gListRelayUrls2, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), getSecondsDaysAgo(limitSelfEvents), "#p", "authors");
-        getUserEvents(gListRelayUrls1, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-        getMentionEvents(gListRelayUrls1, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p");       
+        getUserEvents(gListRelayUrls, userPublicKey, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
+        getMentionEvents(gListRelayUrls, {userPublicKey}, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents), "#p");       
 
       }
 
@@ -350,8 +350,8 @@ Future<void> main(List<String> arguments) async {
         //printSet(userChannels, "user channels: \n", "\n");
         //getIdAndMentionEvents(gListRelayUrls1, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");
 
-        getKindEvents([40, 41], gListRelayUrls1, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
-        getKindEvents([42], gListRelayUrls1, 3 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));        
+        getKindEvents([40, 41], gListRelayUrls, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
+        getKindEvents([42], gListRelayUrls, 3 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));        
 
         initialEvents.forEach((e) => processKind3Event(e)); // first process the kind 3 event ; basically populate the global structure that holds this info
        
@@ -386,11 +386,11 @@ Future<void> main(List<String> arguments) async {
           contacts.retainWhere((element) => i++ < maxContactsFetched); // retain only first 200, whichever they may be
         }
 
-        getMultiUserEvents(gListRelayUrls1, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
+        getMultiUserEvents(gListRelayUrls, contacts.union(gDefaultFollows).union(pTags).difference(usersFetched), 4 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));
         usersFetched = usersFetched.union(gDefaultFollows).union(contacts).union(pTags);
         
         // get meta events of all users fetched 
-        getMultiUserEvents(gListRelayUrls1, usersFetched, 10 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*100), {0,3});
+        getMultiUserEvents(gListRelayUrls, usersFetched, 10 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*100), {0,3});
         //print("fetched meta of ${usersFetched.length}");
 
 
@@ -419,7 +419,7 @@ Future<void> main(List<String> arguments) async {
             relays = Relays({}, {}, {}); // reset relay value
           
             String req = '["REQ","latest_live_all",{"limit":40000,"kinds":[0,1,3,4,5,6,7,40,41,42,104,140,141,142],"since":${getTimeSecondsAgo(gSecsLatestLive).toString()}}]';
-            sendRequest(gListRelayUrls1, req);
+            sendRequest(gListRelayUrls, req);
             //getMultiUserEvents(gListRelayUrls1, usersFetched, 10 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*100), {0,3});
 
             // Create tree from all events that's have yet been received/accumulated

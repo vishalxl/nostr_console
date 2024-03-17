@@ -109,7 +109,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
   
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$vanityTag],"content":"$content","sig":"$sig"}]';
   //print("sending $toSendMessage");
-  sendRequest( gListRelayUrls1, toSendMessage);
+  sendRequest( gListRelayUrls, toSendMessage);
   await mySleep(200);
 }
 
@@ -126,7 +126,7 @@ Future<void> sendChannelMessage(Store node, Channel channel, String messageToSen
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
 
   //printInColor(toSendMessage, gCommentColor);
-  sendRequest( gListRelayUrls1, toSendMessage);
+  sendRequest( gListRelayUrls, toSendMessage);
 
   Future<void> foo() async {
     await Future.delayed(Duration(milliseconds: 300));
@@ -148,7 +148,7 @@ Future<void> sendChannelReply(Store node, Channel channel, String replyTo, Strin
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$messageToSend","sig":"$sig"}]';
   //printInColor(toSendMessage, gCommentColor);
-  sendRequest( gListRelayUrls1, toSendMessage);
+  sendRequest( gListRelayUrls, toSendMessage);
 
   Future<void> foo() async {
     await Future.delayed(Duration(milliseconds: 300));
@@ -174,7 +174,7 @@ Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToS
   String sig = mySign(userPrivateKey, id);
   String eventStrToSend = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$encryptedMessageToSend","sig":"$sig"}]';
   //print("calling send for str : $eventStrToSend");
-  sendRequest( gListRelayUrls1, eventStrToSend);
+  sendRequest( gListRelayUrls, eventStrToSend);
 
   Future<void> foo() async {
     await Future.delayed(Duration(milliseconds: 300));
@@ -217,7 +217,7 @@ Future<String> sendEvent(Store node, Event e, [int delayAfterSend = 500]) async 
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
   //print("in send event: calling sendrequest for string \n $toSendMessage");
-  sendRequest(gListRelayUrls1, toSendMessage);
+  sendRequest(gListRelayUrls, toSendMessage);
 
   Future<void> foo() async {
     await Future.delayed(Duration(milliseconds: delayAfterSend));
@@ -237,7 +237,7 @@ Future<String> sendEventWithTags(Store node, Event e, String tags) async {
 
   String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":${e.eventData.kind.toString()},"tags":[$strTags],"content":"$content","sig":"$sig"}]';
   //print("in send event: calling sendrequest for string \n $toSendMessage");
-  sendRequest(gListRelayUrls1, toSendMessage);
+  sendRequest(gListRelayUrls, toSendMessage);
 
   Future<void> foo() async {
     await Future.delayed(Duration(milliseconds: 500));
@@ -263,7 +263,7 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
 
         String sig = mySign(userPrivateKey, id);
         String toSendMessage = '["EVENT",{"id":"$id","pubkey":"$userPublicKey","created_at":$createdAt,"kind":$replyKind,"tags":[$strTags],"content":"$content","sig":"$sig"}]';
-        sendRequest( gListRelayUrls1, toSendMessage);
+        sendRequest( gListRelayUrls, toSendMessage);
         print("sent event delete request with id = $id");
       } else {
         print("${gWarningColor}The given id was not found and/or is not a valid id, or is not your event. Not deleted.$gColorEndMarker"); 
@@ -648,7 +648,7 @@ Future<void> otherOptionsMenuUi(Store node) async {
       case 4:
         print("TODO");
         break;
-        printSet(gListRelayUrls1, "Going to broadcast your contact list ( kind 3) and About me( kind 0) to all relays. The relays are: ", ",");
+        printSet(gListRelayUrls, "Going to broadcast your contact list ( kind 3) and About me( kind 0) to all relays. The relays are: ", ",");
         stdout.write("Hold on, sending events to relays ...");
         
         int count  = 0;
@@ -1506,11 +1506,11 @@ Future<void> socialMenuUi(Store node) async {
                     print('Sending new contact event');
                     Contact newContact = Contact(pk, defaultServerUrl);
                     newContactEvent.eventData.contactList.add(newContact);
-                    getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                    getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
                     sendEvent(node, newContactEvent);
                   } else {
                     print("The contact already exists in the contact list. Republishing the old contact list.");
-                    getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                    getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
                     sendEvent(node, contactEvent);
                   }
                 } else {
@@ -1529,7 +1529,7 @@ Future<void> socialMenuUi(Store node) async {
 
                       EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
                       Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
-                      getUserEvents(gListRelayUrls1, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                      getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
                       sendEvent(node, newEvent);
                     }
                 }

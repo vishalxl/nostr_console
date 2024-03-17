@@ -41,7 +41,7 @@ const int gDontHighlightEventsOlderThan = 4;
 
 int gDefaultNumWaitSeconds = 12000; // is used in main()
 const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
-const int gMaxPtagsToGet          = 100; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
+const int gMaxPtagsToGet          = 200; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 const int gSecsLatestLive         = 2 * 3600; // the lastst seconds for which to get the latest event in main
 int gHoursDefaultPrint      = 6; // print latest given hours only
@@ -49,25 +49,14 @@ int gHoursDefaultPrint      = 6; // print latest given hours only
 // global counters of total events read or processed
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
-String defaultServerUrl       = "wss://relay.snort.social";
-Set<String> gListRelayUrls1 = { defaultServerUrl,
-                                // edited on 4 march 2024 
-                                "wss://relay.damus.io",
-                                "wss://nostr.mom",
-                                "wss://nostr.nodeofsven.com"                                
-                              };
 
-Set<String> gListRelayUrls2 = {    
-                              "wss://offchain.pub",
-                                 "wss://nostr.zerofeerouting.com",
-                                 "wss://nostr-relay.trustbtc.org",
-                                 "wss://relay.stoner.com"
-                              };
-
-Set<String> gListRelayUrls3 = {    
-                                "wss://nostr.onsats.org",
-                                 "wss://relay.stoner.com",
-                                  "wss://nostr.openchain.fr"
+// edited on 17 march 2024 	
+String defaultServerUrl       = "wss://relay.damus.io";
+Set<String> gListRelayUrls = { defaultServerUrl,
+                              "wss://nostr-01.bolt.observer",
+                              "wss://nostr.wine",
+                              "wss://relay2.nostrchat.io",
+                              "wss://nostr.swiss-enigma.ch"
                               };
 
 // well known disposable test private key

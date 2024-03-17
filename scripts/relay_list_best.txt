@@ -1,0 +1,28 @@
+	
+nostr_relays=( 
+
+	"wss://relay.snort.social"
+	"wss://relay.damus.io"
+	"wss://nostr-01.bolt.observer"
+	"wss://nos.lol"
+    "wss://nostr.wine"
+
+    "wss://relay.current.fyi"
+    "wss://relay.nostr.band"
+	"wss://offchain.pub"
+
+	"wss://relay2.nostrchat.io"
+	"wss://nostr.swiss-enigma.ch"
+	"wss://offchain.pub"
+	"wss://relay.stoner.com"
+
+
+	# info site 
+	"wss://nostr.bitcoiner.social"
+	"wss://nostr.fmt.wiz.biz"
+	"wss://nostr.oxtr.dev"
+	"wss://nostr.roundrockbitcoiners.com"	
+	"wss://nostr.vulpem.com"
+	"wss://relay.nostr.band"
+	"wss://soloco.nl"
+)

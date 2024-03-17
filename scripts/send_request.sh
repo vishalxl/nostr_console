@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# two events from jb55 and jack 
+#  ./send_request.sh '["REQ","nnn",{"limit":3,"ids":["76443db69b9851219ff96ed02d6e5dfe83d85214c64e10520b1706b729f19ebe", "6ca7cc0fabb88e62567cfcc24f57142cdb5acf63a98267d67c138851fb061ef1"]}]'
+
 configfile="./relay_list_all.txt"
 
 if [[ $# -eq 0 ]] ; then

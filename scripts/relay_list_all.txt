@@ -80,6 +80,5 @@ nostr_relays=(
 
 
 # reference
-# https://nostr-registry.netlify.app/
 # nostr.info
-# nostr.watch
+# https://nostr.watch/relays/find

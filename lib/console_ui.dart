@@ -1351,9 +1351,7 @@ Future<void> socialMenuUi(Store node) async {
           }
           stdout.write("Type comment to post/reply (type '+' to send a like): ");
           String? $contentVar = stdin.readLineSync();
-          print('|got string|-');
           String content = $contentVar??"";
-          print("|content| = " + content );
           if( content == "") {
             clearScreen();  
             break;
@@ -1361,7 +1359,6 @@ Future<void> socialMenuUi(Store node) async {
 
           stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
           String? $replyToVar = stdin.readLineSync();
-          print("after readlinesync");
           String replyToId = $replyToVar??"";
           print("got id");
           if( replyToId == "x") {

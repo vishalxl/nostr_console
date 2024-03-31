@@ -371,7 +371,6 @@ KNOWN ISSUES
 ------------
 
 * On windows terminal, special characters such as accent ( as used in many languages) can't be sent. Emojis can't be sent either. But they can be sent from Linux/Mac.
-* On Windows terminal, there is limitation where only 255 characters can be sent at a time.
 
 See and file bugs here: https://github.com/vishalxl/nostr_console/issues
 

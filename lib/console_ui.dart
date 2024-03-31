@@ -93,7 +93,7 @@ Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, S
 
     int numShaDone = 0;
     for( numShaDone = 0; numShaDone < 100000000; numShaDone++) {
-      vanityTag = strTags + ',["nonce","$numShaDone","$gDifficulty"]';
+      vanityTag = '$strTags,["nonce","$numShaDone","$gDifficulty"]';
       id = getShaId(userPublicKey, createdAt.toString(), replyKind, vanityTag, content);
       if( id.substring(0, numBytes) == zeroString) {
         break;
@@ -160,7 +160,7 @@ Future<void> sendChannelReply(Store node, Channel channel, String replyTo, Strin
 // send DM
 Future<void> sendDirectMessage(Store node, String otherPubkey, String messageToSend, {String replyKind = "4"}) async {
   //messageToSend = addEscapeChars(messageToSend); since this get encrypted , it does not need escaping
-  String otherPubkey02 = "02" + otherPubkey;
+  String otherPubkey02 = "02$otherPubkey";
   String encryptedMessageToSend =        myEncrypt(userPrivateKey, otherPubkey02, messageToSend);
 
   //print("in sendDirectMessage: replyKind = $replyKind");
@@ -271,7 +271,7 @@ bool sendDeleteEvent(Store node, String eventIdToDelete) {
     } else {
       print("Event not found. Kindly ensure you have entered a valid event id.");
     }
-  };
+  }
 
   return false;
 }
@@ -282,8 +282,9 @@ void reAdjustAlignment() {
       try {
         var terminalColumns = gDefaultTextWidth;
 
-        if( stdout.hasTerminal )
+        if( stdout.hasTerminal ) {
           terminalColumns = stdout.terminalColumns;
+        }
 
         if(  gTextWidth > terminalColumns) {
           gTextWidth = terminalColumns - 5;
@@ -291,7 +292,7 @@ void reAdjustAlignment() {
         gNumLeftMarginSpaces = (terminalColumns - gTextWidth )~/2;
       } on StdoutException catch (e) {
         print("Terminal information not available");
-        if( gDebug>0)  print("${e.message}");
+        if( gDebug>0)  print(e.message);
         gNumLeftMarginSpaces = 0;
       }
     }
@@ -317,7 +318,7 @@ void printProfile(Store node, String profilePubkey) {
   String picture = gKindONames[profilePubkey]?.picture??"";
   String lud06 = gKindONames[profilePubkey]?.lud06??"";
   String lud16 = gKindONames[profilePubkey]?.lud16??"";
-  String display_name= gKindONames[profilePubkey]?.display_name??"";
+  String displayName= gKindONames[profilePubkey]?.display_name??"";
   String website = gKindONames[profilePubkey]?.website??"";
   int    dateLastUpdated    = gKindONames[profilePubkey]?.createdAt??0;
   bool   verified = gKindONames[profilePubkey]?.nip05Verified??false;
@@ -334,7 +335,7 @@ void printProfile(Store node, String profilePubkey) {
   // print LNRUL lud06 if it exists
   if( lud06.length > gMinLud06AddressLength) {
     try {
-      String lud06LNString = "lightning:" + lud06;
+      String lud06LNString = "lightning:$lud06";
 
       List<int>? typesAndModule = getTypeAndModule(lud06LNString);
       if( typesAndModule != null) {
@@ -349,7 +350,7 @@ void printProfile(Store node, String profilePubkey) {
   // print LNRUL lud16 if it exists
   if( lud16.length > gMinLud16AddressLength) {
     try {
-      String lud16LNString = "" + lud16;
+      String lud16LNString = lud16;
       List<int>? typesAndModule = getTypeAndModule(lud16LNString);
       if( typesAndModule != null) {
         print("Printing lud16 address as QR:\n\n");
@@ -360,14 +361,14 @@ void printProfile(Store node, String profilePubkey) {
     }
   }
 
-  print("\nName        : $authorName ( ${profilePubkey} ).");
+  print("\nName        : $authorName ( $profilePubkey ).");
   print("About       : $about");
   print("Picture     : $picture");
-  print("display_name: $display_name");
+  print("display_name: $displayName");
   print("Website     : $website");
   print("Lud06       : $lud06");
   print("Lud16       : $lud16");
-  print("Nip 05      : ${verified?"yes. ${nip05Id}":"no"}");
+  print("Nip 05      : ${verified?"yes. $nip05Id":"no"}");
   print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
 
   // get the latest kind 3 event for the user, which lists his 'follows' list
@@ -389,7 +390,9 @@ void printProfile(Store node, String profilePubkey) {
     // print follow list
     stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
     profileContactEvent.eventData.contactList.sort();
-    profileContactEvent.eventData.contactList.forEach((x) => stdout.write("${getAuthorName(x.contactPubkey)}, "));
+    for (var x in profileContactEvent.eventData.contactList) {
+      stdout.write("${getAuthorName(x.contactPubkey)}, ");
+    }
     print("\n");
   }
 
@@ -397,7 +400,9 @@ void printProfile(Store node, String profilePubkey) {
   List<String> followers = node.getFollowers(profilePubkey);
   stdout.write("$pronoun have ${followers.length} followers:  ");
   followers.sort((a, b) => getAuthorName(a).compareTo(getAuthorName(b)));
-  followers.forEach((x) => stdout.write("${getAuthorName(x)}, "));
+  for (var x in followers) {
+    stdout.write("${getAuthorName(x)}, ");
+  }
   print("");              
   print("");
 }
@@ -436,11 +441,13 @@ void printMenu(List<String> menuOptions) {
 
   var terminalColumns = gDefaultTextWidth;
 
-  if( stdout.hasTerminal )
+  if( stdout.hasTerminal ) {
     terminalColumns = stdout.terminalColumns;
+  }
 
-  if( longestMenuOption + 5> gMenuWidth )
+  if( longestMenuOption + 5> gMenuWidth ) {
     gMenuWidth = longestMenuOption + 8;
+  }
 
   if( terminalColumns~/gMenuWidth > 4) {
     terminalColumns = gMenuWidth * 4;
@@ -463,7 +470,7 @@ void printMenu(List<String> menuOptions) {
 
 int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) {
 
-  if(menuInfo.length > 0) {
+  if(menuInfo.isNotEmpty) {
     print("\n$menuInfo\n");
   }
 
@@ -531,13 +538,15 @@ Do you want to proceed. Press y/Y or n/N: """, "n");
 
 void printPubkeys(Set<String> pubkey) {
   print("${myPadRight("pubkey",64)}  ${myPadRight("name", 20)}    ${myPadRight("about", 40)}   ${myPadRight("Nip05", 30)}");
-  pubkey.forEach( (x) => print("$x  ${myPadRight(getAuthorName(x),  20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}"));
+  for (var x in pubkey) {
+    print("$x  ${myPadRight(getAuthorName(x),  20)}    ${myPadRight(gKindONames[x]?.about??"", 40)}   ${myPadRight(gKindONames[x]?.nip05Id??"No", 30)}");
+  }
   print("");
 }
 
 void printPubkeyResult(Set<String> pubkey) {
 
-  if( pubkey.length == 0) {
+  if( pubkey.isEmpty) {
     print("There is no pubkey for that given name.");
     return;
   } else {
@@ -599,18 +608,18 @@ Future<void> otherOptionsMenuUi(Store node) async {
         String userName =     getStringFromUser("Enter your new name                  : ", getAuthorName(userPublicKey));
         String userAbout =    getStringFromUser("Enter new 'about me' for yourself    : ", gKindONames[userPublicKey]?.about??"");
         String userPic =      getStringFromUser("Enter url to your new display picture: ", gKindONames[userPublicKey]?.picture??"https://placekitten.com/200/200");
-        String display_name = getStringFromUser("Enter your new display name          : ", gKindONames[userPublicKey]?.display_name??"");
+        String displayName = getStringFromUser("Enter your new display name          : ", gKindONames[userPublicKey]?.display_name??"");
         String website =      getStringFromUser("Enter your new website               : ", gKindONames[userPublicKey]?.website??"");
         String nip05id =   getStringFromUser("Enter your nip 05 id. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.nip05Id??"");
         String lud06 =     getStringFromUser("Enter your lud06 or lnurl. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.lud06??"");
         String lud16 =     getStringFromUser("Enter your lud16 address. Leave blank if unknown/none: ", gKindONames[userPublicKey]?.lud16??"");
         
-        String strLud06 =  lud06.length > 0? '"lud06":"$lud06",': ''; 
-        String strLud16 =  lud16.length > 0? '"lud16":"$lud16",': ''; 
-        String strDispName =  display_name.length > 0? '"display_name":"$display_name",': ''; 
-        String strWebsite =  website.length > 0? '"website":"$website",': ''; 
+        String strLud06 =  lud06.isNotEmpty? '"lud06":"$lud06",': ''; 
+        String strLud16 =  lud16.isNotEmpty? '"lud16":"$lud16",': ''; 
+        String strDispName =  displayName.isNotEmpty? '"display_name":"$displayName",': ''; 
+        String strWebsite =  website.isNotEmpty? '"website":"$website",': ''; 
 
-        String content = "{\"name\": \"$userName\", \"about\": \"$userAbout\", \"picture\": \"$userPic\"${ nip05id.length >0 ? ", $strDispName $strWebsite $strLud06 $strLud16 \"nip05\": \"$nip05id\"":""}}";
+        String content = "{\"name\": \"$userName\", \"about\": \"$userAbout\", \"picture\": \"$userPic\"${ nip05id.isNotEmpty ? ", $strDispName $strWebsite $strLud06 $strLud16 \"nip05\": \"$nip05id\"":""}}";
         int    createdAt = DateTime.now().millisecondsSinceEpoch ~/1000;
 
         EventData eventData = EventData('id', userPublicKey, createdAt, 0, content, [], [], [], [], {}, );
@@ -633,11 +642,11 @@ Future<void> otherOptionsMenuUi(Store node) async {
 
         if( eventIdToDelete.length == 1) {
           String toDeleteId = eventIdToDelete.first;
-          print("Going to send a delete event for the following event with id ${toDeleteId}");
+          print("Going to send a delete event for the following event with id $toDeleteId");
           sendDeleteEvent(node, eventIdToDelete.first);
           await processAnyIncomingEvents(node, false); // get latest event, this takes 300 ms
         } else {
-          if( eventIdToDelete.length == 0) {
+          if( eventIdToDelete.isEmpty) {
             printWarning("Could not find the given event id. Kindly try again, by entering a 64 byte long hex event id, or by entering a unique prefix for the given event id.");
           } else {
             printWarning("Invalid Event Id(s). Kindly enter a more unique id.");
@@ -802,8 +811,9 @@ Future<void> channelMenuUI(Store node) async {
                       Channel? channel = node.getChannelFromId(node.channels, fullChannelId);
                       String actualMessage = messageToSend.substring(7);
 
-                      if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
+                      if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length) {
                         actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
+                      }
 
                       if( channel != null) {
                         await sendChannelReply(node, channel, replyTo, actualMessage, getPostKindFrom( channel.roomType));
@@ -945,7 +955,7 @@ String encryptChannelMessage(Store node, String channelId, String messageToSend)
   }
 
   String priKey = keys[0], pubKey = keys[1];
-  encryptedMessage = myEncrypt(priKey, "02" + pubKey, messageToSend);
+  encryptedMessage = myEncrypt(priKey, "02$pubKey", messageToSend);
 
   return encryptedMessage;
 }
@@ -983,9 +993,9 @@ Future<void> addUsersToEncryptedChannel(Store node, String fullChannelId, Set<St
           String content = channelEvent.eventData.content;
 
           String tags = '["e","$fullChannelId"]';
-          participants.forEach((participant) { 
-            tags += ',["p","${participant}"]';
-          });
+          for (var participant in participants) { 
+            tags += ',["p","$participant"]';
+          }
 
           int numNewUsers = participants.length;
 
@@ -1142,8 +1152,9 @@ Future<void> encryptedChannelMenuUI(Store node) async {
                         String replyTo = tokens[1];
                         String actualMessage = messageToSend.substring(7);
 
-                        if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length)
+                        if( messageToSend.indexOf(tokens[1]) + tokens[1].length < messageToSend.length) {
                           actualMessage = messageToSend.substring( messageToSend.indexOf(tokens[1]) + tokens[1].length + 1);
+                        }
 
                         String encryptedMessageToSend = encryptChannelMessage(node, fullChannelId, actualMessage);
                         if( encryptedMessageToSend != "") {
@@ -1439,7 +1450,9 @@ Future<void> socialMenuUi(Store node) async {
             if( numPrinted[0] == 0) {
               print("\nNot found in the last $gHoursDefaultPrint hours. Try increasing the number of days printed, from social network options to search further back into history.\n");
             }
-          } else printWarning("Blank word entered. Try again.");
+          } else {
+            printWarning("Blank word entered. Try again.");
+          }
 
           break;
 
@@ -1542,7 +1555,7 @@ Future<void> socialMenuUi(Store node) async {
           stdout.write("Printing profile of a user; type username or first few letters of user's public key( or full public key): ");
           String? $tempUserName = stdin.readLineSync();
           String userName = $tempUserName??"";
-          stdout.write( "user name: " + userName);
+          stdout.write( "user name: $userName");
           if( userName != "") {
             Set<String> pubkey = getPublicKeyFromName(userName); 
 
@@ -1578,7 +1591,7 @@ Future<void> socialMenuUi(Store node) async {
             continue;
           } on Exception catch (e) {
             printWarning("Invalid input. Kindly try again."); 
-            if( gDebug > 0) print(" ${e}"); 
+            if( gDebug > 0) print(" $e"); 
             continue;
           }    
           break;
@@ -1600,8 +1613,9 @@ void directRoomNotifications(Store node, [int x = 0, int y = 0]) {
   bool showNotifications (ScrollableMessages room) => room.selectorNotifications();
   int numDirectRoomsPrinted = node.printDirectRoomsOverview( showNotifications, 100, node.allChildEventsMap);
   
-  if( numDirectRoomsPrinted > 0)
-      print("\n");
+  if( numDirectRoomsPrinted > 0) {
+    print("\n");
+  }
 
   int totalNotifications = numPrinted[2] + numDirectRoomsPrinted;
   if( totalNotifications > 0) {
@@ -1691,7 +1705,7 @@ Future<void> mainMenuUi(Store node) async {
           mainMenuContinue = false;
           String authorName = getAuthorName(userPublicKey);
           clearScreen();
-          print("\nFinished Nostr session for user: ${authorName} ($userPublicKey)");
+          print("\nFinished Nostr session for user: $authorName ($userPublicKey)");
           if( gEventsFilename != "") {
             await node.writeEventsToFile(gEventsFilename);
           }

@@ -241,8 +241,9 @@ Map<String, String> pubkeyColor = { '0': magentaColor, '1': brightMagentaColor,
                                    };
 
 String getNameColor( String pubkey) {
-  if( pubkey.length == 0)
+  if( pubkey.isEmpty) {
     return brightMagentaColor;
+  }
 
   String firstChar = pubkey.substring(0, 1).toLowerCase();
   return pubkeyColor[firstChar]??brightMagentaColor;
@@ -408,10 +409,11 @@ List<String> lines = intro.split("\n");
 
 var terminalColumns = gDefaultTextWidth;
 
-if( stdout.hasTerminal )
+if( stdout.hasTerminal ) {
   terminalColumns = stdout.terminalColumns;
+}
 
-lines.forEach((line) {print(line.length > terminalColumns ? line.substring(0, terminalColumns) : line );});
+for (var line in lines) {print(line.length > terminalColumns ? line.substring(0, terminalColumns) : line );}
 
 }
 
@@ -427,6 +429,6 @@ void printUsage() {
   print(gUsage);
 }
 void printVersion() {
-  print("$version");
+  print(version);
 }
 

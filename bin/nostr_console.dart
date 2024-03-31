@@ -92,7 +92,7 @@ Future<void> main(List<String> arguments) async {
         userPrivateKey = "";
       }
 
-      if( gUserLocation.length > 0){ 
+      if( gUserLocation.isNotEmpty){ 
         print("Going to add $gUserLocation as the location tag with each post.");
       }
 
@@ -118,7 +118,7 @@ Future<void> main(List<String> arguments) async {
 
       // write informative message in case user is not using proper keys
       if( userPublicKey == gDefaultPublicKey) {
-        print("You should ideally create your own private key and use it with ${gWarningColor}--prikey$gColorEndMarker program argument. ");
+        print("You should ideally create your own private key and use it with $gWarningColor--prikey$gColorEndMarker program argument. ");
         print("Create a private key from ${gWarningColor}astral.ninja, @damusapp, or even from command line using `openssl rand -hex 32`.$gColorEndMarker.\n");
         print("npub/nsec keys can be converted to hex key format using https://damus.io/key");
       }
@@ -127,16 +127,16 @@ Future<void> main(List<String> arguments) async {
       if( argResults[relayArg] != null) {
         Set<String> userRelayList = Set.from(argResults[relayArg].split(","));
         Set<String> parsedRelays = {};
-        userRelayList.forEach((relay) {
+        for (var relay in userRelayList) {
           if(relay.startsWith(RegExp(r'^ws[s]?:\/\/'))) {
             parsedRelays.add(relay);
           } else {
             printWarning("The provided relay entry: \"$relay\" does not start with ws:// or wss://, omitting");
           }
-        });
+        }
 
         // verify that there is at least one valid relay they provided, otherwise keep defaults
-        if (parsedRelays.length > 0) {
+        if (parsedRelays.isNotEmpty) {
           gListRelayUrls = parsedRelays;
           defaultServerUrl = gListRelayUrls.first;
         } else {
@@ -174,8 +174,9 @@ Future<void> main(List<String> arguments) async {
 
       try {
         var terminalColumns = gDefaultTextWidth;
-        if( stdout.hasTerminal )
+        if( stdout.hasTerminal ) {
           terminalColumns = stdout.terminalColumns;
+        }
 
         // can be computed only after textWidth has been found
         if( gTextWidth > terminalColumns) {
@@ -184,7 +185,7 @@ Future<void> main(List<String> arguments) async {
         gNumLeftMarginSpaces = (terminalColumns - gTextWidth )~/2;
       } on StdoutException catch (e) {
         print("Cannot find terminal size. Left aligning by default.");
-        if( gDebug > 0) log.info("${e.message}");
+        if( gDebug > 0) log.info(e.message);
         gNumLeftMarginSpaces = 0;
       }
       // undo above if left option is given
@@ -262,10 +263,10 @@ Future<void> main(List<String> arguments) async {
         stdout.write('Reading events from ${whetherDefault}file.......');
 
         // read file events and give the events to relays from where they're picked up later
-        initialEvents = await readEventsFromFile(gEventsFilename);
+        initialEvents = readEventsFromFile(gEventsFilename);
 
         // count events
-        initialEvents.forEach((element) { numFileEvents++;});
+        for (var element in initialEvents) { numFileEvents++;}
         print("read $numFileEvents events from file $gEventsFilename");
       }
 
@@ -338,7 +339,7 @@ Future<void> main(List<String> arguments) async {
         clearEvents();
 
 
-        initialEvents.forEach((element) { element.eventData.kind == 1? numUserPosts++: numUserPosts;});
+        for (var element in initialEvents) { element.eventData.kind == 1? numUserPosts++: numUserPosts;}
         numUserPosts -= numFilePosts;
         stdout.write("...done\n");//received $numUserPosts new posts made by the user\n");
 
@@ -353,7 +354,9 @@ Future<void> main(List<String> arguments) async {
         getKindEvents([40, 41], gListRelayUrls, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
         getKindEvents([42], gListRelayUrls, 3 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));        
 
-        initialEvents.forEach((e) => processKind3Event(e)); // first process the kind 3 event ; basically populate the global structure that holds this info
+        for (var e in initialEvents) {
+          processKind3Event(e);
+        } // first process the kind 3 event ; basically populate the global structure that holds this info
        
         Set<String> contacts = {};
         Set<String> pTags  = {};
@@ -365,9 +368,9 @@ Future<void> main(List<String> arguments) async {
           // if contact list was found, get user's feed; also get some default contacts
           if (contactEvent != null ) {
             if(gDebug > 0) print("In main: found contact list: \n ${contactEvent.originalJson}");
-              contactEvent.eventData.contactList.forEach((contact) {
+              for (var contact in contactEvent.eventData.contactList) {
               contacts.add(contact.contactPubkey);
-            });
+            }
           } else {
             print("Could not find your contact list.");
           }

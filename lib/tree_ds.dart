@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
@@ -6,7 +5,7 @@ import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/utils.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/user.dart';
-import 'dart:math'; // for Point 
+// for Point 
  
 
 typedef fTreeSelector = bool Function(Tree a);
@@ -16,7 +15,7 @@ typedef fRoomSelector = bool Function(ScrollableMessages room);
 
 typedef fvisitorMarkNotifications = void Function(Event e);
 
-Store? gStore = null;
+Store? gStore;
 
 // only show in which user is involved
 bool selectorTrees_selfPosts(Tree t) {
@@ -37,7 +36,7 @@ bool userInvolved(String pubkey, Event e) {
   }
 
   if( gReactions.containsKey(e.eventData.id)) {
-    List<List<String>>? reactors = gReactions[e.eventData.id]??null;
+    List<List<String>>? reactors = gReactions[e.eventData.id];
     if( reactors != null) {
       for( var reactor in reactors) {
         String reactorPubkey = reactor[0];
@@ -91,7 +90,7 @@ bool followsInvolved(Event e, Event? contactEvent) {
 
   // check if any of the contact liked it
   if( gReactions.containsKey(e.eventData.id)) {
-    List<List<String>>? reactors = gReactions[e.eventData.id]??null;
+    List<List<String>>? reactors = gReactions[e.eventData.id];
     if( reactors != null) {
       for( var reactor in reactors) {
         String reactorPubkey = reactor[0];
@@ -147,20 +146,20 @@ bool showAllRooms (ScrollableMessages room) => selectorShowAllRooms(room);
 
 int getLatestMessageTime(ScrollableMessages channel) {
 
-  List<String> _messageIds = channel.messageIds;
+  List<String> messageIds = channel.messageIds;
   if(gStore == null) {
     return 0;
   }
 
-  if(_messageIds.length == 0) {
+  if(messageIds.isEmpty) {
     int createdAt = channel.createdAt;
     return createdAt;
   }
 
   int latest = 0;
-  for(int i = 0; i < _messageIds.length; i++) {
+  for(int i = 0; i < messageIds.length; i++) {
     if( gStore != null) {
-      Tree? tree = (gStore?.allChildEventsMap[_messageIds[i]]  );
+      Tree? tree = (gStore?.allChildEventsMap[messageIds[i]]  );
       if( tree != null) {
         EventData ed = tree.event.eventData;
         if( ed.createdAt > latest) {
@@ -193,8 +192,9 @@ DirectMessageRoom? getDirectRoom(List<DirectMessageRoom> rooms, String otherPubk
 
 int scrollableCompareTo(ScrollableMessages a, ScrollableMessages b) {
 
-  if( gStore == null)
+  if( gStore == null) {
     return 0;
+  }
 
   int otherLatest = getLatestMessageTime(b);
   int thisLatest =  getLatestMessageTime(a);
@@ -228,12 +228,12 @@ class ScrollableMessages {
       int eventTime = (tempChildEventsMap[messageIds[i]]?.event.eventData.createdAt??0);
       if( newEventTime < eventTime) {
         // shift current i and rest one to the right, and put event Time here
-        if(gSpecificDebug > 0 && roomType == enumRoomType.kind140) print("In addMessageToRoom: inserted enc message in middle to room with name ${topHeader}");
+        if(gSpecificDebug > 0 && roomType == enumRoomType.kind140) print("In addMessageToRoom: inserted enc message in middle to room with name $topHeader");
         messageIds.insert(i, messageId);
         return;
       }
     }
-    if(gSpecificDebug > 0 && roomType == enumRoomType.kind140) print("In addMessageToRoom: inserted enc message in end of room with name ${topHeader}");
+    if(gSpecificDebug > 0 && roomType == enumRoomType.kind140) print("In addMessageToRoom: inserted enc message in end of room with name $topHeader");
 
     // insert at end
     messageIds.add(messageId);
@@ -273,15 +273,16 @@ class ScrollableMessages {
     if( messageIds.length > gNumChannelMessagesToShow) {
       print("\n");
       printDepth(0);
-      stdout.write("${gNotificationColor}Displayed page number ${page} (out of total $numPages pages, where 1st is the latest 'page').\n");
+      stdout.write("${gNotificationColor}Displayed page number $page (out of total $numPages pages, where 1st is the latest 'page').\n");
       printDepth(0);
-      stdout.write("To see older pages, enter numbers from 1-${numPages}, in format '/N', a slash followed by the required page number.${gColorEndMarker}\n\n");
+      stdout.write("To see older pages, enter numbers from 1-$numPages, in format '/N', a slash followed by the required page number.$gColorEndMarker\n\n");
     }
   }
 
   bool selectorNotifications() {
-    if( gStore == null)
+    if( gStore == null) {
       return false;
+    }
 
     for(int i = 0; i < messageIds.length; i++) {
       Event? e = gStore?.allChildEventsMap[messageIds[i]]?.event;
@@ -317,6 +318,7 @@ class Channel extends ScrollableMessages {
   Set<String> participants; // pubkey of all participants - only for encrypted channels
   String      creatorPubkey;      // creator of the channel, if event is known
 
+  @override
   enumRoomType roomType;
 
   Channel(this.channelId, this.internalChatRoomName, this.about, this.picture, List<String> messageIds, this.participants, this.lastUpdated, this.roomType, [this.creatorPubkey=""] ) : 
@@ -333,7 +335,7 @@ class Channel extends ScrollableMessages {
     return internalChatRoomName;
   }
 
-  void set chatRoomName(String newName){
+  set chatRoomName(String newName){
     internalChatRoomName = newName;
     super.topHeader = "Channel Name: $newName (Id: $channelId)";
   }
@@ -366,11 +368,11 @@ class Channel extends ScrollableMessages {
 // represents direct chat of kind 4
 class DirectMessageRoom extends ScrollableMessages{
   String       otherPubkey; // id of user this DM is happening
+  @override
   int          createdAt;
 
   DirectMessageRoom(this.otherPubkey, List<String> messageIds, this.createdAt):
-            super ( "${(otherPubkey)} ($otherPubkey)", messageIds, createdAt, enumRoomType.kind4) {
-            }
+            super ( "${(otherPubkey)} ($otherPubkey)", messageIds, createdAt, enumRoomType.kind4);
 
   String getChannelId() {
     return otherPubkey;
@@ -404,7 +406,7 @@ class Tree {
     store = s;
   }
   
-  /***********************************************************************************************************************************/
+  /// ********************************************************************************************************************************
   /* The main print tree function. Calls the reeSelector() for every node and prints it( and its children), only if it returns true. 
    * returns Point , where first int is total Threads ( or top trees) printed, and second is notifications printed
    * returns list< total top threads printed, total events printed, total notifications printed> 
@@ -412,7 +414,7 @@ class Tree {
   List<int> printTree(int depth, DateTime newerThan, bool topPost, [int countPrinted = 0, int maxToPrint = gMaxEventsInThreadPrinted]) { 
     List<int> ret = [0,0,0];
 
-    if(event.eventData.isNotification || event.eventData.newLikes.length > 0) {
+    if(event.eventData.isNotification || event.eventData.newLikes.isNotEmpty) {
       ret[2] = 1;
     }
 
@@ -503,7 +505,7 @@ class Tree {
     if( pubkeys.contains(event.eventData.pubkey) &&  gReactions.containsKey(event.eventData.id)) {
       List<List<String>>? reactions = gReactions[event.eventData.id];
       if( reactions  != null) {
-        if( reactions.length > 0) {
+        if( reactions.isNotEmpty) {
           // set every reaction as a new like so they all get highlighted; these are all later reset after first printing
           Set<String> reactorPubkeys = getReactorPubkeys(event.eventData.id);
           event.eventData.newLikes = reactorPubkeys;
@@ -517,18 +519,20 @@ class Tree {
     Set<String> pplTagged = pTags.toSet().intersection(pubkeys);
 
     // 2nd condition: person making the event should not be on this list; they would already be considered in other test
-    if( pplTagged.length > 0 && !pubkeys.contains(event.eventData.pubkey)) { 
+    if( pplTagged.isNotEmpty && !pubkeys.contains(event.eventData.pubkey)) { 
       event.eventData.isNotification = isMentioned = true;
     }
 
     // check if there are any replies from other people to an event made by someone in list
-    if( pubkeys.contains(event.eventData.pubkey) && children.length > 0) {
+    if( pubkeys.contains(event.eventData.pubkey) && children.isNotEmpty) {
       for( int i = 0; i < children.length; i++ ) {
-        children.forEach((child) {  
+        for (var child in children) {  
           // if child is someone else then set notifications and flag, means there are replies to this event 
-           if(child.event.eventData.pubkey != event.eventData.pubkey )  // tests reply is not from same user
+           if(child.event.eventData.pubkey != event.eventData.pubkey ) {
+             // tests reply is not from same user
              childMatches = child.event.eventData.isNotification = true;
-        }); 
+           }
+        } 
       }
     }
 
@@ -597,8 +601,9 @@ class Tree {
       if( reactions  != null) {
         for( int i = 0; i < reactions.length; i++) {
           if( pubkeys.contains(reactions[i][0]) ) {
-            if( enableNotifications)
+            if( enableNotifications) {
               event.eventData.newLikes.add(reactions[i][0]);
+            }
             hasReacted = true;
           }
         }
@@ -617,8 +622,9 @@ class Tree {
 
     // if event is by user(s)
     if( pubkeys.contains(event.eventData.pubkey)) {
-      if( enableNotifications)
+      if( enableNotifications) {
         event.eventData.isNotification = true;
+      }
       return true;
     }
     if( hasReacted || childMatches) {
@@ -636,8 +642,9 @@ class Tree {
 
     // if event is by user(s)
     if( pubkeys.contains(event.eventData.pubkey)) {
-      if( enableNotifications)
+      if( enableNotifications) {
         event.eventData.isNotification = true;
+      }
       return true;
     }
 
@@ -721,7 +728,7 @@ class Tree {
   bool treeSelector_hasNotifications() {
 
     bool hasNotifications = false;
-    if( event.eventData.isNotification || event.eventData.newLikes.length > 0) {
+    if( event.eventData.isNotification || event.eventData.newLikes.isNotEmpty) {
         hasNotifications = true;
     }
 
@@ -749,7 +756,7 @@ class Tree {
       count = 1;
     }
 
-    if( event.eventData.newLikes.length > 0) {
+    if( event.eventData.newLikes.isNotEmpty) {
       event.eventData.newLikes = {};
       count = 1;
     }
@@ -777,7 +784,7 @@ class Tree {
   } // end count()
 } // end Tree
 
-/***********************************************************************************************************************************/
+/// ********************************************************************************************************************************
 /*  
  * The actual tree struture holds only kind 1 events, or only posts. Tree itself can hold any event type( to be fixed, needs renaming etc TODO)
  * This Store class holds events too in its map, and in its chatRooms structure
@@ -902,7 +909,7 @@ class Store {
   static void addTTagEventInChannel(EventData eventData, List<Channel> rooms, Map<String, Tree> tempChildEventsMap) {
 
     List<String>? tTags = eventData.getTTags();
-    if( tTags != null && tTags.length > 0) {
+    if( tTags != null && tTags.isNotEmpty) {
       for( int i = 0; i < tTags.length; i++) {
         String chatRoomId = eventData.getChannelIdForTTagRoom(tTags[i]);
         Channel? channel = getChannel(rooms, chatRoomId);
@@ -949,11 +956,9 @@ class Store {
     return null;
   }
 
-  /**
-   * Will create a entry in encryptedChannels ( if one does not already exist)
-   * Returns id of channel if one is created, null otherwise.
-   * 
-   */
+  /// Will create a entry in encryptedChannels ( if one does not already exist)
+  /// Returns id of channel if one is created, null otherwise.
+  /// 
   static String? createEncryptedRoomFromInvite( List<Channel> encryptedChannels, Map<String, Tree> tempChildEventsMap, Event eventSecretMessage) {
 
     String? temp140Id = getEncryptedChannelIdFromSecretMessage( eventSecretMessage);
@@ -969,7 +974,7 @@ class Store {
     if( event140 != null) {
       
       Set<String> participants = {};
-      event140.eventData.pTags.forEach((element) { participants.add(element);});
+      for (var element in event140.eventData.pTags) { participants.add(element);}
 
       String chatRoomId = event140Id;
       try {
@@ -1018,7 +1023,7 @@ class Store {
 
         // update the participant list if the event already exists ( the room was likely creted with 104 invite, which did not have participant list)
         Set<String> participants = {};
-        event14x.eventData.pTags.forEach((element) { participants.add(element);});
+        for (var element in event14x.eventData.pTags) { participants.add(element);}
         Channel? channel = getChannel(encryptedChannels, event14x.eventData.id);
         
         dynamic json = jsonDecode(event14x.eventData.content);
@@ -1042,7 +1047,7 @@ class Store {
 
       case 141:
         Set<String> participants = {};
-        event14x.eventData.pTags.forEach((element) { participants.add(element);});
+        for (var element in event14x.eventData.pTags) { participants.add(element);}
         
         String chatRoomId = event14x.eventData.getChannelIdForKind4x();
         if( chatRoomId.length != 64) {
@@ -1093,7 +1098,7 @@ class Store {
           }
         } else {
           // could not get channel id of message. 
-          printWarning("---Could not get encryptd channel for message id ${event14x.eventData.id} got channelId : ${channelId} its len ${channelId.length}");
+          printWarning("---Could not get encryptd channel for message id ${event14x.eventData.id} got channelId : $channelId its len ${channelId.length}");
         }
         break;
 
@@ -1158,7 +1163,7 @@ class Store {
             directRooms.add( newDirectRoom);
             if( ce.eventData.id == gCheckEventId && gDebug >= 0) print("Adding new message ${ce.eventData.id} to NEW direct room $directRoomId.  sender pubkey = ${ce.eventData.pubkey}.");
           }
-          if( ce.eventData.evaluatedContent.length > 0) numMessagesDecrypted++;
+          if( ce.eventData.evaluatedContent.isNotEmpty) numMessagesDecrypted++;
         } else {
           if( gDebug > 0) print("Could not get chat room id for event ${ce.eventData.id}  sender pubkey = ${ce.eventData.pubkey}.");
         }
@@ -1252,7 +1257,7 @@ class Store {
     }
   }
 
-  /***********************************************************************************************************************************/
+  /// ********************************************************************************************************************************
   // @method create top level Tree from events. 
   // first create a map. then process each element in the map by adding it to its parent ( if its a child tree)
   factory Store.fromEvents(Set<Event> events) {
@@ -1264,12 +1269,12 @@ class Store {
 
     // create a map tempChildEventsMap from list of events, key is eventId and value is event itself
     Map<String, Tree> tempChildEventsMap = {};
-    events.forEach((event) { 
+    for (var event in events) { 
       // only add in map those kinds that are supported or supposed to be added ( 0 1 3 7 40)
       if( typesInEventMap.contains(event.eventData.kind)) {
         tempChildEventsMap[event.eventData.id] = Tree.withoutStore( event, []); 
       }
-    });
+    }
 
     processDeleteEvents(tempChildEventsMap); // handle returned values perhaps later
     processReactions(events, tempChildEventsMap);
@@ -1322,7 +1327,7 @@ class Store {
       }
 
       // if reacted to event is not in store, then add it to dummy list so it can be fetched
-      if( tree.event.eventData.eTags.length > 0 && tree.event.eventData.eTags.last.length > 0) {
+      if( tree.event.eventData.eTags.isNotEmpty && tree.event.eventData.eTags.last.isNotEmpty) {
         String reactedToId  = tree.event.eventData.eTags.last[0];
         if( !tempChildEventsMap.containsKey(reactedToId) && tree.event.eventData.createdAt > getSecondsDaysAgo(3)) {
           //print("liked event not found in store.");
@@ -1353,7 +1358,7 @@ class Store {
     // allEncryptedGroupInviteIds has been created above 
     // now create encrypted rooms from that list which are just for the current user
     Set<String> usersEncryptedChannelIds = {};
-    allEncryptedGroupInviteIds.forEach((secretEventId) {
+    for (var secretEventId in allEncryptedGroupInviteIds) {
       Event? secretEvent = tempChildEventsMap[secretEventId]?.event;
       
       if( secretEvent != null) {
@@ -1363,7 +1368,7 @@ class Store {
           usersEncryptedChannelIds.add(newEncryptedChannelId); // is later used so a request can be sent to fetch events related to this room
         }
       }
-    });
+    }
 
     tempChildEventsMap.forEach((newEventId, tree) {
       int eKind = tree.event.eventData.kind;
@@ -1391,7 +1396,7 @@ class Store {
     return Store( topLevelTrees, tempChildEventsMap, tempWithoutParent, channels, encryptedChannels, tempDirectRooms, allEncryptedGroupInviteIds);
   } // end fromEvents()
 
-   /***********************************************************************************************************************************/
+   /// ********************************************************************************************************************************
    /* @processIncomingEvent inserts the relevant events into the tree and otherwise processes likes, delete events etc.
     *                        returns the id of the ones actually new so that they can be printed as notifications. 
     */
@@ -1403,26 +1408,26 @@ class Store {
     Set<String> dummyEventIds = {};
 
     // add the event to the main event store thats allChildEventsMap
-    newEventsToProcess.forEach((newEvent) { 
+    for (var newEvent in newEventsToProcess) { 
       
       if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,3).compareTo("000") == 0) {
-        return; // spam prevention
+        continue; // spam prevention
       }
 
       if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
-        return;
+        continue;
       }
 
       //ignore bots
       if( [4, 42, 142].contains( newEvent.eventData.kind ) && gBots.contains(newEvent.eventData.pubkey)) {
-        return;
+        continue;
       }
 
       // handle reaction events and return if we could not find the reacted to. Continue otherwise to add this to notification set newEventIdsSet
       if( newEvent.eventData.kind == 7) {
         if( processReaction(newEvent, allChildEventsMap) == "") {
           if(gDebug > 0) print("In insertEvents: For new reaction ${newEvent.eventData.id} could not find reactedTo or reaction was already present by this reactor");
-          return;
+          continue;
         }
       }
 
@@ -1430,12 +1435,12 @@ class Store {
       if( newEvent.eventData.kind == 5) {
         processDeleteEvent(allChildEventsMap, newEvent);
         if(gDebug > 0) print("In insertEvents: For new deleteion event ${newEvent.eventData.id} could not process it.");
-        return;
+        continue;
       }
 
       if( newEvent.eventData.kind == 4) {
         if( !isValidDirectMessage(newEvent.eventData)) { // direct message not relevant to user are ignored; also otherwise validates the message that it has one p tag
-          return;
+          continue;
         }
       }
 
@@ -1445,12 +1450,13 @@ class Store {
 
       // only kind 0, 1, 3, 4, 5( delete), 7, 40, 42, 140, 142 events are added to map-store, return otherwise
       if( !typesInEventMap.contains(newEvent.eventData.kind) ) {
-        return;
+        continue;
       }
 
       // expand mentions ( and translate if flag is set) and then add event to main event map; 142 events are expanded later
-      if( newEvent.eventData.kind != 142) 
+      if( newEvent.eventData.kind != 142) {
         newEvent.eventData.translateAndExpandMentions( allChildEventsMap); // this also handles dm decryption for kind 4 messages, for kind 1 will do translation/expansion; 
+      }
 
       // add them to the main store of the Tree object, but after checking that its not one of the dummy/missing events. 
       // In that case, replace the older dummy event, and only then add it to store-map
@@ -1462,7 +1468,7 @@ class Store {
           if( gDebug >= 0 && newEvent.eventData.id == gCheckEventId) log.info("In processIncoming: Replaced old dummy event of id: ${newEvent.eventData.id}");
           tree.event = newEvent;
           allChildEventsMap[tree.event.eventData.id] = tree;
-          return;
+          continue;
         }
       }
 
@@ -1471,10 +1477,10 @@ class Store {
       // add to new-notification list only if this is a recent event ( because relays may send old events, and we dont want to highlight stale messages)
       newEventIdsSet.add(newEvent.eventData.id);
      
-    });
+    }
     
     // now go over the newly inserted event, and add it to the tree for kind 1 events, add 42 events to channels. rest ( such as kind 0, kind 3, kind 7) are ignored.
-    newEventIdsSet.forEach((newId) {
+    for (var newId in newEventIdsSet) {
       Tree? newTree = allChildEventsMap[newId];
       if( newTree != null) {  // this should return true because we just inserted this event in the allEvents in block above
 
@@ -1497,21 +1503,22 @@ class Store {
                   topPosts.add(dummyTopNode);
 
                   // add it to list to fetch it from relays
-                  if( parentId.length == 64)
-                    dummyEventIds.add(parentId);                  
+                  if( parentId.length == 64) {
+                    dummyEventIds.add(parentId);
+                  }                  
                 }
             }
 
             // now process case where there is a tag which should put this kind 1 message in a channel
             String? location = newTree.event.eventData.getSpecificTag("location");
             if( location != null && location != "") {
-              addLocationTagEventInChannel(newTree.event.eventData, this.channels, allChildEventsMap);
+              addLocationTagEventInChannel(newTree.event.eventData, channels, allChildEventsMap);
             }
 
             // now process case where there is a tag which should put this kind 1 message in a channel
             List<String>? tTags = newTree.event.eventData.getTTags();
             if( tTags != null && tTags != "") {
-              addTTagEventInChannel(newTree.event.eventData, this.channels, allChildEventsMap);
+              addTTagEventInChannel(newTree.event.eventData, channels, allChildEventsMap);
             }
 
             break;
@@ -1562,19 +1569,19 @@ class Store {
             break;
         }
       }
-    });
+    }
 
     // get dummy events
     sendEventsRequest(gListRelayUrls, dummyEventIds);
 
     int totalTreeSize = 0;
-    topPosts.forEach((element) {totalTreeSize += element.count();});
+    for (var element in topPosts) {totalTreeSize += element.count();}
     if(gDebug > 0) print("In end of insertEvents: allChildEventsMap size = ${allChildEventsMap.length}; mainTree count = $totalTreeSize");
     if(gDebug > 0)  print("Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements>"} ");
     return newEventIdsSet;
   } // end insertEvents()
 
-  /***********************************************************************************************************************************/
+  /// ********************************************************************************************************************************
   /*
    * @printNotifications Add the given events to the Tree, and print the events as notifications
    *                     It should be ensured that these are only kind 1 events
@@ -1600,13 +1607,13 @@ class Store {
     }
    
     List<Tree> topNotificationTree = []; // collect all top tress to display in this list. only unique tress will be displayed
-    newEventIdsSet.forEach((eventID) { 
+    for (var eventID in newEventIdsSet) { 
       
       Tree ?t = allChildEventsMap[eventID];
       if( t == null) {
         // ignore if not in Tree. Should ideally not happen. TODO write warning otherwise
         if( gDebug > 0) print("In printNotifications: Could not find event $eventID in tree");
-        return;
+        continue;
       } else {
         if( isRelevantForNotification(t)) {
           switch(t.event.eventData.kind) {
@@ -1643,7 +1650,7 @@ class Store {
           }
         }
       }
-    });
+    }
 
     // remove duplicate top trees
     Set ids = {};
@@ -1655,7 +1662,7 @@ class Store {
     gFollowList = getFollows(userPublicKey);
 
     List<int> ret = [0,0,0];
-    topNotificationTree.forEach( (t) {
+    for (var t in topNotificationTree) {
       bool selectorTrees_followActionsWithNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey), enableNotifications: true);
       if( selectorTrees_followActionsWithNotifications(t)) {
         List<int> temp = Store.printTopPost(t, 0, DateTime(0));
@@ -1664,7 +1671,7 @@ class Store {
         ret[2] += temp[2];
         //print("\n");
       }
-    });
+    }
 
     return ret;
   }
@@ -1691,7 +1698,7 @@ class Store {
     return count;
   }
 
-   /***********************************************************************************************************************************/
+   /// ********************************************************************************************************************************
   /* The main print tree function. Calls the treeSelector() for every node and prints it( and its children), only if it returns true. 
    */
   List<int> printStoreTrees(int depth, DateTime newerThan, fTreeSelector treeSelector, [int maxToPrint = gMaxEventsInThreadPrinted]) {
@@ -1787,11 +1794,9 @@ class Store {
     return 0;
   }
 
-  /**
-   * @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom) and for 14x channels both; channelsToPrint is different for both
-   * 
-   * @param numRoomsOverview This many number of rooms should be printed. 
-   */
+  /// @printAllChennelsInfo Print one line information about all channels, which are type 40 events ( class ChatRoom) and for 14x channels both; channelsToPrint is different for both
+  /// 
+  /// @param numRoomsOverview This many number of rooms should be printed. 
   int printChannelsOverview(List<Channel> channelsToPrint, int numRoomsOverview, fRoomSelector selector, var tempChildEventsMap , Set<String>? secretMessageIds) {
 
     channelsToPrint.sort(scrollableCompareTo);
@@ -1818,7 +1823,7 @@ class Store {
 
       //stdout.write("channel type: " + channelsToPrint[j].roomType.toString());
 
-      if( channelsToPrint[j].participants.length > 0 &&  !channelsToPrint[j].participants.contains(userPublicKey)) {
+      if( channelsToPrint[j].participants.isNotEmpty &&  !channelsToPrint[j].participants.contains(userPublicKey)) {
         continue;
       }
 
@@ -1838,11 +1843,11 @@ class Store {
       }
 
       if( channelsToPrint[j].chatRoomName != "") {
-        name = "${channelsToPrint[j].chatRoomName}";
+        name = channelsToPrint[j].chatRoomName;
       }
 
       int numMessages = channelsToPrint[j].getNumValidMessages();
-      stdout.write("${name} ${getNumSpaces(32-name.length)}  $id  $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
+      stdout.write("$name ${getNumSpaces(32-name.length)}  $id  $numMessages${getNumSpaces(20- numMessages.toString().length)}"); 
       numChannelsActuallyPrinted++;
       List<String> messageIds = channelsToPrint[j].messageIds;
       for( int i = messageIds.length - 1; i >= 0; i--) {
@@ -1850,7 +1855,7 @@ class Store {
           Event? e = allChildEventsMap[messageIds[i]]?.event;
           if( e!= null) {
             if( !(e.eventData.kind == 142 && e.eventData.content == e.eventData.evaluatedContent)) {
-              stdout.write("${e.eventData.getAsLine(tempChildEventsMap, secretMessageIds, channelsToPrint)}");
+              stdout.write(e.eventData.getAsLine(tempChildEventsMap, secretMessageIds, channelsToPrint));
               break; // print only one event, the latest one
             }
           }
@@ -1886,15 +1891,15 @@ class Store {
     stdout.write("\nChannel participants   : ");
     
     int i = 0;
-    room.participants.forEach((participant) {
+    for (var participant in room.participants) {
       
       if( i != 0) {
         stdout.write(', ');
       }
       String pName = getAuthorName(participant);
-      printInColor("$pName", gCommentColor);
+      printInColor(pName, gCommentColor);
       i++;
-    });
+    }
 
   }
 
@@ -1968,7 +1973,7 @@ class Store {
       }
       return fullChannelId.first;
     } else {
-      if( fullChannelId.length == 0) {
+      if( fullChannelId.isEmpty) {
         printWarning("Could not find the channel.");
       }
       else {
@@ -1982,16 +1987,15 @@ class Store {
     return directRooms.length;
   }
 
-  /**
-   * @printDirectRoomInfo Print one line information about chat rooms
-   */
+  /// @printDirectRoomInfo Print one line information about chat rooms
   int printDirectRoomsOverview(fRoomSelector roomSelector, int numRoomsOverview, var tempChildEventsMap) { 
     directRooms.sort(scrollableCompareTo);
 
     int numNotificationRooms = 0;
     for( int j = 0; j < directRooms.length; j++) {
-      if( roomSelector(directRooms[j]))
+      if( roomSelector(directRooms[j])) {
         numNotificationRooms++;
+      }
     }
 
     // even if num rooms is zero, we will show the heading when its show all rooms
@@ -2026,8 +2030,9 @@ class Store {
 
     int iNotification = 0; // notification counter
     for( int j = startRoomIndex; j < endRoomIndex; j++) {
-      if( !roomSelector(directRooms[j]))
+      if( !roomSelector(directRooms[j])) {
         continue;
+      }
 
       // print only that we have been asked for
       if( iNotification++ > numNotificationRooms) {
@@ -2042,7 +2047,7 @@ class Store {
       room.visitAllMessages(this, markAllRead);
 
       int numMessages = room.messageIds.length;
-      stdout.write("${name} ${getNumSpaces(32-name.length)}          $id   $numMessages${getNumSpaces(18- numMessages.toString().length)}"); 
+      stdout.write("$name ${getNumSpaces(32-name.length)}          $id   $numMessages${getNumSpaces(18- numMessages.toString().length)}"); 
 
       // print latest event in one line
       List<String> messageIds = room.messageIds;
@@ -2106,10 +2111,10 @@ class Store {
         }
       }
     } else {
-      if( lookedUpName.length > 0) {
+      if( lookedUpName.isNotEmpty) {
        printWarning("Got more than one public id for the name given, which are: ");
        for(String pubkey in lookedUpName) {
-        print("${getAuthorName(pubkey)} - ${pubkey}, ");
+        print("${getAuthorName(pubkey)} - $pubkey, ");
        }
       }
       else { // in case the given id is not present in our global list of usernames, create new room for them 
@@ -2169,7 +2174,7 @@ class Store {
   Future<void> writeEventsToFile(String filename) async {
 
     // this variable will be used later; update it if needed
-    if( gFollowList.length == 0) {
+    if( gFollowList.isEmpty) {
       gFollowList = getFollows(userPublicKey);
     }
 
@@ -2207,7 +2212,7 @@ class Store {
         }
 
         String temp = tree.event.originalJson.trim();
-        String line = "${temp}\n";
+        String line = "$temp\n";
         nLinesStr += line;
         eventCounter++;
         if( tree.event.eventData.kind == 1) {
@@ -2227,8 +2232,8 @@ class Store {
         nLinesStr = "";
       }
 
-      if(gDebug > 0) log.info("finished writing eventCounter = ${eventCounter}.");
-      print("Appended $eventCounter new events to file \"$gEventsFilename\" of which ${countPosts} are posts.");
+      if(gDebug > 0) log.info("finished writing eventCounter = $eventCounter.");
+      print("Appended $eventCounter new events to file \"$gEventsFilename\" of which $countPosts are posts.");
     } on Exception catch (e) {
         print("Could not open file $filename.");
         if( gDebug > 0) print("Could not open file: $e");
@@ -2241,7 +2246,7 @@ class Store {
    *                   Also adds 'client' tag with application name.
    * @parameter replyToId First few letters of an event id for which reply is being made
    */
-  String getTagStr(String replyToId, String clientName, [bool addAllP = false, Set<String>? extraTags = null]) {
+  String getTagStr(String replyToId, String clientName, [bool addAllP = false, Set<String>? extraTags]) {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
 
     //print("extraTags = $extraTags");
@@ -2249,26 +2254,29 @@ class Store {
 
     if( extraTags != null)
     for( String extraTag in extraTags) {
-      if( otherTags.length > 0) 
+      if( otherTags.isNotEmpty) {
         otherTags += ",";
+      }
       otherTags += '["t","$extraTag"]';
     }
 
     if( gWhetherToSendClientTag) {
-      if( otherTags.length > 0) 
+      if( otherTags.isNotEmpty) {
         otherTags += ",";
+      }
       otherTags += '["client","$clientName"]';
     }
 
     if( gUserLocation != "") {
-      if( otherTags.length > 0) 
+      if( otherTags.isNotEmpty) {
         otherTags += ",";
+      }
       otherTags += '["location","$gUserLocation"]';
     }
 
     //print("otherTags = $otherTags");
     if( replyToId.isEmpty) {
-      return otherTags.length >0 ? otherTags: '[]';
+      return otherTags.isNotEmpty ? otherTags: '[]';
     }
 
     String strTags = otherTags ;
@@ -2293,7 +2301,7 @@ class Store {
     if( latestEventId.isEmpty && replyToId.length == 64) {
       latestEventId = replyToId;  
     }
-    if( latestEventId.isEmpty && replyToId.length != 64 && replyToId.length != 0) {
+    if( latestEventId.isEmpty && replyToId.length != 64 && replyToId.isNotEmpty) {
       return "";
     }
 
@@ -2301,8 +2309,9 @@ class Store {
     if( latestEventId.isNotEmpty) {
       String? pTagPubkey = allChildEventsMap[latestEventId]?.event.eventData.pubkey;
       if( pTagPubkey != null) {
-        if( strTags.length > 0) 
+        if( strTags.isNotEmpty) {
           strTags += ",";
+        }
         strTags += '["p","$pTagPubkey"]';
       }
       String relay = getRelayOfUser(userPublicKey, pTagPubkey??"");
@@ -2315,14 +2324,16 @@ class Store {
         Tree topTree = getTopTree(t);
         rootEventId = topTree.event.eventData.id;
         if( rootEventId != latestEventId) { // if the reply is to a top/parent event, then only one e tag is sufficient
-          if( strTags.length > 0) 
+          if( strTags.isNotEmpty) {
             strTags += ",";
+          }
           strTags +=  '["e","$rootEventId","","root"]';
         }
       }
 
-      if( strTags.length > 0) 
+      if( strTags.isNotEmpty) {
         strTags += ",";
+      }
       strTags +=  '["e","$latestEventId","$relay","reply"]';
     }
 
@@ -2405,7 +2416,7 @@ class Store {
       latestEventId = replyToId;  
     }
 
-    if( latestEventId.isEmpty && replyToId.length != 64 && replyToId.length != 0) {
+    if( latestEventId.isEmpty && replyToId.length != 64 && replyToId.isNotEmpty) {
       printWarning('Could not find the given id: $replyToId. Sending a regular message.');
     }
 
@@ -2422,7 +2433,7 @@ class Store {
 
       // add root for kind 1 in rooms
       if( [enumRoomType.RoomLocationTag, enumRoomType.RoomTTag].contains( channel.roomType) ) {
-        Tree? replyTree = allChildEventsMap[latestEventId]??null;
+        Tree? replyTree = allChildEventsMap[latestEventId];
         if( replyTree != null) {
           Tree rootTree = getTopTree(replyTree);
           String rootEventId = rootTree.event.eventData.id;
@@ -2517,7 +2528,7 @@ class Store {
       } else {
         stdout.write("* Of the $selfNumContacts people you follow, $numSecond follow you back. Their names are: ");
         mutualFollows.sort();
-        mutualFollows.forEach((name) { stdout.write("$name, ");});
+        for (var name in mutualFollows) { stdout.write("$name, ");}
       }
       print("");
     } else {  // end if contact event was found
@@ -2536,9 +2547,9 @@ class Store {
   static List<String> processDeleteEvent(Map<String, Tree> tempChildEventsMap, Event deleterEvent) {
     List<String> deletedEventIds = [];
     if( deleterEvent.eventData.kind == 5) {
-      deleterEvent.eventData.tags.forEach((tag) { 
+      for (var tag in deleterEvent.eventData.tags) { 
         if( tag.length < 2) {
-          return;
+          continue;
         }
         if( tag[0] == "e") {
           String deletedEventId = tag[1];
@@ -2555,7 +2566,7 @@ class Store {
             }          
           }
         }
-      });
+      }
     } // end if
     return deletedEventIds;
   } // end processDeleteEvent
@@ -2566,7 +2577,7 @@ class Store {
       Event deleterEvent = tree.event;
       if( deleterEvent.eventData.kind == 5) {
           List<String> tempIds = processDeleteEvent(tempChildEventsMap, deleterEvent);
-          tempIds.forEach((tempId) { deletedEventIds.add(tempId); });
+          for (var tempId in tempIds) { deletedEventIds.add(tempId); }
       }
     });
     return deletedEventIds;
@@ -2590,8 +2601,9 @@ class Store {
   // the reactedTo event's id, blank if invalid reaction etc
   static String processReaction(Event event, Map<String, Tree> tempChildEventsMap) {
 
-    if(  gDebug > 0 && event.eventData.id == gCheckEventId)
-        print("in processReaction: 0 got reaction $gCheckEventId");
+    if(  gDebug > 0 && event.eventData.id == gCheckEventId) {
+      print("in processReaction: 0 got reaction $gCheckEventId");
+    }
 
     List<String> validReactionList = ["+", "!"]; // TODO support opposite reactions 
     List<String> opppositeReactions = ['-', "~"];
@@ -2785,20 +2797,24 @@ Store getTree(Set<Event> events) {
     events.retainWhere((event) => ids.add(event.eventData.id));
 
     // process kind 0 events about metadata 
-    events.forEach( (event) =>  processKind0Event(event));
+    for (var event in events) {
+      processKind0Event(event);
+    }
 
     // process kind 3 events which is contact list. Update global info about the user (with meta data) 
-    events.forEach( (event) =>  processKind3Event(event));
+    for (var event in events) {
+      processKind3Event(event);
+    }
 
     // create tree from events
     Store node = Store.fromEvents(events);
 
     // translate and expand mentions 
-    events.where((element) => [1, 42].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.translateAndExpandMentions( node.allChildEventsMap));;
+    events.where((element) => [1, 42].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.translateAndExpandMentions( node.allChildEventsMap));
     
     // has been done in fromEvents
     //events.where((element) => [gSecretMessageKind].contains(element.eventData.kind)).forEach( (event) =>   event.eventData.TranslateAndDecryptGroupInvite( ));;
-    events.where((element) => element.eventData.kind == 142).forEach( (event) => event.eventData.translateAndDecrypt14x(node.encryptedGroupInviteIds, node.encryptedChannels, node.allChildEventsMap));;
+    events.where((element) => element.eventData.kind == 142).forEach( (event) => event.eventData.translateAndDecrypt14x(node.encryptedGroupInviteIds, node.encryptedChannels, node.allChildEventsMap));
 
     return node;
 }
@@ -2807,18 +2823,19 @@ Store getTree(Set<Event> events) {
 String getDirectRoomId(EventData eventData) {
 
   List<String> participantIds = [];
-  eventData.tags.forEach((tag) { 
-    if( tag.length < 2) 
-      return;
+  for (var tag in eventData.tags) { 
+    if( tag.length < 2) {
+      continue;
+    }
 
       if( tag[0] == 'p') {
         participantIds.add(tag[1]);
       }
-  });
+  }
 
   participantIds.sort();
   String uniqueId = "";
-  participantIds.forEach((element) {uniqueId += element;}); // TODO ensure its only one thats added s
+  for (var element in participantIds) {uniqueId += element;} // TODO ensure its only one thats added s
 
   // send the other persons pubkey as identifier 
   if( eventData.pubkey == userPublicKey) {

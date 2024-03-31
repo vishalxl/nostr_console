@@ -38,7 +38,7 @@ class UserNameInfo {
   Event ?latestContactEvent;
   bool nip05Verified;
   String? nip05Id;
-  UserNameInfo(this.createdAt, this.name, this.about, this.picture, this.lud06, this.lud16, this.display_name, this.website, this.nip05Id , this.latestContactEvent,  [this.createdAtKind3 = null, this.nip05Verified = false]);
+  UserNameInfo(this.createdAt, this.name, this.about, this.picture, this.lud06, this.lud16, this.display_name, this.website, this.nip05Id , this.latestContactEvent,  [this.createdAtKind3, this.nip05Verified = false]);
 }
 
 /* 
@@ -59,7 +59,7 @@ Set<String> getReactorPubkeys(String eventId) {
   List<List<String>>? reactions = gReactions[eventId];
 
   if( reactions != null) {
-    reactions.forEach((reaction) { reactorIds.add(reaction[0]);});
+    for (var reaction in reactions) { reactorIds.add(reaction[0]);}
   }
 
   return reactorIds;
@@ -157,22 +157,22 @@ class EventData {
       }
   
       // then depending on the numbers and values ( of root and replyto) return the parent
-      if( replyId.length > 0) {
+      if( replyId.isNotEmpty) {
         if( numReply == 1) {
           return replyId;
         } else {
           // if there are multiply reply's we can't tell which is which, so we return the one at top
-          if( replyId.length > 0) { 
+          if( replyId.isNotEmpty) { 
             return replyId;  
           } else {
             // this is case when there is no reply id . should not actually happen given if conditions
-            if( rootId.length > 0) {
+            if( rootId.isNotEmpty) {
               return rootId;
             }
           }
         }
       } else {
-        if( rootId.length > 0) {
+        if( rootId.isNotEmpty) {
           //printWarning("returning root id. no reply id found.");
           return rootId;
         }
@@ -209,7 +209,7 @@ class EventData {
   }
 
   List<String>? getTTags() {
-    List<String>? tTags = null;
+    List<String>? tTags;
 
     for( int i = 0; i < tags.length; i++) {
       List<String> tag = tags[i];
@@ -217,9 +217,7 @@ class EventData {
         continue;
       }
       if( tag[0] == 't') {
-        if( tTags == null ) {
-          tTags = [];
-        }
+        tTags ??= [];
 
         tTags.add(tag[1]);
       }
@@ -268,7 +266,7 @@ class EventData {
       try {
         verifyEvent(json);
 
-      } on Exception catch(e) {
+      } on Exception {
         //printWarning("verify gave exception $e");
         throw Exception("in Event constructor: sig verify gave exception");
       }
@@ -364,7 +362,7 @@ class EventData {
               String author = getAuthorName(mentionedId);
               return "@$author";
             } else {
-              EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData??null;
+              EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData;
               if( eventData != null) {
                 String quotedAuthor = getAuthorName(eventData.pubkey);
                 String prefixId = mentionedId.substring(0, 3);
@@ -401,7 +399,7 @@ class EventData {
     }
 
     // replace the mentions, if any are found
-    String mentionStr = "(\#\[[0-9]+\])";
+    String mentionStr = "(#[[0-9]+])";
     RegExp mentionRegExp = RegExp(mentionStr);
     content = content.replaceAllMapped(mentionRegExp, replaceMentions);
     return content;
@@ -468,7 +466,7 @@ class EventData {
         return null;
       }
 
-      if(!isValidDirectMessage(this, acceptableKind: this.kind)) {
+      if(!isValidDirectMessage(this, acceptableKind: kind)) {
         return null;
       }
 
@@ -577,19 +575,19 @@ class EventData {
     int ivIndex = content.indexOf("?iv=");
     if( ivIndex > 0) {
       var iv = content.substring( ivIndex + 4, content.length);
-      var enc_str = content.substring(0, ivIndex);
+      var encStr = content.substring(0, ivIndex);
 
       String userKey = userPrivateKey ;
-      String otherUserPubKey = "02" + pubkey;
+      String otherUserPubKey = "02$pubkey";
       if( pubkey == userPublicKey) { // if user themselve is the sender change public key used to decrypt
         userKey =  userPrivateKey;
         int numPtags = 0;
-        tags.forEach((tag) {
+        for (var tag in tags) {
           if(tag[0] == "p" ) {
-            otherUserPubKey = "02" + tag[1];
+            otherUserPubKey = "02${tag[1]}";
             numPtags++;
           }
-        }); 
+        } 
         // if there are more than one p tags, we don't know who its for
         if( numPtags != 1) {
           if( gDebug >= 0) printInColor(" in translateAndExpand: got event $id with number of p tags != one : $numPtags . not decrypting", redColor);
@@ -597,7 +595,7 @@ class EventData {
         }
       } 
 
-      var decrypted = myPrivateDecrypt( userKey, otherUserPubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+      var decrypted = myPrivateDecrypt( userKey, otherUserPubKey, encStr, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
       return decrypted;
     } else {
       if(gDebug > 0) print("Invalid content for dm, could not get ivIndex: $content");
@@ -629,7 +627,7 @@ class EventData {
       return null;
     }
     var iv = content.substring( ivIndex + 4, content.length);
-    var enc_str = content.substring(0, ivIndex);
+    var encStr = content.substring(0, ivIndex);
         
     String channelId = getChannelIdForKind4x();
     List<String> keys = [];
@@ -642,9 +640,9 @@ class EventData {
     }
 
     String priKey = keys[0];
-    String pubKey = "02" + keys[1];
+    String pubKey = "02${keys[1]}";
 
-    var decrypted = myPrivateDecrypt( priKey, pubKey, enc_str, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
+    var decrypted = myPrivateDecrypt( priKey, pubKey, encStr, iv); // use bob's privatekey and alic's publickey means bob can read message from alic
     return decrypted;
   }
 
@@ -657,7 +655,7 @@ class EventData {
     // get first e tag, which should be the channel of which this is part of
     for( int i = 0; i < eTags.length; i++) {
       List tag = eTags[i];
-      if( tag.length >= 1) {
+      if( tag.isNotEmpty) {
         return tag[0];
       }
     }
@@ -665,7 +663,7 @@ class EventData {
   }
 
   String getChannelIdForTTagRoom(String tagValue) {
-    return tagValue + " #t";
+    return "$tagValue #t";
   }
 
   // only applicable for kind 42/142 event; returns the channel 40/140 id of which the event is part of
@@ -687,9 +685,9 @@ class EventData {
 
     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
     if( tempChildEventsMap != null )
-    if(kind == 4)
+    if(kind == 4) {
       translateAndDecryptKind4( tempChildEventsMap);
-    else if ([1, 42].contains(kind)) {
+    } else if ([1, 42].contains(kind)) {
       translateAndExpandMentions(tempChildEventsMap);
     } else if ([142].contains(kind)) {
       if( secretMessageIds != null && encryptedChannels != null) {
@@ -752,7 +750,7 @@ class EventData {
       strToPrint += "█";
     }
 
-    strToPrint += "${name}: ";
+    strToPrint += "$name: ";
     const int typicalxLen = "|id: 82b5 , 12:04 AM Sep 19".length + 5; // not sure where 5 comes from 
     List<dynamic> reactionString = getReactionStr(depth);
     //print("\n|${reactionString[0]}|\n ${  reactionString[1]}\n }");
@@ -781,8 +779,9 @@ class EventData {
 
     // effective len of last line is used to calcluate where the idDateLikes str is affixed at the end 
     int effectiveLastLineLen = lastLineLen - gSpacesPerDepth * depth - effectiveNameFieldLen - gNumLeftMarginSpaces;
-    if( contentShifted.length <= maxLineLen )
+    if( contentShifted.length <= maxLineLen ) {
       effectiveLastLineLen = contentShifted.length;
+    }
 
     // needed to use this because the color padding in notifications reactions will mess up the length calculation in the actual reaction string
     int colorStrLen = reactionString[0].length -  reactionString[1];
@@ -791,20 +790,20 @@ class EventData {
     if( (gSpacesPerDepth * depth + effectiveNameFieldLen + effectiveLastLineLen + idDateLikes.length ) <= gTextWidth) {
       idDateLikes =  idDateLikes.padLeft((gTextWidth ) + colorStrLen - (gSpacesPerDepth * depth + effectiveNameFieldLen + effectiveLastLineLen));
     } else {
-      idDateLikes =   "\n" + idDateLikes.padLeft(gNumLeftMarginSpaces + gTextWidth + colorStrLen);
+      idDateLikes =   "\n${idDateLikes.padLeft(gNumLeftMarginSpaces + gTextWidth + colorStrLen)}";
     }
 
     // print content and the dateslikes string
-    strToPrint += getStrInColor(contentShifted + idDateLikes + "\n", commentColor);
+    strToPrint += getStrInColor("$contentShifted$idDateLikes\n", commentColor);
     stdout.write(strToPrint);
   }
 
   String getAsLine(var tempChildEventsMap, Set<String>? secretMessageIds, List<Channel>? encryptedChannels, {int len = 20}) {
 
     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
-    if(kind == 4)
+    if(kind == 4) {
       translateAndDecryptKind4( tempChildEventsMap);
-    else if ([1, 42].contains(kind)) {
+    } else if ([1, 42].contains(kind)) {
       translateAndExpandMentions(tempChildEventsMap);
     } else if ([142].contains(kind)) {
       if( tempChildEventsMap != null && secretMessageIds != null && encryptedChannels != null) {
@@ -839,12 +838,12 @@ class EventData {
 
     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
      // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
-    if(kind == 4)
+    if(kind == 4) {
       translateAndDecryptKind4( tempChildEventsMap);
-    else if ([1, 42].contains(kind)) {
+    } else if ([1, 42].contains(kind)) {
       translateAndExpandMentions(tempChildEventsMap);
     } else if ([142].contains(kind)) {
-      if( tempChildEventsMap != null && secretMessageIds != null && encryptedChannels != null) {
+      if( secretMessageIds != null && encryptedChannels != null) {
         //print('decrypting 14x in getStrForChannel');
         translateAndDecrypt14x(secretMessageIds, encryptedChannels, tempChildEventsMap);
       }
@@ -867,8 +866,9 @@ class EventData {
       tempEvaluatedContent = tempContent = content; // content would be changed so show that 
     }
 
-    if( tempEvaluatedContent=="") 
+    if( tempEvaluatedContent=="") {
       tempEvaluatedContent = tempContent;
+    }
 
     const int nameWidthDepth = 16~/gSpacesPerDepth; // how wide name will be in depth spaces
     const int timeWidthDepth = 18~/gSpacesPerDepth;
@@ -900,13 +900,13 @@ class EventData {
           if( replyToEvent.eventData.evaluatedContent.length <= gReplyLengthPrinted){
              replyToPrint = replyToEvent.eventData.evaluatedContent;
           } else {
-            replyToPrint = replyToEvent.eventData.evaluatedContent.substring(0, gReplyLengthPrinted) + "...";
+            replyToPrint = "${replyToEvent.eventData.evaluatedContent.substring(0, gReplyLengthPrinted)}...";
           }
           strReplyTo = 'In reply to:"${getAuthorName(replyToEvent.eventData.pubkey)}: $replyToPrint"';
           strReplyTo = makeParagraphAtDepth(strReplyTo, finalContentDepthInSpaces + 6); // one extra for content
           
           // add reply to string to end of the content. How it will show:
-          contentShifted += ( "\n" + getNumSpaces( contentPlacementColumn + gSpacesPerDepth) +  strReplyTo); 
+          contentShifted += ( "\n${getNumSpaces( contentPlacementColumn + gSpacesPerDepth)}$strReplyTo"); 
         }
       }
     } else {
@@ -916,10 +916,10 @@ class EventData {
     String msgId = id.substring(0, 3).padLeft(gSpacesPerDepth~/2).padRight(gSpacesPerDepth) ;
 
     if( isNotification) {
-      strToPrint = "$gNotificationColor${getDepthSpaces(depth-1)}$msgId  $dateToPrint    $nameToPrint: $gNotificationColor" +  contentShifted + gColorEndMarker;
+      strToPrint = "$gNotificationColor${getDepthSpaces(depth-1)}$msgId  $dateToPrint    $nameToPrint: $gNotificationColor$contentShifted$gColorEndMarker";
       isNotification = false;
     } else {
-      strToPrint = "${getDepthSpaces(depth-1)}$msgId  $dateToPrint    $nameToPrint: " +  contentShifted;
+      strToPrint = "${getDepthSpaces(depth-1)}$msgId  $dateToPrint    $nameToPrint: $contentShifted";
     }
     return strToPrint;
   }
@@ -956,8 +956,9 @@ class EventData {
           firstEntry = false;
         } else {
           // this is normal printing of the reaction. only print for + for now
-          if( reactors[i][1] == "+")
+          if( reactors[i][1] == "+") {
             authorName = getAuthorName(reactorId);
+          }
             reactorNames += comma + authorName;
             len += (2 + authorName.length);
             firstEntry = false;
@@ -979,14 +980,14 @@ class EventData {
 
   // returns the last e tag as reply to event for kind 42 and 142 events
   Event? getReplyToChannelEvent(Map<String, Tree> tempChildEventsMap) {
-    switch (this.kind) {
+    switch (kind) {
       case 42:
       case 142:
       for(int i = tags.length - 1; i >= 0; i--) {
         List tag = tags[i];
         if( tag[0] == 'e') {
           String replyToEventId = tag[1];
-          Event? eventInReplyTo = (gStore?.allChildEventsMap[replyToEventId]?.event)??null;
+          Event? eventInReplyTo = (gStore?.allChildEventsMap[replyToEventId]?.event);
           if( eventInReplyTo != null) {
             // add 1 cause 42 can reply to or tag kind 1, and we'll show that kind 1
             if ( [1,42,142].contains( eventInReplyTo.eventData.kind)) { 
@@ -1039,14 +1040,15 @@ class Event {
       }
 
       EventData newEventData = EventData.fromJson(json[2]);
-      if( !fromFile) 
+      if( !fromFile) {
         newEventData.isNotification = true;
+      }
       return Event(json[0] as String, json[1] as String, newEventData, [relay], d, fromFile );
     } on Exception catch(e) {
       if( gDebug > 0) {
         print("Could not create event. $e\nproblem str: $d\n");
       }
-      throw e;
+      rethrow;
     }
   }
 
@@ -1115,7 +1117,7 @@ bool processKind0Event(Event e) {
   String picture = "";
   String lud06 = "";
   String lud16 = "";
-  String display_name = "";
+  String displayName = "";
   String website = "";
   String nip05 = "";
 
@@ -1126,7 +1128,7 @@ bool processKind0Event(Event e) {
     picture = json["picture"]??"";    
     lud06 = json["lud06"]??"";    
     lud16 = json["lud16"]??"";    
-    display_name = json["display_name"]??"";    
+    displayName = json["display_name"]??"";    
     website = json["website"]??"";    
     nip05 = json['nip05']??"";
     //String twitterId = json['twitter']??"";
@@ -1137,12 +1139,12 @@ bool processKind0Event(Event e) {
 
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(e.eventData.pubkey)) {    
-    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, display_name, website, nip05, null);
-    newEntry = true;;
+    gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, displayName, website, nip05, null);
+    newEntry = true;
   } else {
     int oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
     if( oldTime < e.eventData.createdAt) {
-      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, display_name, website, nip05, null);
+      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, displayName, website, nip05, null);
       entryModified = true;
     }
   }
@@ -1154,13 +1156,13 @@ bool processKind0Event(Event e) {
   bool localDebug = false; //e.eventData.pubkey == "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437"? true: false;
 
   if( newEntry || entryModified) {
-    if(nip05.length > 0) {
+    if(nip05.isNotEmpty) {
       List<String> urlSplit = nip05.split("@");
       if( urlSplit.length == 2) {
         
-        String urlNip05 = urlSplit[1] + "/.well-known/nostr.json?name=" + urlSplit[0];
+        String urlNip05 = "${urlSplit[1]}/.well-known/nostr.json?name=${urlSplit[0]}";
         if( !urlNip05.startsWith("http")) {
-          urlNip05 = "http://"+ urlNip05;
+          urlNip05 = "http://$urlNip05";
         }
 
         fetchNip05Info(urlNip05)
@@ -1178,7 +1180,7 @@ bool processKind0Event(Event e) {
                     int oldTime = 0;
                     if( !gKindONames.containsKey(e.eventData.pubkey)) {
                       //printWarning("in response handing. creating user info");
-                      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, display_name, website,null, null);
+                      gKindONames[e.eventData.pubkey] = UserNameInfo(e.eventData.createdAt, name, about, picture, lud06, lud16, displayName, website,null, null);
                     } else {
                       oldTime = gKindONames[e.eventData.pubkey]?.createdAt??0;
                       //print("in response handing. user info exists with old time = $oldTime and this event time = ${e.eventData.createdAt}");
@@ -1215,23 +1217,23 @@ bool processKind3Event(Event newContactEvent) {
   bool newEntry = false, entryModified = false;
   if( !gKindONames.containsKey(newContactEvent.eventData.pubkey)) {
     gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(null, null, null, null, null, null, null, null, null, newContactEvent, newContactEvent.eventData.createdAt);
-    newEntry = true;;
+    newEntry = true;
   } else {
     // if entry already exists, then check its old time and update only if we have a newer entry now
     int oldTime = gKindONames[newContactEvent.eventData.pubkey]?.createdAtKind3??0;
     if( oldTime < newContactEvent.eventData.createdAt) {
-      int? createdAt = gKindONames[newContactEvent.eventData.pubkey]?.createdAt??null;
+      int? createdAt = gKindONames[newContactEvent.eventData.pubkey]?.createdAt;
       String?   name = gKindONames[newContactEvent.eventData.pubkey]?.name, 
                about = gKindONames[newContactEvent.eventData.pubkey]?.about, 
              picture = gKindONames[newContactEvent.eventData.pubkey]?.picture,
                lud06 = gKindONames[newContactEvent.eventData.pubkey]?.lud06,
                lud16 = gKindONames[newContactEvent.eventData.pubkey]?.lud16,
-               display_name = gKindONames[newContactEvent.eventData.pubkey]?.display_name,
+               displayName = gKindONames[newContactEvent.eventData.pubkey]?.display_name,
                website = gKindONames[newContactEvent.eventData.pubkey]?.website,
              nip05id = gKindONames[newContactEvent.eventData.pubkey]?.nip05Id??"";
       
-      gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(createdAt, name, about, picture, lud06, lud16, display_name, website, nip05id, newContactEvent, newContactEvent.eventData.createdAt );
-      entryModified = true;;
+      gKindONames[newContactEvent.eventData.pubkey] = UserNameInfo(createdAt, name, about, picture, lud06, lud16, displayName, website, nip05id, newContactEvent, newContactEvent.eventData.createdAt );
+      entryModified = true;
     }
   }
 
@@ -1260,16 +1262,16 @@ String getNip05Name( String pubkey) {
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
 String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5}) {
 
-  if( gFollowList.length == 0)  {
+  if( gFollowList.isEmpty)  {
     gFollowList = getFollows(userPublicKey);
   }
   bool isFollow = gFollowList.contains(pubkey) && (pubkey != userPublicKey);
 
   String maxLen(String pubkey) => pubkey.length > pubkeyLenShown? pubkey.substring(0,pubkeyLenShown) : pubkey.substring(0, pubkey.length);
   String name = "";
-  if( gKindONames[pubkey]?.name == null || gKindONames[pubkey]?.name?.length == 0)
-     name = maxLen(pubkey);
-  else {
+  if( gKindONames[pubkey]?.name == null || gKindONames[pubkey]?.name?.length == 0) {
+    name = maxLen(pubkey);
+  } else {
     name = (gKindONames[pubkey]?.name)??maxLen(pubkey);
   }
 
@@ -1291,7 +1293,7 @@ String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkey
 
 // returns full public key(s) for the given username( which can be first few letters of pubkey, or the user name)
 Set<String> getPublicKeyFromName(String inquiredName) {
-  if( inquiredName.length < 1) {
+  if( inquiredName.isEmpty) {
     return {};
   }
   Set<String> pubkeys = {};
@@ -1337,8 +1339,9 @@ void printDepth(int d) {
 void printCenteredHeadline(displayName) {
   int numDashes = 10; // num of dashes on each side
   int startText = gNumLeftMarginSpaces + ( gTextWidth - (displayName.length + 2 * numDashes)) ~/ 2; 
-  if( startText < 0) 
+  if( startText < 0) {
     startText = 0;
+  }
 
   String str = getNumSpaces(startText) + getNumDashes(numDashes) + displayName + getNumDashes(numDashes);
   print(str);
@@ -1369,7 +1372,7 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
     String line = listCulledLine[0];
     int lenReturned = listCulledLine[1] as int;
 
-    if( line.length == 0 || lenReturned == 0) break;
+    if( line.isEmpty || lenReturned == 0) break;
 
     newString += line;
     startIndex += lenReturned;
@@ -1381,8 +1384,9 @@ String makeParagraphAtDepth(String s, int depthInSpaces) {
 // returns from string[startIndex:] the first len number of chars. no newline is added. 
 List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesString, List<List<int>> urlRanges) {
 
-  if( startIndex >= s.length)
+  if( startIndex >= s.length) {
     return ["", 0];
+  }
 
   String line = ""; // is returned
   
@@ -1420,7 +1424,9 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
         int i = line.length - 1;
 
         // find a whitespace character
-        for( ; i > 0 && !isWordSeparater(line[i]); i--);
+        for( ; i > 0 && !isWordSeparater(line[i]); i--) {
+           {}
+        }
         // for ended 
 
         if( line.length - i  < gMaxLenUnbrokenWord) {
@@ -1428,9 +1434,10 @@ List getLineWithMaxLen(String s, int startIndex, int lenPerLine, String spacesSt
           // break the line here if its a word separator
           if( isWordSeparater(line[i])) {
             int newLineStart = i + 1;
-            if( line[i] != ' ')
+            if( line[i] != ' ') {
               newLineStart = i;
-            line = line.substring(0, i) + "\n" + spacesString + line.substring(newLineStart, line.length);
+            }
+            line = "${line.substring(0, i)}\n$spacesString${line.substring(newLineStart, line.length)}";
             lineBroken = true;
           }
         }
@@ -1494,16 +1501,16 @@ bool isValidDirectMessage(EventData directMessageData, {int acceptableKind = 4})
   bool validUserMessage = false;
   List<String> allPtags = [];
 
-  directMessageData.tags.forEach((tag) {
+  for (var tag in directMessageData.tags) {
     if( tag.length < 2 ) {
-      return;
+      continue;
     }
     if( tag[0] == "p" && tag[1].length == 64) { // basic length sanity test
       allPtags.add(tag[1]);
     }
-  });
+  }
 
-  if(gDebug >= 0 && gCheckEventId == directMessageData.id) print("In isvalid direct message: ptags len: ${allPtags.length}, ptags = ${allPtags}");
+  if(gDebug >= 0 && gCheckEventId == directMessageData.id) print("In isvalid direct message: ptags len: ${allPtags.length}, ptags = $allPtags");
 
   if( directMessageData.pubkey == userPublicKey && allPtags.length == 1) {
     if( allPtags[0].substring(0, 32) != "0".padLeft(32, '0')) { // check that the message hasn't been sent to an invalid pubkey
@@ -1524,16 +1531,16 @@ bool isValidDirectMessage(EventData directMessageData, {int acceptableKind = 4})
 
 String getRandomPrivKey() {
   FortunaRandom fr = FortunaRandom();
-  final _sGen = Random.secure();;
+  final sGen = Random.secure();
   fr.seed(KeyParameter(
-      Uint8List.fromList(List.generate(32, (_) => _sGen.nextInt(255)))));
+      Uint8List.fromList(List.generate(32, (_) => sGen.nextInt(255)))));
 
   BigInt randomNumber = fr.nextBigInteger(256);
   String strKey = randomNumber.toRadixString(16);
   if( strKey.length < 64) {
     int numZeros = 64 - strKey.length;
     for(int i = 0; i < numZeros; i++) {
-      strKey = "0" + strKey;
+      strKey = "0$strKey";
     }
   }
   return strKey;
@@ -1568,7 +1575,7 @@ Uint8List myPrivateDecryptRaw( String privateString,
     }
 
     if( byteSecret.isEmpty) {
-      byteSecret = Kepler.byteSecret(privateString, publicString);;
+      byteSecret = Kepler.byteSecret(privateString, publicString);
       gMapByteSecret[publicString] = byteSecret;
     }
 
@@ -1578,11 +1585,11 @@ Uint8List myPrivateDecryptRaw( String privateString,
               ? convert.base64.decode(b64IV)
               : Uint8List.fromList(secretIV[1]);
 
-    CipherParameters params = new PaddedBlockCipherParameters(
-        new ParametersWithIV(new KeyParameter(key), iv), null);
+    CipherParameters params = PaddedBlockCipherParameters(
+        ParametersWithIV(KeyParameter(key), iv), null);
 
-    PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
-        new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
+    PaddedBlockCipherImpl cipherImpl = PaddedBlockCipherImpl(
+        PKCS7Padding(), CBCBlockCipher(AESEngine()));
 
     cipherImpl.init(false,
                     params as PaddedBlockCipherParameters<CipherParameters?,
@@ -1620,16 +1627,16 @@ String myEncryptRaw( String privateString,
 
   // generate iv  https://stackoverflow.com/questions/63630661/aes-engine-not-initialised-with-pointycastle-securerandom
   FortunaRandom fr = FortunaRandom();
-  final _sGen = Random.secure();;
+  final sGen = Random.secure();
   fr.seed(KeyParameter(
-                      Uint8List.fromList(List.generate(32, (_) => _sGen.nextInt(255)))));
+                      Uint8List.fromList(List.generate(32, (_) => sGen.nextInt(255)))));
   final iv = fr.nextBytes(16);
    
-  CipherParameters params = new PaddedBlockCipherParameters(
-                                                            new ParametersWithIV(new KeyParameter(key), iv), null);
+  CipherParameters params = PaddedBlockCipherParameters(
+                                                            ParametersWithIV(KeyParameter(key), iv), null);
 
-  PaddedBlockCipherImpl cipherImpl = new PaddedBlockCipherImpl(
-                                                            new PKCS7Padding(), new CBCBlockCipher(new AESEngine()));
+  PaddedBlockCipherImpl cipherImpl = PaddedBlockCipherImpl(
+                                                            PKCS7Padding(), CBCBlockCipher(AESEngine()));
 
   cipherImpl.init(true,  // means to encrypt
                   params as PaddedBlockCipherParameters<CipherParameters?,
@@ -1647,16 +1654,14 @@ String myEncryptRaw( String privateString,
   offset += cipherImpl.doFinal(uintInputText, offset, outputEncodedText, offset);
   final Uint8List finalEncodedText = outputEncodedText.sublist(0, offset);
 
-  String stringIv = convert.base64.encode(iv);;
+  String stringIv = convert.base64.encode(iv);
   String outputPlainText = convert.base64.encode(finalEncodedText);
-  outputPlainText = outputPlainText + "?iv=" + stringIv;
+  outputPlainText = "$outputPlainText?iv=$stringIv";
   return  outputPlainText;
 }
 
-/**
- * Read events from file. a flag is set for such events, so that when writing events back, the ones read from file aren't added, and only
- * new events from relays are written to file.
- */
+/// Read events from file. a flag is set for such events, so that when writing events back, the ones read from file aren't added, and only
+/// new events from relays are written to file.
 Set<Event> readEventsFromFile(String filename) {
   Set<Event> events = {};
   final File  file   = File(filename);
@@ -1709,7 +1714,7 @@ String myGetPublicKey(String prikey) {
   if( pubkey.length < 64) {
     int numZeros = 64 - pubkey.length;
     for(int i = 0; i < numZeros; i++) {
-      pubkey = "0" + pubkey;
+      pubkey = "0$pubkey";
     }
   }
   return pubkey;

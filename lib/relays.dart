@@ -63,7 +63,7 @@ class Relays {
 
   void getKindEvents(List<int> kind, String relayUrl, int limit, int sinceWhen) {
     kind.toString();
-    String subscriptionId = "kind_" + kind.toString() + "_" + relayUrl.substring(6);
+    String subscriptionId = "kind_${kind}_${relayUrl.substring(6)}";
     String request = getKindRequest(subscriptionId, kind,  limit, sinceWhen);
    
     sendRequest(relayUrl, request);
@@ -79,20 +79,21 @@ class Relays {
       }
     }
 
-    String subscriptionId = "single_user" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
+    String subscriptionId = "single_user${relays[relayUrl]?.numRequestsSent??""}_${relayUrl.substring(6)}";
     if( relays.containsKey(relayUrl)) {
       Set<String>? users = relays[relayUrl]?.users;
       if( users != null) { // get a user only if it has not already been requested
         // following is too restrictive casuse changed sinceWhen is not considered. TODO improve it
         bool alreadyRecevied = false;
-        users.forEach((user) { 
+        for (var user in users) { 
           if( user == publicKey) {
             alreadyRecevied = true;
           }
-        });
+        }
 
-        if( alreadyRecevied)
+        if( alreadyRecevied) {
           return;
+        }
     
         users.add(publicKey);
       }
@@ -110,7 +111,7 @@ class Relays {
       }
     }
 
-    String subscriptionId = "mention" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
+    String subscriptionId = "mention${relays[relayUrl]?.numRequestsSent??""}_${relayUrl.substring(6)}";
     
     String request = getMentionRequest(subscriptionId, ids, limit, sinceWhen, tagToGet);
     sendRequest(relayUrl, request);
@@ -118,7 +119,7 @@ class Relays {
 
   void getIdAndMentionEvents(String relayUrl, Set<String> ids, int limit, int idSinceWhen, int mentionSinceWhen, String tagToGet, String idType) {
 
-    String subscriptionId = "id_mention_tag" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
+    String subscriptionId = "id_mention_tag${relays[relayUrl]?.numRequestsSent??""}_${relayUrl.substring(6)}";
     String request = getIdAndMentionRequest(subscriptionId, ids, limit, idSinceWhen, mentionSinceWhen, tagToGet, idType);
     sendRequest(relayUrl, request);
   }    
@@ -128,7 +129,7 @@ class Relays {
    * @connect Connect to given relay and get all events for multiple users/publicKey and insert the
    *          received events in the given List<Event>
    */
-  void getMultiUserEvents(String relayUrl, List<String> publicKeys, int limit, int sinceWhen, [Set<int>? kind = null]) {
+  void getMultiUserEvents(String relayUrl, List<String> publicKeys, int limit, int sinceWhen, [Set<int>? kind]) {
     Set<String> setPublicKeys = publicKeys.toSet();
 
     if( relays.containsKey(relayUrl)) {
@@ -139,7 +140,7 @@ class Relays {
       }
     }
 
-    String subscriptionId = "multiple_user" + (relays[relayUrl]?.numRequestsSent??"").toString() + "_" + relayUrl.substring(6);
+    String subscriptionId = "multiple_user${relays[relayUrl]?.numRequestsSent??""}_${relayUrl.substring(6)}";
     String request = getMultiUserRequest( subscriptionId, setPublicKeys, limit, sinceWhen, kind);
     sendRequest(relayUrl, request);
   }    
@@ -215,7 +216,7 @@ class Relays {
         print('WebSocketChannelException exception for relay $relayUrl');
         return; // is presently not used/called
       }
-      on Exception catch(ex) {
+      on Exception {
         printWarning("Invalid event\n");
       }
       
@@ -261,9 +262,9 @@ void getContactFeed(Set<String> relayUrls, Set<String> setContacts, int numEvent
       groupContacts.add(contacts[i + j]);
     }
 
-    relayUrls.forEach((relayUrl) {
+    for (var relayUrl in relayUrls) {
       relays.getMultiUserEvents(relayUrl, groupContacts, numEventsToGet, sinceWhen);
-    });
+    }
   
   }
 
@@ -272,28 +273,28 @@ void getContactFeed(Set<String> relayUrls, Set<String> setContacts, int numEvent
 }
 
 void getUserEvents(Set<String> serverUrls, String publicKey, int numUserEvents, int sinceWhen) {
-  serverUrls.forEach((serverUrl) {
+  for (var serverUrl in serverUrls) {
       relays.getUserEvents(serverUrl, publicKey, numUserEvents, sinceWhen); 
-    });
+    }
 }
 
 void getMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents, int sinceWhen, String tagToGet) {
-  serverUrls.forEach((serverUrl) {
+  for (var serverUrl in serverUrls) {
       relays.getMentionEvents(serverUrl, ids, numUserEvents, sinceWhen, tagToGet); 
-    });
+    }
 }
 
 void getIdAndMentionEvents(Set<String> serverUrls, Set<String> ids, int numUserEvents, int idSinceWhen, int mentionSinceWhen, String tagToGet, String idType) {
-  serverUrls.forEach((serverUrl) {
+  for (var serverUrl in serverUrls) {
       relays.getIdAndMentionEvents(serverUrl, ids, numUserEvents, idSinceWhen, mentionSinceWhen, tagToGet, idType); 
-    });
+    }
 }
 
 
 getKindEvents(List<int> kind, Set<String> serverUrls, int limit, int sinceWhen) {
-  serverUrls.forEach((serverUrl) {
+  for (var serverUrl in serverUrls) {
       relays.getKindEvents(kind, serverUrl, limit, sinceWhen); 
-    });
+    }
 }
 
 void getMultiUserEvents(Set<String> serverUrls, Set<String> setPublicKeys, int numUserEvents, int sinceWhen, [Set<int>? kind]) {
@@ -314,23 +315,24 @@ void getMultiUserEvents(Set<String> serverUrls, Set<String> setPublicKeys, int n
 
 // send request for specific events whose id's are passed as list eventIds
 void sendEventsRequest(Set<String> serverUrls, Set<String> eventIds) {
-  if( eventIds.length == 0) 
+  if( eventIds.isEmpty) {
     return;
+  }
 
-  String eventIdsStr = getCommaSeparatedQuotedStrs(eventIds);;
+  String eventIdsStr = getCommaSeparatedQuotedStrs(eventIds);
 
   String getEventRequest = '["REQ","event_${eventIds.length}",{"ids":[$eventIdsStr]}]';
   if( gDebug > 0) log.info("sending $getEventRequest");
 
-  serverUrls.forEach((url) {
+  for (var url in serverUrls) {
     relays.sendRequest(url, getEventRequest);
-  });
+  }
 }
 
 void sendRequest(Set<String> serverUrls, request) {
-  serverUrls.forEach((url) { 
+  for (var url in serverUrls) { 
     relays.sendRequest(url, request);
-  });
+  }
 }
 
 Set<Event> getRecievedEvents() {
@@ -343,7 +345,7 @@ void clearEvents() {
 }
 
 void setRelaysIntialEvents(Set<Event> eventsFromFile) {
-  eventsFromFile.forEach((element) {relays.uniqueIdsRecieved.add(element.eventData.id);});
+  for (var element in eventsFromFile) {relays.uniqueIdsRecieved.add(element.eventData.id);}
   relays.rEvents = eventsFromFile;
 }
 

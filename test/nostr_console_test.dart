@@ -221,11 +221,11 @@ String expectedResult =
                          "11                    https://github.com/nostr-protocol/nips/blob/master/16.md#ephemeral-events",
                          "https://res.cloudinary.com/eskema/image/upload/v1669030722/306072883_413474904244526_502927779121754777_n.jpg_l6je2d.jpg"];
 
-    urls.forEach((url) { 
+    for (var url in urls) { 
       String res = makeParagraphAtDepth(url, 30);
       //print(url); print(res);print("");
       expect( res, url);
-    });
+    }
   });
 
 
@@ -233,27 +233,33 @@ String expectedResult =
       Set<Event> initialEvents = {}; // collect all events here and then create tree out of them
 
 
-      String input_filename = 'test_event_file.csv';
-      initialEvents = await readEventsFromFile(input_filename);
+      String inputFilename = 'test_event_file.csv';
+      initialEvents = readEventsFromFile(inputFilename);
 
       int numFilePosts = 0;
       // count events
-      initialEvents.forEach((element) { element.eventData.kind == 1? numFilePosts++: numFilePosts;});
+      for (var element in initialEvents) { element.eventData.kind == 1? numFilePosts++: numFilePosts;}
       //print("read $numFilePosts posts from file $gEventsFilename");
       expect(numFilePosts, 3486, reason:'Verify right number of kind 1 posts');
 
-      Store node = await getTree(initialEvents);
+      Store node = getTree(initialEvents);
       
       expect(0, node.getNumDirectRooms(), reason:'verify correct number of direct chat rooms created');
 
       int numKind4xChannels = 0;
-      node.channels.forEach((channel) => channel.roomType == enumRoomType.kind40? numKind4xChannels++:1);
+      for (var channel in node.channels) {
+        channel.roomType == enumRoomType.kind40? numKind4xChannels++:1;
+      }
 
       int numTTagChannels = 0;
-      node.channels.forEach((channel) => channel.roomType == enumRoomType.RoomTTag? numTTagChannels++:1);
+      for (var channel in node.channels) {
+        channel.roomType == enumRoomType.RoomTTag? numTTagChannels++:1;
+      }
 
       int numLocationTagChannels = 0;
-      node.channels.forEach((channel) => channel.roomType == enumRoomType.RoomLocationTag? numLocationTagChannels++:1);
+      for (var channel in node.channels) {
+        channel.roomType == enumRoomType.RoomLocationTag? numLocationTagChannels++:1;
+      }
 
       expect(78, numKind4xChannels, reason: 'verify correct number of public channels created of kind 4x');
       expect(41, numTTagChannels, reason: 'verify correct number of public channels created of T tag type');

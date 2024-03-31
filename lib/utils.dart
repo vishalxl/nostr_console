@@ -22,14 +22,13 @@ String getPostKindFrom(enumRoomType eType) {
 }
 
 Set<String>? getTagsFromContent(String content) {
-  Set<String>? tags = null;
+  Set<String>? tags;
 
-  String regexp1 = '(#[a-zA-Z0-9_\-]+ )|(#[a-zA-Z0-9_\-]+)\$';
+  String regexp1 = '(#[a-zA-Z0-9_-]+ )|(#[a-zA-Z0-9_-]+)\$';
   RegExp httpRegExp = RegExp(regexp1);
   
   for( var match in httpRegExp.allMatches(content) ) {
-    if( tags == null)
-      tags = {};
+    tags ??= {};
 
     tags.add( content.substring(match.start + 1, match.end).trim() );
   }
@@ -84,31 +83,35 @@ extension StringX on String {
 
   int isChannelPageNumber(int max) {
   
-    if(this.length < 2 || this[0] != '/') {
+    if(length < 2 || this[0] != '/') {
       return 0;
     } 
 
-    String rest = this.substring(1);
+    String rest = substring(1);
 
     //print("rest = $rest");
     int? n = int.tryParse(rest);
     if( n != null) {
-      if( n < max)
+      if( n < max) {
         return n;
+      }
     }
     return 0;
   }
 
   isEnglish( ) {
     // since smaller words can be smileys they should not be translated
-    if( length < 10) 
+    if( length < 10) {
       return true;
+    }
     
-    if( !isLatinAlphabet())
+    if( !isLatinAlphabet()) {
       return false;
+    }
 
-    if (isRomanceLanguage())
+    if (isRomanceLanguage()) {
       return false;
+    }
 
     return true;
   }
@@ -127,7 +130,7 @@ extension StringX on String {
 
     Set<String> romanceWords = frenchWords.union(spanishWords).union(portugeseWords);
     for( String word in romanceWords) {
-      if( this.toLowerCase().contains(" $word ")) {
+      if( toLowerCase().contains(" $word ")) {
         return true;
       }
     }
@@ -208,7 +211,7 @@ String unEscapeChars(String str) {
   return temp;
 }
 
-void printUnderlined(String x) =>  { stdout.write("$x\n${getNumDashes(x.length)}\n")}; 
+void printUnderlined(String x) { stdout.write("$x\n${getNumDashes(x.length)}\n");} 
 
 String getNumSpaces(int num) {
   String s = "";
@@ -228,7 +231,7 @@ String getNumDashes(int num, [String dashType = "-"]) {
 
 List<List<int>> getUrlRanges(String s) {
   List<List<int>> urlRanges = [];
-  String regexp1 = "http[s]*:\/\/[a-zA-Z0-9]+([.a-zA-Z0-9/_\\-\\#\\+=\\&\\?]*)";
+  String regexp1 = "http[s]*://[a-zA-Z0-9]+([.a-zA-Z0-9/_\\-\\#\\+=\\&\\?]*)";
   
   RegExp httpRegExp = RegExp(regexp1);
   for( var match in httpRegExp.allMatches(s) ) {
@@ -273,11 +276,13 @@ List<int>? getTypeAndModule(String str) {
 
 bool sanityChecked(String lnInvoice) {
 
-  if( lnInvoice.length < gMinLnInvoiceLength)
+  if( lnInvoice.length < gMinLnInvoiceLength) {
     return false;
+  }
 
-  if( lnInvoice.substring(0, 4).toLowerCase() != "lnbc") 
+  if( lnInvoice.substring(0, 4).toLowerCase() != "lnbc") {
     return false;
+  }
 
   return true;
 }
@@ -306,7 +311,7 @@ String expandLNInvoices(String content) {
     }
 
     qrStr = getPubkeyAsQrString(lnInvoice, typeAndModule[0], typeAndModule[1], "");
-    content = content.substring(0, match.start) + ":-\n\n" + qrStr + "\n\n" + content.substring(match.end);
+    content = "${content.substring(0, match.start)}:-\n\n$qrStr\n\n${content.substring(match.end)}";
   }
 
   return content;
@@ -319,7 +324,7 @@ String getPubkeyAsQrString(String str, [int typeNumber = 4, moduleCount = 33, St
   String output = "";
 
   final qrCode = QrCode(typeNumber, QrErrorCorrectLevel.L)
-                ..addData('$str');
+                ..addData(str);
   final qrImage = QrImage(qrCode);
 
   assert( qrImage.moduleCount == moduleCount);
@@ -372,8 +377,9 @@ String getStringFromUser(String prompt, [String defaultValue=""] ) {
   stdout.write(prompt);
   str = (stdin.readLineSync())??"";
 
-  if( str.length == 0)
+  if( str.isEmpty) {
     str = defaultValue;
+  }
   return str;
 }
 
@@ -399,21 +405,21 @@ String getCommaSeparatedInts(Set<int>? kind) {
     return "";
   }
 
-  if( kind.length == 0) {
+  if( kind.isEmpty) {
     return "";
   }
   
   String strKind = "";
   int i = 0;
 
-  kind.forEach((k) {
+  for (var k in kind) {
     String comma = ",";
     if( i == kind.length-1) {
       comma = "";
     }
     strKind = strKind + k.toString() + comma;
     i++;
-  });
+  }
 
   return strKind;
 }
@@ -432,16 +438,14 @@ String getKindRequest(String subscriptionId, List<int> kind, int limit, int sinc
   return strRequest;
 }
 
-String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen, [Set<int>? _kind = null]) {
+String getUserRequest(String subscriptionId, String publicKey, int numUserEvents, int sinceWhen, [Set<int>? kind]) {
   Set<int> kind = {};
-  if( _kind != null) {
-    kind = _kind;
-  }
+  kind = kind;
 
   String strKind = getCommaSeparatedInts(kind);
 
   String strKindSection = "";
-  if( strKind.length > 0) {
+  if( strKind.isNotEmpty) {
     strKindSection = '"kinds":[$strKind],';
   }
 
@@ -477,12 +481,12 @@ String getIdAndMentionRequest(String subscriptionId, Set<String> ids, int numUse
 
   var    strSubscription1  = '["REQ","$subscriptionId",{ "$tagToGet": [';
   var    strSubscription2  ='], "limit": $numUserEvents $idStrTime  } ]';
-  String req = '["REQ","$subscriptionId",{ "$tagToGet": [' + getCommaSeparatedQuotedStrs(ids) + '], "limit": $numUserEvents $mentionStrTime},{"$idString":[' + getCommaSeparatedQuotedStrs(ids) + ']$idStrTime}]';
+  String req = '["REQ","$subscriptionId",{ "$tagToGet": [${getCommaSeparatedQuotedStrs(ids)}], "limit": $numUserEvents $mentionStrTime},{"$idString":[${getCommaSeparatedQuotedStrs(ids)}]$idStrTime}]';
   return req;
 }
 
 
-String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int numUserEvents, int sinceWhen, [Set<int>? kind = null]) {
+String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int numUserEvents, int sinceWhen, [Set<int>? kind]) {
   String strTime = "";
   if( sinceWhen != 0) {
     strTime = ', "since": ${sinceWhen.toString()}';
@@ -491,7 +495,7 @@ String getMultiUserRequest(String subscriptionId, Set<String> publicKeys, int nu
   String strKind = getCommaSeparatedInts(kind);
 
   String strKindSection = "";
-  if( strKind.length > 0) {
+  if( strKind.isNotEmpty) {
     strKindSection = '"kinds":[$strKind],';
   }
 
@@ -508,14 +512,14 @@ void printSet( Set<String> toPrint, [ String prefix = "", String separator = ""]
   stdout.write(prefix);
 
   int i = 0;
-  toPrint.forEach((element) {
+  for (var element in toPrint) {
     if( i != 0) {
       stdout.write(separator);
     }
 
     stdout.write(element);
     i++;
-  });
+  }
   stdout.write("\n");
 }
 

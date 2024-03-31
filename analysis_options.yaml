@@ -1,0 +1,26 @@
+# reference : https://dart.dev/tools/analysis
+
+
+include: package:lints/recommended.yaml
+
+analyzer:
+  exclude: [build/**]
+  language:
+    strict-raw-types: true
+    strict-inference: true
+
+# not including 
+#     strict-casts: true
+
+
+linter:
+  rules:
+    - use_super_parameters
+    - cancel_subscriptions
+    - close_sinks
+    - combinators_ordering
+    - comment_references
+    - invalid_case_patterns
+    - library_annotations
+    - one_member_abstracts
+    - only_throw_errors

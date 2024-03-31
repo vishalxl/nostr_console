@@ -10,7 +10,7 @@ Event? getContactEvent(String pubkey) {
 
     // get the latest kind 3 event for the user, which lists his 'follows' list
     if( gKindONames.containsKey(pubkey)) {
-      Event? e = (gKindONames[pubkey]?.latestContactEvent)??null;
+      Event? e = (gKindONames[pubkey]?.latestContactEvent);
       return e;
     }
 
@@ -23,7 +23,9 @@ Set<String> getFollows(String pubkey) {
 
   Event? profileContactEvent = getContactEvent(pubkey);
   if( profileContactEvent != null) {
-    profileContactEvent.eventData.contactList.forEach((x) => followPubkeys.add(x.contactPubkey));
+    for (var x in profileContactEvent.eventData.contactList) {
+      followPubkeys.add(x.contactPubkey);
+    }
     //followPubkeys = profileContactEvent.eventData.contactList.toSet();
   }
 
@@ -33,7 +35,7 @@ Set<String> getFollows(String pubkey) {
 Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {
   Set<String> userChannels = {};
 
-  userEvents.forEach((event) {
+  for (var event in userEvents) {
     if( event.eventData.pubkey == userPublicKey) {
       if( [42, 142].contains( event.eventData.kind) ) {
         String channelId = event.eventData.getChannelIdForKind4x();
@@ -44,7 +46,7 @@ Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {
         userChannels.add(event.eventData.id);
       }
     }
-  });
+  }
 
   return userChannels;
 }
@@ -88,11 +90,11 @@ Set<String> getpTags(Set<Event> events, int numMostFrequent) {
 
 Set<String> getOnlyUserEvents(Set<Event> initialEvents, String userPubkey) {
   Set<String> userEvents = {};
-  initialEvents.forEach((event) {
+  for (var event in initialEvents) {
     if( event.eventData.pubkey == userPubkey) {
       userEvents.add(event.eventData.id);
     }
-  });
+  }
   return userEvents;
 }
 

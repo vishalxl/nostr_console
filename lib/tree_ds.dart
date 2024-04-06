@@ -2103,7 +2103,7 @@ class Store {
         room.printDirectMessageRoom(this, page);
         return lookedUpName.first;
       } else {
-        if( isValidPubkey(lookedUpName.first)) { // in case the pubkey is valid and we have seen the pubkey in global author list, create new room
+        if( isValidHexPubkey(lookedUpName.first)) { // in case the pubkey is valid and we have seen the pubkey in global author list, create new room
           print("Could not find a conversation or room with the given id. Creating one with ${lookedUpName.first}");
           DirectMessageRoom room = createDirectRoom( directRoomId);
           room.printDirectMessageRoom(this, page);
@@ -2118,7 +2118,7 @@ class Store {
        }
       }
       else { // in case the given id is not present in our global list of usernames, create new room for them 
-        if( isValidPubkey(directRoomId)) {
+        if( isValidHexPubkey(directRoomId)) {
           print("Could not find a conversation or room with the given id. Creating one with $directRoomId");
           DirectMessageRoom room = createDirectRoom(directRoomId);
           room.printDirectMessageRoom(this, page);

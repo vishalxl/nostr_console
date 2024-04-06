@@ -110,3 +110,5 @@ dependencies:
   qr: ^3.0.1
   pointycastle: any
   http: any
+  bech32: ^0.2.2
+  convert: ^3.1.1

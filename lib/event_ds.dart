@@ -14,6 +14,8 @@ import 'dart:convert' as convert;
 import "package:pointycastle/export.dart";
 import 'package:kepler/kepler.dart';
 import 'package:http/http.dart' as http;
+import 'package:nostr_console/nip_019.dart';
+
 
 String getStrInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?"$commentColor$s$gColorEndMarker":s;
 void   printInColor(String s, String commentColor) => stdout.supportsAnsiEscapes ?stdout.write("$commentColor$s$gColorEndMarker"):stdout.write(s);
@@ -343,25 +345,38 @@ class EventData {
       return content;
     }
 
-    // just check if there is any square bracket in comment, if not we return
-    String squareBracketStart = "[", squareBracketEnd = "]";
-    if( !content.contains(squareBracketStart) || !content.contains(squareBracketEnd) ) {
+    // just check whether "nostr:" is in comment, because only that indicates a mention; if not we return
+    if( !content.contains("nostr:") ) {
       return content;
     }
 
+    //print("------------------\ncontent = $content \n////////////////////////////////");
+
     String replaceMentions(Match mentionTagMatch) {
+      //print("in replace Mentions: ");
       String? mentionTag = mentionTagMatch.group(0);
       if( mentionTag != null) {
-        String strInt = mentionTag.substring(2, mentionTag.length -1);
-        int? n = int.tryParse(strInt);
-        if( n != null) {
-          if( n < tags.length) {
-            String mentionedId = tags[n][1];
+        String strBechId = mentionTag.substring(6, mentionTag.length);
 
+        String tempType = strBechId.substring(0, 4);
+        if( tempType != "note" && tempType != "npub")  {
+          return "nostr:$strBechId";
+        }
+
+        //print("Going to decode: $strBechId");
+        Map<String, String> nsec = bech32Decode(strBechId);
+        String? type = nsec["prefix"]; // type can be "note" or "npub"
+        String? strHex = nsec["data"]; // this is 64 byte hex pubkey or note id 
+        if( strHex != null && type != null) {
+          String mentionedId = strHex;
+
+          if( type == "npub") {
             if( gKindONames.containsKey(mentionedId)) {
               String author = getAuthorName(mentionedId);
               return "@$author";
-            } else {
+            }
+          } else {
+            if( type == "note") {
               EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData;
               if( eventData != null) {
                 String quotedAuthor = getAuthorName(eventData.pubkey);
@@ -369,38 +384,21 @@ class EventData {
                 String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"${eventData.evaluatedContent}\">";
                 return quote;
               }
-            }
-
-            String tag = "";
-            switch(tags[n][0]) {
-            case "p":
-              tag = "@";
-              break;
-            case "e":
-              tag = "#";
-              break;
-            case "%": // something else for future
-              tag = "%";
-              break;
-            default: 
-              tag = "@";
-            }
-
-
-            return tag+mentionedId;
-
+            } 
           }
+         return "nostr:$strBechId";
+        } else {
+          //print("Could not parse the given nsec/private key. Exiting.");
+          return mentionTag;
         }
-
-        return mentionTag;
       }
-      if( gDebug > 0) printWarning("In replaceMentions returning nothing");
+      if( gDebug >= 0) printWarning("In replaceMentions returning nothing");
       return "";
     }
 
     // replace the mentions, if any are found
-    String mentionStr = "(#[[0-9]+])";
-    RegExp mentionRegExp = RegExp(mentionStr);
+    String mentionStr = "(nostr:[a-z0-9]+)";
+    RegExp mentionRegExp = RegExp(mentionStr, caseSensitive: false);
     content = content.replaceAllMapped(mentionRegExp, replaceMentions);
     return content;
   }
@@ -684,17 +682,17 @@ class EventData {
     }
 
     // will only do decryption if its not been decrypted yet by looking at 'evaluatedContent'
-    if( tempChildEventsMap != null )
-    if(kind == 4) {
-      translateAndDecryptKind4( tempChildEventsMap);
-    } else if ([1, 42].contains(kind)) {
-      translateAndExpandMentions(tempChildEventsMap);
-    } else if ([142].contains(kind)) {
-      if( secretMessageIds != null && encryptedChannels != null) {
-        translateAndDecrypt14x( secretMessageIds, encryptedChannels, tempChildEventsMap);
+    if( tempChildEventsMap != null ) {
+      if(kind == 4) {
+        translateAndDecryptKind4( tempChildEventsMap);
+      } else if ([1, 42].contains(kind)) {
+        translateAndExpandMentions(tempChildEventsMap);
+      } else if ([142].contains(kind)) {
+        if( secretMessageIds != null && encryptedChannels != null) {
+          translateAndDecrypt14x( secretMessageIds, encryptedChannels, tempChildEventsMap);
+        }
       }
     }
-
 
     int n = gEventLenPrinted; // is 6 
     String maxN(String v)       => v.length > n? v.substring(0,n) : v.substring(0, v.length);

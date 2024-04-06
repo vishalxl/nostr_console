@@ -154,7 +154,7 @@ extension StringX on String {
   }
 }    
 
-bool isValidPubkey(String pubkey) {
+bool isValidHexPubkey(String pubkey) {
   if( pubkey.length == 64) {
     return true;
   }

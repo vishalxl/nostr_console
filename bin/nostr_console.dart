@@ -7,6 +7,7 @@ import 'package:nostr_console/console_ui.dart';
 import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
 import 'package:nostr_console/user.dart';
+import 'package:nostr_console/nip_019.dart';
 
 import 'package:args/args.dart';
 import 'package:logging/logging.dart';
@@ -99,8 +100,19 @@ Future<void> main(List<String> arguments) async {
       if( argResults[pubkeyArg] != null) {
         userPublicKey = argResults[pubkeyArg];
         if( userPublicKey.length != 64){ 
-          print("Length of provided public key should be 64. Exiting.");
-          return;
+          if( !userPublicKey.startsWith("npub")) {
+            print("A public key should either start with npub ( bech32 format), or it should have a length of 64 bytes( hex format). Exiting.");
+            return;
+          } else {
+            Map<String, String> npubMap = bech32Decode(userPublicKey);
+            String? npubPubkey = npubMap["data"];
+            if( npubPubkey != null) {
+              userPublicKey = npubPubkey;
+            } else {
+              print("Could not parse the given npub/public key. Exiting.");
+              return;
+            }
+          }
         }
         userPrivateKey = "";
       }
@@ -109,9 +121,21 @@ Future<void> main(List<String> arguments) async {
       if( argResults[prikeyArg] != null) {
         userPrivateKey = argResults[prikeyArg];
         if( userPrivateKey.length != 64){ 
-          print("Length of provided private key should be 64. Exiting.");
-          return;
+          if( !userPrivateKey.startsWith("nsec")) {
+            print("A private key should either start with nsec ( bech32 format), or it should have a length of 64 bytes( hex format). Exiting.");
+            return;
+          } else {
+            Map<String, String> nsec = bech32Decode(userPrivateKey);
+            String? nsecKey = nsec["data"];
+            if( nsecKey != null) {
+              userPrivateKey = nsecKey;
+            } else {
+              print("Could not parse the given nsec/private key. Exiting.");
+              return;
+            }
+          }
         }
+
         userPublicKey = myGetPublicKey(userPrivateKey);
         print("Going to use the provided private key");
       }

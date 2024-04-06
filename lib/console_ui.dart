@@ -7,6 +7,7 @@ import 'package:nostr_console/settings.dart';
 import 'package:nostr_console/utils.dart';
 import 'package:nostr_console/user.dart';
 import 'package:bip340/bip340.dart';
+import 'package:nostr_console/nip_019.dart';
 
 Future<void> processAnyIncomingEvents(Store node, [bool printNotifications = true])  async {
   //print("In process incoming");
@@ -303,6 +304,8 @@ void printProfile(Store node, String profilePubkey) {
   bool onlyUserPostAndLike (Tree t) => t.treeSelectorUserPostAndLike({profilePubkey});
   node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), onlyUserPostAndLike);
 
+  String npubPubkey = bech32Encode("npub", profilePubkey);
+
   // if contact list was found, get user's feed, and keep the contact list for later use 
   String authorName = getAuthorName(profilePubkey);
   String pronoun = "";
@@ -361,7 +364,7 @@ void printProfile(Store node, String profilePubkey) {
     }
   }
 
-  print("\nName        : $authorName ( $profilePubkey ).");
+  print("\nName        : $authorName ( $profilePubkey / $npubPubkey).");
   print("About       : $about");
   print("Picture     : $picture");
   print("display_name: $displayName");

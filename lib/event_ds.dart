@@ -349,55 +349,63 @@ class EventData {
     if( !content.contains("nostr:") ) {
       return content;
     }
-
     //print("------------------\ncontent = $content \n////////////////////////////////");
-
     String replaceMentions(Match mentionTagMatch) {
       //print("in replace Mentions: ");
       String? mentionTag = mentionTagMatch.group(0);
       if( mentionTag != null) {
+        //print("mentionTag = $mentionTag");
         String strBechId = mentionTag.substring(6, mentionTag.length);
-
         String tempType = strBechId.substring(0, 4);
         if( tempType != "note" && tempType != "npub")  {
           return "nostr:$strBechId";
         }
-
         //print("Going to decode: $strBechId");
-        Map<String, String> nsec = bech32Decode(strBechId);
-        String? type = nsec["prefix"]; // type can be "note" or "npub"
-        String? strHex = nsec["data"]; // this is 64 byte hex pubkey or note id 
-        if( strHex != null && type != null) {
-          String mentionedId = strHex;
+        try {
+          Map<String, String> nsec = bech32Decode(strBechId);
+          String? type = nsec["prefix"]; // type can be "note" or "npub"
+          String? strHex = nsec["data"]; // this is 64 byte hex pubkey or note id 
+          if( strHex != null && type != null) {
+            String mentionedId = strHex;
+            if( type == "npub") {
+              if( gKindONames.containsKey(mentionedId)) {
+                
+                String? author = getOnlyAuthorName(mentionedId);
 
-          if( type == "npub") {
-            if( gKindONames.containsKey(mentionedId)) {
-              String author = getAuthorName(mentionedId);
-              return "@$author";
-            }
-          } else {
-            if( type == "note") {
-              EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData;
-              if( eventData != null) {
-                String quotedAuthor = getAuthorName(eventData.pubkey);
-                String prefixId = mentionedId.substring(0, 3);
-                String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"${eventData.evaluatedContent}\">";
-                return quote;
+                if( author == null) {
+                  return "nostr:$strBechId";
+                } else {
+                  return "@$author";
+                }
               }
-            } 
+            } else {
+              if( type == "note") {
+                EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData;
+                if( eventData != null) {
+                  String quotedAuthor = getAuthorName(eventData.pubkey);
+                  String prefixId = mentionedId.substring(0, 3);
+                  String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"${eventData.evaluatedContent}\">";
+                  return quote;
+                }
+              } 
+            }
+          return "nostr:$strBechId";
+          } else {
+            //print("Could not parse the given nsec/private key. Exiting.");
+            return mentionTag;
           }
-         return "nostr:$strBechId";
-        } else {
-          //print("Could not parse the given nsec/private key. Exiting.");
-          return mentionTag;
+        } on Exception catch (e) {
+          //print("====================Caught exctption.");
+          return "nostr:$strBechId";
         }
       }
       if( gDebug >= 0) printWarning("In replaceMentions returning nothing");
       return "";
-    }
+    } // end replaceMentions()
 
     // replace the mentions, if any are found
-    String mentionStr = "(nostr:[a-z0-9]+)";
+    // The Bech32 alphabet contains 32 characters, including lowercase letters a-z and the numbers 0-9, excluding the number 1 and the letters ‘b’, ‘i’, ‘o’ to avoid reader confusion.
+    String mentionStr = "(nostr:(npub1|note1)[a0c-hj-np-z2-9]{58})"; // bech32 
     RegExp mentionRegExp = RegExp(mentionStr, caseSensitive: false);
     content = content.replaceAllMapped(mentionRegExp, replaceMentions);
     return content;
@@ -1281,13 +1289,51 @@ String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkey
       name = name + gValidCheckMark;
     }
   } else {
-    // remove this tick from other names
+    // remove this tick from other names to avoid 'tick hack'
     name = name.replaceAll(gValidCheckMark, "");
-
   }
 
   return name;
 }
+
+// returns only name if it is available. Returns null if name is not available. 
+String? getOnlyAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5}) {
+
+  if( gFollowList.isEmpty)  {
+    gFollowList = getFollows(userPublicKey);
+  }
+
+  bool isFollow = gFollowList.contains(pubkey) && (pubkey != userPublicKey);
+
+  String maxLen(String pubkey) => pubkey.length > pubkeyLenShown? pubkey.substring(0,pubkeyLenShown) : pubkey.substring(0, pubkey.length);
+  String name = "";
+  var temp = gKindONames[pubkey]; 
+  if( temp == null) {
+    return null;
+  } else {
+    var temp2 = temp.name;
+    if( temp2 == null) {
+      return null;
+    } else {
+      name = temp2;
+    }
+  }
+
+  // then add valid check mark in default follows 
+  if( isFollow) {
+    if( name.length >= maxDisplayLen ) {
+      name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
+    } else {
+      name = name + gValidCheckMark;
+    }
+  } else {
+    // remove this tick from other names to avoid 'tick hack'
+    name = name.replaceAll(gValidCheckMark, "");
+  }
+
+  return name;
+}
+
 
 // returns full public key(s) for the given username( which can be first few letters of pubkey, or the user name)
 Set<String> getPublicKeyFromName(String inquiredName) {

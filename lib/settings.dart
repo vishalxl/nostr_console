@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.6-beta";
+const String version = "0.3.7-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -288,19 +288,18 @@ usage: $exename [OPTIONS]
 
   OPTIONS
 
-      -p, --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
-                                    well known private key. When given, posts/replies can't be sent.
-      -k, --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
-                                    sent. Default is a hard-coded well known private key.
-      -r, --relay   <relay urls>    The comma separated relay urls that are used as main relays. If given, these are used
+      -k, --prikey  <private key>   The nsec or hex private key of user you want to 'log in' as.
+      -p, --pubkey  <public key>    The npub or hex public key of user whose events and feed are shown. When given, 
+                                    posts/replies can't be sent because for that a private key is needed.
+      -r, --relay   <relay urls>    The comma separated relay urls that are used as relays. If given, these are used
                                     rather than the default relays.
-      -d, --days    <N as num>      The latest number of days for which events are shown. Default is $gDefaultNumLastDays.
-      --request <REQ string>         This request is sent verbatim to the default relay. It can be used to recieve all events
-                                    from a relay. If not provided, then events for default or given user are shown.
       -f, --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
                                     to it all the events (including the ones read, and any new received). Even if not given, 
                                     the default is to read from and write to $gDefaultEventsFilename . Can be turned off by 
                                     the --disable-file flag 
+      -d, --days    <N as num>      The latest number of days for which events are shown. Default is $gDefaultNumLastDays.
+      --request <REQ string>        This request is sent verbatim to the default relay. It can be used to recieve all events
+                                    from a relay. If not provided, then events for default or given user are shown.
       -s, --disable-file            When turned on, even the default filename is not read from.
       -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
                                     is accessed for any translation request only if this flag is present, and not otherwise.
@@ -341,17 +340,13 @@ Check out the main readme, wiki and discussions on github.com/vishalxl/nostr_con
 EXAMPLES
 --------
 
-To 'login' as a user with private key K:
+To 'login' as a user with private key K, where K should start with nsec or be a hex key of length 64 bytes. 
 
 \$ nostr_console.exe  --prikey=K
 
 To get ALL the latest messages for last 3 days (on linux bash which allows backtick execution):
 
 \$ nostr_console.exe  --request=`echo "[\\"REQ\\",\\"l\\",{\\"since\\":\$(date -d \\'-3 day\\' +%s)}]"`
-
-To get the latest messages for user with private key K ( that is also used to sign posted/sent messages):
-
-\$ nostr_console.exe  --prikey=K
 
 To get the latest messages for user with private key K for last 4 days ( default is 1) from relay R:
 

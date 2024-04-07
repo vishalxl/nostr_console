@@ -6,17 +6,17 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 
 # todo
 
-* [ ] support bech32 keys
 * [ ] allow faster startup with an argument or config
 * [ ] menu should honour --width, its extending way beyond
-* [ ] read prikey from file; create it too using new feature --genkey 
-* [ ] fix --help that's dated
 * [ ] after going to a dm room, screen doesn't clear 
-* [ ] allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
 * [ ] in url expansions, the likes string is shown in same line which is wrong
 * [ ] fix: users who don't have kind 0 or kind 3 are not searchable in menu 8 and 9 in Social network. 
 * [ ] kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
 * [ ] fix count of events shown per relay in app stats
+* [-] read prikey from file; create it too using new feature --genkey 
+* [x] allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
+* [x] fix --help that's dated
+* [x] support bech32 keys
 * [x] (showing tick for now) A F for friend or follow should be shown after each name that's a follow of the logged in user. F1 if the name is follow of a follow, and F2 if next level. 
 * [x] due to extra color related bytes, reactions in highlighted threads are shifted a lot to left. fix that. 
 * [x] increase author id to 5 and event id shown to 6 from 3 and 4 respectively
@@ -82,44 +82,45 @@ usage: dart run bin/nostr_console.dart [OPTIONS]
 
   OPTIONS
 
-      -p, --pubkey  <public key>    The hex public key of user whose events and feed are shown. Default is a hard-coded
-                                    public key derived from a well known private key. When given, posts/replies can't be sent. 
-      -k, --prikey  <private key>   The hex private key of user whose events and feed are shown. Also used to sign events 
-                                    sent. Default is same-as-above hard-coded well known private key. 
-      -r, --relay   <relay urls>    The comma separated relay urls that are used as main relays. If given, these are used
+      -k, --prikey  <private key>   The nsec or hex private key of user you want to 'log in' as.
+      -p, --pubkey  <public key>    The npub or hex public key of user whose events and feed are shown. When given,
+                                    posts/replies can't be sent because for that a private key is needed.
+      -r, --relay   <relay urls>    The comma separated relay urls that are used as relays. If given, these are used
                                     rather than the default relays.
-      -d, --days    <N as num>      The latest number of days for which events are shown. Default is 1.
-      -q, --request <REQ string>    This request is sent verbatim to the default relay. It can be used to receive all events
-                                    from a relay. If not provided, then events for default or given user are shown.
       -f, --file    <filename>      Read from given file, if it is present, and at the end of the program execution, write
-                                    to it all the events (including the ones read, and any new received).
-      -s, --disable-file            When turned on, even the default file is not read from.
-      -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google 
+                                    to it all the events (including the ones read, and any new received). Even if not given,
+                                    the default is to read from and write to all_nostr_events.txt . Can be turned off by
+                                    the --disable-file flag
+      -d, --days    <N as num>      The latest number of days for which events are shown. Default is 1.
+      --request <REQ string>        This request is sent verbatim to the default relay. It can be used to recieve all events
+                                    from a relay. If not provided, then events for default or given user are shown.
+      -s, --disable-file            When turned on, even the default filename is not read from.
+      -t, --translate               Translate some of the recent posts using Google translate site ( and not api). Google
                                     is accessed for any translation request only if this flag is present, and not otherwise.
-      -l, --lnqr                    If set any LN invoices starting with LNBC will be printed as a QR code. Will set 
-                                    width to 140, which can be reset if needed with the --width argument. Wider space is 
-                                    needed for some qr codes.
-      -g, --location                The given value is added as a 'location' tag with every kind 1 post made. Shortcut g for
-                                    geographic location.
-      -h, --help                    Print help/usage message and exit. 
+      -l, --lnqr                    Flag, if set any LN invoices starting with LNBC will be printed as a QR code. Will set
+                                    width to 140, which can be reset if needed with the --width argument. Wider
+                                    space is needed for some qr codes.
+      -g, --location <location>     The given value is added as a 'location' tag with every kind 1 post made. g in shortcut
+                                    standing for geographic location.
+      -h, --help                    Print help/usage message and exit.
       -v, --version                 Print version and exit.
 
-  UI Options                                
-      -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By default
-                                    the posts or text is aligned to the center of the terminal. 
-      -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 100. 
-                                    Can't be less than 60.
+  UI Options
+      -a, --align  <left>           When "left" is given as option to this argument, then the text is aligned to left. By
+                                    default the posts or text is aligned to the center of the terminal.
+      -w, --width  <width as num>   This specifies how wide you want the text to be, in number of columns. Default is 96.
+                                    Cant be less than 60.
       -m, --maxdepth <depth as num> The maximum depth to which the threads can be displayed. Minimum is 2 and
-                                    maximum allowed is 12. 
+                                    maximum allowed is 12.
       -c, --color  <color>          Color option can be green, cyan, white, black, red and blue.
 
   Advanced
-      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. The next larger number divisible by 4 is 
-                                    taken as difficulty. Can't be more than 32 bits, because otherwise it typically takes too much 
-                                    time. Minimum and default is 0, which means no difficulty.
-      -e, --overwrite               Will over write the file with all the events that were read from file, and all newly received. Is
-                                    useful when the file has to be cleared of old unused events. A backup should be made just in case
-                                    of original file before invoking.
+      -y, --difficulty <number>     The difficulty number in bits, only for kind 1 messages. Tne next larger number divisible
+                                    by 4 is taken as difficulty. Can't be more than 32 bits, because otherwise it typically
+                                    takes too much time. Minimum and default is 0, which means no difficulty.
+      -e, --overwrite               Will over write the file with all the events that were read from file, and all newly
+                                    received. Is useful when the file has to be cleared of old unused events. A backup should
+                                    be made just in case of original file before invoking.
 
 ```                                
 

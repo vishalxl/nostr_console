@@ -349,9 +349,10 @@ class EventData {
     if( !content.contains("nostr:") ) {
       return content;
     }
-    //print("------------------\ncontent = $content \n////////////////////////////////");
+    
+    //print("------------------\nin expandMentions: content = $content \n");
     String replaceMentions(Match mentionTagMatch) {
-      //print("in replace Mentions: ");
+      //print("in replaceMentions\n");
       String? mentionTag = mentionTagMatch.group(0);
       if( mentionTag != null) {
         //print("mentionTag = $mentionTag");
@@ -367,6 +368,8 @@ class EventData {
           String? strHex = nsec["data"]; // this is 64 byte hex pubkey or note id 
           if( strHex != null && type != null) {
             String mentionedId = strHex;
+            //print("strHex = $strHex type = $type");
+
             if( type == "npub") {
               if( gKindONames.containsKey(mentionedId)) {
                 
@@ -380,14 +383,27 @@ class EventData {
               }
             } else {
               if( type == "note") {
-                EventData? eventData = tempChildEventsMap[mentionedId]?.event.eventData;
-                if( eventData != null) {
-                  String quotedAuthor = getAuthorName(eventData.pubkey);
+                EventData? mentionedEventData = tempChildEventsMap[mentionedId]?.event.eventData;
+                if( mentionedEventData != null) {
+                  //print("Found note");
+                  String quotedAuthor = getAuthorName(mentionedEventData.pubkey);
                   String prefixId = mentionedId.substring(0, 3);
-                  String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"${eventData.evaluatedContent}\">";
+                  String mentionedContent = mentionedEventData.content;
+
+                  if( mentionedEventData.evaluatedContent != "") {
+                    //print("found evaluated content");
+                    mentionedContent = mentionedEventData.evaluatedContent;
+                  } else {
+                    //print("didnt find evaluated content");
+                  }
+
+                  String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"$mentionedContent\">";
+                  //print("evaluatedContent: ${mentionedEventData.evaluatedContent}\n");
                   return quote;
                 }
-              } 
+              } else {
+                //print("Could not find event!\n");
+              }
             }
           return "nostr:$strBechId";
           } else {

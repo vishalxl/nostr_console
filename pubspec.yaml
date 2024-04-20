@@ -100,7 +100,7 @@ dev_dependencies:
   test: ^1.21.4
 dependencies:
   args: ^2.3.1
-  bip340: ^0.2.0
+  bip340: ^0.3.0
   crypto: ^3.0.2
   intl: ^0.19.0
   translator: ^1.0.0

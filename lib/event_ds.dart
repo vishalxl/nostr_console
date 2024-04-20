@@ -410,7 +410,7 @@ class EventData {
             //print("Could not parse the given nsec/private key. Exiting.");
             return mentionTag;
           }
-        } on Exception catch (e) {
+        } on Exception {
           //print("====================Caught exctption.");
           return "nostr:$strBechId";
         }

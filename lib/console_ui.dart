@@ -394,7 +394,7 @@ void printProfile(Store node, String profilePubkey) {
     stdout.write("$pronoun follow ${profileContactEvent.eventData.contactList.length} accounts:  ");
     profileContactEvent.eventData.contactList.sort();
     for (var x in profileContactEvent.eventData.contactList) {
-      stdout.write("${getAuthorName(x.contactPubkey)}, ");
+      stdout.write("${getAuthorName(x.contactPubkey, pubkeyLenShown: 10)}, ");
     }
     print("\n");
   } else {

@@ -397,6 +397,26 @@ void printProfile(Store node, String profilePubkey) {
       stdout.write("${getAuthorName(x.contactPubkey)}, ");
     }
     print("\n");
+  } else {
+    // check if you follow the other account
+    Event? selfContactEvent = getContactEvent(userPublicKey);
+    bool youFollowThem = false;
+
+    if( selfContactEvent != null) {
+      List<Contact> selfContacts = selfContactEvent.eventData.contactList;
+      for(int i = 0; i < selfContacts.length; i ++) {
+        if( selfContacts[i].contactPubkey == profilePubkey) {
+          youFollowThem = true;
+          print("* You follow $authorName");
+        } 
+      }
+    
+      if( youFollowThem == false) {
+        print("* You don't follow $authorName");
+      }
+  
+      print("* Their contact list was not found.\n");
+    }
   }
 
   // print followers

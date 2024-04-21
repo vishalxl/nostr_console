@@ -1035,8 +1035,9 @@ class Event {
   String originalJson;
   List<String> seenOnRelays;
   bool readFromFile;
+  bool userRelevant; // is made true if the event has been printed for the user ( and its relevant to user, which will later be saved in file)
 
-  Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson, [this.readFromFile = false]);
+  Event(this.event, this.id, this.eventData, this.seenOnRelays, this.originalJson, [this.readFromFile = false, this.userRelevant = false]);
 
   @override
   bool operator ==( other) {

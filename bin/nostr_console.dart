@@ -290,7 +290,7 @@ Future<void> main(List<String> arguments) async {
         initialEvents = readEventsFromFile(gEventsFilename);
 
         // count events
-        for (var element in initialEvents) { numFileEvents++;}
+        numFileEvents += initialEvents.length;
         print("read $numFileEvents events from file $gEventsFilename");
       }
 

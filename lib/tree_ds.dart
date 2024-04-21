@@ -411,7 +411,7 @@ class Tree {
    * returns Point , where first int is total Threads ( or top trees) printed, and second is notifications printed
    * returns list< total top threads printed, total events printed, total notifications printed> 
    */
-  List<int> printTree(int depth, DateTime newerThan, bool topPost, [int countPrinted = 0, int maxToPrint = gMaxEventsInThreadPrinted]) { 
+  List<int> printTree(int depth, DateTime newerThan, bool topPost, [int countPrinted = 0, int maxToPrint = gMaxEventsInThreadPrinted, bool userRelevant = false]) { 
     List<int> ret = [0,0,0];
 
     if(event.eventData.isNotification || event.eventData.newLikes.isNotEmpty) {
@@ -419,6 +419,12 @@ class Tree {
     }
 
     countPrinted++;
+
+    // toggle flag which will save the event and program end
+    if( userRelevant == true) {
+      event.userRelevant = true;
+    }
+
     event.printEvent(depth, topPost);
     ret[1] = 1; 
 
@@ -452,7 +458,7 @@ class Tree {
         leftShifted = true;
       }
 
-      List<int> temp = children[i].printTree(depth+1, newerThan, false, countPrinted, maxToPrint);
+      List<int> temp = children[i].printTree(depth+1, newerThan, false, countPrinted, maxToPrint, userRelevant);
       ret[1] += temp[1];
       ret[2] += temp[2];
       countPrinted += temp[1];
@@ -1677,12 +1683,12 @@ class Store {
   }
 
 // returns list , where first int is total Threads ( or top trees) printed, second is total events printed, and third is notifications printed
-  static List<int> printTopPost(Tree topTree, int depth, DateTime newerThan, [int maxToPrint = gMaxEventsInThreadPrinted]) {
+  static List<int> printTopPost(Tree topTree, int depth, DateTime newerThan, [int maxToPrint = gMaxEventsInThreadPrinted, bool userRelevant = false]) {
     stdout.write(Store.startMarkerStr);
 
     //if(topTree.event.eventData.isNotification) print('is notification');
 
-    List<int> counts = topTree.printTree(depth, newerThan, true, 0, maxToPrint);
+    List<int> counts = topTree.printTree(depth, newerThan, true, 0, maxToPrint, userRelevant);
     counts[0] += 1; // for this top post 
     stdout.write(endMarkerStr);
     //print("In node printTopPost: ret =${counts}");
@@ -1701,7 +1707,7 @@ class Store {
    /// ********************************************************************************************************************************
   /* The main print tree function. Calls the treeSelector() for every node and prints it( and its children), only if it returns true. 
    */
-  List<int> printStoreTrees(int depth, DateTime newerThan, fTreeSelector treeSelector, [int maxToPrint = gMaxEventsInThreadPrinted]) {
+  List<int> printStoreTrees(int depth, DateTime newerThan, fTreeSelector treeSelector, [bool userRelevant = false, int maxToPrint = gMaxEventsInThreadPrinted]) {
 
     // update this list, because it is internally used by printEvent
     gFollowList = getFollows(userPublicKey);
@@ -1738,7 +1744,7 @@ class Store {
         stdout.write("\n"); 
       }
 
-      List<int> temp = printTopPost(topPosts[i], depth, newerThan, maxToPrint);
+      List<int> temp = printTopPost(topPosts[i], depth, newerThan, maxToPrint, userRelevant);
       ret[0] += temp[0]; 
       ret[1] += temp[1]; 
       ret[2] += temp[2];
@@ -2151,8 +2157,13 @@ class Store {
   }
 
 
-  // threads where the user and follows have involved themselves are returnes as true ( relevant)
+  // returns true if the given event should be saved in file
   bool isRelevantForFileSave(Tree tree) {
+    if( tree.event.userRelevant == true) {
+      return true;
+    }
+
+    // threads where the user and follows have involved themselves are returnes as true ( relevant)
     if(   tree.treeSelectorUserPostAndLike(gFollowList.union(gDefaultFollows).union({userPublicKey}), enableNotifications: false) 
        || tree.treeSelectorDMtoFromUser({userPublicKey}, enableNotifications: false)
        || tree.treeSelectorUserReplies(gFollowList)
@@ -2186,7 +2197,6 @@ class Store {
         await  file.writeAsString("", mode: FileMode.write).then( (file) => file);
       }
 
-      //await  file.writeAsString("", mode: FileMode.append).then( (file) => file);
       int        eventCounter = 0;
       String     nLinesStr    = "";
       int        countPosts   = 0;

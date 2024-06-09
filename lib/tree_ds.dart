@@ -846,13 +846,11 @@ class Store {
 
         try {
           dynamic json = jsonDecode(ce.eventData.content);
-          Channel? channel = getChannel(rooms, chatRoomId);
-          if( channel != null) {
-            if( channel.chatRoomName == "" && json.containsKey('name')) {
-              channel.chatRoomName = json['name'];
-            }
-          } else {
-            String roomName = "", roomAbout = "";
+          String roomName = "", roomAbout = "";
+          if( json is String) {
+            // in case there is no json in kind 40, we assume the string is room name
+            roomName = json;
+          } else {           
             if(  json.containsKey('name') ) {
               roomName = json['name']??"";
             }
@@ -860,7 +858,15 @@ class Store {
             if( json.containsKey('about')) {
               roomAbout = json['about']??"";
             }
-
+          }
+          
+          Channel? channel = getChannel(rooms, chatRoomId);
+          if( channel != null) {
+            if( channel.chatRoomName == "" ) {
+              channel.chatRoomName = roomName;
+            }
+          } else {
+ 
             List<String> emptyMessageList = [];
             Channel room = Channel(chatRoomId, roomName, roomAbout, "", emptyMessageList, {}, ce.eventData.createdAt, enumRoomType.kind40);
             rooms.add( room);

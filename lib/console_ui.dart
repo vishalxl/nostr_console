@@ -1351,9 +1351,7 @@ Future<void> socialMenuUi(Store node) async {
     while(socialMenuContinue) {
 
       if( !firstTime) {
-        //stdout.write("calling paie");
         await processAnyIncomingEvents(node); // this takes 300 ms
-        //stdout.write("returned from paie");
       }
 
       firstTime = false;
@@ -1377,8 +1375,6 @@ Future<void> socialMenuUi(Store node) async {
         case 1:
           bool selectorTrees_followActionsNoNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey).union(gDefaultFollows).union({userPublicKey}), enableNotifications: false);
           node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActionsNoNotifications, true);
-
-          await processAnyIncomingEvents(node, true);
 
           break;
 
@@ -1416,7 +1412,6 @@ Future<void> socialMenuUi(Store node) async {
           await sendReplyPostLike(node, replyToId, replyKind, content);
           clearScreen();
 
-          await processAnyIncomingEvents(node, true);
           break;
 
         case 3:
@@ -1430,7 +1425,6 @@ Future<void> socialMenuUi(Store node) async {
             print("No replies or likes.");
           }
 
-          await processAnyIncomingEvents(node, true);
           break;
         case 4:
           clearScreen();
@@ -1441,7 +1435,6 @@ Future<void> socialMenuUi(Store node) async {
             print("No posts made by you in last $gHoursDefaultPrint hours.");
           }
 
-          await processAnyIncomingEvents(node, true);
           break;
         case 5:
           clearScreen();
@@ -1452,7 +1445,6 @@ Future<void> socialMenuUi(Store node) async {
           } else {
             print("No replies/likes made by you in last $gHoursDefaultPrint hours.");
           }
-          await processAnyIncomingEvents(node, true);
           break;
 
         case 6:
@@ -1464,7 +1456,6 @@ Future<void> socialMenuUi(Store node) async {
           } else {
             print("No threads to show where your follows participated in last $gHoursDefaultPrint hours.");
           }
-          await processAnyIncomingEvents(node, true);
           break;
 
         case 7: // search word or event id
@@ -1574,7 +1565,6 @@ Future<void> socialMenuUi(Store node) async {
               }
             }
           }
-          await processAnyIncomingEvents(node, true);
           break;
 
 

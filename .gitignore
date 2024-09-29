@@ -20,7 +20,6 @@ doc/api/
 *.js.deps
 *.js.map
 del*.txt
-all_nostr_events.txt
 bin/nostr_console_win64.exe
 *.exe
 *.zip

@@ -4,7 +4,7 @@
 #  echo '\n' ; for line in `cowsay hi` ;  do echo  -e "${line}\\\n" ; done
 
 IFS=$'\n'
-channel=test99
+channel=25e5c
 # { echo -e "3\n1\n${channel}\nHello, this is a random test.\nx\nx\nx" ; cat /dev/stdin; } | ./nostr_console_ubuntu_x64 --prikey=`openssl rand -hex 32` 
 
 
@@ -12,4 +12,4 @@ channel=test99
 message=""
 message=$message'\n' ; for line in `cowsay hi` ;  do message=$message"${line} \n" ; done
 echo $message
-{ echo -e "3\n1\n${channel}\nHello, this is a random test.\nx\nx\nx" ; cat /dev/stdin; } | ./nostr_console --prikey=`openssl rand -hex 32` 
+{ echo -e "3\n1\n${channel}\nHello, this is a random test.\nx\nx\nx" ; cat /dev/stdin; } | dart run ../bin/nostr_console.dart --prikey=`openssl rand -hex 32` 

@@ -1351,9 +1351,12 @@ Future<void> socialMenuUi(Store node) async {
     while(socialMenuContinue) {
 
       if( !firstTime) {
+        //stdout.write("calling paie");
         await processAnyIncomingEvents(node); // this takes 300 ms
-        firstTime = false;
+        //stdout.write("returned from paie");
       }
+
+      firstTime = false;
 
       // the main menu
       int option = showMenu([
@@ -1374,7 +1377,9 @@ Future<void> socialMenuUi(Store node) async {
         case 1:
           bool selectorTrees_followActionsNoNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey).union(gDefaultFollows).union({userPublicKey}), enableNotifications: false);
           node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActionsNoNotifications, true);
+
           await processAnyIncomingEvents(node, true);
+
           break;
 
         case 2:

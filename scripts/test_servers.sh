@@ -17,12 +17,11 @@ source $configfile
 limit=300
 numHours=1
 
-echo -e "Requesting all events in last $numHours hours with a limit of $limit by executing the following command for each:"
+#echo -e "Requesting all events in last $numHours hours with a limit of $limit by executing the following command for each:"
 sinceSeconds=`date -d "-$numHours hour" +%s` ; 
 
-N=2
-inLastNDays=`date -d "$N days" +%s`
-
+#N=2
+#inLastNDays=`date -d "$N days" +%s`
 #echo "Events in last $N days"
 #req="[\"REQ\",\"id_mention_#p_nostr.coinos.io\",{\"#p\":[\"82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2\"],\"limit\":20000,\"since\":$inLastNDays},{\"authors\":[\"82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2\"]}]"
 

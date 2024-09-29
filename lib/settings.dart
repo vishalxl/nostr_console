@@ -50,14 +50,15 @@ int gHoursDefaultPrint      = 6; // print latest given hours only
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
 
-// edited on 17 march 2024 	
+// edited on 29 sept 2024 	
 String defaultServerUrl       = "wss://relay.damus.io";
 Set<String> gListRelayUrls = { defaultServerUrl,
-                              "wss://nostr-01.bolt.observer",
                               "wss://nostr.wine",
-                              "wss://relay2.nostrchat.io",
-                              "wss://nostr.swiss-enigma.ch"
+                              "wss://relay.nostr.info",
+                              "wss://nos.lol",
+                              "wss://relay.nostr.band"
                               };
+
 
 // well known disposable test private key
 const String gDefaultPublicKey  = "";

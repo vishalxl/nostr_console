@@ -8,14 +8,14 @@ nostr_relays=(
     "wss://nostr.zebedee.cloud"
     "wss://nostr.coinos.io"
     "wss://nostr-01.bolt.observer"
-    #"wss://nostr.openchain.fr"
 
     "wss://nostr-relay.wlvs.space"
+    "wss://nostr-relay-dev.wlvs.space"
+
     "wss://nostr-pub.wellorder.net"
     "wss://nos.lol"
-    "wss://nostr-relay-dev.wlvs.space"
-    #"wss://nostr.shawnyeager.net"
-    #"wss://relay.nostr.info"
+
+
     "wss://nostr.semisol.dev"
     "wss://relay.nostr.info"
 
@@ -55,8 +55,6 @@ nostr_relays=(
     "wss://nostr.onsats.org"
     "wss://nostr-relay.digitalmob.ro"
 
-    "wss://offchain.pub"
-
     "wss://relay.valireum.net"
     "wss://nostr-relay.trustbtc.org"
     "wss://relay.stoner.com"
@@ -73,12 +71,14 @@ nostr_relays=(
 
     "wss://brb.io"
 
-    "wss://dummyurl.example.com"
-
-     )
+    "wss://dummyurl.example.com")
 
 
 
 # reference
 # nostr.info
 # https://nostr.watch/relays/find
+
+#"wss://nostr.openchain.fr"
+#"wss://nostr.shawnyeager.net"
+#"wss://relay.nostr.info"

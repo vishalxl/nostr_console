@@ -16,11 +16,11 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache Dart dependencies
         id: cache-deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/dart
           key: ${{ runner.os }}-dart-deps-${{ matrix.arch }}
@@ -47,7 +47,7 @@ jobs:
 
 
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nostr_console_linux_${{ matrix.arch }}
           path: |
@@ -64,11 +64,11 @@ jobs:
       PUB_CACHE=: tmp/dart
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache Dart dependencies
         id: cache-deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/dart
           key: ${{ runner.os }}-dart-deps-amd64
@@ -99,7 +99,7 @@ jobs:
 
       - name: Archive production artifacts (macOS)
         if: ${{ matrix.os == 'macos' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nostr_console_${{ matrix.os }}_amd64
           path: |
@@ -107,7 +107,7 @@ jobs:
 
       - name: Archive production artifacts (Windows)
         if: ${{ matrix.os == 'windows' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nostr_console_${{ matrix.os }}_amd64.exe
           path: |

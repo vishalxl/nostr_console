@@ -26,10 +26,30 @@ Set<String> getFollows(String pubkey) {
     for (var x in profileContactEvent.eventData.contactList) {
       followPubkeys.add(x.contactPubkey);
     }
-    //followPubkeys = profileContactEvent.eventData.contactList.toSet();
   }
 
   return followPubkeys;
+}
+
+// returns all mutual follows
+Set<String> getMutualFollows(String pubkey) {
+  Set<String> mutualFollowPubkeys = {};
+
+  Event? profileContactEvent = getContactEvent(pubkey);
+  if( profileContactEvent != null) {
+    for (var x in profileContactEvent.eventData.contactList) { // go over each follow
+      Event? followContactEvent = getContactEvent(x.contactPubkey);
+      if( followContactEvent != null) {
+        for (var y in followContactEvent.eventData.contactList) { // go over the follow's friend list
+          mutualFollowPubkeys.add(x.contactPubkey);
+          break;
+        }
+      }
+    }
+  }
+
+  //print("number of mutual follows being returned:  ${mutualFollowPubkeys.length}");
+  return mutualFollowPubkeys;
 }
 
 Set<String>  getUserChannels(Set<Event> userEvents, String userPublicKey) {

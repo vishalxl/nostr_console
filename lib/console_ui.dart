@@ -1359,21 +1359,27 @@ Future<void> socialMenuUi(Store node) async {
       // the main menu
       int option = showMenu([
                              'Your Feed',         // 1
-                             'Post/Reply/Like',   // 2
-                             'Replies/Likes to you',// 3
+                             'Make a Post/Reply or Like',   // 2
+                             'Replies+ to you',// 3
                              'Your Posts',        // 4 
                              'Your Replies/Likes',//5
-                             'Follows\' Posts/Replies/Likes',   // 6
-                             'Search word(s) or event id',    // 7
-                             'Follow new contact',            // 8
-                             'Show user profile',             // 9
-                             'Change # of hours printed', // 10
-                             'E(x)it to main menu'], // 11
+                             'Accounts you Follow',   // 6
+                             'Mutual Follows',   // 7
+                             'Search word or event id',    // 8
+                             'Follow new contact',            // 9
+                             'Show user profile',             // 10
+                             'Change # of hours printed', // 11
+                             'E(x)it to main menu'], // 12
                              "Social Network Menu");
       
       switch(option) {
         case 1:
-          bool selectorTrees_followActionsNoNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey).union(gDefaultFollows).union({userPublicKey}), enableNotifications: false);
+          Set<String> followPubkeys = getFollows( userPublicKey);
+          bool selectorTrees_followActionsNoNotifications (Tree t) => t.treeSelectorUserPostAndLike(
+                                                                      followPubkeys
+                                                                      .union(gDefaultFollows)
+                                                                      .union({userPublicKey}), 
+                                                          enableNotifications: false);
           node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActionsNoNotifications, true);
 
           break;
@@ -1449,7 +1455,9 @@ Future<void> socialMenuUi(Store node) async {
 
         case 6:
           clearScreen();
-          bool selectorTrees_followActionsWithNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey), enableNotifications: true);
+          Set<String> followPubkeys = getFollows( userPublicKey);
+          bool selectorTrees_followActionsWithNotifications (Tree t) => t.treeSelectorUserPostAndLike(
+                                                                        followPubkeys, enableNotifications: true);
           List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_followActionsWithNotifications, true);
           if( numPrinted[0] > 0) {
             print("Showed ${numPrinted[0]} threads where your follows participated.\n");
@@ -1458,7 +1466,21 @@ Future<void> socialMenuUi(Store node) async {
           }
           break;
 
-        case 7: // search word or event id
+        // mutual follows
+        case 7:
+          clearScreen();
+          Set<String> mutualPubkeys = getMutualFollows( userPublicKey);
+          bool selectorTrees_MutualFollowActionsWithNotifications (Tree t) => t.treeSelectorUserPostAndLike(
+                                                                                mutualPubkeys, enableNotifications: true);
+          List<int> numPrinted = node.printStoreTrees(0, DateTime.now().subtract(Duration(hours:gHoursDefaultPrint)), selectorTrees_MutualFollowActionsWithNotifications, true);
+          if( numPrinted[0] > 0) {
+            print("Showed ${numPrinted[0]} threads where your follows participated.\n");
+          } else {
+            print("No threads to show where your mutual follows participated in last $gHoursDefaultPrint hours.");
+          }
+          break;
+
+        case 8: // search word or event id
           clearScreen();
           stdout.write("Enter word(s) to search: ");
           String? $tempWords = stdin.readLineSync();
@@ -1486,7 +1508,7 @@ Future<void> socialMenuUi(Store node) async {
           }
           break;
   */
-        case 8: // follow new contact
+        case 9: // follow new contact
           // in case the program was invoked with --pubkey, then user can't send messages
           if( userPrivateKey == "") {
               printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
@@ -1568,7 +1590,7 @@ Future<void> socialMenuUi(Store node) async {
           break;
 
 
-        case 9:
+        case 10:
           clearScreen();
           stdout.write("Printing profile of a user; type username or first few letters of user's public key( or full public key): ");
           String? $tempUserName = stdin.readLineSync();
@@ -1594,7 +1616,7 @@ Future<void> socialMenuUi(Store node) async {
           }
           break;
 
-        case 10: // change number of days printed
+        case 11: // change number of days printed
           clearScreen();
           stdout.write("Enter number of hours for which you want to see latest posts: ");
           String? $tempHoursDefaultPrint = stdin.readLineSync();
@@ -1614,7 +1636,7 @@ Future<void> socialMenuUi(Store node) async {
           }    
           break;
 
-        case 11:
+        case 12:
           default:
             socialMenuContinue = false;
         } // end menu switch

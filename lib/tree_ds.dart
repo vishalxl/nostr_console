@@ -1675,7 +1675,9 @@ class Store {
 
     List<int> ret = [0,0,0];
     for (var t in topNotificationTree) {
-      bool selectorTrees_followActionsWithNotifications (Tree t) => t.treeSelectorUserPostAndLike(getFollows( userPublicKey), enableNotifications: true);
+      Set<String> followList = getFollows(userPublicKey);
+      bool selectorTrees_followActionsWithNotifications (Tree t) => 
+                                                  t.treeSelectorUserPostAndLike( followList, enableNotifications: true);
       if( selectorTrees_followActionsWithNotifications(t)) {
         List<int> temp = Store.printTopPost(t, 0, DateTime(0));
         ret[0] += temp[0]; 

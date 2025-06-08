@@ -570,16 +570,16 @@ void printPubkeys(Set<String> pubkey) {
 void printPubkeyResult(Set<String> pubkey) {
 
   if( pubkey.isEmpty) {
-    print("There is no pubkey for that given name.");
+    stdout.write("There is no pubkey for that given name.\n");
     return;
   } else {
     if( pubkey.length == 1) {
-      print("There is 1 public key for the given name, which is: ");
+      stdout.write("There is 1 public key for the given name, which is: \n");
     } else {
-      print("There are ${pubkey.length} public keys for the given name, which are: ");
+      stdout.write("There are ${pubkey.length} public keys for the given name, which are: \n");
     }
+    printPubkeys(pubkey);
   }
-  printPubkeys(pubkey);
 }
 
 Future<void> otherOptionsMenuUi(Store node) async {
@@ -1573,7 +1573,7 @@ Future<void> socialMenuUi(Store node) async {
           stdout.write("Printing profile of a user; type username or first few letters of user's public key( or full public key): ");
           String? $tempUserName = stdin.readLineSync();
           String userName = $tempUserName??"";
-          stdout.write( "user name: $userName");
+          stdout.write( "Entered name/pubkey: $userName\n");
           if( userName != "") {
             Set<String> pubkey = getPublicKeyFromName(userName); 
 

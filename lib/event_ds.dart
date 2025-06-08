@@ -1357,21 +1357,34 @@ Set<String> getPublicKeyFromName(String inquiredName) {
   if( inquiredName.isEmpty) {
     return {};
   }
+
+  inquiredName = inquiredName.toLowerCase();
+
   Set<String> pubkeys = {};
   gKindONames.forEach((pubkey, userInfo) {
     // check both the user name, and the pubkey to search for the user
     // check username 
     if( userInfo.name != null) {
       int minNameLen = min( inquiredName.length, (userInfo.name?.length)??0);
-      if( inquiredName.toLowerCase() == userInfo.name?.substring(0, minNameLen).toLowerCase()) {
+      if( inquiredName == userInfo.name?.substring(0, minNameLen).toLowerCase()) {
         pubkeys.add(pubkey);
       }
     }
 
     // check public key
-    if( inquiredName.length >= 2 &&  inquiredName.length <= pubkey.length) {
-      if( pubkey.substring(0, inquiredName.length) == inquiredName) {
-        pubkeys.add(pubkey);
+    if (inquiredName.startsWith("npub")) { // check npub
+      String? hexKey = getHexPubkeyFromNpub(inquiredName);
+      if (hexKey != null) {
+        pubkeys.add(hexKey);
+        //stdout.write("found user");
+      } else {
+        //stdout.write("")
+      }
+    } else { // in case it is a hex key
+      if (inquiredName.length >= 2 && inquiredName.length <= pubkey.length) {
+        if (pubkey.substring(0, inquiredName.length) == inquiredName) {
+          pubkeys.add(pubkey);
+        }
       }
     }
   });
@@ -1779,4 +1792,16 @@ String myGetPublicKey(String prikey) {
     }
   }
   return pubkey;
+}
+
+String? getHexPubkeyFromNpub(String npubKey) {
+  Map<String, String> npubMap = bech32Decode(npubKey);
+  String? npubPubkey = npubMap["data"];
+ 
+  if (npubPubkey != null) {
+    return npubPubkey;
+  } else {
+    //print("Could not parse the given npub/public key. Exiting.");
+    return null;
+  }
 }

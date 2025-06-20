@@ -38,7 +38,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@main
         with:
-          cosign-release: 'v1.13.1'
+          cosign-release: 'v2.4.0'
 
 
       - name: Set up QEMU

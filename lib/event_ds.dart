@@ -457,7 +457,23 @@ class EventData {
 
                 if( author == null) {
                   if(localDebug) print("Could not find author for pubkey $pubkey");
-                  return "nostr:$strBechId";
+
+                  String strRelays = "";
+                  List<String>? listRelays = nevent["relays"] as List<String>?;
+
+                  if( listRelays != null) {
+                    for( int i = 0; i < listRelays.length; i++) {
+                      String relay = listRelays[i];
+                      if( strRelays.isNotEmpty) {
+                        strRelays += ", ";
+                      }
+                      strRelays += relay;
+                    }
+                  }
+
+                  String temp = "\n[User:" + getNpubFromHexPubkey(pubkey) + " on relays: " + strRelays + "]\n";
+                  //print("returning $temp");
+                  return temp;
                 } else {
                   //print("Found author: $author"); 
                   return "@$author";
@@ -1870,4 +1886,9 @@ String? getHexPubkeyFromNpub(String npubKey) {
     //print("Could not parse the given npub/public key. Exiting.");
     return null;
   }
+}
+
+String getNpubFromHexPubkey(String hexKey) {
+  String npubKey = bech32Encode("npub", hexKey);
+  return npubKey;
 }

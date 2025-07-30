@@ -349,28 +349,38 @@ class EventData {
     if( !content.contains("nostr:") ) {
       return content;
     }
+    var localDebug = false;
     
+    if(localDebug) print("------->\n\n<------- content = \n$content\n\n\n");
+
     //print("------------------\nin expandMentions: content = $content \n");
     String replaceMentions(Match mentionTagMatch) {
-      //print("in replaceMentions\n");
+      if(localDebug) print("\n-------------------\nin replaceMentions");
       String? mentionTag = mentionTagMatch.group(0);
       if( mentionTag != null) {
-        //print("mentionTag = $mentionTag");
+        if(localDebug) print("mentionTag = $mentionTag");
         String strBechId = mentionTag.substring(6, mentionTag.length);
-        String tempType = strBechId.substring(0, 4);
-        if( tempType != "note" && tempType != "npub")  {
+        //String tempType = strBechId.substring(0, 4);
+        if( !strBechId.startsWith((RegExp(r'npub|note|nevent|nprofile'))))   {
+          if(localDebug) print('returning from replaceMentions');
           return "nostr:$strBechId";
         }
-        //print("Going to decode: $strBechId");
-        try {
-          Map<String, String> nsec = bech32Decode(strBechId);
-          String? type = nsec["prefix"]; // type can be "note" or "npub"
-          String? strHex = nsec["data"]; // this is 64 byte hex pubkey or note id 
-          if( strHex != null && type != null) {
-            String mentionedId = strHex;
-            //print("strHex = $strHex type = $type");
 
-            if( type == "npub") {
+        if(localDebug) print("Going to decode: $strBechId");
+        try {
+          Map<String, String> bech32str = bech32Decode(strBechId);
+          if(localDebug) print('after bech32Decode');
+          String? type = bech32str["prefix"]; // type can be "note", "npub", nevent, nprofile ( others not supported yet)
+          String? hexData = bech32str["data"]; // the data for given type
+
+          if(localDebug) print('after bech32Decode 2');
+
+          if( hexData != null && type != null) {
+            String mentionedId = hexData;
+            if(localDebug) print("strHex = $hexData type = $type");
+
+            switch(type) { 
+            case "npub":
               if( gKindONames.containsKey(mentionedId)) {
                 
                 String? author = getOnlyAuthorName(mentionedId);
@@ -381,7 +391,9 @@ class EventData {
                   return "@$author";
                 }
               }
-            } else {
+
+              break;
+            case "note":
               if( type == "note") {
                 EventData? mentionedEventData = tempChildEventsMap[mentionedId]?.event.eventData;
                 if( mentionedEventData != null) {
@@ -391,37 +403,91 @@ class EventData {
                   String mentionedContent = mentionedEventData.content;
 
                   if( mentionedEventData.evaluatedContent != "") {
-                    //print("found evaluated content");
+                    if(localDebug) print("found evaluated content");
                     mentionedContent = mentionedEventData.evaluatedContent;
                   } else {
-                    //print("didnt find evaluated content");
+                    if(localDebug) print("didnt find evaluated content");
                   }
 
                   String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"$mentionedContent\">";
                   //print("evaluatedContent: ${mentionedEventData.evaluatedContent}\n");
                   return quote;
                 }
-              } else {
-                //print("Could not find event!\n");
               }
+              break;
+
+          
+            case "nevent":
+              if(localDebug) print("in nevent");
+              if(localDebug) print("nevent = $mentionedId");
+              Nevent nevent = Nip19.decodeNevent(mentionedId);
+              if( nevent["id"] != null) {
+                String id = nevent["id"] as String;
+
+                EventData? mentionedEventData = tempChildEventsMap[id]?.event.eventData;
+                if( mentionedEventData != null) {
+                  String quotedAuthor = getAuthorName(mentionedEventData.pubkey);
+                  String prefixId = mentionedId.substring(0, 3);
+                  String mentionedContent = mentionedEventData.content;
+
+                  if( mentionedEventData.evaluatedContent != "") {
+                    if(localDebug) print("found evaluated content");
+                    mentionedContent = mentionedEventData.evaluatedContent;
+                  } else {
+                    if(localDebug) print("didnt find evaluated content");
+                  }
+
+                  String quote = "<Quoted event id '$prefixId' by $quotedAuthor: \"$mentionedContent\">";
+                  //print("evaluatedContent: ${mentionedEventData.evaluatedContent}\n");
+                  //print(quote);
+                  return quote;
+                }
+              }
+              
+              break;
+
+            case "nprofile":
+              if(localDebug) print("in nprofile");
+              if(localDebug) print("nprofile = $mentionedId");
+              Nevent nevent = Nip19.decodeNevent(mentionedId);
+              // id is pubkey here
+              if( nevent["id"] != null) {
+                String pubkey = nevent["id"] as String;
+                String? author = getOnlyAuthorName(pubkey);
+
+                if( author == null) {
+                  if(localDebug) print("Could not find author for pubkey $pubkey");
+                  return "nostr:$strBechId";
+                } else {
+                  //print("Found author: $author"); 
+                  return "@$author";
+                }
+              }
+              
+              break;
+
+            default:
+              print("in default");
+              break;
             }
-          return "nostr:$strBechId";
+
+            return "nostr:$strBechId";
           } else {
-            //print("Could not parse the given nsec/private key. Exiting.");
+            print("Could not parse the given nsec/private key. Exiting.");
             return mentionTag;
           }
-        } on Exception {
-          //print("====================Caught exctption.");
+        } on Exception catch (e) {
+          print("====================Caught exctption $e");
           return "nostr:$strBechId";
         }
       }
-      if( gDebug >= 0) printWarning("In replaceMentions returning nothing");
+      printWarning("In replaceMentions returning nothing");
       return "";
     } // end replaceMentions()
 
     // replace the mentions, if any are found
     // The Bech32 alphabet contains 32 characters, including lowercase letters a-z and the numbers 0-9, excluding the number 1 and the letters ‘b’, ‘i’, ‘o’ to avoid reader confusion.
-    String mentionStr = "(nostr:(npub1|note1)[a0c-hj-np-z2-9]{58})"; // bech32 
+    String mentionStr = "(nostr:(npub1|note1)[a0c-hj-np-z2-9]{58})|(nostr:(nevent1|nprofile1)[a0c-hj-np-z2-9]+)"; // bech32 
     RegExp mentionRegExp = RegExp(mentionStr, caseSensitive: false);
     content = content.replaceAllMapped(mentionRegExp, replaceMentions);
     return content;

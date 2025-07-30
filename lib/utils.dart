@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:qr/qr.dart';
-import 'package:nostr_console/nip_019.dart';
 
 enum enumRoomType { kind4, kind40, kind140, RoomLocationTag, RoomTTag}
 

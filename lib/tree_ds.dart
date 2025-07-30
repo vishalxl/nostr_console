@@ -1735,7 +1735,9 @@ class Store {
 
     List<int> ret = [0,0,0];
 
+    //print("in printStoreTrees");
     for( int i = 0; i < topPosts.length; i++) {
+      //print("i = $i");
       // continue if this children isn't going to get printed anyway; selector is only called for top most tree
       if( treeSelector(topPosts[i]) == false) {
         continue;

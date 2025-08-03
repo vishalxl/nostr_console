@@ -502,9 +502,11 @@ int showMenu(List<String> menuOptions, String menuName, [String menuInfo = ""]) 
     print("\n");
 
     printMenu(menuOptions);
+    
     String promptWithName = userPrivateKey.length == 64? 
                               "Signed in as $gCommentColor${getAuthorName(userPublicKey)}$gColorEndMarker": 
-                              "${gWarningColor}You are not signed in so can't send any messages$gColorEndMarker";
+                              (userPublicKey.length == 64? "${gWarningColor}You are not signed in, but are browsing as ${getAuthorName(userPublicKey)} $gColorEndMarker": 
+                                    "${gWarningColor}You are not signed in so can't send any messages$gColorEndMarker");
 
     stdout.write("$promptWithName. ");
     stdout.write("Type option number: ");
@@ -1745,7 +1747,14 @@ Future<void> mainMenuUi(Store node) async {
           mainMenuContinue = false;
           String authorName = getAuthorName(userPublicKey);
           clearScreen();
-          print("\nFinished Nostr session for user: $authorName ($userPublicKey)");
+          String npubPubkey = "";
+          if( userPublicKey.isNotEmpty) { 
+            npubPubkey = bech32Encode("npub", userPublicKey);
+          }
+
+          String readOnly = userPrivateKey.isEmpty? "(read-only)": "";
+
+          print("\nFinished $readOnly Nostr session for user: $authorName ($userPublicKey / $npubPubkey)\n");
           if( gEventsFilename != "") {
             await node.writeEventsToFile(gEventsFilename);
           }

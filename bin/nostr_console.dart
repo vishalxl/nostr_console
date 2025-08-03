@@ -43,15 +43,31 @@ Future<void> main(List<String> arguments) async {
   if( credentials != null) {
     String? priKey = credentials["secret_key_bech32"];
     String? pubKey = credentials["public_key_bech32"];
-    List<dynamic>? configFileRelays = credentials["relays"]; 
+    //List<dynamic>? configFileRelays = credentials["relays"]; 
 
-    if( priKey != null) {
+    if( priKey != null && priKey.isNotEmpty) {
       //print("private key = $priKey");
       print("Config file private key found.");
       userPrivateKey = priKey;
+    } else {
+      print("Private key credentials not found in config file.");
+      if( pubKey != null && pubKey.isNotEmpty) {
+        print("Config file public key found : $pubKey");        
+        if( pubKey.startsWith("npub")) {
+          Map<String, String> npubMap = bech32Decode(pubKey);
+          String? npubPubkey = npubMap["data"];
+          if( npubPubkey != null) {
+            userPublicKey = npubPubkey;
+          } else {
+            print("Could not parse the given npub/public key that's in the credentials file. ");
+          }
+        } else {
+          userPublicKey = pubKey;
+        }
+      }  
     }
   } else {
-    print("Credentials not found in config file.");
+    print("Credentials not found in config file and/or config file not found.");
   }
  
  
@@ -139,6 +155,8 @@ Future<void> main(List<String> arguments) async {
           }
         }
       }
+
+
 
       // process private key argument, and it overrides what's given in pub key argument, if any pubkey is given
       if( argResults[prikeyArg] != null) {

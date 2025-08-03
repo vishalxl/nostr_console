@@ -583,7 +583,7 @@ Future<dynamic> readConfigFile() async {
  
   Directory dir = createConfigDirectory();
   
-  print("Configuration directory: ${dir.path}");
+  //print("Configuration directory: ${dir.path}");
 
   String configFilePath = path.join(dir.path, "credentials.json");
   print("Configuration filename: $configFilePath");

@@ -80,6 +80,11 @@ Usage:
 ```
 usage: dart run bin/nostr_console.dart [OPTIONS] 
 
+  Command line arguments take precedence over the config file settings, if any.  
+  Config file is expected to be located at \$HOME/nostr-commander-rs/data/credentials.json   
+  On Windows OS, \$HOME is usually C:\Users\UserName\AppData\Roaming  
+  Only private key is supported from the config file.  
+
   OPTIONS
 
       -k, --prikey  <private key>   The nsec or hex private key of user you want to 'log in' as.

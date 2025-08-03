@@ -1,10 +1,14 @@
 name: nostr_console
 description: A multi-platform nostr client built for terminal/console
-version: 0.3.6-beta
+version: 0.3.8-beta
 homepage: https://github.com/vishalxl/nostr_console   
 
-# 0.3.6
-# 
+
+# 0.3.8-beta 
+# 3 August 2025
+# read secret key from config file ( which is same format as used by nostr-commander-rs)
+# Supported nprofile/nevent 
+
 
 # 0.3.5
 # fix for crash in issue #70 

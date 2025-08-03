@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 
 // name of executable
 const String exename = "nostr_console";
-const String version = "0.3.7-beta";
+const String version = "0.3.8-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
@@ -288,7 +288,12 @@ The nostr console client built using dart.
 
 usage: $exename [OPTIONS] 
 
-  OPTIONS
+  Command line arguments take precedence over the config file settings, if any. 
+  Config file is expected to be located at \$HOME/nostr-commander-rs/data/credentials.json 
+  On Windows OS, \$HOME is usually C:/Users/UserName/AppData/Roaming
+  Only private key is supported from the config file.
+
+  COMMAND LINE OPTIONS
 
       -k, --prikey  <private key>   The nsec or hex private key of user you want to 'log in' as.
       -p, --pubkey  <public key>    The npub or hex public key of user whose events and feed are shown. When given, 

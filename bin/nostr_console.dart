@@ -12,6 +12,8 @@ import 'package:nostr_console/nip_019.dart';
 import 'package:args/args.dart';
 import 'package:logging/logging.dart';
 
+
+
 // program arguments
 const String pubkeyArg   = "pubkey";
 const String prikeyArg   = "prikey";
@@ -31,10 +33,29 @@ const String colorArg     = "color";
 const String overWriteFlag = "overwrite";
 const String locationArg = "location";
 const String lnQrFlag    = "lnqr";
+const String configuredUser = "user";
+
 
 Future<void> main(List<String> arguments) async {
 
-      
+  dynamic credentials = await readConfigFile();
+
+  if( credentials != null) {
+    String? priKey = credentials["secret_key_bech32"];
+    String? pubKey = credentials["public_key_bech32"];
+    List<dynamic>? configFileRelays = credentials["relays"]; 
+
+    if( priKey != null) {
+      //print("private key = $priKey");
+      print("Config file private key found.");
+      userPrivateKey = priKey;
+    }
+  } else {
+    print("Credentials not found in config file.");
+  }
+ 
+ 
+
     final parser = ArgParser()..addOption(requestArg) ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
                               ..addFlag(helpArg, abbr:"h", defaultsTo: false)
@@ -48,7 +69,8 @@ Future<void> main(List<String> arguments) async {
                               ..addFlag(overWriteFlag, abbr:"e", defaultsTo: false)
                               ..addOption(locationArg, abbr:"g")
                               ..addFlag("debug")
-                              ..addFlag(lnQrFlag, abbr:"l", defaultsTo: false);
+                              ..addFlag(lnQrFlag, abbr:"l", defaultsTo: false)
+                              ..addOption(configuredUser, abbr:"u");
     try {
       ArgResults argResults = parser.parse(arguments);
       if( argResults[helpArg]) {
@@ -90,7 +112,6 @@ Future<void> main(List<String> arguments) async {
       // get location of user if given
       if( argResults[locationArg] != null) {
         gUserLocation = argResults[locationArg];
-        userPrivateKey = "";
       }
 
       if( gUserLocation.isNotEmpty){ 
@@ -98,6 +119,9 @@ Future<void> main(List<String> arguments) async {
       }
 
       if( argResults[pubkeyArg] != null) {
+        
+        userPrivateKey = ""; // overwrite the one from config file, if any
+
         userPublicKey = argResults[pubkeyArg];
         if( userPublicKey.length != 64){ 
           if( !userPublicKey.startsWith("npub")) {
@@ -114,13 +138,16 @@ Future<void> main(List<String> arguments) async {
             }
           }
         }
-        userPrivateKey = "";
       }
 
       // process private key argument, and it overrides what's given in pub key argument, if any pubkey is given
       if( argResults[prikeyArg] != null) {
         userPrivateKey = argResults[prikeyArg];
-        if( userPrivateKey.length != 64){ 
+        print("Read private key from command line argument.");
+      }
+
+      if( userPrivateKey.isNotEmpty){ 
+        if( userPrivateKey.length != 64) {
           if( !userPrivateKey.startsWith("nsec")) {
             print("A private key should either start with nsec ( bech32 format), or it should have a length of 64 bytes( hex format). Exiting.");
             return;
@@ -134,11 +161,13 @@ Future<void> main(List<String> arguments) async {
               return;
             }
           }
+        } else { 
+          // 
         }
 
         userPublicKey = myGetPublicKey(userPrivateKey);
         print("Going to use the provided private key");
-      }
+      } 
 
       // write informative message in case user is not using proper keys
       if( userPublicKey == gDefaultPublicKey) {

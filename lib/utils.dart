@@ -1,10 +1,17 @@
 import 'dart:io';
 import 'package:qr/qr.dart';
+import 'package:cli_util/cli_util.dart';
+import 'package:path/path.dart' as path;
 
+import 'dart:convert';
 enum enumRoomType { kind4, kind40, kind140, RoomLocationTag, RoomTTag}
 
 int gMinLnInvoiceLength = 20; // TODO put real value
 int gMaxStrLenForQrCode = 600; // in bytes, maximum acceptable length of string that is converted to qr code. for lnbc1 invoices
+
+
+// used in config file 
+const String EXECUTABLE_NAME = "nostr-commander-rs";
 
 String getPostKindFrom(enumRoomType eType) {
   switch (eType) {
@@ -524,3 +531,65 @@ void printSet( Set<String> toPrint, [ String prefix = "", String separator = ""]
 }
 
 
+/// The application config directory for the Shorebird CLI.
+Directory get configDirectory {
+  return Directory(applicationConfigHome(EXECUTABLE_NAME));
+}
+
+Directory createConfigDirectory({Directory? configHome}) {
+  configHome ??= Directory(applicationConfigHome(EXECUTABLE_NAME));
+  
+  var data = path.join( configHome.path, "data");
+  //configHome = configHome.create("data");
+  //print(data);
+
+  Directory dataDir = Directory(data);
+
+  if (!dataDir.existsSync()) {
+    print("creating config data directory: ${dataDir.path}");
+    dataDir.createSync(recursive: true);
+  } 
+
+  return dataDir;
+}
+
+Future<dynamic?> readJsonFile(String filePath) async {
+  var input;
+  
+  try{ 
+    input = await File(filePath).readAsString();
+  }
+  on Exception catch (e) {
+    print("Could not read file $filePath.");
+    return null;
+  }
+
+  var credentials;
+  try {
+     credentials = jsonDecode(input);
+  } 
+  on Exception catch (e) {
+    print("Could not parse file $filePath as JSON.");
+    return null;
+  }
+
+  //print("in readJsonFile: $credentials");
+  return credentials;
+}
+
+
+// reads private key, pubkey, relays 
+Future<dynamic> readConfigFile() async {  
+ 
+  Directory dir = createConfigDirectory();
+  
+  print("Configuration directory: ${dir.path}");
+
+  String configFilePath = path.join(dir.path, "credentials.json");
+  print("Configuration filename: $configFilePath");
+
+  dynamic? retval = await readJsonFile(configFilePath);
+
+  //print("returning from readConfigFile");
+  return retval;
+}

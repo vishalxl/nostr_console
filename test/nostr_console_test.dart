@@ -551,6 +551,27 @@ String expectedResult =
 
   });
 
+  test( "test_configFile", () async {
+
+    dynamic credentials = await readConfigFile();
+
+    if( credentials != null) {
+      String? priKey = credentials["secret_key_bech32"];
+      String? pubKey = credentials["public_key_bech32"];
+      List<dynamic>? configFileRelays = credentials["relays"]; 
+
+      if( priKey != null) {
+        //print("private key = $priKey");
+        print("Config file private key found.");
+        userPrivateKey = priKey;
+      } else {
+        print("Config file private key not found.");
+      }
+    } else {
+      print("Credentials not found in config file.");
+    }
+  
+  });
 
   Future.delayed(Duration(milliseconds: 2000), () {
     exit(0);

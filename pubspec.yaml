@@ -112,3 +112,5 @@ dependencies:
   http: any
   bech32: ^0.2.2
   convert: ^3.1.1
+  cli_util: ^0.4.2
+  path: ^1.8.0

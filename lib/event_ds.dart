@@ -145,12 +145,12 @@ class EventData {
       String rootId = "", replyId = "";
       for( int i = 0; i < eTags.length; i++) {
         String eventId = eTags[i][0];
-        if( eTags[i].length >= 3) {
-          if( eTags[i][2].toLowerCase() == "root") {
+        if( eTags[i].length >= 4) {
+          if( eTags[i][3].toLowerCase() == "root") {
             numRoot++;
             rootId = eventId;
           } else {
-            if( eTags[i][2].toLowerCase() == "reply") {
+            if( eTags[i][3].toLowerCase() == "reply") {
               numReply++;
               replyId = eventId;
             }
@@ -163,7 +163,7 @@ class EventData {
         if( numReply == 1) {
           return replyId;
         } else {
-          // if there are multiply reply's we can't tell which is which, so we return the one at top
+          // if there are multiple reply's we can't tell which is which, so we return the one at top
           if( replyId.isNotEmpty) { 
             return replyId;  
           } else {
@@ -493,7 +493,7 @@ class EventData {
             return mentionTag;
           }
         } on Exception catch (e) {
-          print("====================Caught exctption $e");
+          //print("====================Caught exctption $e");
           return "nostr:$strBechId";
         }
       }

@@ -119,7 +119,7 @@ String bech32Encode(String prefix, String hexData) {
 
 Map<String, String> bech32Decode(String bech32Data) {
   //print("in becn32Decode 1 bech32Data = $bech32Data");
-  final decodedData = bech32.decode(bech32Data, Bech32Validations.maxInputLength + 300);
+  final decodedData = bech32.decode(bech32Data, Bech32Validations.maxInputLength + 500);
   //print(decodedData.hrp);
   final convertedData = convertBits(decodedData.data, 5, 8, false);
   final hexData = hex.encode(convertedData);

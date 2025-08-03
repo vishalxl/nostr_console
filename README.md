@@ -13,7 +13,8 @@ This is an experimental or pre-alpha software made to show or know what a Nostr 
 * [ ] fix: users who don't have kind 0 or kind 3 are not searchable in menu 8 and 9 in Social network. 
 * [ ] kind 7 tags are messed up. for example for reaction: 066cdb716e250069c4078565c9d9046af483c43bbd8497aad9c60d41ec462034 and 137289198ff1c57a14711d87b059e5fc5f9b11b257672503595ac31bad450a22
 * [ ] fix count of events shown per relay in app stats
-* [-] read prikey from file; create it too using new feature --genkey 
+* [x] support nprofile and nevent
+* [x] read prikey from file; create it too using new feature --genkey 
 * [x] allow special character input, and 256 limit [info](https://www.reddit.com/r/dartlang/comments/xcdsyx/i_am_seeing_that_stdinreadlinesync_returns_only/)
 * [x] fix --help that's dated
 * [x] support bech32 keys

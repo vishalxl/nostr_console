@@ -72,7 +72,20 @@ Future<void> mySleep(int duration) async {
  */
 Future<void> sendReplyPostLike(Store node, String replyToId, String replyKind, String content) async {
   content = addEscapeChars(content);
-  String strTags = node.getTagStr(replyToId, exename, true, getTagsFromContent(content));
+  var ( setUserMentions, content2) = getUserMentionsFromContent(content);
+  
+  for( String userMention in setUserMentions) {
+    //print("Got userMention: $userMention");
+  }
+
+  if( setUserMentions.isNotEmpty) {
+    content = content2;
+  }
+
+  String strTags = node.getTagStr(replyToId, exename, addAllP: true, extraTags: getTagsFromContent(content), userMentions: setUserMentions);
+
+  //print("in sendReply: strTags = $strTags");
+
   if( replyToId.isNotEmpty && strTags == "") { // this returns empty only when the given replyto ID is non-empty, but its not found ( nor is it 64 bytes)
     print("${gWarningColor}The given target id was not found and/or is not a valid id. Not sending the event.$gColorEndMarker"); 
     return; 
@@ -1403,7 +1416,8 @@ Future<void> socialMenuUi(Store node) async {
           stdout.write("\nType id of event to reply to (leave blank to make a new post; type x to cancel): ");
           String? $replyToVar = stdin.readLineSync();
           String replyToId = $replyToVar??"";
-          print("got id");
+          
+          //print("get");
           if( replyToId == "x") {
             print("Cancelling post/reply.");
             break;

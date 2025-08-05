@@ -1365,7 +1365,8 @@ String getNip05Name( String pubkey) {
 }
 
 // returns name by looking up global list gKindONames, which is populated by kind 0 events
-String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5}) {
+// if name is not available, returns the first few chars of the pubkey
+String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5, bool addRemoveTick = true}) {
 
   if( gFollowList.isEmpty)  {
     gFollowList = getFollows(userPublicKey);
@@ -1381,22 +1382,23 @@ String getAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkey
   }
 
   // then add valid check mark in default follows 
-  if( isFollow) {
-    if( name.length >= maxDisplayLen ) {
-      name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
+  if( addRemoveTick) {
+    if( isFollow) {
+      if( name.length >= maxDisplayLen ) {
+        name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
+      } else {
+        name = name + gValidCheckMark;
+      }
     } else {
-      name = name + gValidCheckMark;
+      // remove this tick from other names to avoid 'tick hack'
+      name = name.replaceAll(gValidCheckMark, "");
     }
-  } else {
-    // remove this tick from other names to avoid 'tick hack'
-    name = name.replaceAll(gValidCheckMark, "");
-  }
-
+  } 
   return name;
 }
 
 // returns only name if it is available. Returns null if name is not available. 
-String? getOnlyAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5}) {
+String? getOnlyAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int pubkeyLenShown = 5, bool addRemoveTick = true}) {
 
   if( gFollowList.isEmpty)  {
     gFollowList = getFollows(userPublicKey);
@@ -1419,20 +1421,59 @@ String? getOnlyAuthorName(String pubkey, {int maxDisplayLen = gMaxInteger, int p
   }
 
   // then add valid check mark in default follows 
-  if( isFollow) {
-    if( name.length >= maxDisplayLen ) {
-      name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
+  if( addRemoveTick) {
+    if( isFollow) {
+      if( name.length >= maxDisplayLen ) {
+        name = name.substring(0, maxDisplayLen-1) + gValidCheckMark;
+      } else {
+        name = name + gValidCheckMark;
+      }
     } else {
-      name = name + gValidCheckMark;
+      // remove this tick from other names to avoid 'tick hack'
+      name = name.replaceAll(gValidCheckMark, "");
     }
-  } else {
-    // remove this tick from other names to avoid 'tick hack'
-    name = name.replaceAll(gValidCheckMark, "");
   }
 
   return name;
 }
 
+Set<String> getPreferredUserid(Set<String> pubkeys) {
+  Set<String> preferredPubkeys = {};
+
+  for(String pubkey in pubkeys) {
+    if( pubkey == userPublicKey ) {
+      //print("    in getPreferredUserId: tagged self $pubkey");
+      return {pubkey};
+    } 
+    
+    if( gFollowList.contains(pubkey) ) {      
+        preferredPubkeys.add(pubkey);
+        //print("    in getPreferredUserId: got a follow $pubkey");
+    }
+    
+  };
+
+  return preferredPubkeys;
+}
+
+Set<String> getExactMatch(String name, Set<String> pubkeys) {
+  Set<String> exactMatch = {};
+  name = name.toLowerCase();
+
+  //print("In get exact match name = |$name|");
+
+  pubkeys.forEach( (pubkey) {
+    String? author = getOnlyAuthorName(pubkey, addRemoveTick: false)?.toLowerCase();
+    
+    if( author != null) {
+      //print("got lowercased author in getExactMatch |$author|");
+      if( author == name) {
+        exactMatch.add(pubkey);
+      }
+    }  
+  });
+  return exactMatch;
+}
 
 // returns full public key(s) for the given username( which can be first few letters of pubkey, or the user name)
 Set<String> getPublicKeyFromName(String inquiredName) {
@@ -1473,6 +1514,56 @@ Set<String> getPublicKeyFromName(String inquiredName) {
 
   return pubkeys;
 }
+
+// returns a set of user id's that are mentioned in the content 
+(Set<String>, String) getUserMentionsFromContent(String content) {
+  Set<String> setUserMentions = {} ;
+  
+  bool localDebug = false;
+
+  if( localDebug ) print("\n================\nin getUserMentionsFromContent");
+
+  String strMentionRegExp = '(@[a-zA-Z0-9_-]+ )|(@[a-zA-Z0-9_-]+\$)';
+  RegExp mentionRegExp = RegExp(strMentionRegExp);
+  
+  String content2 = "";
+
+  content2 = content.replaceAllMapped( mentionRegExp, (match ) {
+    String name = content.substring(match.start + 1, match.end).trim();
+
+    if( localDebug ) print("--------------\nin user match for name |$name|");
+
+    Set<String> pubkeys = getPublicKeyFromName(name);
+    if( localDebug ) print("Got ${pubkeys.length} entries for |$name| from getPublicKeyFromName which are $pubkeys");
+    
+    if( pubkeys.length > 1) {
+      pubkeys = getExactMatch(name, pubkeys);
+      if( pubkeys.length > 1 ) {
+        if( localDebug ) print("calling getPreferredUserid");
+        pubkeys = getPreferredUserid(pubkeys);
+      }
+    }
+
+    if(pubkeys.length == 1) {
+      if( localDebug ) print("adding one pubkey for name |$name|" );
+      setUserMentions.addAll(pubkeys);
+      String npub = getNpubFromHexPubkey(pubkeys.first);
+      //print("new content = |$content|");
+      //print("returning $npub");
+      return " nostr:$npub ";
+    } else {
+      if( localDebug ) print("Got ${pubkeys.length} entries for |$name|");
+    }
+
+    return content.substring(match.start, match.end);
+  });
+
+
+  //print("========================\n\n");
+  //print("getUserMentions: Returning |$content2|\n----------------\n");
+  return (setUserMentions, content2);
+}
+
 
 // returns the seconds since epoch N days ago
 int getSecondsDaysAgo( int N) {

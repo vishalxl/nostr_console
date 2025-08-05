@@ -2322,18 +2322,29 @@ class Store {
    *                   Also adds 'client' tag with application name.
    * @parameter replyToId First few letters of an event id for which reply is being made
    */
-  String getTagStr(String replyToId, String clientName, [bool addAllP = false, Set<String>? extraTags]) {
+  String getTagStr(String replyToId, String clientName, {bool addAllP = false, Set<String>? extraTags,  Set<String>? userMentions}) {
     clientName = (clientName == "")? "nostr_console": clientName; // in case its empty 
 
     //print("extraTags = $extraTags");
     String otherTags = "";
 
-    if( extraTags != null)
-    for( String extraTag in extraTags) {
-      if( otherTags.isNotEmpty) {
-        otherTags += ",";
+    if( extraTags != null) {
+      for( String extraTag in extraTags) {
+        if( otherTags.isNotEmpty) {
+          otherTags += ",";
+        }
+        otherTags += '["t","$extraTag"]';
       }
-      otherTags += '["t","$extraTag"]';
+    }
+
+    if( userMentions != null) {
+      for( String userMention in userMentions) {
+        if( otherTags.isNotEmpty) {
+          otherTags += ",";
+        }
+        otherTags += '["p","$userMention"]';
+        print("Debug: Added user mention $userMention in p tags");
+      }
     }
 
     if( gWhetherToSendClientTag) {
@@ -2413,6 +2424,7 @@ class Store {
       strTags +=  '["e","$latestEventId","$relay","reply"]';
     }
 
+    print("Debug: Final tag string: |$strTags|\n");
     return strTags;
   }
 

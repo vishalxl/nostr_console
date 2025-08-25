@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
@@ -451,8 +452,8 @@ class Tree {
       // if the thread becomes too 'deep' then reset its depth, so that its 
       // children will not be displayed too much on the right, but are shifted
       // left by about <leftShiftThreadsBy> places
-      if( depth > maxDepthAllowed) {
-        depth = maxDepthAllowed - leftShiftThreadsBy;
+      if( depth > gMaxDepthAllowed) {
+        depth = gMaxDepthAllowed - leftShiftThreadsBy;
         printDepth(depth+1);
         stdout.write("    ┌${getNumDashes((leftShiftThreadsBy + 1) * gSpacesPerDepth - 1, "─")}┘\n");        
         leftShifted = true;
@@ -588,7 +589,7 @@ class Tree {
   // only used by writefile
   bool treeSelectorUserMentioned(Set<String> pubkeys) {
     for( int i = 0; i < event.eventData.pTags.length; i++ ) {
-      if(  pubkeys.contains( event.eventData.pTags[i][0] )) {
+      if(  pubkeys.contains( event.eventData.pTags[i] )) {
         return true;
       }
     }
@@ -1418,14 +1419,14 @@ class Store {
 
     for(int i = 0; i < topPosts.length; i++) {
       Tree tree = topPosts[i];
-      if( tree.event.eventData.id == newEvent.eventData.id) {
+      if( tree.event.eventData.id == newEvent.eventData.id && tree.event.eventData.pubkey == gDummyAccountPubkey) {
         // its a replacement. 
         if( gDebug >= 0 && newEvent.eventData.id == gCheckEventId) log.info("In processIncoming: Replaced old dummy event of id: ${newEvent.eventData.id}");
         tree.event = newEvent;
         allChildEventsMap[tree.event.eventData.id] = tree;
         insertedInMap = true;
-        if(false) print("    replaced old ${tree.event.eventData.id}");
-        continue;
+        if(false) print("    In replaceAndInsertInMap: replaced old ${tree.event.eventData.id}");
+        break;
       }
     }
 
@@ -1452,14 +1453,17 @@ class Store {
 
     // add the event to the main event store thats allChildEventsMap
     for (var newEvent in newEventsToProcess) { 
-      if(localDebug) print("processing incoming: ${newEvent.eventData.id}");
+      if(localDebug) print("In processIncomingEvent: processing incoming: ${newEvent.eventData.id}");
       
-      if( newEvent.eventData.kind == 1 && newEvent.eventData.content.compareTo("Hello Nostr! :)") == 0 && newEvent.eventData.id.substring(0,3).compareTo("000") == 0) {
-        continue; // spam prevention
-      }
-
-      if( allChildEventsMap.containsKey(newEvent.eventData.id)) {// don't process if the event is already present in the map
-        continue;
+      // don't process if the event is already present in the map and is not dummy
+      if( allChildEventsMap.containsKey(newEvent.eventData.id)) {
+        Tree? prev = allChildEventsMap[newEvent.eventData.id];
+        if( prev != null) {
+          if( prev.event.eventData.pubkey != gDummyAccountPubkey) {
+            if(localDebug) print("In processIncomingEvent: already exists ");
+            continue;
+          }
+        }
       }
 
       //ignore bots
@@ -1489,7 +1493,12 @@ class Store {
       }
 
       if( newEvent.eventData.kind == 0) {
-        processKind0Event(newEvent);
+        int retval = processKind0Event(newEvent);
+        if( retval == 2) {
+          // entry was modified, so delete old event 
+          // TODO           
+        }
+        continue;
       }
 
       // only kind 0, 1, 3, 4, 5( delete), 7, 40, 42, 140, 142 events are added to map-store, return otherwise
@@ -1514,7 +1523,7 @@ class Store {
         if(localDebug) print("    adding to allChildEventsMap ${newEvent.eventData.id}");
         allChildEventsMap[newEvent.eventData.id] = Tree(newEvent, [], this);
       } else {
-        if(localDebug) print("    already in allChildEventsMap ${newEvent.eventData.id}");
+        if(localDebug) print("    inserted in replaceAndInsertInMap as allChildEventsMap ${newEvent.eventData.id}");
       }
 
 
@@ -1533,6 +1542,7 @@ class Store {
 
         switch(newTree.event.eventData.kind) {
           case 1:
+            if(localDebug) print("    kind 1");
             // only kind 1 events are added to the overall tree structure
             String parentId = newTree.event.eventData.getParent(allChildEventsMap);
             if( parentId == "") {
@@ -1559,6 +1569,12 @@ class Store {
                 if( allChildEventsMap.containsKey(parentId)) {
                   if(localDebug) print("    added to parent $parentId");
                   allChildEventsMap[parentId]?.children.add(newTree);
+
+                  if(localDebug) print("    Got a child of $parentId. where new event id = ${newTree.event.eventData.id}");
+                  if( allChildEventsMap[parentId]?.event.eventData.pubkey == gDummyAccountPubkey) {
+                    if(localDebug) print("    parent is dummy");
+                  }
+
                   topPosts.removeWhere((tree) => tree.event.eventData.id == newTree.event.eventData.id); // remove from top posts if it was there
 
                 } else {
@@ -1567,11 +1583,25 @@ class Store {
                   Event dummy = Event("","",  EventData(parentId, gDummyAccountPubkey, newTree.event.eventData.createdAt, 1, "Missing event (not yet found on any relay)", [], [], [], [[]], {}), [""], "[json]");
                   Tree dummyTopNode = Tree.withoutStore(dummy, []);
                   dummyTopNode.children.add(newTree);
-                  topPosts.add(dummyTopNode);
+                  bool alreadyAdded = false;
+                  for ( int i = 0; i < topPosts.length; i++) {
+                    if( topPosts[i].event.eventData.id == newTree.event.eventData.id) {
+                      topPosts[i] = dummyTopNode;
+                      alreadyAdded = true;
+                      break;
+                    }
+                  }
+
+                  if( !alreadyAdded) {
+                    topPosts.add(dummyTopNode);
+                  }
+
+                  allChildEventsMap.addAll({parentId: dummyTopNode});
 
                   // add it to list to fetch it from relays
                   if( parentId.length == 64) {
                     dummyEventIds.add(parentId);
+                    if(localDebug) print("    parent added to dummyEventIds list.");
                   }                  
                 }
             }
@@ -1643,8 +1673,8 @@ class Store {
 
     int totalTreeSize = 0;
     for (var element in topPosts) {totalTreeSize += element.count();}
-    if(gDebug > 0) print("In end of insertEvents: allChildEventsMap size = ${allChildEventsMap.length}; mainTree count = $totalTreeSize");
-    if(gDebug > 0)  print("Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements>"} ");
+    if(gDebug > 0 || localDebug) print("In end of insertEvents: allChildEventsMap size = ${allChildEventsMap.length}; mainTree count = $totalTreeSize");
+    if(gDebug > 0 || localDebug)  print("Returning ${newEventIdsSet.length} new notification-type events, which are ${newEventIdsSet.length < 10 ? newEventIdsSet: " <had more than 10 elements>"} ");
     return newEventIdsSet;
   } // end processIncomingEvent()
 
@@ -1722,6 +1752,10 @@ class Store {
     // remove duplicate top trees
     Set ids = {};
     topNotificationTree.retainWhere((t) => ids.add(t.event.eventData.id));
+    
+    // remove entries older than given days 
+    Set ids2 = {};
+    topNotificationTree.retainWhere((t) => ids2.add(t.event.eventData.createdAt > epochAppStartedAt - gDontHighlightEventsOlderThan * 84600));
 
     Store.reCalculateMarkerStr();
 
@@ -1790,9 +1824,7 @@ class Store {
 
     List<int> ret = [0,0,0];
 
-    //print("in printStoreTrees");
     for( int i = 0; i < topPosts.length; i++) {
-      //print("i = $i");
       // continue if this children isn't going to get printed anyway; selector is only called for top most tree
       if( treeSelector(topPosts[i]) == false) {
         continue;
@@ -1802,7 +1834,6 @@ class Store {
       int newestChildTime = topPosts[i].getMostRecentTime(0);
       DateTime dTime = DateTime.fromMillisecondsSinceEpoch(newestChildTime *1000);
       if( dTime.compareTo(newerThan) < 0) {
-        //print("continue");
         continue;
       }
 
@@ -1828,8 +1859,6 @@ class Store {
     if( ret[0] > 0) {
       print("\nTotal threads printed: ${ret[0]} for last $strTime.");
     }
-
-    //print("in node print all: ret = $ret");
 
     return ret;
   }
@@ -2223,13 +2252,27 @@ class Store {
   }
 
 
+  int oldEventCounter = 0;
   // returns true if the given event should be saved in file
-  bool isRelevantForFileSave(Tree tree) {
+  bool isRelevantForFileSave(Tree tree, int cutoffTime) {
     if( tree.event.userRelevant == true) {
       return true;
     }
 
-    // threads where the user and follows have involved themselves are returnes as true ( relevant)
+    // cutoff time is applicable only when this flag is set
+    if( gDontSaveBeforeDays != -1) {
+      // don't delete kind 0, which are meta data 
+      if(  tree.event.eventData.kind != 0 ) {
+        // delete other elements older than given value
+        if( tree.event.eventData.createdAt < cutoffTime) {
+          oldEventCounter++;
+          print("not saving old event # $oldEventCounter for event date ${getPrintableDate(tree.event.eventData.createdAt)}");
+          return false;
+        }
+      }
+    }
+
+    // threads where the user and follows have involved themselves are returned as true ( relevant)
     if(   tree.treeSelectorUserPostAndLike(gFollowList.union(gDefaultFollows).union({userPublicKey}), enableNotifications: false) 
        || tree.treeSelectorDMtoFromUser({userPublicKey}, enableNotifications: false)
        || tree.treeSelectorUserReplies(gFollowList)
@@ -2255,20 +2298,35 @@ class Store {
       gFollowList = getFollows(userPublicKey);
     }
 
+
+    List<String> listEventIdsNotSaved = [];
+
     if( gDebug > 0) print("opening $filename to write to.");
     try {
       final File file         = File(filename);
       
       if( gOverWriteFile) {
+        // if we are overwriting the file, then make it empty
         await  file.writeAsString("", mode: FileMode.write).then( (file) => file);
+        print("Created output file \"$filename\".");
+      } else {
+        print("Going to append to file \"$filename\".");
       }
 
       int        eventCounter = 0;
       String     nLinesStr    = "";
-      int        countPosts   = 0;
+
+      int cutoffTime = 0;
+      if( gDontSaveBeforeDays != -1) {
+        cutoffTime= epochAppStartedAt -  gDontSaveBeforeDays * SECONDS_PER_DAY;
+        print("while saving, cutoff time: ${getPrintableDate(cutoffTime)}");
+      }
 
       const int  numLinesTogether = 100; // number of lines to write in one write call
       int        linesWritten = 0;
+      
+      Map<int, int> mapNumEventsOfKind = {};
+
       for( var tree in allChildEventsMap.values) {
 
         if(   tree.event.eventData.isDeleted                      // dont write those deleted
@@ -2283,7 +2341,18 @@ class Store {
           }
         }
 
-        if( !isRelevantForFileSave(tree)) {
+        if( !isRelevantForFileSave(tree, cutoffTime)) {
+          /*
+          print("not saving: ${tree.event.eventData.id}");
+          listEventIdsNotSaved.add(tree.event.eventData.id); 
+          listEventIdsNotSaved.add(tree.event.originalJson);
+          listEventIdsNotSaved.add("------------------------------------------");
+          
+          if( gFollowList.contains(tree.event.eventData.pubkey)) {
+            print("    Event is by a follow that's ${tree.event.eventData.pubkey}");
+          }
+          */
+
           continue;
         }
 
@@ -2291,9 +2360,13 @@ class Store {
         String line = "$temp\n";
         nLinesStr += line;
         eventCounter++;
-        if( tree.event.eventData.kind == 1) {
-          countPosts++;
-        }
+
+        mapNumEventsOfKind.update( tree.event.eventData.kind , 
+                                          (value) => ++value, 
+                                          ifAbsent: () => 1
+                                  );
+
+
         //if( temp.length < 10) print('len < 10');
         if( eventCounter % numLinesTogether == 0) {
           await  file.writeAsString(nLinesStr, mode: FileMode.append).then( (file) => file);
@@ -2309,11 +2382,25 @@ class Store {
       }
 
       if(gDebug > 0) log.info("finished writing eventCounter = $eventCounter.");
-      print("Appended $eventCounter new events to file \"$gEventsFilename\" of which $countPosts are posts.");
+      print("Appended $eventCounter new events to file \"$gEventsFilename\". Their breakdown according to kind of event is as follows:\n\n Kind     <Number of events>");
+      mapNumEventsOfKind.forEach((key, value) => print(" $key          $value"));
+      print("");
+
     } on Exception catch (e) {
         print("Could not open file $filename.");
         if( gDebug > 0) print("Could not open file: $e");
     }      
+
+    // create file where we note down events not saved, to help with debugging
+    if( gDebug > 0) { 
+      print("create file where we note down events not saved.");
+      final File notSavedFile         = File("not_saved.txt");
+      await  notSavedFile.writeAsString("", mode: FileMode.write).then( (file) => file);
+
+      // write not saved event to file
+      await notSavedFile.writeAsString(listEventIdsNotSaved.join("\n"),  mode: FileMode.append).then( (file) => file);          
+    }
+
     return;
   }
 
@@ -2424,7 +2511,7 @@ class Store {
       strTags +=  '["e","$latestEventId","$relay","reply"]';
     }
 
-    print("Debug: Final tag string: |$strTags|\n");
+    //print("Debug: Final tag string: |$strTags|\n");
     return strTags;
   }
 
@@ -2815,6 +2902,27 @@ int ascendingTimeTree(Tree a, Tree b) {
   return 1;
 }
 
+// sorter function that sorts according to participation by Web of Trust 
+// Mutual Follows                 3 points 
+// Follows                        2 points 
+// Well known                     1
+// people followed by 3+ follows: 1 
+int sortTreeWotScore(Tree a, Tree b) {
+  int aMostRecent = a.getMostRecentTime(0);
+  int bMostRecent = b.getMostRecentTime(0);
+
+  if(aMostRecent < bMostRecent) {
+    return -1;
+  } else {
+    if( aMostRecent == bMostRecent) {
+      return 0;
+    } else {
+        return 1;
+    }
+  }
+}
+
+
 // sorter function that looks at the latest event in the whole tree including the/its children
 int sortTreeNewestReply(Tree a, Tree b) {
   int aMostRecent = a.getMostRecentTime(0);
@@ -2876,9 +2984,15 @@ Store getTree(Set<Event> events) {
     events.retainWhere((event) => ids.add(event.eventData.id));
 
     // process kind 0 events about metadata 
-    for (var event in events) {
+  /*  for (var event in events) {
       processKind0Event(event);
     }
+  */
+    
+    ids.clear();
+    print("before kind 0 : ${events.length}");
+    events.retainWhere((event) => processKind0Event(event) != 3   );    
+    print("after kind 0 : ${events.length}");
 
     // process kind 3 events which is contact list. Update global info about the user (with meta data) 
     for (var event in events) {

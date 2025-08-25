@@ -1,0 +1,78 @@
+{
+    "id": "0133c16a68c92df01ea7250ade624688493d9fcbbfadf15f94640700ceb793d6",
+    "sig": "2ee3f19d633f5adebdcba05dfe5230a1ecc6a1be33609d3ff5b576fcc6dc51e438558ca4b6a8c247473cf5e403362ec0aa66d9a60768ca12ce765b53a9cf11ae",
+    "kind": 1,
+    "tags": [],
+    "pubkey": "52b4a076bcbbbdc3a1aefa3735816cf74993b1b8db202b01c883c58be7fad8bd",
+    "content": "gm Nostr",
+    "created_at": 1752504950
+}
+
+
+
+{
+    "id": "d296ba29223318e12a48b857ef1dfc97edc7a74af2979739e9aaa7343f6957d6",
+    "sig": "9e681df0988fb2304aca2c5a60a474441c3506af4501f9eefcc7b53d20b9d3cef6e8e4aa0557ddd083976738961a801855f6f12ccc2c2035f101e72212b72415",
+    "kind": 1,
+    "tags": [
+        [
+            "p",
+            "40b9c85fffeafc1cadf8c30a4e5c88660ff6e4971a0dc723d5ab674b5e61b451"
+        ],
+        [
+            "client",
+            "nostr_console"
+        ]
+    ],
+    "pubkey": "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c",
+    "content": "nostr:npub1gzuushllat7pet0ccv9yuhygvc8ldeyhrgxuwg744dn5khnpk3gs3ea5dstesting nostr console with mentions. for simple one word names without spaces. ",
+    "created_at": 1754389754
+}
+
+npub1gzuushllat7pet0ccv9yuhygvc8ldeyhrgxuwg744dn5khnpk3gs3ea5ds
+
+{
+    "id": "a5344bc16e4ecd4cd1d2d6fc315216f00c4f3584e800cbaa8cb3f6772ae9a727",
+    "sig": "22840829d64327e827398e1915b781fe99fb7c4ebc957a21324941c2471304d5845039365386435f7512b14ffc51ff797bfa22929d40899573b878ed3319987d",
+    "kind": 1,
+    "tags": [
+        [
+            "p",
+            "3235036bd0957dfb27ccda02d452d7c763be40c91a1ac082ba6983b25238388c"
+        ],
+        [
+            "p",
+            "290417c26b0fc78fe987a58c0edd76008977c60543dda873f248b60dbf89a11c"
+        ],
+        [
+            "client",
+            "nostr_console"
+        ]
+    ],
+    "pubkey": "e00ce8ec993e1b5450a833ae0c164dc6f71990f7ec75589cd2c2388b7ee7e1c1",
+    "content": "testing mention  nostr:npub1xg6sx67sj47lkf7vmgpdg5khca3musxfrgdvpq46dxpmy53c8zxqqy7kwr \n  nostr:npub19yzp0sntplrcl6v85kxqahtkqzyh03s9g0w6suljfzmqm0uf5ywqwpjkda \n @nostr commander augustus \n ",
+    "created_at": 1754390145
+}
+
+
+egg 
+{
+    "id": "43d7bd9f443c7d9751550f1e1eafb4f0a5220c3d6edef8ed6f1741fb09570859",
+    "sig": "1e352832982460e5e3120e46ee948333e4680354858cfe2c655b30696ed9ba8e59ac4a38235ea6062ee562ae080441985af69b0de9b22a611f7ad8766161b077",
+    "kind": 1,
+    "tags": [
+        [
+            "imeta",
+            "url https://image.nostr.build/e70d185cd4e2f0ba5f3b9b41b4c743f49e759785874bf8da7d2f9de093e6a4d4.jpg",
+            "blurhash eIEpx:I-Kas.ai?[i_NYbtsqEkrrw5OTxtZ=I-$+aOXQnWInoN$+NG",
+            "dim 3024x4032"
+        ],
+        [
+            "r",
+            "https://image.nostr.build/e70d185cd4e2f0ba5f3b9b41b4c743f49e759785874bf8da7d2f9de093e6a4d4.jpg"
+        ]
+    ],
+    "pubkey": "ddf03aca85ade039e6742d5bef3df352df199d0d31e22b9858e7eda85cb3bbbe",
+    "content": "Named my dog after my favourite distro. This is Archie\n\nhttps://image.nostr.build/e70d185cd4e2f0ba5f3b9b41b4c743f49e759785874bf8da7d2f9de093e6a4d4.jpg",
+    "created_at": 1754413437
+}

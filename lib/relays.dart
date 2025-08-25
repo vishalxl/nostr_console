@@ -154,7 +154,7 @@ class Relays {
       return;
     }
 
-    if( gDebug > 0) print ("\nIn relay.sendRequest for relay $relayUrl");
+    if( gDebug > 0 ) print ("\nIn relay.sendRequest for relay $relayUrl");
 
     IOWebSocketChannel?  fws;
     if(relays.containsKey(relayUrl)) {
@@ -226,8 +226,9 @@ class Relays {
       }
     }
 
-    if(gDebug > 0) log.info('Sending request: \n$request\n to $relayUrl\n\n');
+    if(gDebug > 0 ) print('in sendRequest: Connected for \n$request\n to $relayUrl\n\n');
     fws?.sink.add(request);
+    if(gDebug > 0 ) print('in sendRequest: Now sending request: \n$request\n to $relayUrl\n\n');
   }
 
 
@@ -299,7 +300,7 @@ getKindEvents(List<int> kind, Set<String> serverUrls, int limit, int sinceWhen) 
 
 void getMultiUserEvents(Set<String> serverUrls, Set<String> setPublicKeys, int numUserEvents, int sinceWhen, [Set<int>? kind]) {
   List<String> publicKeys = setPublicKeys.toList();
-  if( gDebug > 0) print("Sending multi user request for ${publicKeys.length} users");
+  if( gDebug > 0 || true) print("Sending multi user request for ${publicKeys.length} users");
   
   for(var serverUrl in serverUrls) {
     for( int i = 0; i < publicKeys.length; i+= gMaxAuthorsInOneRequest) {
@@ -309,6 +310,7 @@ void getMultiUserEvents(Set<String> serverUrls, Set<String> setPublicKeys, int n
       }
       List<String> partialList = publicKeys.sublist(i, i + getUserRequests);
       relays.getMultiUserEvents(serverUrl, partialList, numUserEvents, sinceWhen, kind);
+      if( gDebug > 0 || true) print("   Sending multi user request for $getUserRequests users");
     }
   }
 }
@@ -329,7 +331,7 @@ void sendEventsRequest(Set<String> serverUrls, Set<String> eventIds) {
   }
 }
 
-void sendRequest(Set<String> serverUrls, request) {
+void sendRequest(Set<String> serverUrls, String request) {
   for (var url in serverUrls) { 
     relays.sendRequest(url, request);
   }

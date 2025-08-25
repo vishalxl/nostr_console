@@ -1206,15 +1206,17 @@ Future<http.Response> fetchNip05Info(String nip05Url) {
 }
 
 // If given event is kind 0 event, then populates gKindONames with that info
-// returns true if entry was created or modified, false otherwise
-bool processKind0Event(Event e) {
+// returns 1  if entry was created, 2 if it was modified, 3 if it was an older kind 0 and a latest kind 0 is already there
+// return -1 if its not a kind 0 event
+// caller can discard the event if 2 and 3 are returned
+int processKind0Event(Event e) {
   if( e.eventData.kind != 0) {
-    return false;
+    return -1;
   }
 
   String content = e.eventData.content;
   if( content.isEmpty) {
-    return false;
+    return 0;
   }
 
   String name = "";
@@ -1259,7 +1261,8 @@ bool processKind0Event(Event e) {
   }
 
   bool localDebug = false; //e.eventData.pubkey == "9ec7a778167afb1d30c4833de9322da0c08ba71a69e1911d5578d3144bb56437"? true: false;
-
+  
+  // get NIP 05 info
   if( newEntry || entryModified) {
     if(nip05.isNotEmpty) {
       List<String> urlSplit = nip05.split("@");
@@ -1309,7 +1312,14 @@ bool processKind0Event(Event e) {
     }
   }
 
-  return newEntry || entryModified;
+  if( newEntry) {
+    return 1;
+  }
+  if( entryModified) {
+    return 2;
+  }
+
+  return 3;
 }
 
 // If given event is kind 3 event, then populates gKindONames with contact info
@@ -1735,6 +1745,16 @@ String getPrintableDate(int createdAt) {
   strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
   return strDate;
 }
+
+// get printable date from seconds since epoch
+String getPrintableDateWithYear(int createdAt) {
+  final df1 = DateFormat('hh:mm a');
+  final df2 = DateFormat(DateFormat.ABBR_MONTH_DAY);
+  String strDate = df1.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000));
+  strDate += " ${df2.format(DateTime.fromMillisecondsSinceEpoch(createdAt*1000))}";
+  return strDate;
+}
+
 
 /*
  * Returns true if this is a valid direct message to just this user. Direct message = kind 4 AND 104

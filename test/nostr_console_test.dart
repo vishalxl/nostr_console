@@ -18,11 +18,12 @@ Tree  exampleTree  = Tree.withoutStore(exampleEvent, []);
 
 //bool skipTest = true;
 
- Relays relays = Relays({}, {}, {});
+//Relays relays = Relays({}, {}, {});
 
 
 void main() async {
-
+  relays = Relays({}, {}, {});
+  gListRelayUrls = {};
   //gDebug = 1;
   
   test('invalid_relay', () async {
@@ -43,6 +44,9 @@ void main() async {
     //store.printStoreTrees(1, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all);
   });
 
+
+
+
   test('createNodeTree_ordered', () {
     
     Event exampleEvent1 = Event.fromJson('["EVENT","latest",{"id":"167063f491c41b7b8f79bc74f318e8a8b0a802bf8364b8bb7d19c887d59ec5de","pubkey":"137d948a0eee45e6cd113faaad934fcf17a97de2236c655b70650d4252daa9d3","created_at":1659722388,"kind":1,"tags":[],"content":"nostr is not federated is it? this is like a global feed of all nostr freaks?","sig":"6db0b287015d9529dfbacef91561cb4e32afd6968edd8454867b8482bde01452e17b6f3de69bffcb2d9deba2a52d3c9ff82e04f7b18eb32428daf7eab5fd27c5"}]', "");
@@ -58,6 +62,81 @@ void main() async {
     //print("=========================");
   });
 
+
+
+  test('createNodeTree_only2_1', () {
+
+
+
+// ▄────────────
+// █       137d9: Non                                                         |id: 167063, 11:29 PM Aug 5          2
+//
+//               137d9: event2 reply 1 to top 1                               |id: f3a267, 11:31 PM Aug 5          2
+//
+//                     137d9: event3 reply 2 to reply 1                       |id: dfc576, 11:32 PM Aug 5          1
+//
+//                                                                                                 █
+//                                                                                     ────────────▀
+
+    Event exampleEvent2 = Event.fromJson(
+      """["EVENT","latest",{"id":"f3a267ecbb631012da618de620bc1fe265f6429f412359bf02330b437cf88e67","pubkey":"137d948a0eee45e6cd113faaad934fcf17a97de2236c655b70650d4252daa9d3",
+      "created_at":1659722463,
+      "kind":1,
+      "tags":[["e","167063f491c41b7b8f79bc74f318e8a8b0a802bf8364b8bb7d19c887d59ec5de", "", "root"]],
+      "content":"event2 reply 1 to top 1",
+      "sig":"9f68031687214a24862226f291e3baadd956dc14ba9c5c552f8c881a40aacd34feda667ef4e4b09711cd43950eec2d272d5b11bd7636de5f457f38f31eaff398"}]""", "");
+    
+    Event exampleEvent3 = Event.fromJson(
+      """["EVENT","latest",{"id":"dfc5765da281c0ad99cb8693fc98c87f0f86ad56042a414f06f19d41c1315fc3","pubkey":"137d948a0eee45e6cd113faaad934fcf17a97de2236c655b70650d4252daa9d3",
+      "created_at":1659722537,"kind":1,
+      "tags":[
+        ["e","167063f491c41b7b8f79bc74f318e8a8b0a802bf8364b8bb7d19c887d59ec5de", "", "root"],
+        ["e","f3a267ecbb631012da618de620bc1fe265f6429f412359bf02330b437cf88e67", "", "reply"]
+      ],
+      "content":"event3 reply 2 to reply 1",
+      "sig":"d4fdc288e3cb95fc5ab46177fc0982d2aaa3b028eef6649f8200500da9c2e9a16c7a0462638afef7635bfea3094ec10901de759a48e362b60cb08f7e6585e02f"}]""", "");
+
+
+
+    Set<Event> setEmpty = { };
+
+    Store node = Store.fromEvents(setEmpty);
+    expect(node.topPosts.length, 0);
+
+    print(" createNodeTree_unordered_2212 : added none:");
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
+    print("calling processIncomingEvents with event3");    
+    Set<Event> newEvents3 = {exampleEvent3};
+    node.processIncomingEvent(newEvents3);
+
+    expect(node.topPosts.length, 1);
+    expect ( node.topPosts[0].children.length, 1);
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
+
+    print("calling processIncomingEvents with event2");    
+    Set<Event> newEvents2 = { exampleEvent2 };
+    node.processIncomingEvent(newEvents2);
+
+    expect(node.topPosts.length, 1);
+    expect ( node.topPosts[0].children.length, 1);
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
+   // repeat event 
+    print("AGAIN calling processIncomingEvents with event2");    
+    node.processIncomingEvent(newEvents2);
+
+    expect(node.topPosts.length, 1);
+    expect ( node.topPosts[0].children.length, 1);
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
+
+  });
 
 
   test('createNodeTree_unordered_reactions', () {
@@ -95,7 +174,7 @@ void main() async {
       "tags":[["e","167063f491c41b7b8f79bc74f318e8a8b0a802bf8364b8bb7d19c887d59ec5de", ""]],
       "sig":"9f68031687214a24862226f291e3baadd956dc14ba9c5c552f8c881a40aacd34feda667ef4e4b09711cd43950eec2d272d5b11bd7636de5f457f38f31eaff398"}]""", "");
     
-    Event exampleEvent3 = Event.fromJson(
+    Event reactionEvent3 = Event.fromJson(
       """["EVENT","latest",{"id":"dfc5765da281c0ad99cb8693fc98c87f0f86ad56042a414f06f19d41c1315fc3","pubkey":"137d948a0eee45e6cd113faaad934fcf17a97de2236c655b70650d4252daa9d3",
       "created_at":1659722537,
       "kind":7,
@@ -118,7 +197,7 @@ void main() async {
 
 
 
-    Set<Event> listEvents = {  exampleEvent3};
+    Set<Event> listEvents = {  reactionEvent3};
 
     Store node = Store.fromEvents(listEvents);
     
@@ -145,13 +224,13 @@ void main() async {
 
 
 // ▄────────────
-// █       137d9: top 1                                                |id: 167063, 11:29 PM Aug 5          2
+// █       137d9: event1 top 1                                                |id: 167063, 11:29 PM Aug 5          2
 //
-//               137d9: reply 1 to top 1                               |id: f3a267, 11:31 PM Aug 5          2
+//               137d9: event2 reply 1 to top 1                               |id: f3a267, 11:31 PM Aug 5          2
 //
-//                     137d9: reply 2 to reply 1                       |id: dfc576, 11:32 PM Aug 5          1
+//                     137d9: event3 reply 2 to reply 1                       |id: dfc576, 11:32 PM Aug 5          1
 //
-//               137d9: reply 2 to top 1                               |id: afc576, 11:32 PM Aug 5          2
+//               137d9: event4 reply 2 to top 1                               |id: afc576, 11:32 PM Aug 5          2
 //                                                                                                 █
 //                                                                                     ────────────▀
 
@@ -162,7 +241,7 @@ void main() async {
     "created_at":1659722388,
     "kind":1,
     "tags":[],
-    "content":"top 1",
+    "content":"event1 top 1",
     "sig":"6db0b287015d9529dfbacef91561cb4e32afd6968edd8454867b8482bde01452e17b6f3de69bffcb2d9deba2a52d3c9ff82e04f7b18eb32428daf7eab5fd27c5"}]"""
   
     , "");
@@ -172,7 +251,7 @@ void main() async {
       "created_at":1659722463,
       "kind":1,
       "tags":[["e","167063f491c41b7b8f79bc74f318e8a8b0a802bf8364b8bb7d19c887d59ec5de", "", "root"]],
-      "content":"reply 1 to top 1",
+      "content":"event2 reply 1 to top 1",
       "sig":"9f68031687214a24862226f291e3baadd956dc14ba9c5c552f8c881a40aacd34feda667ef4e4b09711cd43950eec2d272d5b11bd7636de5f457f38f31eaff398"}]""", "");
     
     Event exampleEvent3 = Event.fromJson(
@@ -182,7 +261,7 @@ void main() async {
         ["e","167063f491c41b7b8f79bc74f318e8a8b0a802bf8364b8bb7d19c887d59ec5de", "", "root"],
         ["e","f3a267ecbb631012da618de620bc1fe265f6429f412359bf02330b437cf88e67", "", "reply"]
       ],
-      "content":"reply 2 to reply 1",
+      "content":"event3 reply 2 to reply 1",
       "sig":"d4fdc288e3cb95fc5ab46177fc0982d2aaa3b028eef6649f8200500da9c2e9a16c7a0462638afef7635bfea3094ec10901de759a48e362b60cb08f7e6585e02f"}]""", "");
 
 
@@ -192,26 +271,51 @@ void main() async {
       "tags":[
         ["e","167063f491c41b7b8f79bc74f318e8a8b0a802bf8364b8bb7d19c887d59ec5de", "", "root"]
       ],
-      "content":"reply 2 to top 1",
+      "content":"event4 reply 2 to top 1",
       "sig":"d4fdc288e3cb95fc5ab46177fc0982d2aaa3b028eef6649f8200500da9c2e9a16c7a0462638afef7635bfea3094ec10901de759a48e362b60cb08f7e6585e02f"}]""", "");
 
 
-    Set<Event> listEvents = {  exampleEvent3};
+    Set<Event> setEvent3 = {  exampleEvent3};
 
-    Store node = Store.fromEvents(listEvents);
+    Store node = Store.fromEvents(setEvent3);
     expect(node.topPosts.length, 1);
     expect ( node.topPosts[0].children.length, 1);
     expect ( node.topPosts[0].children[0].children.length, 0);
 
-    //print(" createNodeTree_unordered_2212 : added only one, only one should get printed:");
-    //node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
-    
-    Set<Event> newEvents = {exampleEvent2, exampleEvent1 , exampleEvent4};
-    node.processIncomingEvent(newEvents);
+    print(" createNodeTree_unordered_2212 : added only one, only one should get printed:");
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
+    print("calling processIncomingEvents with event4");    
+    Set<Event> newEvents4 = {exampleEvent4};
+    node.processIncomingEvent(newEvents4);
+
+    expect(node.topPosts.length, 2);
+    expect ( node.topPosts[0].children.length, 1);
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
+
+    print("calling processIncomingEvents with event1");    
+    Set<Event> newEvents1 = { exampleEvent1 };
+    node.processIncomingEvent(newEvents1);
+
+    expect(node.topPosts.length, 2);
+    expect ( node.topPosts[0].children.length, 1);
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
+    print("calling processIncomingEvents with 2");    
+    Set<Event> newEvents2 = {  exampleEvent2};
+    node.processIncomingEvent(newEvents2);
 
     expect(node.topPosts.length, 1);
+    expect ( node.topPosts[0].event.eventData.pubkey, "137d948a0eee45e6cd113faaad934fcf17a97de2236c655b70650d4252daa9d3");
     expect ( node.topPosts[0].children.length, 2);
-    //node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("node.count() = ${node.count()}");
+
 
   });
 
@@ -280,15 +384,15 @@ void main() async {
     expect ( node.topPosts[0].children.length, 1);
     expect ( node.topPosts[0].children[0].children.length, 1);
 
-    //print("ended test createNodeTree_unordered1");
-    //node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    print("ended test createNodeTree_unordered1");
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
     
     Set<Event> newEvents = {exampleEvent1 , exampleEvent4};
     node.processIncomingEvent(newEvents);
 
     expect(node.topPosts.length, 1);
     expect ( node.topPosts[0].children.length, 2);
-    //node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
+    node.printStoreTrees(0, DateTime.now().subtract(Duration(days:2000)), selectorTrees_all); // will test for ~1000 days
 
   });
 
@@ -572,6 +676,29 @@ String expectedResult =
     }
   
   });
+
+
+  test('getParent', () {
+  
+    // "tags":[
+    //  ["e","ed05e1ba26c9d3684a4f0f9443dbb45cccb4ba20f2b7b05a6ac1aee0a8324baf","","root"],
+    // ["e","ebb01cc8788dadfc4ce621999ec3b332ff712937bacc1be99a20bf01ed29d2b0","","reply"],
+    // ["p","20651ab8c2fb1febca56b80deba14630af452bdce64fe8f04a9f5f67e4a3c1cc"]
+
+    Event exampleEvent_31e_daniel = Event.fromJson('["EVENT","latest_live_all",{"content":"Hard to tell the difference these days, ngl.","created_at":1755366333,"id":"31e2ebe59b3fd691450055cbbae2545e41dd986032d564e49a56125da1ddea96","kind":1,"pubkey":"ee6ea13ab9fe5c4a68eaf9b1a34fe014a66b40117c50ee2a614f4cda959b6e74","sig":"7af6c0d86ffa4ccf96c9ffd9c7fe9d87ae77c7be062bbd05079e666129aafd6802023ebf6167291419b06a574e09167694c6fa45bfa585c61f22a122f74856a5","tags":[["e","ed05e1ba26c9d3684a4f0f9443dbb45cccb4ba20f2b7b05a6ac1aee0a8324baf","","root"],["e","ebb01cc8788dadfc4ce621999ec3b332ff712937bacc1be99a20bf01ed29d2b0","","reply"],["p","20651ab8c2fb1febca56b80deba14630af452bdce64fe8f04a9f5f67e4a3c1cc"]]}]', "");
+
+    Store  store     = Store.fromEvents({exampleEvent_31e_daniel});
+
+    //Tree tree = Tree.withoutStore(exampleEvent_31e_daniel,[]);
+
+    String parentId = exampleEvent_31e_daniel.eventData.getParent({});
+    print("parentId = $parentId");
+    
+    expect(parentId, "ebb01cc8788dadfc4ce621999ec3b332ff712937bacc1be99a20bf01ed29d2b0");
+
+  });
+
+
 
   Future.delayed(Duration(milliseconds: 2000), () {
     exit(0);

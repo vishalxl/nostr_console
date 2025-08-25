@@ -7,11 +7,14 @@ const String version = "0.3.8-beta";
 
 int gDebug = 0;
 int gSpecificDebug = 0;
+const int SECONDS_PER_DAY = 84600;
+
+int epochAppStartedAt = -1; // is set when application starts 
 
 final log = Logger('ExampleLogger');
 
 // for debugging
-String gCheckEventId = "xb9e1824fe65b10f7d06bd5f6dfe1ab3eda876d7243df5878ca0b9686d80c0840f"; 
+String gCheckEventId = "_f3a267ecbb631012da618de620bc1fe265f6429f412359bf02330b437cf88e67"; 
 
 int gMaxEventLenthAccepted = 80000; // max event size. events larger than this are rejected. 
 
@@ -26,21 +29,28 @@ const int gNumRoomsShownByDefault = 20;
 const String gDefaultEventsFilename = "all_nostr_events.txt";
 String       gEventsFilename        = ""; // is set in arguments, and if set, then file is read from and written to
 bool         gDontWriteOldEvents    = true;
-const int gDontSaveBeforeDays       = 20; // dont save events older than this many days if gDontWriteOldEvents flag is true
-const int gDeletePostsOlderThanDays = 20;
-bool         gOverWriteFile         = false; // overwrite the file, and don't just append. Will write all events in memory. 
+
+// controlled by command line argument 'nosave'
+// dont save events older than this many days. If its -1, then everything is saved.  
+int          gDontSaveBeforeDays       = -1; 
+
+// overwrite the file, and don't just append. Will write all events in memory. 
+bool         gOverWriteFile         = false; 
 
 const int gDontAddToStoreBeforeDays = 60; // events older than this are not added to the Store of all events
 
-const int gLimitFollowPosts       = 20; // when getting events, this is the since field (unless a fully formed request is given in command line)
+
+const int gLimitFollowPosts       = 50; // when getting events, this is the since field (unless a fully formed request is given in command line)
 const int gLimitPerSubscription     = 20000;
 
- // don't show notifications for events that are older than 5 days and come when program is running
- // applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
-const int gDontHighlightEventsOlderThan = 4;
 
-int gDefaultNumWaitSeconds = 12000; // is used in main()
-const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
+// Used in printTreeNotifications()
+// don't show notifications for events that are older than 10 days and come when program is running
+// applicable only for notifications and not for search results. Search results set a flag in EventData and don't use this variable
+const int gDontHighlightEventsOlderThan = 10;
+
+int gDefaultNumWaitSeconds = 120; // is used in main()
+const int gMaxAuthorsInOneRequest = 100; // number of author requests to send in one request
 const int gMaxPtagsToGet          = 200; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 const int gSecsLatestLive         = 2 * 3600; // the lastst seconds for which to get the latest event in main
@@ -50,16 +60,27 @@ int gHoursDefaultPrint      = 6; // print latest given hours only
 int numFileEvents = 0, numFilePosts = 0, numUserPosts = 0, numFeedPosts = 0, numOtherPosts = 0;
 
 
+Set<String> aug18_2025 = {
+"wss://relay.damus.io",
+"wss://nostr-pub.wellorder.net",
+"wss://nos.lol",
+"wss://eden.nostr.land",
+"wss://offchain.pub",
+"wss://nostr.mom"
+};
 
 // edited on 29 sept 2024 	
 String defaultServerUrl       = "wss://relay.damus.io";
-Set<String> gListRelayUrls = { defaultServerUrl,
+
+Set<String> orignalUrls = { defaultServerUrl,
                               "wss://nostr.wine",
                               "wss://relay.nostr.info",
                               "wss://nos.lol",
                               "wss://relay.nostr.band"
                               };
 
+
+Set<String> gListRelayUrls =  orignalUrls ; // aug18_2025;
 
 // well known disposable test private key
 const String gDefaultPublicKey  = "";
@@ -143,11 +164,11 @@ String     gAlignment           = "center";   // is modified in main if --align 
 const int  gapBetweenTopTrees   = 1;
 const int gNameLengthInPost     = 12;
 
-// after depth of maxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
+// after depth of gMaxDepthAllowed the thread is re-aligned to left by leftShiftThreadBy
 const int  gMinimumDepthAllowed = 2;
 const int  gMaximumDepthAllowed = 12;
 const int  gDefaultMaxDepth     = 5;
-int        maxDepthAllowed      = gDefaultMaxDepth;
+int        gMaxDepthAllowed      = gDefaultMaxDepth;
 const int  leftShiftThreadsBy   = 3;
 
 int gMaxLenUnbrokenWord = 8; // lines are broken if space is at end of line for this number of places

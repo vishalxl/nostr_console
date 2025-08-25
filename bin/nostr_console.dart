@@ -34,9 +34,10 @@ const String overWriteFlag = "overwrite";
 const String locationArg = "location";
 const String lnQrFlag    = "lnqr";
 const String configuredUser = "user";
-
+const String nosaveArg = "nosave";
 
 Future<void> main(List<String> arguments) async {
+    epochAppStartedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     final parser = ArgParser()..addOption(requestArg) ..addOption(pubkeyArg, abbr:"p")..addOption(prikeyArg, abbr:"k")
                               ..addOption(lastdaysArg, abbr:"d") ..addOption(relayArg, abbr:"r")
@@ -49,6 +50,7 @@ Future<void> main(List<String> arguments) async {
                               ..addOption(colorArg, abbr:"c")
                               ..addOption(difficultyArg, abbr:"y")
                               ..addFlag(overWriteFlag, abbr:"e", defaultsTo: false)
+                              ..addOption(nosaveArg, abbr:"n")
                               ..addOption(locationArg, abbr:"g")
                               ..addFlag("debug")
                               ..addFlag(lnQrFlag, abbr:"l", defaultsTo: false)
@@ -117,6 +119,12 @@ Future<void> main(List<String> arguments) async {
       if( argResults[overWriteFlag]) {
         print("Going to overwrite file at the end of program execution.");
         gOverWriteFile = true;
+      }
+
+
+      if( argResults[nosaveArg] != null) {
+        gDontSaveBeforeDays = int.parse(argResults[nosaveArg]);
+        print("Will not save events older than $gDontSaveBeforeDays days.");
       }
 
 
@@ -273,7 +281,7 @@ Future<void> main(List<String> arguments) async {
         if( tempMaxDepth < gMinimumDepthAllowed || tempMaxDepth > gMaximumDepthAllowed) {
           print("Maximum depth cannot be less than $gMinimumDepthAllowed and cannot be more than $gMaximumDepthAllowed. Going to use the default maximum depth, which is $gDefaultMaxDepth.");
         } else {
-          maxDepthAllowed = tempMaxDepth;
+          gMaxDepthAllowed = tempMaxDepth;
           print("Going to take threads to maximum depth of $gNumLastDays days");
         }
       }
@@ -416,12 +424,12 @@ Future<void> main(List<String> arguments) async {
         stdout.write("...done\n");//received $numUserPosts new posts made by the user\n");
 
         Set<String> userEvents = getOnlyUserEvents(initialEvents, userPublicKey);
-        //print('Total events fetched till now: ${initialEvents.length}. Total user events fetched: ${userEvents.length}');
+        print('Total events fetched till now: ${initialEvents.length}. Total user events fetched: ${userEvents.length}');
 
         // get events from channels of user; gets public as well as encrypted channels
-        Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);
+        //Set<String> userChannels = getUserChannels(initialEvents, userPublicKey);
         //printSet(userChannels, "user channels: \n", "\n");
-        //getIdAndMentionEvents(gListRelayUrls1, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");
+        //getIdAndMentionEvents(gListRelayUrls, userChannels, limitPerSubscription, 0, getSecondsDaysAgo(limitOthersEvents), "#e", "ids");
 
         getKindEvents([40, 41], gListRelayUrls, limitPerSubscription, getSecondsDaysAgo(limitSelfEvents));
         getKindEvents([42], gListRelayUrls, 3 * limitPerSubscription, getSecondsDaysAgo(limitOthersEvents));        
@@ -454,6 +462,8 @@ Future<void> main(List<String> arguments) async {
           pTags = getpTags(initialEvents, gMaxPtagsToGet);
         }
 
+        print("pTags = ${pTags.length}");
+
         // get only limited number of contacts otherwise relays get less responsive
         int maxContactsFetched = 700;
         if( contacts.length > maxContactsFetched) {
@@ -466,7 +476,7 @@ Future<void> main(List<String> arguments) async {
         
         // get meta events of all users fetched 
         getMultiUserEvents(gListRelayUrls, usersFetched, 10 *  limitPerSubscription, getSecondsDaysAgo(limitSelfEvents*100), {0,3});
-        //print("fetched meta of ${usersFetched.length}");
+        print("fetched meta of ${usersFetched.length}");
 
 
         void resetRelays() {

@@ -377,16 +377,17 @@ void printProfile(Store node, String profilePubkey) {
     }
   }
 
-  print("\nName        : $authorName ( $profilePubkey / $npubPubkey).");
-  print("About       : $about");
-  print("Picture     : $picture");
-  print("display_name: $displayName");
-  print("Website     : $website");
-  print("Lud06       : $lud06");
-  print("Lud16       : $lud16");
-  print("Nip 05      : ${verified?"yes. $nip05Id":"no"}");
-  print("\nLast Updated: ${getPrintableDate(dateLastUpdated)}\n");
 
+  // print followers
+  List<String> followers = node.getFollowers(profilePubkey);
+  stdout.write("$pronoun have ${followers.length} followers:  ");
+  followers.sort((a, b) => getAuthorName(a).compareTo(getAuthorName(b)));
+  for (var x in followers) {
+    stdout.write("${getAuthorName(x)}, ");
+  }
+
+
+  print("\n");
   // get the latest kind 3 event for the user, which lists his 'follows' list
   Event? profileContactEvent = getContactEvent(profilePubkey);
   if (profileContactEvent != null ) {
@@ -432,14 +433,20 @@ void printProfile(Store node, String profilePubkey) {
     }
   }
 
-  // print followers
-  List<String> followers = node.getFollowers(profilePubkey);
-  stdout.write("$pronoun have ${followers.length} followers:  ");
-  followers.sort((a, b) => getAuthorName(a).compareTo(getAuthorName(b)));
-  for (var x in followers) {
-    stdout.write("${getAuthorName(x)}, ");
-  }
+
   print("");              
+  print("-------------------------------------------------------------------------");
+
+  print("\nName        : $authorName ( $profilePubkey / $npubPubkey).");
+  print("About       : $about");
+  print("Picture     : $picture");
+  print("display_name: $displayName");
+  print("Website     : $website");
+  print("Lud06       : $lud06");
+  print("Lud16       : $lud16");
+  print("Nip 05      : ${verified?"yes. $nip05Id":"no"}");
+  print("\nKind 0 was Last Updated on: ${getPrintableDate(dateLastUpdated)}\n");
+
   print("");
 }
 
@@ -1355,6 +1362,226 @@ Future<void> PrivateMenuUI(Store node) async {
   return;
 }
 
+Future<void> followUnfollowMenu(Store node) async {
+  bool continueMenu = true;
+
+  while(continueMenu) {
+    await processAnyIncomingEvents(node, true); // this takes 300 ms
+
+    String menuInfo = """You can follow or unfollow any given pubkey/User. You can also fetch events for some specific user, or fetch some specific event(s).""";
+    int option = showMenu([ 
+                            'Follow a User',            // 1
+                            'Unfollow a User',          // 2
+                            'Fetch all events for User',// 3
+                            'Fetch specific Event',     // 4
+                            'E(x)it to main menu'],     // 5
+                          "Follow/Unfollow Menu", // name of menu
+                          menuInfo); 
+    switch(option) {
+
+      case 1:
+        // in case the program was invoked with --pubkey, then user can't send kind 3 (contact list) messages
+        if( userPrivateKey == "") {
+            printWarning("Since no user private key has been supplied, new follow messages can't be sent. Invoke with --prikey");
+            break;
+        }
+
+        clearScreen();
+        stdout.write("Enter username or first few letters of user's public key( or full public key): ");
+        String? $tempUserName = stdin.readLineSync();
+        String userName = $tempUserName??"";
+        if( userName != "") {
+          Set<String> pubkey = getPublicKeyFromName(userName); 
+          
+          printPubkeyResult(pubkey);
+          
+          if( pubkey.length > 1) {
+            printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
+          } else {
+            if (pubkey.isEmpty && userName.length != 64) {
+                printWarning("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
+            } 
+            else {
+              if( pubkey.isEmpty) {
+                printWarning("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
+                pubkey.add(userName);
+              }
+
+              String pk = pubkey.first;
+
+              // get this users latest contact list event ( kind 3 event)
+              Event? contactEvent = getContactEvent(userPublicKey);
+              
+              if( contactEvent != null) {
+                Event newContactEvent = contactEvent;
+
+                bool alreadyContact = false;
+                for(int i = 0; i < newContactEvent.eventData.contactList.length; i++) {
+                  if( newContactEvent.eventData.contactList[i].contactPubkey == pubkey.first) {
+                    alreadyContact = true;
+                    break;
+                  }
+                }
+                if( !alreadyContact) {
+                  print('Sending new contact event');
+                  Contact newContact = Contact(pk, defaultServerUrl);
+                  newContactEvent.eventData.contactList.add(newContact);
+                  getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                  sendEvent(node, newContactEvent);
+                } else {
+                  print("The contact already exists in the contact list.");
+                }
+              } else {
+                  // TODO fix the send event functions by streamlining them
+
+                  if(confirmFirstContact()) {
+                    print('Sending first contact event');
+                    String newId = "", newPubkey = userPublicKey,  newContent = "";
+                    int newKind = 3;
+                    List<List<String>> newEtags = [];
+                    List<String> newPtags = [pk];
+                    List<List<String>> newTags = [[]];
+                    Set<String> newNewLikes = {};
+                    int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
+                    List<Contact> newContactList = [ Contact(pk, defaultServerUrl) ];
+
+                    EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
+                    Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
+                    getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
+                    sendEvent(node, newEvent);
+                  }
+              }
+            }
+          }
+        }
+        break;
+
+      case 2:
+        // in case the program was invoked with --pubkey, then user can't send kind 3 (contact list) messages
+        if( userPrivateKey == "") {
+            printWarning("Since no user private key has been supplied, new kind 3 messages can be sent, means you can't unfollow anyone. Invoke with --prikey");
+            break;
+        }
+
+        clearScreen();
+        stdout.write("Enter username or first few letters of user's public key who you want to unfollow ( or full public key): ");
+        String? $tempUserName = stdin.readLineSync();
+        String userName = $tempUserName??"";
+
+        if( userName != "") {
+          Set<String> pubkeysFromName = getPublicKeyFromName(userName); 
+          Set<String> setFollows = getFollows(userPublicKey);
+          
+          setFollows.addAll(pubkeysFromName);
+          
+          Set<String> toUnfollow = {};
+          
+          for ( String pubkey in pubkeysFromName) {
+            if( setFollows.contains(pubkey)) { 
+              toUnfollow.add(pubkey);    
+            }
+          }
+
+          printPubkeyResult(toUnfollow);
+
+          if( toUnfollow.length > 1) {
+              printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
+          } else {
+            if (toUnfollow.isEmpty && userName.length != 64) {
+                printWarning("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
+            } 
+            else {
+              if( toUnfollow.isEmpty) {
+                printWarning("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
+              }
+
+              // get this users latest contact list event ( kind 3 event)
+              Event? contactEvent = getContactEvent(userPublicKey);
+              
+              if( contactEvent != null) {
+                Event newContactEvent = contactEvent;
+
+                bool alreadyContact = false;
+                for(int i = 0; i < newContactEvent.eventData.contactList.length; i++) {
+                  if( newContactEvent.eventData.contactList[i].contactPubkey == toUnfollow.first) {
+                    alreadyContact = true;
+                    break;
+                  }
+                }
+
+                if( !alreadyContact) {
+                  print('Given user ${toUnfollow.first} is not in your contact list. You cannot unfollow them.');
+                } else {
+                  print("Going to publish a new contact list without this given user.");                  
+                  print("old contact list = ${newContactEvent.eventData.contactList.length}");
+                  newContactEvent.eventData.contactList.removeWhere((element) => element.contactPubkey == toUnfollow.first);
+                  print("new contact list = ${newContactEvent.eventData.contactList.length}");
+                  sendEvent(node, newContactEvent);
+                }
+               } else {
+                  print("Could not find your contact list, so no user can be unfollowed.");
+              }
+            }
+          }
+        }
+        break;
+      case 3:
+        clearScreen();
+        stdout.write("Enter username or first few letters of user's public key( or full public key): ");
+        String? $tempUserName = stdin.readLineSync();
+        String userName = $tempUserName??"";
+        if( userName != "") {
+          Set<String> pubkey = getPublicKeyFromName(userName); 
+          
+          printPubkeyResult(pubkey);
+          
+          if( pubkey.length > 1) {
+            printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
+          } else {
+            if( pubkey.length == 1) {
+              getUserEvents(gListRelayUrls, pubkey.first, gLimitPerSubscription, getSecondsDaysAgo(4*gLimitFollowPosts));
+            } else {
+              //printWarning("Could not find any user with given name/id");
+              if( userName.length > 64) {
+                userName = userName.substring(0, 64);
+              }
+
+              for(var t in node.allChildEventsMap.values) {
+                
+                EventData e = t.event.eventData;
+                if( e.pubkey.length < 64) {
+                  continue;
+                }
+  
+                // print(e.pubkey);
+                if( e.pubkey.substring(0, userName.length) == userName) {
+                  print("matched ${e.pubkey}");
+                  printPubkeyResult({e.pubkey});
+                  getUserEvents(gListRelayUrls, e.pubkey, gLimitPerSubscription, getSecondsDaysAgo(4*gLimitFollowPosts));
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        break;
+      case 4:
+        print("in case 4");
+        break;
+
+      case 5:
+        continueMenu = false;
+        break;
+
+      default:
+        break;
+    } // switch 
+  } // while (continueMenu)
+  return;
+}
+
+
 Future<void> socialMenuUi(Store node) async {
    
     clearScreen();
@@ -1373,18 +1600,18 @@ Future<void> socialMenuUi(Store node) async {
 
       // the main menu
       int option = showMenu([
-                             'Your Feed',         // 1
+                             'Your Feed (follow+popular)',  // 1
                              'Make a Post/Reply or Like',   // 2
-                             'Replies+ to you',// 3
-                             'Your Posts',        // 4 
-                             'Your Replies/Likes',//5
-                             'Accounts you Follow',   // 6
-                             'Mutual Follows',   // 7
-                             'Search word or event id',    // 8
-                             'Follow new contact',            // 9
-                             'Show user profile',             // 10
-                             'Change # of hours printed', // 11
-                             'E(x)it to main menu'], // 12
+                             'Replies+ to you',             // 3
+                             'Your Posts',                  // 4 
+                             'Your Replies/Likes',          // 5
+                             'Accounts you Follow',         // 6
+                             'Mutual Follows',              // 7
+                             'Search word or event id',     // 8
+                             'Follow/Unfollow/Fetch Menu',  // 9
+                             'Show user profile',           // 10
+                             'Change # of hours printed',   // 11
+                             'E(x)it to main menu'],        // 12
                              "Social Network Menu");
       
       switch(option) {
@@ -1525,84 +1752,7 @@ Future<void> socialMenuUi(Store node) async {
           break;
   */
         case 9: // follow new contact
-          // in case the program was invoked with --pubkey, then user can't send messages
-          if( userPrivateKey == "") {
-              printWarning("Since no user private key has been supplied, posts/messages can't be sent. Invoke with --prikey");
-              break;
-          }
-
-          clearScreen();
-          stdout.write("Enter username or first few letters of user's public key( or full public key): ");
-          String? $tempUserName = stdin.readLineSync();
-          String userName = $tempUserName??"";
-          if( userName != "") {
-            Set<String> pubkey = getPublicKeyFromName(userName); 
-            
-            printPubkeyResult(pubkey);
-            
-            if( pubkey.length > 1) {
-              if( pubkey.length > 1) {
-                printWarning("Got multiple users with the same name. Try again, and type a more unique name or id-prefix");
-              }
-            } else {
-              if (pubkey.isEmpty && userName.length != 64) {
-                  printWarning("Could not find the user with that id or username. You can try again by providing the full 64 byte long hex public key.");
-              } 
-              else {
-                if( pubkey.isEmpty) {
-                  printWarning("Could not find the user with that id or username in internal store/list. However, since the given id is 64 bytes long, taking that as hex public key and adding them as contact.");
-                  pubkey.add(userName);
-                }
-
-                String pk = pubkey.first;
-
-                // get this users latest contact list event ( kind 3 event)
-                Event? contactEvent = getContactEvent(userPublicKey);
-                
-                if( contactEvent != null) {
-                  Event newContactEvent = contactEvent;
-
-                  bool alreadyContact = false;
-                  for(int i = 0; i < newContactEvent.eventData.contactList.length; i++) {
-                    if( newContactEvent.eventData.contactList[i].contactPubkey == pubkey.first) {
-                      alreadyContact = true;
-                      break;
-                    }
-                  }
-                  if( !alreadyContact) {
-                    print('Sending new contact event');
-                    Contact newContact = Contact(pk, defaultServerUrl);
-                    newContactEvent.eventData.contactList.add(newContact);
-                    getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
-                    sendEvent(node, newContactEvent);
-                  } else {
-                    print("The contact already exists in the contact list. Republishing the old contact list.");
-                    getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
-                    sendEvent(node, contactEvent);
-                  }
-                } else {
-                    // TODO fix the send event functions by streamlining them
-
-                    if(confirmFirstContact()) {
-                      print('Sending first contact event');
-                      String newId = "", newPubkey = userPublicKey,  newContent = "";
-                      int newKind = 3;
-                      List<List<String>> newEtags = [];
-                      List<String> newPtags = [pk];
-                      List<List<String>> newTags = [[]];
-                      Set<String> newNewLikes = {};
-                      int newCreatedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
-                      List<Contact> newContactList = [ Contact(pk, defaultServerUrl) ];
-
-                      EventData newEventData = EventData(newId, newPubkey, newCreatedAt, newKind, newContent, newEtags, newPtags, newContactList, newTags, newNewLikes,);
-                      Event newEvent = Event( "EVENT", newId, newEventData,  [], "");
-                      getUserEvents(gListRelayUrls, pk, gLimitPerSubscription, getSecondsDaysAgo(gLimitFollowPosts));
-                      sendEvent(node, newEvent);
-                    }
-                }
-              }
-            }
-          }
+          await followUnfollowMenu(node);
           break;
 
 
@@ -1772,6 +1922,7 @@ Future<void> mainMenuUi(Store node) async {
           if( gEventsFilename != "") {
             await node.writeEventsToFile(gEventsFilename);
           }
+          relays.printInfo();
           exit(0);
       } // end menu switch
     } // end while

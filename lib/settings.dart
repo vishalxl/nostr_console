@@ -183,7 +183,7 @@ bool gShowLnInvoicesAsQr = false;
 const int  gMinWidthForLnQr = 140;
 
 // event length printed
-const int gEventLenPrinted = 6;
+const int gEventLenPrinted = 8;
 
 // used in word/event search
 const int gMinEventIdLenInSearch = gEventLenPrinted;

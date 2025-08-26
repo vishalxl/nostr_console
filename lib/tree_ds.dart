@@ -2957,7 +2957,6 @@ int sortTreeByItsTime(Tree a, Tree b) {
   }
 }
 
-
 /*
  * @function getTree Creates a Tree out of these received List of events. 
  *             Will remove duplicate events( which should not ideally exists because we have a set), 
@@ -2982,19 +2981,11 @@ Store getTree(Set<Event> events) {
     events.removeWhere( (event) => !Store.typesInEventMap.contains(event.eventData.kind));  
 
     // remove duplicate events
-    Set ids = {};
+    Set<String> ids = {};
     events.retainWhere((event) => ids.add(event.eventData.id));
 
     // process kind 0 events about metadata 
-  /*  for (var event in events) {
-      processKind0Event(event);
-    }
-  */
-    
-    ids.clear();
-    print("before kind 0 : ${events.length}");
     events.retainWhere((event) => processKind0Event(event) != 3   );    
-    print("after kind 0 : ${events.length}");
 
     // process kind 3 events which is contact list. Update global info about the user (with meta data) 
     for (var event in events) {

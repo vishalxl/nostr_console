@@ -1923,6 +1923,7 @@ Future<void> mainMenuUi(Store node) async {
             await node.writeEventsToFile(gEventsFilename);
           }
           relays.printInfo();
+          print("");
           exit(0);
       } // end menu switch
     } // end while

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:format/format.dart';
 
 import 'dart:convert';
 import 'package:nostr_console/event_ds.dart';
@@ -20,7 +21,7 @@ class Relay {
   }
 
   void printInfo()   { 
-    print("$url ${getNumSpaces(45 - url.length)}   $numReceived                   ${users.length}");
+    print(  '{url:45s}   {numReceived: 6d}   {numUsers: 14d}'.format({#url: url, #numReceived: numReceived, #numUsers: users.length})  ); //"$url ${getNumSpaces(45 - url.length)}   $numReceived                   ${users.length}");
   }
 }
 
@@ -43,9 +44,8 @@ class Relays {
 
   void printInfo()  {
     printUnderlined("Server connection info");
-    print("     Server Url                    Num events received:   Num users requested");
+    print("     Server Url                         <Num events received>   <Num users requested>");
     for( var key in relays.keys) {
-     
      relays[key]?.printInfo();
     }
   }
@@ -300,7 +300,7 @@ getKindEvents(List<int> kind, Set<String> serverUrls, int limit, int sinceWhen) 
 
 void getMultiUserEvents(Set<String> serverUrls, Set<String> setPublicKeys, int numUserEvents, int sinceWhen, [Set<int>? kind]) {
   List<String> publicKeys = setPublicKeys.toList();
-  if( gDebug > 0 || true) print("Sending multi user request for ${publicKeys.length} users");
+  if( gDebug > 0) print("Sending multi user request for ${publicKeys.length} users");
   
   for(var serverUrl in serverUrls) {
     for( int i = 0; i < publicKeys.length; i+= gMaxAuthorsInOneRequest) {
@@ -310,7 +310,7 @@ void getMultiUserEvents(Set<String> serverUrls, Set<String> setPublicKeys, int n
       }
       List<String> partialList = publicKeys.sublist(i, i + getUserRequests);
       relays.getMultiUserEvents(serverUrl, partialList, numUserEvents, sinceWhen, kind);
-      if( gDebug > 0 || true) print("   Sending multi user request for $getUserRequests users");
+      if( gDebug > 0) print("   Sending multi user request for $getUserRequests users");
     }
   }
 }

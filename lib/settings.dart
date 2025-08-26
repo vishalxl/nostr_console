@@ -50,7 +50,7 @@ const int gLimitPerSubscription     = 20000;
 const int gDontHighlightEventsOlderThan = 10;
 
 int gDefaultNumWaitSeconds = 120; // is used in main()
-const int gMaxAuthorsInOneRequest = 100; // number of author requests to send in one request
+const int gMaxAuthorsInOneRequest = 300; // number of author requests to send in one request
 const int gMaxPtagsToGet          = 200; // maximum number of p tags that are taken from the comments of feed ( the top most, most frequent)
 
 const int gSecsLatestLive         = 2 * 3600; // the lastst seconds for which to get the latest event in main

@@ -1,6 +1,8 @@
 import 'dart:developer';
 import 'dart:io';
 import 'dart:convert';
+import 'package:format/format.dart';
+
 import 'package:nostr_console/event_ds.dart';
 import 'package:nostr_console/relays.dart';
 import 'package:nostr_console/utils.dart';
@@ -2382,8 +2384,8 @@ class Store {
       }
 
       if(gDebug > 0) log.info("finished writing eventCounter = $eventCounter.");
-      print("Appended $eventCounter new events to file \"$gEventsFilename\". Their breakdown according to kind of event is as follows:\n\n Kind     <Number of events>");
-      mapNumEventsOfKind.forEach((key, value) => print(" $key          $value"));
+      print("Appended $eventCounter new events to file \"$gEventsFilename\". Their breakdown according to kind of event is as follows:\n\n  Kind     <Number of events>");
+      mapNumEventsOfKind.forEach((key, value) => print( '{keyx:5d}  {valuex:8d}'.format({#keyx: key, #valuex: value})));
       print("");
 
     } on Exception catch (e) {

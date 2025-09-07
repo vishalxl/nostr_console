@@ -2,8 +2,11 @@
 
 configfile="./relay_list_all.txt"
 
+# configfile="./50relays2.txt"
+
 if [[ $# -eq 1 ]] ; then
-	if [ $1=="--help"  ]; then 
+	echo $1
+	if [ $1 == "--help"  ]; then 
 		echo 'Usage: ./test_servers.sh  <nostr relays filename(optional)>'
 		echo 'nostr relays filename contains list of relays to test; its default value is relay_list_all.txt' 
 		exit 1
@@ -15,7 +18,7 @@ fi
 source $configfile
 
 limit=300
-numHours=1
+numHours=100
 
 #echo -e "Requesting all events in last $numHours hours with a limit of $limit by executing the following command for each:"
 sinceSeconds=`date -d "-$numHours hour" +%s` ; 
@@ -33,7 +36,7 @@ echo -e "Getting all events, with limit $limit, from servers in last $numHours h
 
 for relay in ${nostr_relays[@]};
 do
-printf "Testing     %-40s: "  "$relay"
+printf "Testing     %-45s: "  "$relay"
 echo "$req" | websocat -B 300000 $relay 2> /dev/null | wc -l
 
 done

@@ -1,32 +1,27 @@
 
 nostr_relays=( 
 
+
     # some popular relays
     "wss://relay.damus.io"
 
-    "wss://nostr-2.zebedee.cloud"
-    "wss://nostr.zebedee.cloud"
-    "wss://nostr.coinos.io"
-    "wss://nostr-01.bolt.observer"
+    "wss://nos.lol"
+    "wss://relay.nostr.info"
 
-    "wss://nostr-relay.wlvs.space"
-    "wss://nostr-relay-dev.wlvs.space"
+    "wss://nostr.wine"
+    "wss://relay.nostr.band"
 
     "wss://nostr-pub.wellorder.net"
-    "wss://nos.lol"
-
-
     "wss://nostr.semisol.dev"
-    "wss://relay.nostr.info"
 
     # snort default relays 
     "wss://relay.snort.social"
-    "wss://nostr.wine"
+	"wss://relay.snort.social/relay.snort.social"
+
 
     # iris default relays 
     "wss://eden.nostr.land"
-    "wss://relay.current.fyi"
-    "wss://relay.nostr.band"
+
     "wss://offchain.pub"
     "wss://nostr.relayer.se"
      
@@ -34,44 +29,57 @@ nostr_relays=(
     "wss://relay1.nostrchat.io"
     "wss://relay2.nostrchat.io"
 
-    "wss://nostr.radixrat.com"
-    "wss://relay.nostr.ch"
-    "wss://nostr.rdfriedl.com"
-    "wss://relay.nostr.scot"
-    "wss://knostr.neutrine.com"
 
+    "wss://knostr.neutrine.com"
     "wss://nostr.mom"
 
-    "wss://nostr.drss.io"
-    "wss://nostr.delo.software"
-    "wss://nostr.zaprite.io"
-    "wss://sg.qemura.xyz"
+	# 45 new relays from https://www.reddit.com/r/nostr/comments/1n6k9m6/50_relays_you_may_have_missed/
 
-    "wss://nostr.zerofeerouting.com"
-    "wss://nostr.satsophone.tk"
-    "wss://relay.oldcity-bitcoiners.info"
+	"wss://relay.exit.pub/"
+	"wss://a.nos.lol/"
+	"wss://nostr.hifish.org/"
+	"wss://relay.primal.net/"
+	"wss://relay.chorus.community/"
+	"wss://ftp.halifax.rwth-aachen.de/nostr"
+	"wss://nostr.stakey.net/"
 
-    "wss://nostr.swiss-enigma.ch"
-    "wss://nostr.onsats.org"
-    "wss://nostr-relay.digitalmob.ro"
+	"wss://relay.primal.net/"
+	"wss://relay.degmods.com/"
 
-    "wss://relay.valireum.net"
-    "wss://nostr-relay.trustbtc.org"
-    "wss://relay.stoner.com"
-    "wss://nostr.w3ird.tech"
-    "wss://nostr.bongbong.com"
-    "wss://nostr.hugo.md"
+	"wss://relay.freeplace.nl/"
+	"wss://relay.agora.social/"
 
-    "wss://nostr.slothy.win"
-    "wss://nostr.robotechy.com"
-    "wss://nostr.nodeofsven.com"
-    "wss://nostrrelay.com"
-    "wss://nostr.mwmdev.com"
-    "wss://nostr.sandwich.farm"
+	"wss://nostr.noones.com/"
+	"wss://soloco.nl/"
 
-    "wss://brb.io"
+	"wss://relay.nostromo.social/"
+	"wss://nostr.sathoarder.com/"
+	"wss://relay.orangepill.ovh/"
+	"wss://45.135.180.104/"
 
-    "wss://dummyurl.example.com")
+	"wss://nostr.oxtr.dev/"
+	"wss://nostr.einundzwanzig.space/"
+	"wss://relay.cypherflow.ai/"
+	"wss://nostr.chaima.info/"
+
+	"wss://relay.snort.social/"
+	"wss://jskitty.cat/nostr"
+
+	"wss://nostr.21crypto.ch/"
+	"wss://relay.letsfo.com/"
+	"wss://relay.snort.social/"
+	"wss://orangepiller.org/"
+	"wss://orangesync.tech/"
+	"wss://nostr.azzamo.net/"
+
+	"wss://relay.fountain.fm/"
+	"wss://relay.bullishbounty.com/"
+	"wss://prl.plus/"
+	"wss://nostr.petrkr.net/strfry"
+	"wss://relay.seq1.net/outbox"
+	"wss://nostr.satstralia.com/"
+
+)
 
 
 

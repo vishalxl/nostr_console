@@ -1,4 +1,7 @@
 # nostr_console
+
+**Latest update (1 Feb 2026): Since late 2025, Nostr Console client is pretty much not usable. No fixes are planned, so this client should be considered 'retired'.**
+
 Nostr console client using Dart
 
 This is an experimental or pre-alpha software made to show or know what a Nostr network client would look like. It works 90% of the time everytime; less when relays are not working perfectly. 
